@@ -1,0 +1,7 @@
+node_modules
+.next
+data
+legacy-static
+.git
+.env*
+*.md
