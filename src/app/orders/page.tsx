@@ -2,10 +2,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getHistory } from "@/lib/history";
-import { rupees, type QuoteLine } from "@/lib/pricing";
+import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useStore } from "@/components/Store";
 
-type Order = { code: string; status: string; total: number; giftcard_used: number; pay_status: string; lines: QuoteLine[]; created_at: string };
+type Order = { code: string; status: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pay_status: string; lines: QuoteLine[]; created_at: string };
 
 export default function MyOrders() {
   const { add, setDrawerOpen, toast, soldOut, find } = useStore();
@@ -61,7 +61,7 @@ export default function MyOrders() {
               <p className="small" style={{ marginTop: "0.3rem" }}>{o.lines.map((l) => `${l.qty} × ${l.name}`).join(", ")}</p>
             </div>
             <div className="history-actions">
-              <strong>{rupees(o.total - o.giftcard_used)}</strong>
+              <strong>{rupees(orderDue(o))}</strong>
               <div className="row">
                 <Link href={`/order/${o.code}`} className="btn btn-ghost btn-sm">View</Link>
                 <button className="btn btn-pink btn-sm" onClick={() => orderAgain(o)}>Order again</button>

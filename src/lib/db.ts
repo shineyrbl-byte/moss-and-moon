@@ -135,6 +135,64 @@ function open() {
       customer_id INTEGER NOT NULL,
       expires_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS table_calls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      table_no INTEGER NOT NULL,
+      reason TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      done_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS order_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_code TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      ref TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS passes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER NOT NULL,
+      starts TEXT NOT NULL,
+      ends TEXT NOT NULL,
+      price INTEGER NOT NULL,
+      paid INTEGER NOT NULL DEFAULT 0,
+      payment_ref TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS pass_uses (
+      customer_id INTEGER NOT NULL,
+      day TEXT NOT NULL,
+      order_code TEXT NOT NULL,
+      PRIMARY KEY (customer_id, day)
+    );
+    CREATE TABLE IF NOT EXISTS waitlist (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      email TEXT,
+      date TEXT NOT NULL,
+      time TEXT NOT NULL,
+      guests INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'waiting',
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS staff (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'barista',
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS ingredients (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      unit TEXT NOT NULL,
+      qty REAL NOT NULL DEFAULT 0,
+      low_at REAL NOT NULL DEFAULT 0
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -158,6 +216,14 @@ function open() {
   addColumn(db, "orders", "ready_at", "TEXT");
   addColumn(db, "bookings", "email", "TEXT");
   addColumn(db, "orders", "customer_id", "INTEGER");
+  addColumn(db, "orders", "tip", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "orders", "credit_used", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "orders", "delivery_fee", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "orders", "delivery_address", "TEXT");
+  addColumn(db, "orders", "split_count", "INTEGER");
+  addColumn(db, "orders", "perks", "TEXT"); // e.g. "pass,birthday"
+  addColumn(db, "orders", "staff_id", "INTEGER");
+  addColumn(db, "reviews", "photo", "TEXT");
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };

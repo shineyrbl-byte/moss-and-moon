@@ -192,3 +192,114 @@ test("accounts: codes expire after too many wrong tries", async () => {
   for (let i = 0; i < 5; i++) await s.api("/api/account/verify", { method: "POST", json: { email, code: "999999" === sent.body.demoCode ? "888888" : "999999" } });
   assert.equal((await s.api("/api/account/verify", { method: "POST", json: { email, code: sent.body.demoCode } })).status, 400);
 });
+
+async function signIn(email: string) {
+  const sent = await s.api("/api/account/code", { method: "POST", json: { email } });
+  const r = await s.api("/api/account/verify", { method: "POST", json: { email, code: sent.body.demoCode } });
+  assert.equal(r.status, 200);
+  return (await s.api("/api/account")).body;
+}
+
+test("live updates arrive instantly over SSE", async () => {
+  await s.login();
+  const o = await order({ name: "Live", phone: "9666666666", lines: [{ itemId: "cookie", qty: 1 }] });
+  const ctrl = new AbortController();
+  const res = await fetch(`${s.url}/api/live?topic=order&code=${o.body.code}`, { signal: ctrl.signal });
+  const reader = res.body!.getReader();
+  await reader.read(); // the "retry" line
+  await s.api(`/api/orders/${o.body.code}`, { method: "PATCH", json: { status: "brewing" } });
+  const { value } = await reader.read();
+  ctrl.abort();
+  assert.match(new TextDecoder().decode(value), /brewing/);
+});
+
+test("tables can call staff", async () => {
+  assert.equal((await s.api("/api/tables/call", { method: "POST", json: { table: 7, reason: "water" } })).status, 200);
+  await s.api("/api/tables/call", { method: "POST", json: { table: 7, reason: "water" } }); // pressed twice
+  assert.equal((await s.api("/api/tables/call", { method: "POST", json: { table: 99, reason: "water" } })).status, 400);
+  await s.login();
+  const calls = (await s.api("/api/tables/call")).body.filter((c: { table_no: number }) => c.table_no === 7);
+  assert.equal(calls.length, 1);
+  await s.api("/api/tables/call", { method: "PATCH", json: { id: calls[0].id } });
+  assert.equal((await s.api("/api/tables/call")).body.filter((c: { table_no: number }) => c.table_no === 7).length, 0);
+});
+
+test("tips are added and split bills settle in shares", async () => {
+  const o = await order({ name: "Friends", table: 2, tipPercent: 10, lines: [{ itemId: "tiramisu", qty: 2 }, { itemId: "matcha", qty: 1 }] });
+  assert.equal(o.status, 200);
+  assert.equal(o.body.due, Math.round(840 * 1.1));
+  const code = o.body.code;
+  assert.equal((await s.api(`/api/orders/${code}/split`, { method: "POST", json: { count: 3 } })).status, 200);
+  for (let i = 0; i < 3; i++) {
+    const st = await s.api("/api/payments/start", { method: "POST", json: { kind: "share", code } });
+    assert.equal(st.status, 200, JSON.stringify(st.body));
+    await s.api("/api/payments/verify", { method: "POST", json: { kind: "share", code, shareId: st.body.shareId, demo: true } });
+  }
+  const after = await s.api(`/api/orders/${code}`);
+  assert.equal(after.body.pay_status, "paid");
+  assert.ok(after.body.paidShares >= o.body.due);
+  assert.equal((await s.api("/api/payments/start", { method: "POST", json: { kind: "share", code } })).status, 409);
+});
+
+test("delivery adds a fee and needs an address", async () => {
+  const noAddr = await order({ name: "D", phone: "9777777777", delivery: { address: "x" }, lines: [{ itemId: "tiramisu", qty: 1 }] });
+  assert.equal(noAddr.status, 400);
+  const r = await order({ name: "D", phone: "9777777777", delivery: { address: "Flat 2, Rose Apartments, Willow Lane" }, lines: [{ itemId: "tiramisu", qty: 1 }] });
+  if (r.status === 400 && /opening hours/.test(r.body.error)) return; // café closed while the tests run
+  assert.equal(r.status, 200);
+  assert.equal(r.body.due, 290 + 40);
+  const small = await order({ name: "D", phone: "9777777777", delivery: { address: "Flat 2, Rose Apartments, Willow Lane" }, lines: [{ itemId: "cookie", qty: 1 }] });
+  assert.equal(small.status, 400, "minimum order for delivery");
+});
+
+test("coffee pass: one free drink a day", async () => {
+  await signIn("pass@example.com");
+  const p = await s.api("/api/pass", { method: "POST" });
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "pass", code: p.body.code, demo: true } });
+  const acc = (await s.api("/api/account")).body;
+  assert.equal(acc.pass.active, true);
+  const first = await order({ name: "Pass", phone: "9888888888", lines: [{ itemId: "matcha", qty: 1 }] });
+  assert.equal(first.body.total, 0);
+  const second = await order({ name: "Pass", phone: "9888888888", lines: [{ itemId: "matcha", qty: 1 }] });
+  assert.equal(second.body.total, 260, "only one pass drink per day");
+  await s.api("/api/account/logout", { method: "POST" });
+});
+
+test("invite a friend: both get credit", async () => {
+  const a = await signIn("inviter@example.com");
+  const inviteCode = a.customer.referralCode;
+  await s.api("/api/account/logout", { method: "POST" });
+
+  await signIn("newfriend@example.com");
+  assert.equal((await s.api("/api/account/referral", { method: "POST", json: { code: "NOPE123" } })).status, 404);
+  assert.equal((await s.api("/api/account/referral", { method: "POST", json: { code: inviteCode } })).body.credit, 100);
+  assert.equal((await s.api("/api/account/referral", { method: "POST", json: { code: inviteCode } })).status, 409, "only once");
+  const o = await order({ name: "Friend", phone: "9123456780", lines: [{ itemId: "tiramisu", qty: 1 }] });
+  assert.equal(o.body.total, 290);
+  assert.equal(o.body.due, 190, "₹100 credit used");
+  await s.api("/api/account/logout", { method: "POST" });
+
+  const inviterNow = await signIn("inviter@example.com");
+  assert.equal(inviterNow.customer.credit, 100);
+  await s.api("/api/account/logout", { method: "POST" });
+});
+
+test("waitlist: a cancelled booking frees a spot", async () => {
+  const date = tomorrow();
+  const slots = (await s.api(`/api/bookings/availability?date=${date}`)).body;
+  const time = slots[slots.length - 1].time;
+  let last = "";
+  for (let i = 0; i < 6; i++) {
+    const b = await s.api("/api/bookings", { method: "POST", json: { name: `Full ${i}`, phone: "9000000001", date, time, guests: 2 } });
+    if (b.status === 200) last = b.body.code;
+  }
+  assert.equal((await s.api("/api/bookings", { method: "POST", json: { name: "Late", phone: "9000000002", date, time, guests: 2 } })).status, 409);
+  const w = await s.api("/api/waitlist", { method: "POST", json: { name: "Late", phone: "9000000002", email: "late@example.com", date, time, guests: 2 } });
+  assert.equal(w.body.position, 1);
+  await s.login();
+  await s.api("/api/bookings", { method: "PATCH", json: { code: last, status: "cancelled" } });
+  const waiting = (await s.api("/api/waitlist")).body.filter((x: { time: string; date: string }) => x.date === date && x.time === time);
+  assert.equal(waiting.length, 0, "first in line was offered the table");
+  const emails = (await s.api("/api/admin/emails")).body.emails;
+  assert.ok(emails.some((e: { to_email: string; subject: string }) => e.to_email === "late@example.com" && /table just opened/i.test(e.subject)));
+});

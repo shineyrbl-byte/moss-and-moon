@@ -630,3 +630,44 @@ body:has(.board) .nav, body:has(.board) .footer, body:has(.board) .table-banner,
 .account-order { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid var(--line); }
 .account-order:hover b { color: var(--pink-deep); }
 @media (max-width: 760px) { .account-grid { grid-template-columns: 1fr; } .account-order { grid-template-columns: 1fr auto; } .account-order > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; } }
+
+/* ============ live / barista screen / table extras / perks ============ */
+.call-wrap { position: relative; }
+.call-btn { background: var(--pink) !important; color: #fff !important; opacity: 1 !important; border-radius: 999px; padding: 0.2rem 0.8rem; font-size: 0.85rem; font-weight: 500; }
+:root[data-theme="dark"] .call-btn { background: #261a15 !important; color: var(--pink) !important; }
+.call-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 70; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 0.3rem; display: flex; flex-direction: column; min-width: 190px; }
+.call-menu button { opacity: 1 !important; text-align: left; padding: 0.55rem 0.8rem; border-radius: 12px; color: var(--text) !important; }
+.call-menu button:hover { background: var(--surface-2) !important; }
+.perk-toggles { display: flex; flex-direction: column; gap: 0.4rem; }
+.perk-toggles label { display: flex; gap: 0.5rem; align-items: center; cursor: pointer; }
+.split-picker { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; width: 100%; }
+.pass-card { background: linear-gradient(135deg, var(--surface), var(--latte)); }
+.slots .chip.is-full { opacity: 0.55; border-style: dashed; }
+.slots .chip.is-full.on { opacity: 1; }
+
+.kds { padding: 1rem 16px 3rem; max-width: 110rem; margin: 0 auto; }
+body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
+.kds-head { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.kds-head .logo span { color: var(--pink-deep); font-style: italic; }
+.kds-calls { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
+.kds-call { background: var(--pink); color: #fff; border: none; border-radius: 16px; padding: 0.8rem 1.1rem; font-size: 1.05rem; animation: pulseRing 1.8s infinite; text-align: left; }
+.kds-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: start; }
+.kds-col { background: var(--surface-2); border-radius: 24px; padding: 1rem; min-height: 60vh; display: flex; flex-direction: column; gap: 0.8rem; }
+.kds-col h2 { font-size: 1.8rem; display: flex; justify-content: space-between; align-items: center; margin: 0; }
+.kds-col h2 span { font-family: var(--font-sans), sans-serif; font-size: 1rem; background: var(--surface); border-radius: 999px; padding: 0.1rem 0.7rem; }
+.kds-col.ready { background: var(--pink-soft); }
+.ticket { background: var(--surface); border-radius: 18px; padding: 1rem; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 0.5rem; border-left: 6px solid var(--caramel); animation: pop 0.3s both; }
+.ticket.late { border-left-color: var(--pink-deep); }
+.ticket-top { display: flex; justify-content: space-between; align-items: baseline; }
+.ticket-top strong { font-family: ui-monospace, monospace; font-size: 1.3rem; letter-spacing: 0.06em; }
+.ticket-time { font-weight: 700; color: var(--muted); }
+.ticket.late .ticket-time { color: var(--pink-deep); }
+.ticket-who { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.ticket-pickup { font-size: 0.85rem; color: var(--muted); }
+.ticket-items { list-style: none; font-size: 1.15rem; line-height: 1.4; }
+.ticket-items small { display: block; font-size: 0.85rem; color: var(--pink-deep); margin-left: 1.6rem; }
+.ticket-note { background: var(--butter); color: #3b2720; border-radius: 10px; padding: 0.4rem 0.7rem; font-size: 0.95rem; }
+.ticket-foot { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; margin-top: 0.3rem; }
+.ticket-foot .btn { padding: 0.75rem 1.2rem; font-size: 1rem; }
+.kds-empty { text-align: center; padding: 2rem 0; }
+@media (max-width: 900px) { .kds-cols { grid-template-columns: 1fr; } .kds-col { min-height: auto; } }

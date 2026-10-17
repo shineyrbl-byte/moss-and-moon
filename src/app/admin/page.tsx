@@ -3,8 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import MenuEditor from "@/components/admin/MenuEditor";
 import TablesQR from "@/components/admin/TablesQR";
 import { ORDER_STEPS, type OrderStatus } from "@/lib/cafe";
-import { rupees, type QuoteLine } from "@/lib/pricing";
+import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useStore } from "@/components/Store";
+import { useLive } from "@/components/useLive";
 
 type Stats = {
   todayOrders: number; todayRevenue: number; activeOrders: number; bookingsToday: number; guestsToday: number;
@@ -12,7 +13,7 @@ type Stats = {
   giftCards: number; giftSold: number; giftOutstanding: number; paidOnline: number;
   top: { name: string; qty: number }[]; days: { day: string; label: string; revenue: number; orders: number }[];
 };
-type Order = { id: number; code: string; name: string; phone: string; table_no: number | null; email: string | null; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number; pay_method: string; pay_status: string; status: OrderStatus; created_at: string };
+type Order = { id: number; code: string; name: string; phone: string; table_no: number | null; email: string | null; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; delivery_address: string | null; pay_method: string; pay_status: string; status: OrderStatus; created_at: string };
 type Gift = { code: string; amount: number; balance: number; from_name: string; to_name: string; to_email: string; paid: number; created_at: string };
 type Email = { id: number; to_email: string; subject: string; html: string; status: string; error: string | null; created_at: string };
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
@@ -51,6 +52,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [showDone, setShowDone] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [waitlist, setWaitlist] = useState<{ id: number; name: string; phone: string; email: string; date: string; time: string; guests: number }[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [mail, setMail] = useState<{ emails: Email[]; emailMode: string; paymentMode: string } | null>(null);
@@ -78,14 +80,17 @@ export default function AdminPage() {
     setGifts(gc);
     setMail(em);
     setBookings(b);
+    fetch("/api/waitlist").then((r) => (r.ok ? r.json() : [])).then(setWaitlist).catch(() => {});
     setReviews(rv.reviews);
   }, [showDone]);
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 8000); // keep the dashboard fresh
+    const t = setInterval(load, 30000); // backup refresh; live updates come instantly
     return () => clearInterval(t);
   }, [load]);
+
+  useLive(authed ? "/api/live?topic=staff" : null, (e) => e.type !== "menu" && load());
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -145,7 +150,10 @@ export default function AdminPage() {
           <p className="eyebrow">staff dashboard</p>
           <h1 style={{ fontSize: "clamp(2.2rem, 5vw, 3.4rem)" }}>Good day, <em>barista</em> ☕</h1>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={logout}>Log out</button>
+        <div className="row">
+          <a className="btn btn-pink btn-sm" href="/staff">☕ Barista screen</a>
+          <button className="btn btn-ghost btn-sm" onClick={logout}>Log out</button>
+        </div>
       </div>
 
       <div className="admin-tabs">
@@ -229,13 +237,15 @@ export default function AdminPage() {
                     </span>
                   </div>
                   {o.table_no && <span className="table-tag">🪑 Table {o.table_no}: bring it over</span>}
+                  {o.delivery_address && <a className="table-tag" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.delivery_address)}`} target="_blank" rel="noreferrer">🛵 {o.delivery_address}</a>}
+                  {o.tip > 0 && <span className="small">💛 includes {rupees(o.tip)} tip</span>}
                   <span className="small muted">{o.name}{o.phone ? ` · ${o.phone}` : ""} · {o.table_no ? "dine-in" : `pickup ${o.pickup === "asap" ? "ASAP" : o.pickup}`} · {o.created_at.slice(11, 16)}</span>
                   <ul>
                     {o.lines.map((l, i) => <li key={i}>{l.qty} × {l.name}{l.note && <small className="muted"> ({l.note})</small>}</li>)}
                   </ul>
                   {o.note && <span className="small">📝 {o.note}</span>}
                   <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-                    <strong>{rupees(o.total - o.giftcard_used)}</strong>
+                    <strong>{rupees(orderDue(o))}</strong>
                     {next && <button className="btn btn-pink btn-sm" onClick={() => advance(o)}>Mark {next} →</button>}
                   </div>
                 </div>
@@ -265,6 +275,20 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+          )}
+          {waitlist.length > 0 && (
+            <>
+              <h3 style={{ margin: "1.5rem 0 0.5rem" }}>⏳ Waitlist</h3>
+              <p className="small muted">When you cancel a booking, the first person waiting for that time gets an email automatically.</p>
+              <table className="table">
+                <thead><tr><th>Date</th><th>Time</th><th>Name</th><th>Guests</th><th>Phone</th><th>Email</th></tr></thead>
+                <tbody>
+                  {waitlist.map((w) => (
+                    <tr key={w.id}><td>{w.date}</td><td>{w.time}</td><td>{w.name}</td><td>{w.guests}</td><td>{w.phone}</td><td>{w.email}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </div>
       )}

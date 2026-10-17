@@ -84,3 +84,33 @@ test("open / closed status", () => {
   assert.equal(openStatus(new Date(2026, 9, 19, 10, 0)).open, true); // Monday 10am
   assert.equal(openStatus(new Date(2026, 9, 19, 6, 0)).open, false);
 });
+
+test("tips, delivery and what's due", () => {
+  const q = quote([{ itemId: "latte", qty: 1 }], find, null, false, { now: morning, tipPercent: 10, delivery: true });
+  assert.equal(q.tip, 20);
+  assert.equal(q.deliveryFee, 40);
+  assert.equal(q.due, 260);
+  const big = quote([{ itemId: "cake", qty: 2 }], find, null, false, { now: morning, delivery: true });
+  assert.equal(big.deliveryFee, 0, "free delivery over ₹600");
+  assert.equal(quote([{ itemId: "latte", qty: 1 }], find, null, false, { now: morning, tipPercent: 37 }).tip, 0, "only offered tip choices");
+});
+
+test("coffee pass and loyalty can't use the same cup", () => {
+  const one = quote([{ itemId: "latte", qty: 1 }], find, null, true, { now: morning, passDrink: true });
+  assert.equal(one.passDiscount, 200);
+  assert.equal(one.loyaltyDiscount, 0);
+  const two = quote([{ itemId: "latte", qty: 1 }, { itemId: "tea", qty: 1 }], find, null, true, { now: morning, passDrink: true });
+  assert.equal(two.passDiscount, 200);
+  assert.equal(two.loyaltyDiscount, 150);
+  // the pass covers the base price, not paid extras
+  assert.equal(quote([{ itemId: "latte", qty: 1, opts: { size: "large", milk: "oat" } }], find, null, false, { now: morning, passDrink: true }).total, 70);
+});
+
+test("birthday treat and account credit", () => {
+  const q = quote([{ itemId: "cake", qty: 1 }, { itemId: "latte", qty: 1 }], find, null, false, { now: morning, birthdayTreat: true, credit: 100, giftBalance: 1000 });
+  assert.equal(q.birthdayDiscount, 250, "capped at ₹250");
+  assert.equal(q.total, 250);
+  assert.equal(q.creditUsed, 100);
+  assert.equal(q.giftUsed, 150);
+  assert.equal(q.due, 0);
+});

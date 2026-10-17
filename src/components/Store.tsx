@@ -6,7 +6,10 @@ import type { MenuItem } from "@/lib/menu";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
 import { TABLE_COUNT } from "@/lib/cafe";
 
-export type Me = { name: string | null; email: string; phone: string | null; birthday: string | null; favs: string[]; referralCode: string; credit: number };
+export type Me = {
+  name: string | null; email: string; phone: string | null; birthday: string | null; favs: string[]; referralCode: string; credit: number;
+  perks?: { birthdayTreat: boolean; passDrink: boolean; credit: number; canUseInvite: boolean };
+};
 
 type Store = {
   me: Me | null;
@@ -123,7 +126,7 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
         favsSynced.current = false;
         return;
       }
-      setMe(d.customer);
+      setMe({ ...d.customer, perks: d.perks });
       setFavs((local) => {
         const merged = new Set([...local, ...(d.customer.favs as string[])]);
         try { localStorage.setItem("mm-favs", JSON.stringify([...merged])); } catch {}

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useEscape, useStore } from "./Store";
 import { usePay } from "./Payment";
 import { photo } from "@/lib/menu";
-import { HAPPY_HOUR, describeOptions, quote, rupees, unitPrice } from "@/lib/pricing";
+import { DELIVERY, HAPPY_HOUR, TIP_CHOICES, describeOptions, quote, rupees, unitPrice } from "@/lib/pricing";
 import { HOURS, STAMPS_FOR_REWARD } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
 
@@ -36,6 +36,11 @@ export default function CartDrawer() {
   const [codeErr, setCodeErr] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", pickup: "asap", note: "" });
   const [payMethod, setPayMethod] = useState<"online" | "counter">("online");
+  const [tipPercent, setTipPercent] = useState(0);
+  const [mode, setMode] = useState<"pickup" | "delivery">("pickup");
+  const [address, setAddress] = useState("");
+  const [usePass, setUsePass] = useState(true);
+  const [useBirthday, setUseBirthday] = useState(true);
   const [loyalty, setLoyalty] = useState<Loyalty | null>(null);
   const [wait, setWait] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -73,7 +78,19 @@ export default function CartDrawer() {
     fetch(`/api/loyalty?phone=${digits}`).then((r) => r.json()).then(setLoyalty).catch(() => {});
   }, [digits]);
 
-  const q = useMemo(() => quote(lines, find, promo?.code, !!loyalty?.hasReward, { giftBalance: gift?.balance }), [lines, find, promo, loyalty, gift]);
+  const delivery = !table && mode === "delivery";
+  const q = useMemo(
+    () =>
+      quote(lines, find, promo?.code, !!loyalty?.hasReward, {
+        giftBalance: gift?.balance,
+        credit: me?.perks?.credit ?? 0,
+        birthdayTreat: !!me?.perks?.birthdayTreat && useBirthday,
+        passDrink: !!me?.perks?.passDrink && usePass,
+        tipPercent: step === "checkout" ? tipPercent : 0,
+        delivery,
+      }),
+    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step]
+  );
   const times = useMemo(() => (step === "checkout" ? pickupTimes() : []), [step]);
   const hasSoldOut = lines.some((l) => soldOut.has(l.itemId) || !find(l.itemId));
 
@@ -109,6 +126,10 @@ export default function CartDrawer() {
         table,
         promo: promo?.code,
         giftCard: gift?.code,
+        tipPercent,
+        usePass,
+        useBirthday,
+        ...(delivery ? { delivery: { address } } : {}),
         lines: lines.map(({ itemId, opts, qty }) => ({ itemId, opts, qty })),
       });
       const d = await r.json();
@@ -143,8 +164,13 @@ export default function CartDrawer() {
       {q.happyDiscount > 0 && <div className="sum-row discount"><span>Golden hour (bakes −20%)</span><span>−{rupees(q.happyDiscount)}</span></div>}
       {q.promoDiscount > 0 && <div className="sum-row discount"><span>Promo ({q.promoCode})</span><span>−{rupees(q.promoDiscount)}</span></div>}
       {q.loyaltyDiscount > 0 && <div className="sum-row discount"><span>Free drink reward</span><span>−{rupees(q.loyaltyDiscount)}</span></div>}
+      {q.passDiscount > 0 && <div className="sum-row discount"><span>☕ Coffee Pass drink</span><span>−{rupees(q.passDiscount)}</span></div>}
+      {q.birthdayDiscount > 0 && <div className="sum-row discount"><span>🎂 Birthday treat</span><span>−{rupees(q.birthdayDiscount)}</span></div>}
+      {q.creditUsed > 0 && <div className="sum-row discount"><span>💝 Your credit</span><span>−{rupees(q.creditUsed)}</span></div>}
       {q.giftUsed > 0 && <div className="sum-row discount"><span>Gift card</span><span>−{rupees(q.giftUsed)}</span></div>}
-      <div className="sum-row total"><span>{step === "checkout" && q.due > 0 ? (payMethod === "online" ? "To pay now" : "Pay at pickup") : "Total"}</span><span>{rupees(q.due)}</span></div>
+      {q.deliveryFee > 0 && <div className="sum-row"><span>Delivery</span><span>{rupees(q.deliveryFee)}</span></div>}
+      {q.tip > 0 && <div className="sum-row"><span>Tip for the team 💛</span><span>{rupees(q.tip)}</span></div>}
+      <div className="sum-row total"><span>{step === "checkout" && q.due > 0 ? (payMethod === "online" ? "To pay now" : delivery ? "Pay on delivery" : "Pay at pickup") : "Total"}</span><span>{rupees(q.due)}</span></div>
     </>
   );
 
@@ -239,13 +265,49 @@ export default function CartDrawer() {
                   <button type="button" className="link-btn" onClick={() => setTable(null)}>Picking up instead?</button>
                 </div>
               ) : (
-                <label className="field">Pickup time
-                  <select className="input" value={form.pickup} onChange={(e) => setForm({ ...form, pickup: e.target.value })}>
-                    <option value="asap">As soon as possible</option>
-                    {times.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </label>
+                <>
+                  <div className="chips" style={{ justifyContent: "flex-start" }} role="radiogroup" aria-label="Pickup or delivery">
+                    <button type="button" className={`chip ${mode === "pickup" ? "on" : ""}`} onClick={() => setMode("pickup")} role="radio" aria-checked={mode === "pickup"}>🛍 Pick up</button>
+                    <button type="button" className={`chip ${mode === "delivery" ? "on" : ""}`} onClick={() => setMode("delivery")} role="radio" aria-checked={mode === "delivery"}>🛵 Delivery</button>
+                  </div>
+                  {mode === "pickup" ? (
+                    <label className="field">Pickup time
+                      <select className="input" value={form.pickup} onChange={(e) => setForm({ ...form, pickup: e.target.value })}>
+                        <option value="asap">As soon as possible</option>
+                        {times.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </label>
+                  ) : (
+                    <>
+                      <label className="field">Delivery address
+                        <textarea className="input" rows={2} required minLength={10} maxLength={200} placeholder="Flat, building, street, landmark" value={address} onChange={(e) => setAddress(e.target.value)} />
+                      </label>
+                      <p className="small muted">🛵 {rupees(DELIVERY.fee)} delivery, free over {rupees(DELIVERY.freeOver)} · minimum {rupees(DELIVERY.minOrder)} · nearby areas only</p>
+                      {q.total < DELIVERY.minOrder && <p className="error small">Add {rupees(DELIVERY.minOrder - q.total)} more for delivery.</p>}
+                    </>
+                  )}
+                </>
               )}
+              {(me?.perks?.passDrink || me?.perks?.birthdayTreat) && (
+                <div className="reward-banner small perk-toggles">
+                  {me?.perks?.passDrink && (
+                    <label><input type="checkbox" checked={usePass} onChange={(e) => setUsePass(e.target.checked)} /> ☕ Use today&apos;s Coffee Pass drink</label>
+                  )}
+                  {me?.perks?.birthdayTreat && (
+                    <label><input type="checkbox" checked={useBirthday} onChange={(e) => setUseBirthday(e.target.checked)} /> 🎂 Happy birthday! Use your free treat</label>
+                  )}
+                </div>
+              )}
+              <div className="field">
+                Add a tip for the team?
+                <div className="chips" style={{ justifyContent: "flex-start" }}>
+                  {TIP_CHOICES.map((t) => (
+                    <button type="button" key={t} className={`chip ${tipPercent === t ? "on" : ""}`} onClick={() => setTipPercent(t)}>
+                      {t === 0 ? "No tip" : `${t}%`}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {q.due > 0 && (
                 <div className="field">
                   How would you like to pay?
@@ -254,7 +316,7 @@ export default function CartDrawer() {
                       <span>📱</span><b>Pay now</b><small>UPI · card</small>
                     </button>
                     <button type="button" className={`pay-opt ${payMethod === "counter" ? "on" : ""}`} onClick={() => setPayMethod("counter")}>
-                      <span>🪙</span><b>At the counter</b><small>cash · UPI</small>
+                      <span>🪙</span><b>{delivery ? "On delivery" : "At the counter"}</b><small>cash · UPI</small>
                     </button>
                   </div>
                 </div>
@@ -264,7 +326,7 @@ export default function CartDrawer() {
             <div className="drawer-foot">
               {summary}
               {error && <p className="error">{error}</p>}
-              <button className="btn btn-pink full" disabled={busy}>
+              <button className="btn btn-pink full" disabled={busy || (delivery && q.total < DELIVERY.minOrder)}>
                 {busy ? "Placing order…" : q.due === 0 ? "Place order (covered ✿)" : payMethod === "online" ? `Pay ${rupees(q.due)} & order` : "Place order"}
               </button>
             </div>

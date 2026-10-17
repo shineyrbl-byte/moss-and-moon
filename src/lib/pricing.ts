@@ -99,7 +99,7 @@ export const PROMOS: Record<string, { label: string; apply: (subtotal: number) =
   PINKMOON: { label: "15% off orders over ₹500", apply: (s) => (s >= 500 ? Math.round(s * 0.15) : 0) },
 };
 
-export type QuoteLine = { itemId: string; name: string; cat?: Category; opts: Options; note: string; qty: number; unit: number; total: number };
+export type QuoteLine = { itemId: string; name: string; cat?: Category; opts: Options; note: string; qty: number; unit: number; base?: number; total: number };
 export type Quote = {
   lines: QuoteLine[];
   subtotal: number;
@@ -107,28 +107,51 @@ export type Quote = {
   happyDiscount: number;
   promoCode: string | null;
   promoDiscount: number;
-  loyaltyDiscount: number;
-  total: number; // after discounts
+  loyaltyDiscount: number; // 10-stamp free drink
+  birthdayDiscount: number; // free bake in your birthday week
+  passDiscount: number; // coffee pass: one drink a day
+  total: number; // goods after discounts
+  creditUsed: number; // account credit (from invites)
   giftUsed: number; // paid from a gift card
-  due: number; // left to pay
+  deliveryFee: number;
+  tip: number;
+  due: number; // what's left to pay
 };
 
 // ----- happy hour: 20% off bakes, every day 3pm–5pm -----
 export const HAPPY_HOUR = { from: 15, to: 17, off: 0.2, label: "Golden hour · 20% off bakes, 3–5pm" };
 export const isHappyHour = (now = new Date()) => now.getHours() >= HAPPY_HOUR.from && now.getHours() < HAPPY_HOUR.to;
 
+// ----- perks & extras -----
+export const TIP_CHOICES = [0, 5, 10, 15];
+export const PASS = { price: 1499, days: 30, cap: 300, label: "Coffee Pass · one drink a day for 30 days" };
+export const BIRTHDAY_CAP = 250;
+export const REFERRAL_CREDIT = 100;
+export const DELIVERY = { fee: 40, freeOver: 600, minOrder: 200 };
+
+/** What a stored order still needs paid (shared by server and browser) */
+export const orderDue = (o: { total: number; giftcard_used?: number | null; credit_used?: number | null; tip?: number | null; delivery_fee?: number | null }) =>
+  Math.max(0, o.total - (o.giftcard_used ?? 0) - (o.credit_used ?? 0) + (o.tip ?? 0) + (o.delivery_fee ?? 0));
+
 /**
  * Work out the price of an order.
  * - find: how to look up menu items (unknown or hidden items are skipped)
  * - freeDrink: the customer has a loyalty reward, so their cheapest drink is free
- * - giftBalance: money left on a gift card, used after all discounts
+ * - extra.giftBalance / credit: money on a gift card / account, used after discounts
+ * - extra.birthdayTreat: cheapest bake free (up to ₹250)
+ * - extra.passDrink: coffee pass, one drink's base price free (up to ₹300)
+ * - extra.tipPercent / tipAmount: optional tip for the team
+ * - extra.delivery: add the delivery fee
  */
 export function quote(
   raw: { itemId: string; opts?: unknown; qty: number }[],
   find: FindItem,
   promo?: string | null,
   freeDrink = false,
-  extra: { now?: Date; giftBalance?: number } = {}
+  extra: {
+    now?: Date; giftBalance?: number; credit?: number; birthdayTreat?: boolean; passDrink?: boolean;
+    tipPercent?: number; tipAmount?: number; delivery?: boolean;
+  } = {}
 ): Quote {
   const lines: QuoteLine[] = [];
   for (const l of raw) {
@@ -137,26 +160,46 @@ export function quote(
     if (!item || !(qty >= 1 && qty <= 20)) continue;
     const opts = cleanOptions(item, l.opts);
     const unit = unitPrice(item, opts);
-    lines.push({ itemId: item.id, name: item.name, cat: item.cat, opts, note: describeOptions(item, opts), qty, unit, total: unit * qty });
+    lines.push({ itemId: item.id, name: item.name, cat: item.cat, opts, note: describeOptions(item, opts), qty, unit, base: item.price, total: unit * qty });
   }
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
 
   const happyHour = isHappyHour(extra.now);
-  const bakesTotal = lines.filter((l) => !isDrink(l.cat!)).reduce((s, l) => s + l.total, 0);
-  const happyDiscount = happyHour ? Math.round(bakesTotal * HAPPY_HOUR.off) : 0;
+  const bakes = lines.filter((l) => !isDrink(l.cat!));
+  const happyDiscount = happyHour ? Math.round(bakes.reduce((s, l) => s + l.total, 0) * HAPPY_HOUR.off) : 0;
 
   const code = promo?.trim().toUpperCase() || null;
   const p = code ? PROMOS[code] : undefined;
   const promoDiscount = p ? p.apply(subtotal - happyDiscount) : 0;
 
-  let loyaltyDiscount = 0;
-  if (freeDrink) {
-    const drinks = lines.filter((l) => isDrink(l.cat!));
-    if (drinks.length) loyaltyDiscount = Math.min(...drinks.map((d) => d.unit));
+  // One entry per drink cup, so a pass and a loyalty reward can't use the same cup
+  const cups = lines.filter((l) => isDrink(l.cat!)).flatMap((l) => Array.from({ length: l.qty }, () => ({ unit: l.unit, base: l.base ?? l.unit })));
+  let passDiscount = 0;
+  if (extra.passDrink && cups.length) {
+    cups.sort((a, b) => b.base - a.base);
+    passDiscount = Math.min(cups[0].base, PASS.cap);
+    cups.shift();
   }
-  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount);
-  const giftUsed = Math.min(total, Math.max(0, Math.floor(extra.giftBalance ?? 0)));
-  return { lines, subtotal, happyHour, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, total, giftUsed, due: total - giftUsed };
+  let loyaltyDiscount = 0;
+  if (freeDrink && cups.length) loyaltyDiscount = Math.min(...cups.map((c) => c.unit));
+
+  let birthdayDiscount = 0;
+  if (extra.birthdayTreat && bakes.length) birthdayDiscount = Math.min(Math.min(...bakes.map((b) => b.unit)), BIRTHDAY_CAP);
+
+  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount);
+  const creditUsed = Math.min(total, Math.max(0, Math.floor(extra.credit ?? 0)));
+  const giftUsed = Math.min(total - creditUsed, Math.max(0, Math.floor(extra.giftBalance ?? 0)));
+  const deliveryFee = extra.delivery && lines.length ? (total >= DELIVERY.freeOver ? 0 : DELIVERY.fee) : 0;
+  const tip =
+    extra.tipAmount !== undefined
+      ? Math.max(0, Math.min(2000, Math.round(extra.tipAmount)))
+      : TIP_CHOICES.includes(extra.tipPercent ?? 0)
+        ? Math.round((total * (extra.tipPercent ?? 0)) / 100)
+        : 0;
+  return {
+    lines, subtotal, happyHour, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount,
+    total, creditUsed, giftUsed, deliveryFee, tip, due: total - creditUsed - giftUsed + deliveryFee + tip,
+  };
 }
 
 export const rupees = (n: number) => `₹${n.toLocaleString("en-IN")}`;
