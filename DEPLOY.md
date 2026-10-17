@@ -34,6 +34,21 @@ gh repo create moss-and-moon --private --source=. --push
 
 Every `git push` redeploys automatically.
 
+### Easier: deploy from the terminal (Railway CLI)
+
+If you can't find the button on the website, this does the same thing:
+
+```bash
+brew install railway
+railway login                      # opens the browser once
+railway init --name moss-and-moon
+railway add --service web --variables "ADMIN_PASSCODE=pick-something" --variables "DATA_DIR=/data" --variables "TZ=Asia/Kolkata"
+railway service link web
+railway volume add --mount-path /data
+railway domain                     # prints your public link
+railway up                         # uploads + deploys (run again after changes)
+```
+
 ### Alternative: Render
 
 New → Web Service → connect the repo → it picks up the Dockerfile.
