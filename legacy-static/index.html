@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moss & Moon — slow coffee café</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Nav -->
+  <header class="nav" id="nav">
+    <a href="#top" class="logo">Moss <span>&</span> Moon</a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#about">Our story</a>
+      <a href="#menu">Menu</a>
+      <a href="#moments">Moments</a>
+      <a href="#visit">Visit</a>
+    </nav>
+    <button class="order-btn" id="openTray" aria-label="Open your order">
+      Order <span class="badge" id="badge">0</span>
+    </button>
+    <button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero" id="top">
+    <div class="hero-text">
+      <p class="eyebrow">est. 2026 · a slow-coffee corner</p>
+      <h1>Coffee that<br /><em>takes its time.</em></h1>
+      <p class="lede">Hand-poured brews, warm bakes and a sunny window seat. Stay a while — we'll keep the kettle on.</p>
+      <div class="hero-actions">
+        <a href="#menu" class="btn btn-solid">See the menu</a>
+        <a href="#visit" class="btn btn-ghost">Book a table</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="arch">
+        <div class="sun"></div>
+        <div class="cup">
+          <div class="steam s1"></div>
+          <div class="steam s2"></div>
+          <div class="steam s3"></div>
+          <div class="handle"></div>
+        </div>
+        <div class="saucer"></div>
+      </div>
+      <div class="leaf l1"></div>
+      <div class="leaf l2"></div>
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span>☕ pour-overs</span><span>✿ matcha</span><span>🥐 croissants</span><span>☾ late-night lattes</span><span>✿ oat milk, always</span><span>☕ pour-overs</span><span>✿ matcha</span><span>🥐 croissants</span><span>☾ late-night lattes</span><span>✿ oat milk, always</span>
+    </div>
+  </div>
+
+  <!-- About -->
+  <section class="about reveal" id="about">
+    <div class="about-card">
+      <p class="eyebrow">our story</p>
+      <h2>A little café for <em>soft mornings</em> and long conversations.</h2>
+      <p>Moss & Moon started as a weekend coffee cart and grew into a corner full of plants, mismatched mugs and the smell of cardamom buns. We roast in small batches, bake every morning and play records all day.</p>
+      <div class="stats">
+        <div><strong>12</strong><span>single-origin beans</span></div>
+        <div><strong>6am</strong><span>first bake of the day</span></div>
+        <div><strong>40+</strong><span>plants to keep you company</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Menu -->
+  <section class="menu reveal" id="menu">
+    <p class="eyebrow center">the menu</p>
+    <h2 class="center">Something warm, <em>something sweet</em></h2>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-cat="all">All</button>
+      <button class="tab" data-cat="coffee">Coffee</button>
+      <button class="tab" data-cat="tea">Tea & matcha</button>
+      <button class="tab" data-cat="bakes">Bakes</button>
+    </div>
+    <div class="menu-grid" id="menuGrid"><!-- filled by script.js --></div>
+  </section>
+
+  <!-- Moments (gallery) -->
+  <section class="moments reveal" id="moments">
+    <p class="eyebrow center">moments</p>
+    <h2 class="center">Life at <em>Moss & Moon</em></h2>
+    <div class="gallery">
+      <figure class="g g1"><figcaption>window seat, 4pm</figcaption></figure>
+      <figure class="g g2"><figcaption>latte art practice</figcaption></figure>
+      <figure class="g g3"><figcaption>fresh out the oven</figcaption></figure>
+      <figure class="g g4"><figcaption>sunday records</figcaption></figure>
+      <figure class="g g5"><figcaption>the matcha bar</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- Visit -->
+  <section class="visit reveal" id="visit">
+    <div class="visit-info">
+      <p class="eyebrow">come say hi</p>
+      <h2>Visit <em>us</em></h2>
+      <p class="addr">14 Willow Lane<br />Your favourite neighbourhood</p>
+      <ul class="hours">
+        <li><span>Mon – Fri</span><span>7am – 8pm</span></li>
+        <li><span>Saturday</span><span>8am – 10pm</span></li>
+        <li><span>Sunday</span><span>9am – 6pm</span></li>
+      </ul>
+      <p class="open-now" id="openNow"></p>
+    </div>
+
+    <form class="booking" id="booking">
+      <h3>Reserve a table</h3>
+      <label>Name<input type="text" name="name" required placeholder="Your name" /></label>
+      <div class="row">
+        <label>Date<input type="date" name="date" required /></label>
+        <label>Time<input type="time" name="time" required /></label>
+      </div>
+      <label>Guests
+        <select name="guests">
+          <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5+</option>
+        </select>
+      </label>
+      <label>A little note (optional)<textarea name="note" rows="2" placeholder="Window seat, please ✿"></textarea></label>
+      <button type="submit" class="btn btn-solid full">Reserve</button>
+      <p class="form-msg" id="formMsg" role="status"></p>
+    </form>
+  </section>
+
+  <footer class="footer">
+    <p class="logo">Moss <span>&</span> Moon</p>
+    <p>made with oat milk & love · © <span id="year"></span></p>
+  </footer>
+
+  <!-- Order tray -->
+  <aside class="tray" id="tray" aria-hidden="true">
+    <div class="tray-head">
+      <h3>Your order</h3>
+      <button class="close" id="closeTray" aria-label="Close">✕</button>
+    </div>
+    <ul class="tray-items" id="trayItems"></ul>
+    <div class="tray-foot">
+      <div class="total"><span>Total</span><strong id="total">₹0</strong></div>
+      <button class="btn btn-solid full" id="checkout">Place order</button>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+  <div class="toast" id="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
