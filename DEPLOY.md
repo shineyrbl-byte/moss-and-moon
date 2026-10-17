@@ -32,7 +32,9 @@ gh repo create moss-and-moon --private --source=. --push
    (`DATA_DIR=/data` and `TZ=Asia/Kolkata` are already set in the Dockerfile.)
 5. **Settings → Networking → Generate Domain.** That's your live link 🎉
 
-Every `git push` redeploys automatically.
+Every `git push` redeploys automatically. If it doesn't, Railway's GitHub app
+probably can't see the repo: install it at https://github.com/apps/railway-app
+(choose "Only select repositories"), then in the service settings connect the repo.
 
 ### Easier: deploy from the terminal (Railway CLI)
 
