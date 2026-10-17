@@ -11,7 +11,7 @@ const BLANK: MenuItem = { id: "", cat: "coffee", name: "", desc: "", price: 200,
 const LEVELS = ["Low", "Medium", "High"];
 
 // Staff: add, edit, hide, reorder and stock menu items. Changes go live instantly.
-export default function MenuEditor() {
+export default function MenuEditor({ canEdit = true }: { canEdit?: boolean }) {
   const { toast, refreshSoldOut } = useStore();
   const [items, setItems] = useState<MenuItem[]>([]);
   const [filter, setFilter] = useState<Category | "all">("all");
@@ -49,9 +49,9 @@ export default function MenuEditor() {
             <button key={c.id} className={`chip ${filter === c.id ? "on" : ""}`} onClick={() => setFilter(c.id)}>{c.label}</button>
           ))}
         </div>
-        <button className="btn btn-pink btn-sm" onClick={() => setEditing({ ...BLANK, cat: filter === "all" ? "coffee" : filter })}>＋ New item</button>
+        {canEdit && <button className="btn btn-pink btn-sm" onClick={() => setEditing({ ...BLANK, cat: filter === "all" ? "coffee" : filter })}>＋ New item</button>}
       </div>
-      <p className="muted small" style={{ marginBottom: "1rem" }}>Changes show on the site straight away. &quot;Hidden&quot; keeps an item for later without guests seeing it.</p>
+      <p className="muted small" style={{ marginBottom: "1rem" }}>{canEdit ? <>Changes show on the site straight away. &quot;Hidden&quot; keeps an item for later; seasonal items appear and disappear on their dates.</> : "Flip the switch when something runs out. It shows as sold out straight away."}</p>
 
       <div className="menu-admin">
         {shown.map((m) => (
@@ -65,12 +65,12 @@ export default function MenuEditor() {
               <button className={`switch ${m.soldOut ? "off" : ""}`} onClick={() => stock(m)} aria-label={`${m.name} in stock`} aria-pressed={!m.soldOut} />
               {m.soldOut ? "sold out" : "in stock"}
             </label>
-            <div className="menu-row-actions">
+            {canEdit && <div className="menu-row-actions">
               <button className="chip" onClick={() => move(m, "up")} aria-label="Move up">↑</button>
               <button className="chip" onClick={() => move(m, "down")} aria-label="Move down">↓</button>
               <button className="chip" onClick={() => toggleHidden(m)}>{m.hidden ? "Show" : "Hide"}</button>
               <button className="chip on" onClick={() => setEditing(m)}>Edit</button>
-            </div>
+            </div>}
           </div>
         ))}
       </div>
@@ -182,6 +182,13 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
               </div>
             </div>
           )}
+          <div className="field">Seasonal (optional): only on the menu between these dates
+            <div className="row">
+              <input className="input" type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value || undefined)} aria-label="Season starts" />
+              <input className="input" type="date" value={f.until ?? ""} onChange={(e) => set("until", e.target.value || undefined)} aria-label="Season ends" />
+            </div>
+          </div>
+          <UsesEditor uses={f.uses ?? []} onChange={(u) => set("uses", u)} />
           {error && <p className="error">{error}</p>}
           <div className="row" style={{ justifyContent: "space-between" }}>
             {!isNew && (confirmDelete ? (
@@ -200,3 +207,28 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
     </>
   );
 }
+
+/** Which ingredients one of this item uses (empty = sensible defaults for drinks) */
+function UsesEditor({ uses, onChange }: { uses: { ingredient: string; amount: number }[]; onChange: (u: { ingredient: string; amount: number }[]) => void }) {
+  const [list, setList] = useState<{ id: string; name: string; unit: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/admin/stock").then((r) => (r.ok ? r.json() : [])).then(setList).catch(() => {});
+  }, []);
+  const opts = [{ id: "milk", name: "Milk (follows the guest's choice)", unit: "ml" }, ...list];
+  return (
+    <div className="field">Uses <span className="small">(leave empty for our usual recipe)</span>
+      {uses.map((u, i) => (
+        <div className="row" key={i}>
+          <select className="input" value={u.ingredient} onChange={(e) => onChange(uses.map((x, j) => (j === i ? { ...x, ingredient: e.target.value } : x)))} aria-label="Ingredient">
+            {opts.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+          <input className="input" style={{ maxWidth: "6rem" }} inputMode="decimal" value={u.amount} onChange={(e) => onChange(uses.map((x, j) => (j === i ? { ...x, amount: Number(e.target.value) || 0 } : x)))} aria-label="Amount" />
+          <span className="small muted" style={{ alignSelf: "center" }}>{opts.find((o) => o.id === u.ingredient)?.unit ?? ""}</span>
+          <button type="button" className="chip" onClick={() => onChange(uses.filter((_, j) => j !== i))} aria-label="Remove ingredient">✕</button>
+        </div>
+      ))}
+      <button type="button" className="chip" style={{ alignSelf: "flex-start" }} onClick={() => onChange([...uses, { ingredient: opts[1]?.id ?? "milk", amount: 1 }])}>＋ Add ingredient</button>
+    </div>
+  );
+}
+

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { isAdmin, unauthorized } from "@/lib/auth";
+import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { deleteItem, getMenu, moveItem, saveItem } from "@/lib/menuStore";
 import type { Category, Diet, MenuItem } from "@/lib/menu";
 import { publish } from "@/lib/live";
@@ -48,6 +48,14 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
   const diet = (Array.isArray(b.diet) ? b.diet : []).filter((d): d is Diet => d === "vegan" || d === "gf");
   const badge = BADGES.find((x) => x === b.badge);
   const t = (b.traits ?? {}) as Record<string, unknown>;
+  const date = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
+  const from = date(b.from);
+  const until = date(b.until);
+  if (from && until && from > until) return "The season ends before it starts. Check the dates.";
+  const uses = (Array.isArray(b.uses) ? b.uses : [])
+    .map((u: { ingredient?: unknown; amount?: unknown }) => ({ ingredient: String(u?.ingredient ?? "").slice(0, 40), amount: Math.max(0, Number(u?.amount) || 0) }))
+    .filter((u: { ingredient: string; amount: number }) => /^[a-z0-9-]+$/.test(u.ingredient) && u.amount > 0)
+    .slice(0, 8);
   const id = typeof b.id === "string" && /^[\w-]{1,60}$/.test(b.id) ? b.id : `${slug(name)}-${Math.random().toString(36).slice(2, 6)}`;
 
   return {
@@ -56,12 +64,18 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(badge ? { badge } : {}),
     ...(cat !== "bakes" ? { traits: { energy: level(t.energy), sweet: level(t.sweet), temp: t.temp === "iced" ? "iced" : "hot" } } : {}),
     ...(b.hidden ? { hidden: true } : {}),
+    ...(from ? { from } : {}),
+    ...(until ? { until } : {}),
+    ...(uses.length ? { uses } : {}),
   };
 }
 
-// Staff: create / edit an item, or move it ({ move: "up" | "down", id })
+// Owner: create / edit an item, or move it ({ move: "up" | "down", id })
 export async function POST(req: Request) {
-  if (!(await isAdmin())) return unauthorized();
+  {
+    const gate = await ownerGate();
+    if (gate) return gate;
+  }
   const b = await req.json().catch(() => null);
   if (!b) return Response.json({ error: "Invalid request." }, { status: 400 });
   if (b.move) {
@@ -75,9 +89,12 @@ export async function POST(req: Request) {
   return Response.json({ ok: true, item });
 }
 
-// Staff: delete an item for good (?id=...)
+// Owner: delete an item for good (?id=...)
 export async function DELETE(req: Request) {
-  if (!(await isAdmin())) return unauthorized();
+  {
+    const gate = await ownerGate();
+    if (gate) return gate;
+  }
   const id = new URL(req.url).searchParams.get("id") ?? "";
   deleteItem(id);
   return Response.json({ ok: true });
