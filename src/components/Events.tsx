@@ -9,7 +9,7 @@ import Reveal from "./Reveal";
 type Ev = CafeEvent & { spotsLeft: number };
 
 export default function Events() {
-  const { toast } = useStore();
+  const { toast, t } = useStore();
   const [events, setEvents] = useState<Ev[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "" });
@@ -38,8 +38,8 @@ export default function Events() {
   return (
     <Reveal id="events" className="section">
       <div className="center">
-        <p className="eyebrow">what&apos;s on</p>
-        <h2>Little <em>gatherings</em></h2>
+        <p className="eyebrow">{t("events.eyebrow")}</p>
+        <h2>{t("events.title1")} <em>{t("events.title2")}</em></h2>
         <p className="lead">Workshops, open mics and slow Sundays. Save a spot — it&apos;s free.</p>
       </div>
       <div className="events">

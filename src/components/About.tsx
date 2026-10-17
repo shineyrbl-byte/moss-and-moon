@@ -1,8 +1,11 @@
+"use client";
 import Image from "next/image";
 import { photo } from "@/lib/menu";
 import Reveal from "./Reveal";
+import { useStore } from "./Store";
 
 export default function About() {
+  const { t } = useStore();
   return (
     <Reveal id="about" className="section about">
       <div className="about-photos">
@@ -10,7 +13,7 @@ export default function About() {
         <div className="p2"><Image src={photo("1497935586351-b67a49e012bf", 600)} alt="Coffee beans and a fresh latte" fill sizes="25vw" style={{ objectFit: "cover" }} /></div>
       </div>
       <div>
-        <p className="eyebrow">our story</p>
+        <p className="eyebrow">{t("about.eyebrow")}</p>
         <h2>A little café for <em>soft mornings</em> and long conversations.</h2>
         <p className="lead">
           Moss & Moon started as a weekend coffee cart and grew into a corner full of plants, mismatched mugs and the smell of cardamom buns.

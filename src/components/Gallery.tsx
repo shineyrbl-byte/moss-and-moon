@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { GALLERY } from "@/lib/cafe";
 import { photo } from "@/lib/menu";
 import Reveal from "./Reveal";
+import { useStore } from "./Store";
 
 // Photo sizes vary a bit so the masonry layout looks natural
 const HEIGHTS = [420, 300, 360, 280, 380, 300, 340, 400];
 
 export default function Gallery() {
   const [open, setOpen] = useState<number | null>(null);
+  const { t } = useStore();
   const move = useCallback((d: number) => setOpen((i) => (i === null ? i : (i + d + GALLERY.length) % GALLERY.length)), []);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function Gallery() {
   return (
     <Reveal id="moments" className="section">
       <div className="center">
-        <p className="eyebrow">moments</p>
+        <p className="eyebrow">{t("moments.eyebrow")}</p>
         <h2>Life at <em>Moss & Moon</em></h2>
       </div>
       <div className="gallery">

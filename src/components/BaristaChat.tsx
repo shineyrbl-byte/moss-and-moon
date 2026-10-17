@@ -15,7 +15,7 @@ const HELLO: Msg = { role: "assistant", content: "Hi, I'm Mo, your barista ✿ T
 // Floating "Ask the barista" chat. Remembers the conversation for this visit.
 export default function BaristaChat() {
   const pathname = usePathname();
-  const { find, setCustomizing, soldOut } = useStore();
+  const { find, setCustomizing, soldOut, t } = useStore();
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([HELLO]);
   const [text, setText] = useState("");
@@ -67,7 +67,7 @@ export default function BaristaChat() {
   return (
     <>
       <button className={`chat-fab ${open ? "open" : ""}`} onClick={() => setOpen((o) => !o)} aria-label={open ? "Close barista chat" : "Ask the barista"} aria-expanded={open}>
-        {open ? "✕" : <><span aria-hidden>☕</span><span className="chat-fab-label">Ask the barista</span></>}
+        {open ? "✕" : <><span aria-hidden>☕</span><span className="chat-fab-label">{t("chat.ask")}</span></>}
       </button>
 
       {open && (

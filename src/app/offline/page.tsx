@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-export const metadata = { title: "Offline · Moss & Moon" };
 
 // Shown by the app when there's no internet and the page wasn't saved yet
 export default function Offline() {

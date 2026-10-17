@@ -1,8 +1,11 @@
+"use client";
 import Link from "next/link";
 import { HOURS_LABEL } from "@/lib/cafe";
 import InstallButton from "./InstallButton";
+import { useStore } from "./Store";
 
 export default function Footer() {
+  const { t } = useStore();
   return (
     <footer className="footer">
       <div className="footer-grid">
@@ -13,18 +16,18 @@ export default function Footer() {
           </p>
         </div>
         <div>
-          <h4>Explore</h4>
+          <h4>{t("footer.explore")}</h4>
           <ul>
-            <li><Link href="/#menu">Menu</Link></li>
-            <li><Link href="/#events">Events</Link></li>
+            <li><Link href="/#menu">{t("nav.menu")}</Link></li>
+            <li><Link href="/#events">{t("nav.events")}</Link></li>
             <li><Link href="/#reviews">Reviews</Link></li>
-            <li><Link href="/loyalty">Stamp card</Link></li>
-            <li><Link href="/gift-cards">Gift cards</Link></li>
+            <li><Link href="/loyalty">{t("nav.stamps")}</Link></li>
+            <li><Link href="/gift-cards">{t("nav.gift")}</Link></li>
             <li><Link href="/orders">My orders</Link></li>
           </ul>
         </div>
         <div>
-          <h4>Hours</h4>
+          <h4>{t("footer.hours")}</h4>
           <ul>
             {HOURS_LABEL.map((h) => (
               <li key={h.days}>{h.days} · {h.time}</li>
@@ -32,7 +35,7 @@ export default function Footer() {
           </ul>
         </div>
         <div>
-          <h4>Say hi</h4>
+          <h4>{t("footer.hi")}</h4>
           <ul>
             <li>14 Willow Lane</li>
             <li>hello@mossandmoon.cafe</li>

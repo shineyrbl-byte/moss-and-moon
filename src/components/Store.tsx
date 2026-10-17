@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { MenuItem } from "@/lib/menu";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
 import { TABLE_COUNT } from "@/lib/cafe";
+import { DICT, type Lang, type TKey } from "@/lib/i18n";
 
 export type Me = {
   name: string | null; email: string; phone: string | null; birthday: string | null; favs: string[]; referralCode: string; credit: number;
@@ -12,6 +13,9 @@ export type Me = {
 };
 
 type Store = {
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  t: (k: TKey) => string;
   me: Me | null;
   refreshMe: () => Promise<void>;
   menu: MenuItem[];
@@ -49,6 +53,7 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
   const [bumpKey, setBumpKey] = useState(0);
   const [favs, setFavs] = useState<Set<string>>(new Set());
   const [me, setMe] = useState<Me | null>(null);
+  const [lang, setLangState] = useState<Lang>("en");
   const favsSynced = useRef(false);
   const toastId = useRef(0);
 
@@ -117,6 +122,23 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
     setLines((ls) => (qty <= 0 ? ls.filter((l) => l.key !== key) : ls.map((l) => (l.key === key ? { ...l, qty: Math.min(20, qty) } : l))));
   }, []);
 
+  // Language: remembered per browser
+  useEffect(() => {
+    try {
+      const l = localStorage.getItem("mm-lang");
+      if (l === "hi") {
+        setLangState("hi");
+        document.documentElement.lang = "hi";
+      }
+    } catch {}
+  }, []);
+  const setLang = useCallback((l: Lang) => {
+    setLangState(l);
+    document.documentElement.lang = l;
+    try { localStorage.setItem("mm-lang", l); } catch {}
+  }, []);
+  const t = useCallback((k: TKey) => DICT[lang][k] ?? DICT.en[k], [lang]);
+
   // Signed-in guest: load their profile and merge favourites from all their devices
   const refreshMe = useCallback(async () => {
     try {
@@ -153,6 +175,9 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
 
   const value = useMemo<Store>(
     () => ({
+      lang,
+      setLang,
+      t,
       me,
       refreshMe,
       menu,
@@ -175,7 +200,7 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
       favs,
       toggleFav,
     }),
-    [me, refreshMe, menu, find, table, setTable, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
+    [lang, setLang, t, me, refreshMe, menu, find, table, setTable, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
   );
 
   return (

@@ -35,7 +35,7 @@ export default function OrderPage() {
   const [error, setError] = useState("");
   const lastStatus = useRef<string | null>(null);
   const pay = usePay();
-  const { toast } = useStore();
+  const { toast, t } = useStore();
   const [reload, setReload] = useState(0);
   const [paying, setPaying] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
@@ -116,7 +116,7 @@ export default function OrderPage() {
     <div className="page">
       <p className="eyebrow">order {order.code}</p>
       <h1 style={{ fontSize: "clamp(2.4rem, 6vw, 4rem)" }}>
-        {order.status === "ready" && !isDelivery ? <>It&apos;s <em>ready</em>, {order.name}!</> : <>Thanks, <em>{order.name}</em></>}
+        {order.status === "ready" && !isDelivery ? <>It&apos;s <em>ready</em>, {order.name}!</> : <>{t("order.thanks")} <em>{order.name}</em></>}
       </h1>
       <p className="lead">{info.msg}</p>
       {order.status !== "ready" && order.status !== "collected" && (
@@ -173,7 +173,7 @@ export default function OrderPage() {
           {ORDER_STEPS.map((s, i) => (
             <div key={s} className={`step ${i <= idx ? "done" : ""} ${i === idx && s !== "collected" ? "current" : ""}`}>
               <span className="circle">{step(s).icon}</span>
-              {step(s).label}
+              {isDelivery && DELIVERY_INFO[s] ? step(s).label : t(`order.${s}` as "order.ready")}
             </div>
           ))}
         </div>

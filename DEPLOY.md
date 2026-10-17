@@ -119,3 +119,11 @@ and stored in the database.
   Set `SITE_URL` (step 2) so the codes point at your real address.
 - Open **/board** on the café TV, click **Full screen** and **Tap for sound**.
 
+
+## 8. Your own domain (e.g. mossandmoon.in)
+
+1. Buy one from any registrar (Hostinger, GoDaddy, Namecheap, Cloudflare; a `.in` is usually ₹500–800/year).
+2. Railway → your service → **Settings → Networking → Custom Domain** → type the domain.
+3. Railway shows a **CNAME** record. Add it in your registrar's DNS settings and wait 5–60 minutes.
+4. Update `SITE_URL` to the new address, so QR codes, emails and link previews use it.
+5. If you use Resend for email, add the same domain under **Resend → Domains** too.

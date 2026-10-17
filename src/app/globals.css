@@ -725,3 +725,10 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .stock-row.low .meter span { background: var(--pink-deep); }
 .team-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 @media (max-width: 600px) { .viz-bar-row { grid-template-columns: 5.5rem 1fr; } .heat { grid-template-columns: 2rem repeat(16, 1fr); } }
+.lang-btn { font-size: 0.85rem; font-weight: 700; }
+:lang(hi) body { font-family: var(--font-sans), "Noto Sans Devanagari", "Kohinoor Devanagari", system-ui, sans-serif; }
+:lang(hi) h1, :lang(hi) h2 { line-height: 1.25; }
+.review-photo { border: none; padding: 0; border-radius: 14px; overflow: hidden; background: var(--surface-2); aspect-ratio: 4 / 3; }
+.review-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+.review-photo:hover img { transform: scale(1.04); }
+.review-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 10px; }

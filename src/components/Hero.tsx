@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { photo } from "@/lib/menu";
 import { openStatus } from "@/lib/cafe";
+import { useStore } from "./Store";
 
 export default function Hero() {
   const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
   const [wait, setWait] = useState<number | null>(null);
+  const { t } = useStore();
   useEffect(() => {
     const f = () => setStatus(openStatus());
     const w = () => fetch("/api/queue").then((r) => r.json()).then((d) => setWait(d.minutes)).catch(() => {});
@@ -25,15 +27,15 @@ export default function Hero() {
           {status?.text ?? "…"}
         </div>
         <h1>
-          Coffee that <br />
-          <em>blooms slowly.</em>
+          {t("hero.title1")} <br />
+          <em>{t("hero.title2")}</em>
         </h1>
         <p className="lead">
-          Hand-poured brews, rose-pink lattes and warm bakes in a café full of plants. Order ahead, grab the window seat, stay a while.
+          {t("hero.lead")}
         </p>
         <div className="hero-actions">
-          <Link href="#menu" className="btn btn-pink">Order ahead</Link>
-          <Link href="#visit" className="btn btn-ghost">Book a table</Link>
+          <Link href="#menu" className="btn btn-pink">{t("hero.order")}</Link>
+          <Link href="#visit" className="btn btn-ghost">{t("hero.book")}</Link>
         </div>
       </div>
 
@@ -57,7 +59,7 @@ export default function Hero() {
         </div>
         <div className="sticker s3">
           <span className="ico">⏱</span>
-          <div><strong>{wait === null ? "…" : `~${wait} min`}</strong><span className="muted">current wait</span></div>
+          <div><strong>{wait === null ? "…" : `~${wait} min`}</strong><span className="muted">{t("hero.wait")}</span></div>
         </div>
       </div>
     </section>

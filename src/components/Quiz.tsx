@@ -46,7 +46,7 @@ function bestMatch(a: Answers, menu: MenuItem[]): MenuItem | null {
 }
 
 export default function Quiz() {
-  const { menu, setCustomizing, soldOut } = useStore();
+  const { menu, setCustomizing, soldOut, t } = useStore();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [result, setResult] = useState<MenuItem | null>(null);
@@ -64,9 +64,9 @@ export default function Quiz() {
   return (
     <Reveal id="quiz" className="section">
       <div className="center">
-        <p className="eyebrow">can&apos;t decide?</p>
-        <h2>Find your <em>drink</em></h2>
-        <p className="lead">Three tiny questions and we&apos;ll pour you a match.</p>
+        <p className="eyebrow">{t("quiz.eyebrow")}</p>
+        <h2>{t("quiz.title1")} <em>{t("quiz.title2")}</em></h2>
+        <p className="lead">{t("quiz.lead")}</p>
       </div>
       <div className="quiz card">
         {!result ? (

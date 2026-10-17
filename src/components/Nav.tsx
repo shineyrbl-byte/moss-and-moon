@@ -6,16 +6,16 @@ import ThemeToggle from "./ThemeToggle";
 import AmbientSound from "./AmbientSound";
 
 const LINKS = [
-  { href: "/#menu", label: "Menu" },
-  { href: "/#quiz", label: "Find your drink" },
-  { href: "/#events", label: "Events" },
-  { href: "/#visit", label: "Book a table" },
-  { href: "/gift-cards", label: "Gift cards" },
-  { href: "/loyalty", label: "Stamp card" },
-];
+  { href: "/#menu", key: "nav.menu" },
+  { href: "/#quiz", key: "nav.quiz" },
+  { href: "/#events", key: "nav.events" },
+  { href: "/#visit", key: "nav.book" },
+  { href: "/gift-cards", key: "nav.gift" },
+  { href: "/loyalty", key: "nav.stamps" },
+] as const;
 
 export default function Nav() {
-  const { count, setDrawerOpen, bumpKey, me } = useStore();
+  const { count, setDrawerOpen, bumpKey, me, t, lang, setLang } = useStore();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -34,7 +34,7 @@ export default function Nav() {
       <nav className={`nav-links ${open ? "open" : ""}`} aria-label="Main">
         {LINKS.map((l) => (
           <Link key={l.href} href={l.href} onClick={() => setOpen(false)}>
-            {l.label}
+            {t(l.key)}
           </Link>
         ))}
       </nav>
@@ -42,11 +42,14 @@ export default function Nav() {
         <Link href="/account" className={`icon-btn ${me ? "on" : ""}`} aria-label={me ? "Your account" : "Sign in"} title={me ? `Signed in as ${me.name || me.email}` : "Sign in"}>
           {me ? (me.name || me.email)[0].toUpperCase() : "👤"}
         </Link>
+        <button className="icon-btn lang-btn" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label={t("lang.label")} title={t("lang.label")}>
+          {t("lang.switch")}
+        </button>
         <AmbientSound />
         <ThemeToggle />
         <button className="cart-btn" onClick={() => setDrawerOpen(true)} aria-label={`Open your tray, ${count} items`}>
           <span aria-hidden>🛍</span>
-          <span className="cart-label">Tray</span>
+          <span className="cart-label">{t("nav.tray")}</span>
           <span key={bumpKey} className={`badge ${bumpKey ? "bump" : ""}`}>{count}</span>
         </button>
         <button className="icon-btn burger" onClick={() => setOpen((o) => !o)} aria-label="Toggle menu" aria-expanded={open}>

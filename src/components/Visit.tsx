@@ -8,7 +8,7 @@ type Slot = { time: string; left: number };
 type Booked = { code: string; name: string; date: string; time: string; guests: number };
 
 export default function Visit() {
-  const { toast } = useStore();
+  const { toast, t } = useStore();
   const [today, setToday] = useState("");
   const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "" });
@@ -65,8 +65,8 @@ export default function Visit() {
   return (
     <Reveal id="visit" className="section visit">
       <div>
-        <p className="eyebrow">come say hi</p>
-        <h2>Visit <em>us</em></h2>
+        <p className="eyebrow">{t("visit.eyebrow")}</p>
+        <h2>{t("visit.title1")} <em>{t("visit.title2")}</em></h2>
         <p className="lead">14 Willow Lane, your favourite neighbourhood. Look for the pink door and the bicycles outside.</p>
         <ul className="hours">
           {HOURS_LABEL.map((h, i) => (
@@ -103,7 +103,7 @@ export default function Visit() {
           </div>
         ) : (
           <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <h3>Reserve a table</h3>
+            <h3>{t("visit.reserve")}</h3>
             <div className="row">
               <label className="field">Name<input className="input" required maxLength={40} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
               <label className="field">Phone<input className="input" required inputMode="numeric" placeholder="10 digits" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>

@@ -26,7 +26,7 @@ function pickupTimes() {
 const post = (url: string, body: unknown) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export default function CartDrawer() {
-  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me } = useStore();
+  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me, t } = useStore();
   const pay = usePay();
   const router = useRouter();
   const [step, setStep] = useState<"tray" | "checkout">("tray");
@@ -160,7 +160,7 @@ export default function CartDrawer() {
 
   const summary = (
     <>
-      <div className="sum-row"><span>Subtotal</span><span>{rupees(q.subtotal)}</span></div>
+      <div className="sum-row"><span>{t("tray.subtotal")}</span><span>{rupees(q.subtotal)}</span></div>
       {q.happyDiscount > 0 && <div className="sum-row discount"><span>Golden hour (bakes −20%)</span><span>−{rupees(q.happyDiscount)}</span></div>}
       {q.promoDiscount > 0 && <div className="sum-row discount"><span>Promo ({q.promoCode})</span><span>−{rupees(q.promoDiscount)}</span></div>}
       {q.loyaltyDiscount > 0 && <div className="sum-row discount"><span>Free drink reward</span><span>−{rupees(q.loyaltyDiscount)}</span></div>}
@@ -170,7 +170,7 @@ export default function CartDrawer() {
       {q.giftUsed > 0 && <div className="sum-row discount"><span>Gift card</span><span>−{rupees(q.giftUsed)}</span></div>}
       {q.deliveryFee > 0 && <div className="sum-row"><span>Delivery</span><span>{rupees(q.deliveryFee)}</span></div>}
       {q.tip > 0 && <div className="sum-row"><span>Tip for the team 💛</span><span>{rupees(q.tip)}</span></div>}
-      <div className="sum-row total"><span>{step === "checkout" && q.due > 0 ? (payMethod === "online" ? "To pay now" : delivery ? "Pay on delivery" : "Pay at pickup") : "Total"}</span><span>{rupees(q.due)}</span></div>
+      <div className="sum-row total"><span>{step === "checkout" && q.due > 0 ? (payMethod === "online" ? "To pay now" : delivery ? "Pay on delivery" : "Pay at pickup") : t("tray.total")}</span><span>{rupees(q.due)}</span></div>
     </>
   );
 
@@ -180,9 +180,9 @@ export default function CartDrawer() {
       <aside className={`drawer ${drawerOpen ? "open" : ""}`} aria-hidden={!drawerOpen} aria-label="Your tray">
         <div className="drawer-head">
           {step === "checkout" ? (
-            <button className="btn btn-ghost btn-sm" onClick={() => setStep("tray")}>← Tray</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setStep("tray")}>{t("tray.back")}</button>
           ) : (
-            <h3>Your tray</h3>
+            <h3>{t("tray.title")}</h3>
           )}
           <button className="icon-btn" onClick={close} aria-label="Close tray">✕</button>
         </div>
@@ -194,7 +194,7 @@ export default function CartDrawer() {
               {q.happyHour && <div className="reward-banner" style={{ marginTop: "0.8rem" }}>✨ {HAPPY_HOUR.label}</div>}
               {!lines.length && (
                 <div className="empty-state">
-                  <p>Your tray is empty — pick something cosy ☕</p>
+                  <p>{t("tray.empty")}</p>
                   <Link href="/orders" className="small" style={{ textDecoration: "underline" }} onClick={close}>See past orders</Link>
                 </div>
               )}
@@ -238,15 +238,15 @@ export default function CartDrawer() {
             </div>
             <div className="drawer-foot">
               {summary}
-              <button className="btn full" disabled={!lines.length || hasSoldOut} onClick={() => setStep("checkout")}>Checkout →</button>
+              <button className="btn full" disabled={!lines.length || hasSoldOut} onClick={() => setStep("checkout")}>{t("tray.checkout")}</button>
             </div>
           </>
         ) : (
           <form onSubmit={placeOrder} style={{ display: "contents" }}>
             <div className="drawer-body" style={{ display: "flex", flexDirection: "column", gap: "0.9rem", paddingTop: "1rem" }}>
-              <h3 style={{ fontSize: "1.8rem" }}>Almost there ✿</h3>
+              <h3 style={{ fontSize: "1.8rem" }}>{t("checkout.title")}</h3>
               {wait !== null && <p className="small muted">⏱ Ready in about <b>{wait} min</b> right now</p>}
-              <label className="field">Your name<input className="input" required maxLength={40} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+              <label className="field">{t("checkout.name")}<input className="input" required maxLength={40} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
               <label className="field">
                 {table ? "Phone (optional — to collect a stamp)" : "Phone (for your stamp card)"}
                 <input className="input" required={!table} inputMode="numeric" placeholder="10 digits" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
@@ -267,8 +267,8 @@ export default function CartDrawer() {
               ) : (
                 <>
                   <div className="chips" style={{ justifyContent: "flex-start" }} role="radiogroup" aria-label="Pickup or delivery">
-                    <button type="button" className={`chip ${mode === "pickup" ? "on" : ""}`} onClick={() => setMode("pickup")} role="radio" aria-checked={mode === "pickup"}>🛍 Pick up</button>
-                    <button type="button" className={`chip ${mode === "delivery" ? "on" : ""}`} onClick={() => setMode("delivery")} role="radio" aria-checked={mode === "delivery"}>🛵 Delivery</button>
+                    <button type="button" className={`chip ${mode === "pickup" ? "on" : ""}`} onClick={() => setMode("pickup")} role="radio" aria-checked={mode === "pickup"}>🛍 {t("checkout.pickup")}</button>
+                    <button type="button" className={`chip ${mode === "delivery" ? "on" : ""}`} onClick={() => setMode("delivery")} role="radio" aria-checked={mode === "delivery"}>🛵 {t("checkout.delivery")}</button>
                   </div>
                   {mode === "pickup" ? (
                     <label className="field">Pickup time
@@ -299,24 +299,24 @@ export default function CartDrawer() {
                 </div>
               )}
               <div className="field">
-                Add a tip for the team?
+                {t("checkout.tip")}
                 <div className="chips" style={{ justifyContent: "flex-start" }}>
-                  {TIP_CHOICES.map((t) => (
-                    <button type="button" key={t} className={`chip ${tipPercent === t ? "on" : ""}`} onClick={() => setTipPercent(t)}>
-                      {t === 0 ? "No tip" : `${t}%`}
+                  {TIP_CHOICES.map((tp) => (
+                    <button type="button" key={tp} className={`chip ${tipPercent === tp ? "on" : ""}`} onClick={() => setTipPercent(tp)}>
+                      {tp === 0 ? t("checkout.noTip") : `${tp}%`}
                     </button>
                   ))}
                 </div>
               </div>
               {q.due > 0 && (
                 <div className="field">
-                  How would you like to pay?
+                  {t("checkout.how")}
                   <div className="pay-options">
                     <button type="button" className={`pay-opt ${payMethod === "online" ? "on" : ""}`} onClick={() => setPayMethod("online")}>
-                      <span>📱</span><b>Pay now</b><small>UPI · card</small>
+                      <span>📱</span><b>{t("checkout.payNow")}</b><small>UPI · card</small>
                     </button>
                     <button type="button" className={`pay-opt ${payMethod === "counter" ? "on" : ""}`} onClick={() => setPayMethod("counter")}>
-                      <span>🪙</span><b>{delivery ? "On delivery" : "At the counter"}</b><small>cash · UPI</small>
+                      <span>🪙</span><b>{delivery ? "On delivery" : t("checkout.payCounter")}</b><small>cash · UPI</small>
                     </button>
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function CartDrawer() {
               {summary}
               {error && <p className="error">{error}</p>}
               <button className="btn btn-pink full" disabled={busy || (delivery && q.total < DELIVERY.minOrder)}>
-                {busy ? "Placing order…" : q.due === 0 ? "Place order (covered ✿)" : payMethod === "online" ? `Pay ${rupees(q.due)} & order` : "Place order"}
+                {busy ? "Placing order…" : q.due === 0 ? "Place order (covered ✿)" : payMethod === "online" ? `${t("checkout.payNow")} · ${rupees(q.due)}` : t("checkout.place")}
               </button>
             </div>
           </form>
