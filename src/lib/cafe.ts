@@ -18,6 +18,8 @@ export const HOURS_LABEL = [
 ];
 
 export const TABLES_PER_SLOT = 6;
+/** Tables with a QR code for ordering from your seat (1 to TABLE_COUNT) */
+export const TABLE_COUNT = 12;
 export const STAMPS_FOR_REWARD = 10;
 
 export const ORDER_STEPS = ["received", "brewing", "ready", "collected"] as const;

@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MENU } from "@/lib/menu";
+import MenuEditor from "@/components/admin/MenuEditor";
+import TablesQR from "@/components/admin/TablesQR";
 import { ORDER_STEPS, type OrderStatus } from "@/lib/cafe";
 import { rupees, type QuoteLine } from "@/lib/pricing";
 import { useStore } from "@/components/Store";
@@ -11,13 +12,13 @@ type Stats = {
   giftCards: number; giftSold: number; giftOutstanding: number; paidOnline: number;
   top: { name: string; qty: number }[]; days: { day: string; label: string; revenue: number; orders: number }[];
 };
-type Order = { id: number; code: string; name: string; phone: string; email: string | null; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number; pay_method: string; pay_status: string; status: OrderStatus; created_at: string };
+type Order = { id: number; code: string; name: string; phone: string; table_no: number | null; email: string | null; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number; pay_method: string; pay_status: string; status: OrderStatus; created_at: string };
 type Gift = { code: string; amount: number; balance: number; from_name: string; to_name: string; to_email: string; paid: number; created_at: string };
 type Email = { id: number; to_email: string; subject: string; html: string; status: string; error: string | null; created_at: string };
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Orders", "Bookings", "Menu stock", "Gift cards", "Emails", "Reviews"] as const;
+const TABS = ["Overview", "Orders", "Bookings", "Menu", "Tables & QR", "Gift cards", "Emails", "Reviews"] as const;
 
 // A soft two-note "ding" when a new order arrives
 function chime() {
@@ -41,7 +42,7 @@ function chime() {
 const json = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export default function AdminPage() {
-  const { toast, refreshSoldOut, soldOut } = useStore();
+  const { toast } = useStore();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [pass, setPass] = useState("");
   const [loginErr, setLoginErr] = useState("");
@@ -78,8 +79,7 @@ export default function AdminPage() {
     setMail(em);
     setBookings(b);
     setReviews(rv.reviews);
-    refreshSoldOut();
-  }, [showDone, refreshSoldOut]);
+  }, [showDone]);
 
   useEffect(() => {
     load();
@@ -113,10 +113,6 @@ export default function AdminPage() {
     load();
   }
 
-  async function toggleStock(id: string) {
-    await fetch("/api/menu", json("PATCH", { itemId: id, soldOut: !soldOut.has(id) }));
-    refreshSoldOut();
-  }
 
   async function deleteReview(id: number) {
     await fetch(`/api/reviews/${id}`, { method: "DELETE" });
@@ -232,7 +228,8 @@ export default function AdminPage() {
                       <span className={`status-tag ${o.status}`}>{o.status}</span>
                     </span>
                   </div>
-                  <span className="small muted">{o.name} · {o.phone} · pickup {o.pickup === "asap" ? "ASAP" : o.pickup} · {o.created_at.slice(11, 16)}</span>
+                  {o.table_no && <span className="table-tag">🪑 Table {o.table_no}: bring it over</span>}
+                  <span className="small muted">{o.name}{o.phone ? ` · ${o.phone}` : ""} · {o.table_no ? "dine-in" : `pickup ${o.pickup === "asap" ? "ASAP" : o.pickup}`} · {o.created_at.slice(11, 16)}</span>
                   <ul>
                     {o.lines.map((l, i) => <li key={i}>{l.qty} × {l.name}{l.note && <small className="muted"> ({l.note})</small>}</li>)}
                   </ul>
@@ -272,19 +269,8 @@ export default function AdminPage() {
         </div>
       )}
 
-      {tab === "Menu stock" && (
-        <>
-          <p className="muted" style={{ marginBottom: "1rem" }}>Switch something off and it shows as &quot;sold out&quot; on the menu straight away.</p>
-          <div className="stock-grid">
-            {MENU.map((m) => (
-              <div key={m.id} className="stock card">
-                <span>{m.name}</span>
-                <button className={`switch ${soldOut.has(m.id) ? "off" : ""}`} onClick={() => toggleStock(m.id)} aria-label={`${m.name} in stock`} aria-pressed={!soldOut.has(m.id)} />
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      {tab === "Menu" && <MenuEditor />}
+      {tab === "Tables & QR" && <TablesQR />}
 
       {tab === "Gift cards" && (
         <div className="card table-wrap" style={{ padding: "1rem" }}>

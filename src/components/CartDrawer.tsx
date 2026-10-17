@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useEscape, useStore } from "./Store";
 import { usePay } from "./Payment";
-import { findItem, photo } from "@/lib/menu";
+import { photo } from "@/lib/menu";
 import { HAPPY_HOUR, describeOptions, quote, rupees, unitPrice } from "@/lib/pricing";
 import { HOURS, STAMPS_FOR_REWARD } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
@@ -26,7 +26,7 @@ function pickupTimes() {
 const post = (url: string, body: unknown) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export default function CartDrawer() {
-  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast } = useStore();
+  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable } = useStore();
   const pay = usePay();
   const router = useRouter();
   const [step, setStep] = useState<"tray" | "checkout">("tray");
@@ -67,9 +67,9 @@ export default function CartDrawer() {
     fetch(`/api/loyalty?phone=${digits}`).then((r) => r.json()).then(setLoyalty).catch(() => {});
   }, [digits]);
 
-  const q = useMemo(() => quote(lines, promo?.code, !!loyalty?.hasReward, { giftBalance: gift?.balance }), [lines, promo, loyalty, gift]);
+  const q = useMemo(() => quote(lines, find, promo?.code, !!loyalty?.hasReward, { giftBalance: gift?.balance }), [lines, find, promo, loyalty, gift]);
   const times = useMemo(() => (step === "checkout" ? pickupTimes() : []), [step]);
-  const hasSoldOut = lines.some((l) => soldOut.has(l.itemId));
+  const hasSoldOut = lines.some((l) => soldOut.has(l.itemId) || !find(l.itemId));
 
   // One box for both promo codes and gift cards
   async function applyCode() {
@@ -100,6 +100,7 @@ export default function CartDrawer() {
       const r = await post("/api/orders", {
         ...form,
         payMethod,
+        table,
         promo: promo?.code,
         giftCard: gift?.code,
         lines: lines.map(({ itemId, opts, qty }) => ({ itemId, opts, qty })),
@@ -157,6 +158,7 @@ export default function CartDrawer() {
         {step === "tray" ? (
           <>
             <div className="drawer-body">
+              {table && <div className="reward-banner table-note" style={{ marginTop: "0.8rem" }}>🪑 Ordering for <b>table {table}</b> — we&apos;ll bring it over.</div>}
               {q.happyHour && <div className="reward-banner" style={{ marginTop: "0.8rem" }}>✨ {HAPPY_HOUR.label}</div>}
               {!lines.length && (
                 <div className="empty-state">
@@ -165,8 +167,14 @@ export default function CartDrawer() {
                 </div>
               )}
               {lines.map((l) => {
-                const item = findItem(l.itemId);
-                if (!item) return null;
+                const item = find(l.itemId);
+                if (!item)
+                  return (
+                    <div className="line" key={l.key}>
+                      <div className="line-info"><strong>No longer on the menu</strong><small className="error">Please remove this item</small></div>
+                      <button className="chip" onClick={() => setQty(l.key, 0)}>Remove</button>
+                    </div>
+                  );
                 return (
                   <div className="line" key={l.key}>
                     <div className="line-thumb"><Image src={photo(item.img, 200)} alt="" fill sizes="56px" /></div>
@@ -207,7 +215,10 @@ export default function CartDrawer() {
               <h3 style={{ fontSize: "1.8rem" }}>Almost there ✿</h3>
               {wait !== null && <p className="small muted">⏱ Ready in about <b>{wait} min</b> right now</p>}
               <label className="field">Your name<input className="input" required maxLength={40} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
-              <label className="field">Phone (for your stamp card)<input className="input" required inputMode="numeric" placeholder="10 digits" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
+              <label className="field">
+                {table ? "Phone (optional — to collect a stamp)" : "Phone (for your stamp card)"}
+                <input className="input" required={!table} inputMode="numeric" placeholder="10 digits" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              </label>
               {loyalty && (
                 <div className="reward-banner">
                   {loyalty.hasReward
@@ -216,12 +227,19 @@ export default function CartDrawer() {
                 </div>
               )}
               <label className="field">Email (optional — for your receipt & "it's ready" note)<input className="input" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
-              <label className="field">Pickup time
-                <select className="input" value={form.pickup} onChange={(e) => setForm({ ...form, pickup: e.target.value })}>
-                  <option value="asap">As soon as possible</option>
-                  {times.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </label>
+              {table ? (
+                <div className="reward-banner table-note">
+                  🪑 We&apos;ll bring it to <b>table {table}</b>.{" "}
+                  <button type="button" className="link-btn" onClick={() => setTable(null)}>Picking up instead?</button>
+                </div>
+              ) : (
+                <label className="field">Pickup time
+                  <select className="input" value={form.pickup} onChange={(e) => setForm({ ...form, pickup: e.target.value })}>
+                    <option value="asap">As soon as possible</option>
+                    {times.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </label>
+              )}
               {q.due > 0 && (
                 <div className="field">
                   How would you like to pay?

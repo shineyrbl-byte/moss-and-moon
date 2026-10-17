@@ -1,6 +1,7 @@
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "@/lib/db";
 import { quote } from "@/lib/pricing";
-import { HOURS, STAMPS_FOR_REWARD } from "@/lib/cafe";
+import { HOURS, STAMPS_FOR_REWARD, TABLE_COUNT } from "@/lib/cafe";
+import { menuLookup } from "@/lib/menuStore";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { orderPlacedEmail, sendLater } from "@/lib/email";
 
@@ -13,13 +14,16 @@ export async function POST(req: Request) {
   const phone = cleanPhone(body.phone);
   const email = cleanEmail(body.email);
   const note = cleanText(body.note, 200);
-  const pickup = String(body.pickup ?? "asap");
+  const tableNo = Math.floor(Number(body.table));
+  const table = tableNo >= 1 && tableNo <= TABLE_COUNT ? tableNo : null;
+  const pickup = table ? "table" : String(body.pickup ?? "asap");
   const payMethod = body.payMethod === "online" ? "online" : "counter";
   if (!name) return Response.json({ error: "Please tell us your name." }, { status: 400 });
-  if (phone.length !== 10) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
+  // Phone is optional when ordering from a table (it's only needed for the stamp card)
+  if (phone.length !== 10 && !(table && !phone)) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
   if (body.email && !email) return Response.json({ error: "That email doesn't look right." }, { status: 400 });
 
-  if (pickup !== "asap") {
+  if (pickup !== "asap" && pickup !== "table") {
     const m = /^(\d{2}):(\d{2})$/.exec(pickup);
     const [open, close] = HOURS[new Date().getDay()];
     const mins = m ? Number(m[1]) * 60 + Number(m[2]) : -1;
@@ -29,8 +33,8 @@ export async function POST(req: Request) {
   }
 
   const raw = Array.isArray(body.lines) ? body.lines.slice(0, 30) : [];
-  const soldOut = new Set((db.prepare("SELECT item_id FROM sold_out").all() as { item_id: string }[]).map((r) => r.item_id));
-  if (raw.some((l: { itemId: string }) => soldOut.has(l.itemId)))
+  const find = menuLookup();
+  if (raw.some((l: { itemId: string }) => find(l.itemId)?.soldOut))
     return Response.json({ error: "Sorry, something in your tray just sold out. Please remove it." }, { status: 409 });
 
   // Gift card (optional)
@@ -40,9 +44,9 @@ export async function POST(req: Request) {
     if (!gift) return Response.json({ error: "We couldn't find that gift card." }, { status: 400 });
   }
 
-  const card = db.prepare("SELECT stamps FROM loyalty WHERE phone = ?").get(phone) as { stamps: number } | undefined;
+  const card = phone ? (db.prepare("SELECT stamps FROM loyalty WHERE phone = ?").get(phone) as { stamps: number } | undefined) : undefined;
   const hasReward = (card?.stamps ?? 0) >= STAMPS_FOR_REWARD;
-  const q = quote(raw, body.promo, hasReward, { giftBalance: gift?.balance ?? 0 });
+  const q = quote(raw, find, body.promo, hasReward, { giftBalance: gift?.balance ?? 0 });
   if (!q.lines.length) return Response.json({ error: "Your tray is empty." }, { status: 400 });
 
   // Fully covered by a gift card = already paid
@@ -50,18 +54,18 @@ export async function POST(req: Request) {
   const code = makeCode("MM");
   db.prepare(
     `INSERT INTO orders (code, name, phone, email, pickup, note, lines, subtotal, discount, total, promo,
-       pay_method, pay_status, giftcard_code, giftcard_used, happy_hour)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       pay_method, pay_status, giftcard_code, giftcard_used, happy_hour, table_no)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     code, name, phone, email || null, pickup, note, JSON.stringify(q.lines), q.subtotal,
     q.happyDiscount + q.promoDiscount + q.loyaltyDiscount, q.total, q.promoCode,
-    q.due === 0 && q.giftUsed > 0 ? "giftcard" : payMethod, payStatus, gift?.code ?? null, q.giftUsed, q.happyHour ? 1 : 0
+    q.due === 0 && q.giftUsed > 0 ? "giftcard" : payMethod, payStatus, gift?.code ?? null, q.giftUsed, q.happyHour ? 1 : 0, table
   );
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
 
   // Loyalty: one stamp per order. Using a reward spends 10 stamps.
   const usedReward = q.loyaltyDiscount > 0;
-  db.prepare(
+  if (phone) db.prepare(
     `INSERT INTO loyalty (phone, name, stamps, rewards_used) VALUES (?, ?, 1, 0)
      ON CONFLICT(phone) DO UPDATE SET name = excluded.name,
        stamps = stamps + 1 - ?, rewards_used = rewards_used + ?`

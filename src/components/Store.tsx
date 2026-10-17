@@ -1,10 +1,16 @@
 "use client";
-// Shared app state: the order tray, toasts, and which item is being customised.
+// Shared app state: the live menu, the order tray, toasts, the table you're
+// ordering from, and which item is being customised.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { MenuItem } from "@/lib/menu";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
+import { TABLE_COUNT } from "@/lib/cafe";
 
 type Store = {
+  menu: MenuItem[];
+  find: (id: string) => MenuItem | undefined;
+  table: number | null;
+  setTable: (n: number | null) => void;
   lines: CartLine[];
   count: number;
   add: (itemId: string, opts: Options, qty?: number) => void;
@@ -25,12 +31,13 @@ type Store = {
 const Ctx = createContext<Store | null>(null);
 const STORAGE = "mm-tray-v2";
 
-export function StoreProvider({ children }: { children: React.ReactNode }) {
+export function StoreProvider({ children, initialMenu }: { children: React.ReactNode; initialMenu: MenuItem[] }) {
+  const [menu, setMenu] = useState<MenuItem[]>(initialMenu);
+  const [table, setTableState] = useState<number | null>(null);
   const [lines, setLines] = useState<CartLine[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [customizing, setCustomizing] = useState<MenuItem | null>(null);
-  const [soldOut, setSoldOut] = useState<Set<string>>(new Set());
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([]);
   const [bumpKey, setBumpKey] = useState(0);
   const [favs, setFavs] = useState<Set<string>>(new Set());
@@ -50,10 +57,36 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try { localStorage.setItem(STORAGE, JSON.stringify(lines)); } catch {}
   }, [lines, loaded]);
 
+  // Keep the menu (and sold-out flags) fresh
   const refreshSoldOut = useCallback(() => {
-    fetch("/api/menu").then((r) => r.json()).then((d) => setSoldOut(new Set(d.soldOut))).catch(() => {});
+    fetch("/api/menu").then((r) => r.json()).then((d) => Array.isArray(d.items) && setMenu(d.items)).catch(() => {});
   }, []);
-  useEffect(refreshSoldOut, [refreshSoldOut]);
+  useEffect(() => {
+    refreshSoldOut();
+    const t = setInterval(refreshSoldOut, 60_000);
+    return () => clearInterval(t);
+  }, [refreshSoldOut]);
+  const soldOut = useMemo(() => new Set(menu.filter((m) => m.soldOut).map((m) => m.id)), [menu]);
+  const find = useCallback((id: string) => menu.find((m) => m.id === id), [menu]);
+
+  // Ordering from a table: the QR code opens /?table=5 — remember it for this visit
+  useEffect(() => {
+    try {
+      const fromUrl = Number(new URLSearchParams(window.location.search).get("table"));
+      const n = fromUrl || Number(sessionStorage.getItem("mm-table"));
+      if (n >= 1 && n <= TABLE_COUNT) {
+        setTableState(n);
+        sessionStorage.setItem("mm-table", String(n));
+      }
+    } catch {}
+  }, []);
+  const setTable = useCallback((n: number | null) => {
+    setTableState(n);
+    try {
+      if (n) sessionStorage.setItem("mm-table", String(n));
+      else sessionStorage.removeItem("mm-table");
+    } catch {}
+  }, []);
 
   const toast = useCallback((msg: string) => {
     const id = ++toastId.current;
@@ -87,6 +120,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<Store>(
     () => ({
+      menu,
+      find,
+      table,
+      setTable,
       lines,
       count: lines.reduce((s, l) => s + l.qty, 0),
       add,
@@ -103,7 +140,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       favs,
       toggleFav,
     }),
-    [lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
+    [menu, find, table, setTable, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
   );
 
   return (
