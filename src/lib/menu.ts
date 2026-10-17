@@ -16,6 +16,11 @@ export type MenuItem = {
   // Used by the "find your drink" quiz (drinks only)
   traits?: { energy: 0 | 1 | 2; sweet: 0 | 1 | 2; temp: "hot" | "iced" };
   hidden?: boolean; // staff can hide items without deleting them
+  /** Seasonal: only on the menu between these dates (YYYY-MM-DD, either can be left empty) */
+  from?: string;
+  until?: string;
+  /** Ingredients used per item (leave empty to use sensible defaults for drinks) */
+  uses?: { ingredient: string; amount: number }[];
   soldOut?: boolean; // filled in from the database
 };
 

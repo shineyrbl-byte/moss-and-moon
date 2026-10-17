@@ -3,6 +3,8 @@ import { ORDER_STEPS } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { orderReadyEmail, sendLater } from "@/lib/email";
 import { notifyOrder } from "@/lib/push";
+import { publish } from "@/lib/live";
+import { paidShares } from "@/lib/orderMoney";
 
 type Ctx = { params: Promise<{ code: string }> };
 
@@ -12,7 +14,8 @@ export async function GET(_req: Request, { params }: Ctx) {
   const row = db
     .prepare(
       `SELECT code, name, pickup, note, lines, subtotal, discount, total, promo, status, created_at,
-              pay_method, pay_status, giftcard_used, happy_hour, table_no
+              pay_method, pay_status, giftcard_used, happy_hour, table_no,
+              tip, credit_used, delivery_fee, delivery_address, split_count, perks
        FROM orders WHERE code = ?`
     )
     .get(code.toUpperCase()) as Record<string, unknown> | undefined;
@@ -22,7 +25,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   const ahead = db
     .prepare("SELECT COUNT(*) AS n FROM orders WHERE status IN ('received','brewing') AND id < (SELECT id FROM orders WHERE code = ?)")
     .get(code.toUpperCase()) as { n: number };
-  return Response.json({ ...row, lines: JSON.parse(String(row.lines)), ahead: ahead.n });
+  return Response.json({ ...row, lines: JSON.parse(String(row.lines)), ahead: ahead.n, paidShares: paidShares(code.toUpperCase()) });
 }
 
 // Staff: move an order to the next status
@@ -33,6 +36,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (!ORDER_STEPS.includes(status)) return Response.json({ error: "Unknown status." }, { status: 400 });
   const r = db.prepare("UPDATE orders SET status = ? WHERE code = ?").run(status, code.toUpperCase());
   if (!r.changes) return Response.json({ error: "Order not found." }, { status: 404 });
+  publish({ type: "order", code: code.toUpperCase(), status, action: "status" });
 
   if (status === "ready") {
     db.prepare("UPDATE orders SET ready_at = datetime('now','localtime') WHERE code = ?").run(code.toUpperCase());

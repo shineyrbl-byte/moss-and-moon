@@ -4,10 +4,10 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { rupees } from "@/lib/pricing";
 
-type Kind = "order" | "giftcard";
+type Kind = "order" | "giftcard" | "share" | "pass";
 type Start =
-  | { mode: "demo"; amount: number; label: string; code: string; kind: Kind }
-  | { mode: "razorpay"; amount: number; label: string; code: string; kind: Kind; keyId: string; orderId: string };
+  | { mode: "demo"; amount: number; label: string; code: string; kind: Kind; shareId?: number }
+  | { mode: "razorpay"; amount: number; label: string; code: string; kind: Kind; keyId: string; orderId: string; shareId?: number };
 
 type PayFn = (kind: Kind, code: string, prefill?: { name?: string; email?: string; phone?: string }) => Promise<boolean>;
 const Ctx = createContext<PayFn | null>(null);
@@ -61,7 +61,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
           description: start.label,
           prefill: { name: prefill.name, email: prefill.email, contact: prefill.phone },
           theme: { color: "#c25b78" },
-          handler: async (resp: Record<string, string>) => resolve(await verify({ kind, code, ...resp })),
+          handler: async (resp: Record<string, string>) => resolve(await verify({ kind, code, shareId: start.shareId, ...resp })),
           modal: { ondismiss: () => resolve(false) },
         });
         rz.open();
@@ -110,7 +110,7 @@ function DemoPay({ start, onDone, error, setError }: { start: Start; onDone: (ok
   async function go() {
     setStage("paying");
     await new Promise((r) => setTimeout(r, 1300));
-    const ok = await verify({ kind: start.kind, code: start.code, demo: true });
+    const ok = await verify({ kind: start.kind, code: start.code, shareId: start.shareId, demo: true });
     if (!ok) {
       setStage("form");
       return setError("Payment didn't go through. Try again?");

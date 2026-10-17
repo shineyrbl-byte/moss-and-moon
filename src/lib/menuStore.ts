@@ -2,6 +2,8 @@
 import "server-only";
 import { db } from "./db";
 import type { MenuItem } from "./menu";
+import { canMake, stockMap } from "./stock";
+import { toDateStr } from "./cafe";
 
 type Row = { id: string; data: string; sort: number };
 
@@ -9,12 +11,22 @@ function soldOutIds() {
   return new Set((db.prepare("SELECT item_id FROM sold_out").all() as { item_id: string }[]).map((r) => r.item_id));
 }
 
-/** The menu in display order. Hidden items are left out unless asked for. */
+/** Seasonal items only show between their dates */
+export const inSeason = (m: MenuItem, today = toDateStr(new Date())) => (!m.from || m.from <= today) && (!m.until || m.until >= today);
+
+/**
+ * The menu in display order. Hidden and out-of-season items are left out unless asked for.
+ * An item is sold out if staff said so, or if an ingredient it needs has run out.
+ */
 export function getMenu({ includeHidden = false } = {}): MenuItem[] {
   const out = soldOutIds();
+  const have = stockMap();
   return (db.prepare("SELECT id, data, sort FROM menu_items ORDER BY sort, rowid").all() as Row[])
-    .map((r) => ({ ...(JSON.parse(r.data) as MenuItem), id: r.id, soldOut: out.has(r.id) }))
-    .filter((m) => includeHidden || !m.hidden);
+    .map((r) => {
+      const m = { ...(JSON.parse(r.data) as MenuItem), id: r.id };
+      return { ...m, soldOut: out.has(r.id) || !canMake(m, have) };
+    })
+    .filter((m) => includeHidden || (!m.hidden && inSeason(m)));
 }
 
 /** One item that guests can order right now (visible), or undefined */
@@ -22,7 +34,7 @@ export function findOrderable(id: string): MenuItem | undefined {
   const r = db.prepare("SELECT id, data FROM menu_items WHERE id = ?").get(id) as Row | undefined;
   if (!r) return undefined;
   const item = { ...(JSON.parse(r.data) as MenuItem), id: r.id };
-  return item.hidden ? undefined : item;
+  return item.hidden || !inSeason(item) ? undefined : item;
 }
 
 /** A lookup function for pricing, loaded once per request */
