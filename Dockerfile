@@ -17,7 +17,7 @@ RUN npm ci --omit=dev
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public* ./public/
 COPY --from=build /app/next.config.ts ./
+# The /data folder is a persistent disk (a Railway Volume, or docker run -v)
 RUN mkdir -p /data
-VOLUME /data
 EXPOSE 3000
 CMD ["sh", "-c", "npx next start -p ${PORT:-3000}"]
