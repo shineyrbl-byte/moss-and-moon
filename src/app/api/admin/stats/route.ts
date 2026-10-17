@@ -1,10 +1,13 @@
 import { db } from "@/lib/db";
 import { toDateStr } from "@/lib/cafe";
-import { isAdmin, unauthorized } from "@/lib/auth";
+import { ownerGate } from "@/lib/auth";
 
 // Staff dashboard numbers
 export async function GET() {
-  if (!(await isAdmin())) return unauthorized();
+  {
+    const gate = await ownerGate();
+    if (gate) return gate;
+  }
   const today = toDateStr(new Date());
   const one = <T,>(sql: string, ...p: (string | number)[]) => db.prepare(sql).get(...p) as T;
 

@@ -2,6 +2,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import MenuEditor from "@/components/admin/MenuEditor";
 import TablesQR from "@/components/admin/TablesQR";
+import Analytics from "@/components/admin/Analytics";
+import Team from "@/components/admin/Team";
+import StockTab from "@/components/admin/StockTab";
 import { ORDER_STEPS, type OrderStatus } from "@/lib/cafe";
 import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useStore } from "@/components/Store";
@@ -19,7 +22,9 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Orders", "Bookings", "Menu", "Tables & QR", "Gift cards", "Emails", "Reviews"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Menu", "Stock", "Tables & QR", "Team", "Gift cards", "Emails", "Reviews"] as const;
+// What baristas can see (owners see everything)
+const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Menu", "Stock", "Tables & QR"];
 
 // A soft two-note "ding" when a new order arrives
 function chime() {
@@ -45,7 +50,9 @@ const json = (method: string, body: unknown) => ({ method, headers: { "Content-T
 export default function AdminPage() {
   const { toast } = useStore();
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [me, setMe] = useState<{ id: number; name: string; role: "owner" | "barista" } | null>(null);
   const [pass, setPass] = useState("");
+  const [username, setUsername] = useState("");
   const [loginErr, setLoginErr] = useState("");
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
   const [stats, setStats] = useState<Stats | null>(null);
@@ -60,17 +67,22 @@ export default function AdminPage() {
   const lastMaxId = useRef<number | null>(null);
 
   const load = useCallback(async () => {
-    const r = await fetch("/api/admin/stats");
-    if (r.status === 401) return setAuthed(false);
+    const who = await fetch("/api/admin/me");
+    if (who.status === 401) return setAuthed(false);
+    const staff = await who.json();
+    setMe(staff);
     setAuthed(true);
-    setStats(await r.json());
-    const [o, b, rv, gc, em] = await Promise.all([
+    const owner = staff.role === "owner";
+    const ownerOnly = (url: string, fallback: unknown) => (owner ? fetch(url).then((r) => r.json()) : Promise.resolve(fallback));
+    const [o, b, rv, gc, em, st] = await Promise.all([
       fetch(`/api/orders${showDone ? "" : "?active=1"}`).then((r) => r.json()),
       fetch("/api/bookings").then((r) => r.json()),
       fetch("/api/reviews").then((r) => r.json()),
-      fetch("/api/giftcards").then((r) => r.json()),
-      fetch("/api/admin/emails").then((r) => r.json()),
+      ownerOnly("/api/giftcards", []),
+      ownerOnly("/api/admin/emails", null),
+      ownerOnly("/api/admin/stats", null),
     ]);
+    setStats(st);
     // New order since last check? Play the chime.
     const maxId = Math.max(0, ...(o as Order[]).map((x) => x.id));
     if (lastMaxId.current !== null && maxId > lastMaxId.current) chime();
@@ -91,12 +103,17 @@ export default function AdminPage() {
   }, [load]);
 
   useLive(authed ? "/api/live?topic=staff" : null, (e) => e.type !== "menu" && load());
+  useEffect(() => {
+    if (me && me.role !== "owner" && !BARISTA_TABS.includes(tab)) setTab("Orders");
+  }, [me, tab]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
-    const r = await fetch("/api/admin/login", json("POST", { passcode: pass }));
+    const r = await fetch("/api/admin/login", json("POST", { username, password: pass }));
     if (!r.ok) return setLoginErr((await r.json()).error);
+    const d = await r.json();
     setPass("");
+    if (d.staff?.role !== "owner") setTab("Orders");
     load();
   }
 
@@ -132,10 +149,11 @@ export default function AdminPage() {
         <p className="eyebrow">staff only</p>
         <h1 style={{ fontSize: "3rem" }}>Behind the <em>counter</em></h1>
         <form className="card" style={{ padding: "1.5rem", marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.8rem" }} onSubmit={login}>
-          <label className="field">Passcode<input className="input" type="password" autoFocus value={pass} onChange={(e) => setPass(e.target.value)} /></label>
+          <label className="field">Username <span className="small">(leave empty if you&apos;re the owner)</span><input className="input" autoComplete="username" autoFocus value={username} onChange={(e) => setUsername(e.target.value)} /></label>
+          <label className="field">{username.trim() ? "Password" : "Owner passcode"}<input className="input" type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} /></label>
           {loginErr && <p className="error small">{loginErr}</p>}
           <button className="btn btn-pink">Log in</button>
-          <p className="small muted">Default passcode is <code>moonlight</code> — change it with ADMIN_PASSCODE in .env.local</p>
+          <p className="small muted">Owners log in with the passcode set in ADMIN_PASSCODE. Staff get their own username from the owner (Team tab).</p>
         </form>
       </div>
     );
@@ -148,7 +166,8 @@ export default function AdminPage() {
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <p className="eyebrow">staff dashboard</p>
-          <h1 style={{ fontSize: "clamp(2.2rem, 5vw, 3.4rem)" }}>Good day, <em>barista</em> ☕</h1>
+          <h1 style={{ fontSize: "clamp(2.2rem, 5vw, 3.4rem)" }}>Good day, <em>{me?.role === "owner" && me.id === 0 ? "boss" : me?.name.split(" ")[0] ?? "barista"}</em> ☕</h1>
+          <p className="small muted">Signed in as {me?.name} · {me?.role}</p>
         </div>
         <div className="row">
           <a className="btn btn-pink btn-sm" href="/staff">☕ Barista screen</a>
@@ -157,7 +176,7 @@ export default function AdminPage() {
       </div>
 
       <div className="admin-tabs">
-        {TABS.map((t) => (
+        {TABS.filter((t) => me?.role === "owner" || BARISTA_TABS.includes(t)).map((t) => (
           <button key={t} className={`chip ${tab === t ? "on" : ""}`} onClick={() => setTab(t)}>
             {t}{t === "Orders" && stats?.activeOrders ? ` (${stats.activeOrders})` : ""}
           </button>
@@ -293,7 +312,10 @@ export default function AdminPage() {
         </div>
       )}
 
-      {tab === "Menu" && <MenuEditor />}
+      {tab === "Menu" && <MenuEditor canEdit={me?.role === "owner"} />}
+      {tab === "Analytics" && me?.role === "owner" && <Analytics />}
+      {tab === "Team" && me?.role === "owner" && <Team />}
+      {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}
 
       {tab === "Gift cards" && (

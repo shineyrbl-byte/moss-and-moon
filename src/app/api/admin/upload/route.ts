@@ -2,13 +2,16 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { dataDir } from "@/lib/db";
-import { isAdmin, unauthorized } from "@/lib/auth";
+import { ownerGate } from "@/lib/auth";
 
 const TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 // Staff: upload a menu photo. Saved next to the database (on the persistent disk).
 export async function POST(req: Request) {
-  if (!(await isAdmin())) return unauthorized();
+  {
+    const gate = await ownerGate();
+    if (gate) return gate;
+  }
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) return Response.json({ error: "Please choose a photo." }, { status: 400 });

@@ -1,5 +1,5 @@
 import { db, makeCode, cleanText, cleanEmail } from "@/lib/db";
-import { isAdmin, unauthorized } from "@/lib/auth";
+import { ownerGate } from "@/lib/auth";
 
 const GIFT_DESIGNS = ["blush", "mocha", "matcha"];
 
@@ -26,6 +26,9 @@ export async function POST(req: Request) {
 
 // Staff: all gift cards
 export async function GET() {
-  if (!(await isAdmin())) return unauthorized();
+  {
+    const gate = await ownerGate();
+    if (gate) return gate;
+  }
   return Response.json(db.prepare("SELECT * FROM giftcards ORDER BY id DESC LIMIT 200").all());
 }

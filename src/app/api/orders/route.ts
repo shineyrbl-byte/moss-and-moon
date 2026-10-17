@@ -6,7 +6,7 @@ import { checkStock, consumeStock } from "@/lib/stock";
 import { menuLookup } from "@/lib/menuStore";
 import { currentCustomer } from "@/lib/account";
 import { publish } from "@/lib/live";
-import { isAdmin, unauthorized } from "@/lib/auth";
+import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { orderPlacedEmail, referralRewardEmail, sendLater } from "@/lib/email";
 
 // Place an order (pickup, table or delivery)
@@ -130,6 +130,10 @@ export async function GET(req: Request) {
   const active = params.get("active") === "1";
 
   if (params.get("format") === "csv") {
+    {
+    const gate = await ownerGate();
+    if (gate) return gate;
+  }
     const rows = db.prepare("SELECT * FROM orders ORDER BY id DESC").all() as Record<string, unknown>[];
     const cols = ["code", "created_at", "name", "phone", "email", "pickup", "table_no", "delivery_address", "status", "pay_method", "pay_status", "subtotal", "discount", "total", "credit_used", "giftcard_used", "delivery_fee", "tip", "promo", "perks"];
     const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;

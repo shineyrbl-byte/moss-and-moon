@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { ORDER_STEPS } from "@/lib/cafe";
-import { isAdmin, unauthorized } from "@/lib/auth";
+import { currentStaff } from "@/lib/auth";
 import { orderReadyEmail, sendLater } from "@/lib/email";
 import { notifyOrder } from "@/lib/push";
 import { publish } from "@/lib/live";
@@ -30,12 +30,14 @@ export async function GET(_req: Request, { params }: Ctx) {
 
 // Staff: move an order to the next status
 export async function PATCH(req: Request, { params }: Ctx) {
-  if (!(await isAdmin())) return unauthorized();
+  const staff = await currentStaff();
+  if (!staff) return Response.json({ error: "Please log in as staff." }, { status: 401 });
   const { code } = await params;
   const { status } = await req.json().catch(() => ({}));
   if (!ORDER_STEPS.includes(status)) return Response.json({ error: "Unknown status." }, { status: 400 });
   const r = db.prepare("UPDATE orders SET status = ? WHERE code = ?").run(status, code.toUpperCase());
   if (!r.changes) return Response.json({ error: "Order not found." }, { status: 404 });
+  if (status === "brewing" && staff.id) db.prepare("UPDATE orders SET staff_id = ? WHERE code = ?").run(staff.id, code.toUpperCase());
   publish({ type: "order", code: code.toUpperCase(), status, action: "status" });
 
   if (status === "ready") {
