@@ -16,7 +16,8 @@ function addColumn(db: DatabaseSync, table: string, column: string, type: string
 function open() {
   const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
   fs.mkdirSync(dir, { recursive: true });
-  const db = new DatabaseSync(path.join(dir, "cafe.db"));
+  // Wait up to 5s if another process is using the database, instead of failing
+  const db = new DatabaseSync(path.join(dir, "cafe.db"), { timeout: 5000 });
   db.exec(`
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS orders (
@@ -119,7 +120,17 @@ function open() {
   return db;
 }
 
-export const db = g.__cafeDb ?? (g.__cafeDb = open());
+const getDb = () => (g.__cafeDb ??= open());
+
+// Opens the database the first time it's actually used (not when the code
+// loads), so building the site never touches it.
+export const db = new Proxy({} as DatabaseSync, {
+  get(_target, prop) {
+    const real = getDb();
+    const value = Reflect.get(real, prop, real);
+    return typeof value === "function" ? value.bind(real) : value;
+  },
+});
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 /** Short readable code like "MM-7KQ2" */
