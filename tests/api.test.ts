@@ -303,3 +303,66 @@ test("waitlist: a cancelled booking frees a spot", async () => {
   const emails = (await s.api("/api/admin/emails")).body.emails;
   assert.ok(emails.some((e: { to_email: string; subject: string }) => e.to_email === "late@example.com" && /table just opened/i.test(e.subject)));
 });
+
+test("staff roles: baristas run the counter, owners see the money", async () => {
+  await s.login(); // owner
+  assert.equal((await s.api("/api/admin/staff", { method: "POST", json: { name: "Riya", username: "riya", password: "short", role: "barista" } })).status, 400);
+  assert.equal((await s.api("/api/admin/staff", { method: "POST", json: { name: "Riya", username: "riya", password: "latte-art-1", role: "barista" } })).status, 200);
+  assert.equal((await s.api("/api/admin/staff", { method: "POST", json: { name: "Riya 2", username: "riya", password: "latte-art-1" } })).status, 409);
+
+  assert.equal((await s.api("/api/admin/login", { method: "POST", json: { username: "riya", password: "wrong-pass" } })).status, 401);
+  const r = await s.api("/api/admin/login", { method: "POST", json: { username: "riya", password: "latte-art-1" } });
+  assert.equal(r.body.staff.role, "barista");
+  assert.equal((await s.api("/api/admin/me")).body.name, "Riya");
+  assert.equal((await s.api("/api/orders?active=1")).status, 200, "baristas see the queue");
+  assert.equal((await s.api("/api/admin/stats")).status, 403, "but not the money");
+  assert.equal((await s.api("/api/admin/analytics")).status, 403);
+  assert.equal((await s.api("/api/admin/emails")).status, 403);
+  assert.equal((await s.api("/api/menu", { method: "POST", json: { name: "Sneaky", cat: "coffee", price: 1, img: "abc" } })).status, 403);
+  assert.equal((await s.api("/api/menu", { method: "PATCH", json: { itemId: "donut", soldOut: true } })).status, 200, "stock switch is fine");
+  await s.api("/api/menu", { method: "PATCH", json: { itemId: "donut", soldOut: false } });
+
+  // Owner switches Riya off: her session stops working straight away
+  await s.login();
+  const team = (await s.api("/api/admin/staff")).body;
+  const riya = team.find((m: { username: string }) => m.username === "riya");
+  await s.api("/api/admin/staff", { method: "PATCH", json: { id: riya.id, active: false } });
+  assert.equal((await s.api("/api/admin/login", { method: "POST", json: { username: "riya", password: "latte-art-1" } })).status, 401);
+});
+
+test("analytics add up", async () => {
+  await s.login();
+  const a = await s.api("/api/admin/analytics?days=7");
+  assert.equal(a.status, 200);
+  assert.ok(a.body.orders > 0);
+  assert.equal(a.body.heat.length, 7);
+  assert.equal(a.body.heat.flat().reduce((x: number, y: number) => x + y, 0), a.body.orders);
+  const ch = a.body.channels;
+  assert.equal(ch.pickup.orders + ch.table.orders + ch.delivery.orders, a.body.orders);
+});
+
+test("stock: running out of oat milk blocks oat drinks; no beans sells out coffee", async () => {
+  await s.login();
+  await s.api("/api/admin/stock", { method: "PATCH", json: { id: "milk-oat", qty: 0 } });
+  const oat = await order({ name: "Oaty", phone: "9012345678", lines: [{ itemId: "cappuccino", qty: 1, opts: { milk: "oat" } }] });
+  assert.equal(oat.status, 409);
+  assert.match(oat.body.error, /oat milk/);
+  assert.equal((await order({ name: "Whole", phone: "9012345678", lines: [{ itemId: "cappuccino", qty: 1 }] })).status, 200, "whole milk still fine");
+  await s.api("/api/admin/stock", { method: "PATCH", json: { id: "milk-oat", add: 5000 } });
+
+  const before = (await s.api("/api/admin/stock")).body.find((i: { id: string }) => i.id === "espresso-beans").qty;
+  await s.api("/api/admin/stock", { method: "PATCH", json: { id: "espresso-beans", qty: 10 } });
+  const menu = (await s.api("/api/menu")).body.items;
+  assert.equal(menu.find((m: { id: string }) => m.id === "cappuccino").soldOut, true, "auto sold out");
+  assert.equal(menu.find((m: { id: string }) => m.id === "matcha").soldOut, false, "matcha doesn't need beans");
+  await s.api("/api/admin/stock", { method: "PATCH", json: { id: "espresso-beans", qty: before } });
+});
+
+test("seasonal items only show in season", async () => {
+  await s.login();
+  const past = await s.api("/api/menu", { method: "POST", json: { name: "Pumpkin Latte", cat: "coffee", price: 260, img: "1541167760496-1628856ab772", from: "2020-10-01", until: "2020-11-30" } });
+  assert.equal(past.status, 200);
+  assert.equal((await s.api("/api/menu")).body.items.some((m: { id: string }) => m.id === past.body.item.id), false);
+  assert.equal((await order({ name: "A", phone: "9876543210", lines: [{ itemId: past.body.item.id, qty: 1 }] })).status, 400);
+  assert.equal((await s.api("/api/menu", { method: "POST", json: { name: "Backwards", cat: "coffee", price: 1, img: "abc", from: "2030-02-01", until: "2030-01-01" } })).status, 400);
+});
