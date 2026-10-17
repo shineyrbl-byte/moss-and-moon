@@ -4,6 +4,7 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import { SEED_MENU } from "./menu";
 
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
 
@@ -13,8 +14,11 @@ function addColumn(db: DatabaseSync, table: string, column: string, type: string
   if (!cols.some((c) => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
 }
 
+/** Folder where the database and uploaded photos live */
+export const dataDir = () => process.env.DATA_DIR || path.join(process.cwd(), "data");
+
 function open() {
-  const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
+  const dir = dataDir();
   fs.mkdirSync(dir, { recursive: true });
   // Wait up to 5s if another process is using the database, instead of failing
   const db = new DatabaseSync(path.join(dir, "cafe.db"), { timeout: 5000 });
@@ -88,6 +92,23 @@ function open() {
       payment_ref TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS menu_items (
+      id TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      sort INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS push_subs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_code TEXT NOT NULL,
+      endpoint TEXT NOT NULL,
+      data TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      UNIQUE(order_code, endpoint)
+    );
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -107,7 +128,16 @@ function open() {
   addColumn(db, "orders", "giftcard_code", "TEXT");
   addColumn(db, "orders", "giftcard_used", "INTEGER NOT NULL DEFAULT 0");
   addColumn(db, "orders", "happy_hour", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "orders", "table_no", "INTEGER");
+  addColumn(db, "orders", "ready_at", "TEXT");
   addColumn(db, "bookings", "email", "TEXT");
+
+  // First run: copy the starting menu into the database
+  const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };
+  if (items.n === 0) {
+    const add = db.prepare("INSERT INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
+    SEED_MENU.forEach((m, i) => add.run(m.id, JSON.stringify(m), i * 10));
+  }
 
   const count = db.prepare("SELECT COUNT(*) AS n FROM reviews").get() as { n: number };
   if (count.n === 0) {
@@ -146,3 +176,11 @@ export const cleanEmail = (e: unknown) => {
   const s = cleanText(e, 100).toLowerCase();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : "";
 };
+
+/** Small key/value store for settings the app creates itself */
+export function getSetting(key: string) {
+  return (db.prepare("SELECT value FROM settings WHERE key = ?").get(key) as { value: string } | undefined)?.value;
+}
+export function setSetting(key: string, value: string) {
+  db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, value);
+}

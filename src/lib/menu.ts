@@ -1,4 +1,5 @@
-// The whole menu lives here. Edit names, prices (in ₹) and photos freely.
+// The starting menu. On first run it is copied into the database; after that,
+// staff edit the menu from /admin → Menu (no code changes needed).
 
 export type Category = "coffee" | "tea" | "bakes";
 export type Diet = "vegan" | "gf";
@@ -9,15 +10,17 @@ export type MenuItem = {
   name: string;
   desc: string;
   price: number;
-  img: string; // Unsplash photo id
+  img: string; // Unsplash photo id, or an uploaded photo path like /api/uploads/abc.jpg
   diet?: Diet[];
   badge?: "bestseller" | "new" | "pink pick";
   // Used by the "find your drink" quiz (drinks only)
   traits?: { energy: 0 | 1 | 2; sweet: 0 | 1 | 2; temp: "hot" | "iced" };
+  hidden?: boolean; // staff can hide items without deleting them
+  soldOut?: boolean; // filled in from the database
 };
 
-export const photo = (id: string, w = 900) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=75&w=${w}`;
+export const photo = (img: string, w = 900) =>
+  img.startsWith("/") || img.startsWith("http") ? img : `https://images.unsplash.com/photo-${img}?auto=format&fit=crop&q=75&w=${w}`;
 
 export const CATEGORIES: { id: Category | "all"; label: string }[] = [
   { id: "all", label: "Everything" },
@@ -26,7 +29,7 @@ export const CATEGORIES: { id: Category | "all"; label: string }[] = [
   { id: "bakes", label: "Bakes & sweets" },
 ];
 
-export const MENU: MenuItem[] = [
+export const SEED_MENU: MenuItem[] = [
   // ----- coffee -----
   { id: "honey-oat-latte", cat: "coffee", name: "Honey Oat Latte", desc: "Double espresso, silky oat milk and wildflower honey.", price: 220, img: "1541167760496-1628856ab772", badge: "bestseller", traits: { energy: 1, sweet: 2, temp: "hot" } },
   { id: "rose-latte", cat: "coffee", name: "Rose Pistachio Latte", desc: "Our pink signature — rose syrup, pistachio cream, espresso.", price: 250, img: "1517487881594-2787fef5ebf7", badge: "pink pick", traits: { energy: 1, sweet: 2, temp: "hot" } },
@@ -59,4 +62,3 @@ export const MENU: MenuItem[] = [
   { id: "sourdough", cat: "bakes", name: "Seeded Sourdough & Butter", desc: "A thick slice of our daily loaf, toasted.", price: 120, img: "1509440159596-0249088772ff", diet: ["vegan"] },
 ];
 
-export const findItem = (id: string) => MENU.find((m) => m.id === id);

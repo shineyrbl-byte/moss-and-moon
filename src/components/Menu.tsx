@@ -1,13 +1,13 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { CATEGORIES, MENU, photo, type Category, type Diet } from "@/lib/menu";
+import { CATEGORIES, photo, type Category, type Diet } from "@/lib/menu";
 import { HAPPY_HOUR, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
 
 export default function Menu() {
-  const { setCustomizing, add, toast, soldOut, favs, toggleFav } = useStore();
+  const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav } = useStore();
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [happy, setHappy] = useState(false);
   useEffect(() => setHappy(isHappyHour()), []);
@@ -17,14 +17,14 @@ export default function Menu() {
 
   const items = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return MENU.filter(
+    return menu.filter(
       (m) =>
         (cat === "all" || m.cat === cat) &&
         (!onlyFavs || favs.has(m.id)) &&
         diet.every((d) => m.diet?.includes(d)) &&
         (!s || `${m.name} ${m.desc} ${m.badge ?? ""}`.toLowerCase().includes(s))
     );
-  }, [cat, diet, q, onlyFavs, favs]);
+  }, [menu, cat, diet, q, onlyFavs, favs]);
 
   const toggleDiet = (d: Diet) => setDiet((ds) => (ds.includes(d) ? ds.filter((x) => x !== d) : [...ds, d]));
 

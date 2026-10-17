@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
-import { MENU, photo, type MenuItem } from "@/lib/menu";
+import { photo, type MenuItem } from "@/lib/menu";
 import { rupees } from "@/lib/pricing";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
@@ -37,15 +37,16 @@ const QUESTIONS = [
 
 type Answers = { energy?: number; temp?: string; sweet?: number };
 
-function bestMatch(a: Answers): MenuItem {
-  const drinks = MENU.filter((m) => m.traits);
+function bestMatch(a: Answers, menu: MenuItem[]): MenuItem | null {
+  const drinks = menu.filter((m) => m.traits && !m.soldOut);
+  if (!drinks.length) return null;
   const score = (m: MenuItem) =>
     Math.abs(m.traits!.energy - (a.energy ?? 1)) * 1.2 + Math.abs(m.traits!.sweet - (a.sweet ?? 1)) + (m.traits!.temp === a.temp ? 0 : 2.5) + Math.random() * 0.4;
   return drinks.sort((x, y) => score(x) - score(y))[0];
 }
 
 export default function Quiz() {
-  const { setCustomizing, soldOut } = useStore();
+  const { menu, setCustomizing, soldOut } = useStore();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [result, setResult] = useState<MenuItem | null>(null);
@@ -54,7 +55,7 @@ export default function Quiz() {
     const next = { ...answers, [key]: value };
     setAnswers(next);
     if (step + 1 < QUESTIONS.length) setStep(step + 1);
-    else setResult(bestMatch(next));
+    else setResult(bestMatch(next, menu));
   }
 
   const reset = () => { setStep(0); setAnswers({}); setResult(null); };

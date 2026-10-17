@@ -3,13 +3,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getHistory } from "@/lib/history";
 import { rupees, type QuoteLine } from "@/lib/pricing";
-import { findItem } from "@/lib/menu";
 import { useStore } from "@/components/Store";
 
 type Order = { code: string; status: string; total: number; giftcard_used: number; pay_status: string; lines: QuoteLine[]; created_at: string };
 
 export default function MyOrders() {
-  const { add, setDrawerOpen, toast, soldOut } = useStore();
+  const { add, setDrawerOpen, toast, soldOut, find } = useStore();
   const [orders, setOrders] = useState<Order[] | null>(null);
 
   useEffect(() => {
@@ -22,7 +21,7 @@ export default function MyOrders() {
   function orderAgain(o: Order) {
     let added = 0;
     for (const l of o.lines) {
-      if (!findItem(l.itemId) || soldOut.has(l.itemId)) continue;
+      if (!find(l.itemId) || soldOut.has(l.itemId)) continue;
       add(l.itemId, l.opts, l.qty);
       added++;
     }

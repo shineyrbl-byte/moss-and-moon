@@ -1,6 +1,9 @@
 // Prices and drink options. The server uses these same functions to
 // recalculate every order, so prices can't be changed from the browser.
-import { findItem, type Category, type MenuItem } from "./menu";
+import type { Category, MenuItem } from "./menu";
+
+/** Looks up a menu item by id (from the database on the server, from the loaded menu in the browser) */
+export type FindItem = (id: string) => MenuItem | undefined;
 
 export type Options = {
   size?: "small" | "regular" | "large";
@@ -96,7 +99,7 @@ export const PROMOS: Record<string, { label: string; apply: (subtotal: number) =
   PINKMOON: { label: "15% off orders over ₹500", apply: (s) => (s >= 500 ? Math.round(s * 0.15) : 0) },
 };
 
-export type QuoteLine = { itemId: string; name: string; opts: Options; note: string; qty: number; unit: number; total: number };
+export type QuoteLine = { itemId: string; name: string; cat?: Category; opts: Options; note: string; qty: number; unit: number; total: number };
 export type Quote = {
   lines: QuoteLine[];
   subtotal: number;
@@ -116,28 +119,30 @@ export const isHappyHour = (now = new Date()) => now.getHours() >= HAPPY_HOUR.fr
 
 /**
  * Work out the price of an order.
+ * - find: how to look up menu items (unknown or hidden items are skipped)
  * - freeDrink: the customer has a loyalty reward, so their cheapest drink is free
  * - giftBalance: money left on a gift card, used after all discounts
  */
 export function quote(
   raw: { itemId: string; opts?: unknown; qty: number }[],
+  find: FindItem,
   promo?: string | null,
   freeDrink = false,
   extra: { now?: Date; giftBalance?: number } = {}
 ): Quote {
   const lines: QuoteLine[] = [];
   for (const l of raw) {
-    const item = findItem(l.itemId);
+    const item = find(l.itemId);
     const qty = Math.floor(Number(l.qty));
     if (!item || !(qty >= 1 && qty <= 20)) continue;
     const opts = cleanOptions(item, l.opts);
     const unit = unitPrice(item, opts);
-    lines.push({ itemId: item.id, name: item.name, opts, note: describeOptions(item, opts), qty, unit, total: unit * qty });
+    lines.push({ itemId: item.id, name: item.name, cat: item.cat, opts, note: describeOptions(item, opts), qty, unit, total: unit * qty });
   }
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
 
   const happyHour = isHappyHour(extra.now);
-  const bakesTotal = lines.filter((l) => !isDrink(findItem(l.itemId)!.cat)).reduce((s, l) => s + l.total, 0);
+  const bakesTotal = lines.filter((l) => !isDrink(l.cat!)).reduce((s, l) => s + l.total, 0);
   const happyDiscount = happyHour ? Math.round(bakesTotal * HAPPY_HOUR.off) : 0;
 
   const code = promo?.trim().toUpperCase() || null;
@@ -146,7 +151,7 @@ export function quote(
 
   let loyaltyDiscount = 0;
   if (freeDrink) {
-    const drinks = lines.filter((l) => isDrink(findItem(l.itemId)!.cat));
+    const drinks = lines.filter((l) => isDrink(l.cat!));
     if (drinks.length) loyaltyDiscount = Math.min(...drinks.map((d) => d.unit));
   }
   const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount);
