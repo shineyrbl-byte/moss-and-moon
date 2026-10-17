@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { deleteItem, getMenu, moveItem, saveItem } from "@/lib/menuStore";
 import type { Category, Diet, MenuItem } from "@/lib/menu";
+import { publish } from "@/lib/live";
 
 // The menu (with sold-out flags). Staff can add ?all=1 to include hidden items.
 export async function GET(req: Request) {
@@ -18,6 +19,7 @@ export async function PATCH(req: Request) {
   if (!getMenu({ includeHidden: true }).some((m) => m.id === itemId)) return Response.json({ error: "Unknown item." }, { status: 400 });
   if (soldOut) db.prepare("INSERT OR IGNORE INTO sold_out (item_id) VALUES (?)").run(itemId);
   else db.prepare("DELETE FROM sold_out WHERE item_id = ?").run(itemId);
+  publish({ type: "menu" });
   return Response.json({ ok: true });
 }
 
@@ -69,6 +71,7 @@ export async function POST(req: Request) {
   const item = cleanItem(b);
   if (typeof item === "string") return Response.json({ error: item }, { status: 400 });
   saveItem(item);
+  publish({ type: "menu" });
   return Response.json({ ok: true, item });
 }
 

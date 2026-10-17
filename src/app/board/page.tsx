@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { HAPPY_HOUR, isHappyHour } from "@/lib/pricing";
+import { useLive } from "@/components/useLive";
 
 type Entry = { code: string; name: string; table: number | null };
 type Board = { preparing: Entry[]; ready: Entry[] };
@@ -27,6 +28,8 @@ function ding() {
 // "Now serving" screen for the café TV. Open /board on the TV and go full screen.
 export default function BoardPage() {
   const [board, setBoard] = useState<Board>({ preparing: [], ready: [] });
+  const [kick, setKick] = useState(0);
+  useLive("/api/live?topic=board", () => setKick((k) => k + 1));
   const [now, setNow] = useState<Date | null>(null);
   const [wait, setWait] = useState<number | null>(null);
   const [sound, setSound] = useState(false);
@@ -57,11 +60,11 @@ export default function BoardPage() {
       } catch {}
     };
     load();
-    const t = setInterval(load, 3000);
+    const t = setInterval(load, 15000);
     const c = setInterval(() => setNow(new Date()), 1000);
     setNow(new Date());
     return () => { alive = false; clearInterval(t); clearInterval(c); };
-  }, []);
+  }, [kick]);
 
   const happy = now ? isHappyHour(now) : false;
   const label = (e: Entry) => (e.table ? `table ${e.table}` : e.name);
