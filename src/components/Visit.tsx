@@ -1,0 +1,126 @@
+"use client";
+import { useEffect, useState } from "react";
+import { HOURS_LABEL, openStatus, toDateStr } from "@/lib/cafe";
+import { useStore } from "./Store";
+import Reveal from "./Reveal";
+
+type Slot = { time: string; left: number };
+type Booked = { code: string; name: string; date: string; time: string; guests: number };
+
+export default function Visit() {
+  const { toast } = useStore();
+  const [today, setToday] = useState("");
+  const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
+  const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "" });
+  const [slots, setSlots] = useState<Slot[] | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [booked, setBooked] = useState<Booked | null>(null);
+
+  useEffect(() => {
+    const t = toDateStr(new Date());
+    setToday(t);
+    setStatus(openStatus());
+    setForm((f) => ({ ...f, date: t }));
+  }, []);
+
+  // Load free times whenever the date changes
+  useEffect(() => {
+    if (!form.date) return;
+    setSlots(null);
+    fetch(`/api/bookings/availability?date=${form.date}`).then((r) => r.json()).then(setSlots).catch(() => setSlots([]));
+  }, [form.date, booked]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.time) return setError("Please pick a time.");
+    setBusy(true);
+    setError("");
+    const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    const d = await r.json();
+    setBusy(false);
+    if (!r.ok) return setError(d.error);
+    setBooked(d);
+    toast("Table booked! See you soon 🌸");
+  }
+
+  const weekdayIdx = new Date().getDay();
+  const todayRow = weekdayIdx === 0 ? 2 : weekdayIdx === 6 ? 1 : 0;
+
+  return (
+    <Reveal id="visit" className="section visit">
+      <div>
+        <p className="eyebrow">come say hi</p>
+        <h2>Visit <em>us</em></h2>
+        <p className="lead">14 Willow Lane, your favourite neighbourhood. Look for the pink door and the bicycles outside.</p>
+        <ul className="hours">
+          {HOURS_LABEL.map((h, i) => (
+            <li key={h.days} className={status && i === todayRow ? "today" : ""}><span>{h.days}</span><span>{h.time}</span></li>
+          ))}
+        </ul>
+        {status && (
+          <div className="status-pill"><span className={`dot ${status.open ? "" : "closed"}`} />{status.text}</div>
+        )}
+        <div className="map">
+          <iframe title="Map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=73.8%2C15.38%2C73.84%2C15.4&layer=mapnik" />
+        </div>
+      </div>
+
+      <div className="booking card">
+        {booked ? (
+          <div className="confirm">
+            <span className="big">🌸</span>
+            <h3>See you soon, {booked.name}!</h3>
+            <p className="muted">
+              Table for {booked.guests} on{" "}
+              {new Date(booked.date + "T00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })} at {booked.time}
+            </p>
+            <span className="code">{booked.code}</span>
+            <p className="small muted">Show this code when you arrive.</p>
+            <button className="btn btn-ghost btn-sm" onClick={() => { setBooked(null); setForm((f) => ({ ...f, time: "", note: "" })); }}>Book another</button>
+          </div>
+        ) : (
+          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <h3>Reserve a table</h3>
+            <div className="row">
+              <label className="field">Name<input className="input" required maxLength={40} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+              <label className="field">Phone<input className="input" required inputMode="numeric" placeholder="10 digits" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
+            </div>
+            <div className="row">
+              <label className="field">Date<input className="input" type="date" required min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value, time: "" })} /></label>
+              <label className="field">Guests
+                <select className="input" value={form.guests} onChange={(e) => setForm({ ...form, guests: Number(e.target.value) })}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n} {n === 1 ? "guest" : "guests"}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="field">
+              Time
+              {slots === null ? (
+                <span className="small">Checking free tables…</span>
+              ) : slots.length === 0 ? (
+                <span className="small">No times left on this day — try another date.</span>
+              ) : (
+                <div className="slots">
+                  {slots.map((s) => {
+                    const need = form.guests >= 5 ? 2 : 1;
+                    return (
+                      <button type="button" key={s.time} className={`chip ${form.time === s.time ? "on" : ""}`} disabled={s.left < need} onClick={() => setForm({ ...form, time: s.time })}>
+                        {s.time}
+                        <small>{s.left < need ? "full" : `${s.left} left`}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <label className="field">Email (optional — we&apos;ll send a confirmation)<input className="input" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+            <label className="field">A little note (optional)<textarea className="input" rows={2} maxLength={200} placeholder="Window seat, birthday, a high chair…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
+            {error && <p className="error">{error}</p>}
+            <button className="btn btn-pink full" disabled={busy}>{busy ? "Booking…" : "Reserve"}</button>
+          </form>
+        )}
+      </div>
+    </Reveal>
+  );
+}
