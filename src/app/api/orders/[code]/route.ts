@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { ORDER_STEPS } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { orderReadyEmail, sendLater } from "@/lib/email";
+import { notifyOrder } from "@/lib/push";
 
 type Ctx = { params: Promise<{ code: string }> };
 
@@ -11,7 +12,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   const row = db
     .prepare(
       `SELECT code, name, pickup, note, lines, subtotal, discount, total, promo, status, created_at,
-              pay_method, pay_status, giftcard_used, happy_hour
+              pay_method, pay_status, giftcard_used, happy_hour, table_no
        FROM orders WHERE code = ?`
     )
     .get(code.toUpperCase()) as Record<string, unknown> | undefined;
@@ -34,8 +35,16 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (!r.changes) return Response.json({ error: "Order not found." }, { status: 404 });
 
   if (status === "ready") {
-    const o = db.prepare("SELECT code, name, email FROM orders WHERE code = ?").get(code.toUpperCase()) as { code: string; name: string; email: string | null };
+    db.prepare("UPDATE orders SET ready_at = datetime('now','localtime') WHERE code = ?").run(code.toUpperCase());
+    const o = db.prepare("SELECT code, name, email, table_no FROM orders WHERE code = ?").get(code.toUpperCase()) as {
+      code: string; name: string; email: string | null; table_no: number | null;
+    };
     if (o.email) sendLater(o.email, ...orderReadyEmail(o));
+    void notifyOrder(o.code, {
+      title: o.table_no ? "Your order is on its way 🌸" : "Your order is ready 🌸",
+      body: o.table_no ? `${o.code} — we're bringing it to table ${o.table_no} now.` : `${o.code} — come grab it from the pink counter.`,
+      url: `/order/${o.code}`,
+    });
   }
   // Collected + paying at the counter = paid
   if (status === "collected") db.prepare("UPDATE orders SET pay_status = 'paid' WHERE code = ? AND pay_status = 'unpaid'").run(code.toUpperCase());

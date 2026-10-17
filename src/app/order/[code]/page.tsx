@@ -7,11 +7,13 @@ import { rupees, type QuoteLine } from "@/lib/pricing";
 import { usePay } from "@/components/Payment";
 import { useStore } from "@/components/Store";
 import { rememberOrder } from "@/lib/history";
+import NotifyButton from "@/components/NotifyButton";
+import InstallButton from "@/components/InstallButton";
 
 type Order = {
   code: string; name: string; pickup: string; note: string; lines: QuoteLine[];
   subtotal: number; discount: number; total: number; promo: string | null; status: OrderStatus; created_at: string;
-  pay_method: string; pay_status: "unpaid" | "pending" | "paid"; giftcard_used: number; happy_hour: number; ahead: number;
+  pay_method: string; pay_status: "unpaid" | "pending" | "paid"; giftcard_used: number; happy_hour: number; ahead: number; table_no: number | null;
 };
 
 const STEP_INFO: Record<OrderStatus, { icon: string; label: string; msg: string }> = {
@@ -70,7 +72,10 @@ export default function OrderPage() {
   if (!order) return <div className="page center"><p className="muted">Finding your order…</p></div>;
 
   const idx = ORDER_STEPS.indexOf(order.status);
-  const info = STEP_INFO[order.status];
+  const info =
+    order.table_no && order.status === "ready"
+      ? { ...STEP_INFO.ready, msg: `It's ready, and on its way to table ${order.table_no} ✿` }
+      : STEP_INFO[order.status];
 
   return (
     <div className="page">
@@ -83,6 +88,12 @@ export default function OrderPage() {
         <p className="small muted" style={{ marginTop: "0.5rem" }}>
           ⏱ {order.ahead === 0 ? "You're next in line" : `${order.ahead} order${order.ahead === 1 ? "" : "s"} ahead of you`} · about {5 + order.ahead * 3} min
         </p>
+      )}
+      {order.status !== "ready" && order.status !== "collected" && (
+        <div className="row" style={{ marginTop: "1rem", alignItems: "center" }}>
+          <NotifyButton code={order.code} />
+          <InstallButton />
+        </div>
       )}
 
       {order.pay_status !== "paid" && order.total - order.giftcard_used > 0 && (
@@ -107,7 +118,9 @@ export default function OrderPage() {
         </div>
 
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-          <span className="muted">Pickup: <strong>{order.pickup === "asap" ? "as soon as possible" : order.pickup}</strong></span>
+          <span className="muted">
+            {order.table_no ? <>🪑 Bringing it to <strong>table {order.table_no}</strong></> : <>Pickup: <strong>{order.pickup === "asap" ? "as soon as possible" : order.pickup}</strong></>}
+          </span>
           <span className="code">{order.code}</span>
         </div>
 

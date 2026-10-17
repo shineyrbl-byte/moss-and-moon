@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HOURS_LABEL } from "@/lib/cafe";
+import InstallButton from "./InstallButton";
 
 export default function Footer() {
   return (
@@ -37,6 +38,7 @@ export default function Footer() {
             <li>hello@mossandmoon.cafe</li>
             <li><Link href="/admin">Staff login</Link></li>
           </ul>
+          <div style={{ marginTop: "1rem" }}><InstallButton className="btn btn-pink btn-sm" /></div>
         </div>
       </div>
       <div className="footer-bottom">
