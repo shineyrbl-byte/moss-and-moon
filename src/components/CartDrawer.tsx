@@ -26,7 +26,7 @@ function pickupTimes() {
 const post = (url: string, body: unknown) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export default function CartDrawer() {
-  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable } = useStore();
+  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me } = useStore();
   const pay = usePay();
   const router = useRouter();
   const [step, setStep] = useState<"tray" | "checkout">("tray");
@@ -59,6 +59,12 @@ export default function CartDrawer() {
       setForm((f) => ({ ...f, name: me.name ?? "", phone: me.phone ?? "", email: me.email ?? "" }));
     } catch {}
   }, []);
+
+  // Signed in: fill in anything still empty from the account
+  useEffect(() => {
+    if (!me) return;
+    setForm((f) => ({ ...f, name: f.name || me.name || "", phone: f.phone || me.phone || "", email: f.email || me.email }));
+  }, [me]);
 
   // Check stamp card once a full phone number is typed
   const digits = form.phone.replace(/\D/g, "");

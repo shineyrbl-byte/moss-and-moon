@@ -2,6 +2,7 @@ import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "@/lib/db";
 import { quote } from "@/lib/pricing";
 import { HOURS, STAMPS_FOR_REWARD, TABLE_COUNT } from "@/lib/cafe";
 import { menuLookup } from "@/lib/menuStore";
+import { currentCustomer } from "@/lib/account";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { orderPlacedEmail, sendLater } from "@/lib/email";
 
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
   }
 
   const raw = Array.isArray(body.lines) ? body.lines.slice(0, 30) : [];
+  const me = await currentCustomer();
   const find = menuLookup();
   if (raw.some((l: { itemId: string }) => find(l.itemId)?.soldOut))
     return Response.json({ error: "Sorry, something in your tray just sold out. Please remove it." }, { status: 409 });
@@ -54,12 +56,12 @@ export async function POST(req: Request) {
   const code = makeCode("MM");
   db.prepare(
     `INSERT INTO orders (code, name, phone, email, pickup, note, lines, subtotal, discount, total, promo,
-       pay_method, pay_status, giftcard_code, giftcard_used, happy_hour, table_no)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       pay_method, pay_status, giftcard_code, giftcard_used, happy_hour, table_no, customer_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     code, name, phone, email || null, pickup, note, JSON.stringify(q.lines), q.subtotal,
     q.happyDiscount + q.promoDiscount + q.loyaltyDiscount, q.total, q.promoCode,
-    q.due === 0 && q.giftUsed > 0 ? "giftcard" : payMethod, payStatus, gift?.code ?? null, q.giftUsed, q.happyHour ? 1 : 0, table
+    q.due === 0 && q.giftUsed > 0 ? "giftcard" : payMethod, payStatus, gift?.code ?? null, q.giftUsed, q.happyHour ? 1 : 0, table, me?.id ?? null
   );
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
 

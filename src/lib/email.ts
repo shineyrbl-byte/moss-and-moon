@@ -91,3 +91,8 @@ export function giftCardEmail(gc: { code: string; amount: number; from_name: str
      ${button(`${SITE()}/#menu`, "Treat yourself")}`,
   ] as const;
 }
+
+export function loginCodeEmail(code: string) {
+  return [`Your Moss & Moon sign-in code: ${code}`, `<p>Here's your code to sign in. It works for 10 minutes.</p>${codeBox(code)}<p style="color:#8a6a5c;font-size:13px">Didn't ask for this? You can ignore this email.</p>`] as const;
+}
+

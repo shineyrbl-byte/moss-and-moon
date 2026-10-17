@@ -159,3 +159,36 @@ test("QR codes, table links and push key", async () => {
   assert.equal((await fetch(s.url + "/t/3", { redirect: "manual" })).status, 307);
   assert.equal((await s.api("/api/push")).body.publicKey.length, 87);
 });
+
+test("accounts: sign in with an email code", async () => {
+  const email = "guest@example.com";
+  const sent = await s.api("/api/account/code", { method: "POST", json: { email } });
+  assert.equal(sent.status, 200);
+  assert.match(sent.body.demoCode, /^\d{6}$/, "demo mode shows the code");
+  const wrong = sent.body.demoCode === "000000" ? "111111" : "000000";
+  assert.equal((await s.api("/api/account/verify", { method: "POST", json: { email, code: wrong } })).status, 400);
+  assert.equal((await s.api("/api/account/verify", { method: "POST", json: { email, code: sent.body.demoCode } })).status, 200);
+
+  const me = await s.api("/api/account");
+  assert.equal(me.body.signedIn, true);
+  assert.equal(me.body.customer.email, email);
+  assert.ok(me.body.customer.referralCode);
+
+  assert.equal((await s.api("/api/account", { method: "PATCH", json: { name: "Guest", phone: "9555555555", birthday: "02-14" } })).status, 200);
+  assert.equal((await s.api("/api/account", { method: "PATCH", json: { birthday: "03-01" } })).status, 400, "birthday can only be set once");
+
+  const o = await order({ name: "Guest", phone: "9555555555", lines: [{ itemId: "cookie", qty: 1 }] });
+  const after = await s.api("/api/account");
+  assert.ok(after.body.orders.some((x: { code: string }) => x.code === o.body.code));
+  assert.equal(after.body.stamps.count, 1);
+
+  await s.api("/api/account/logout", { method: "POST" });
+  assert.equal((await s.api("/api/account")).body.signedIn, false);
+});
+
+test("accounts: codes expire after too many wrong tries", async () => {
+  const email = "tries@example.com";
+  const sent = await s.api("/api/account/code", { method: "POST", json: { email } });
+  for (let i = 0; i < 5; i++) await s.api("/api/account/verify", { method: "POST", json: { email, code: "999999" === sent.body.demoCode ? "888888" : "999999" } });
+  assert.equal((await s.api("/api/account/verify", { method: "POST", json: { email, code: sent.body.demoCode } })).status, 400);
+});

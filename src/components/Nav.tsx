@@ -15,7 +15,7 @@ const LINKS = [
 ];
 
 export default function Nav() {
-  const { count, setDrawerOpen, bumpKey } = useStore();
+  const { count, setDrawerOpen, bumpKey, me } = useStore();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -39,6 +39,9 @@ export default function Nav() {
         ))}
       </nav>
       <div className="nav-tools">
+        <Link href="/account" className={`icon-btn ${me ? "on" : ""}`} aria-label={me ? "Your account" : "Sign in"} title={me ? `Signed in as ${me.name || me.email}` : "Sign in"}>
+          {me ? (me.name || me.email)[0].toUpperCase() : "👤"}
+        </Link>
         <AmbientSound />
         <ThemeToggle />
         <button className="cart-btn" onClick={() => setDrawerOpen(true)} aria-label={`Open your tray, ${count} items`}>

@@ -12,10 +12,15 @@ export default function MyOrders() {
   const [orders, setOrders] = useState<Order[] | null>(null);
 
   useEffect(() => {
-    const list = getHistory();
-    Promise.all(list.map((o) => fetch(`/api/orders/${o.code}`).then((r) => (r.ok ? r.json() : null)).catch(() => null))).then((rs) =>
-      setOrders(rs.filter(Boolean) as Order[])
-    );
+    (async () => {
+      // Orders from this browser + (if signed in) from the account on any device
+      const local = getHistory().map((o) => o.code);
+      const acc = await fetch("/api/account").then((r) => r.json()).catch(() => ({}));
+      const remote: string[] = acc.signedIn ? acc.orders.map((o: { code: string }) => o.code) : [];
+      const list = [...new Set([...local, ...remote])].map((code) => ({ code }));
+      const rs = await Promise.all(list.map((o) => fetch(`/api/orders/${o.code}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)));
+      setOrders((rs.filter(Boolean) as Order[]).sort((x, y) => y.created_at.localeCompare(x.created_at)));
+    })();
   }, []);
 
   function orderAgain(o: Order) {
@@ -34,7 +39,7 @@ export default function MyOrders() {
     <div className="page">
       <p className="eyebrow">from this device</p>
       <h1 style={{ fontSize: "clamp(2.4rem, 6vw, 4rem)" }}>My <em>orders</em></h1>
-      <p className="lead">Your usual, one tap away. Orders you place on this browser show up here.</p>
+      <p className="lead">Your usual, one tap away. <Link href="/account" className="link-btn">Sign in</Link> to see orders from all your devices.</p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "2rem" }}>
         {orders === null && <p className="muted">Loading…</p>}

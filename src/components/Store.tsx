@@ -6,7 +6,11 @@ import type { MenuItem } from "@/lib/menu";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
 import { TABLE_COUNT } from "@/lib/cafe";
 
+export type Me = { name: string | null; email: string; phone: string | null; birthday: string | null; favs: string[]; referralCode: string; credit: number };
+
 type Store = {
+  me: Me | null;
+  refreshMe: () => Promise<void>;
   menu: MenuItem[];
   find: (id: string) => MenuItem | undefined;
   table: number | null;
@@ -41,6 +45,8 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([]);
   const [bumpKey, setBumpKey] = useState(0);
   const [favs, setFavs] = useState<Set<string>>(new Set());
+  const [me, setMe] = useState<Me | null>(null);
+  const favsSynced = useRef(false);
   const toastId = useRef(0);
 
   // Load the tray saved in this browser
@@ -108,6 +114,30 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
     setLines((ls) => (qty <= 0 ? ls.filter((l) => l.key !== key) : ls.map((l) => (l.key === key ? { ...l, qty: Math.min(20, qty) } : l))));
   }, []);
 
+  // Signed-in guest: load their profile and merge favourites from all their devices
+  const refreshMe = useCallback(async () => {
+    try {
+      const d = await fetch("/api/account").then((r) => r.json());
+      if (!d.signedIn) {
+        setMe(null);
+        favsSynced.current = false;
+        return;
+      }
+      setMe(d.customer);
+      setFavs((local) => {
+        const merged = new Set([...local, ...(d.customer.favs as string[])]);
+        try { localStorage.setItem("mm-favs", JSON.stringify([...merged])); } catch {}
+        return merged;
+      });
+      favsSynced.current = true;
+    } catch {}
+  }, []);
+  useEffect(() => { refreshMe(); }, [refreshMe]);
+  useEffect(() => {
+    if (!me || !favsSynced.current) return;
+    fetch("/api/account", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ favs: [...favs] }) }).catch(() => {});
+  }, [favs, me]);
+
   const toggleFav = useCallback((id: string) => {
     setFavs((f) => {
       const n = new Set(f);
@@ -120,6 +150,8 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
 
   const value = useMemo<Store>(
     () => ({
+      me,
+      refreshMe,
       menu,
       find,
       table,
@@ -140,7 +172,7 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
       favs,
       toggleFav,
     }),
-    [menu, find, table, setTable, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
+    [me, refreshMe, menu, find, table, setTable, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
   );
 
   return (

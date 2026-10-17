@@ -109,6 +109,32 @@ function open() {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS customers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      name TEXT,
+      phone TEXT,
+      birthday TEXT,
+      favs TEXT NOT NULL DEFAULT '[]',
+      referral_code TEXT UNIQUE,
+      referred_by INTEGER,
+      credit INTEGER NOT NULL DEFAULT 0,
+      birthday_treat_year INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS login_codes (
+      email TEXT PRIMARY KEY,
+      code_hash TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      sent_count INTEGER NOT NULL DEFAULT 0,
+      window_start INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS customer_sessions (
+      token_hash TEXT PRIMARY KEY,
+      customer_id INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -131,6 +157,7 @@ function open() {
   addColumn(db, "orders", "table_no", "INTEGER");
   addColumn(db, "orders", "ready_at", "TEXT");
   addColumn(db, "bookings", "email", "TEXT");
+  addColumn(db, "orders", "customer_id", "INTEGER");
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };
