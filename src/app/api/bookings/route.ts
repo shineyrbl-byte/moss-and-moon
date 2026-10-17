@@ -1,5 +1,5 @@
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "@/lib/db";
-import { bookingEmail, sendLater } from "@/lib/email";
+import { bookingEmail, sendLater, waitlistEmail } from "@/lib/email";
 import { slotsFor, parseDate, toDateStr, TABLES_PER_SLOT } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
 
@@ -56,5 +56,15 @@ export async function PATCH(req: Request) {
   const { code, status } = await req.json().catch(() => ({}));
   if (!["confirmed", "cancelled", "seated"].includes(status)) return Response.json({ error: "Unknown status." }, { status: 400 });
   db.prepare("UPDATE bookings SET status = ? WHERE code = ?").run(status, String(code));
+  if (status === "cancelled") {
+    const b = db.prepare("SELECT date, time FROM bookings WHERE code = ?").get(String(code)) as { date: string; time: string } | undefined;
+    const w = b && (db.prepare("SELECT id, name, email, date, time FROM waitlist WHERE date = ? AND time = ? AND status = 'waiting' ORDER BY id LIMIT 1").get(b.date, b.time) as
+      | { id: number; name: string; email: string; date: string; time: string }
+      | undefined);
+    if (w) {
+      db.prepare("UPDATE waitlist SET status = 'offered' WHERE id = ?").run(w.id);
+      sendLater(w.email, ...waitlistEmail(w));
+    }
+  }
   return Response.json({ ok: true });
 }

@@ -1,6 +1,8 @@
 import { db, cleanPhone, cleanText } from "@/lib/db";
 import { currentCustomer } from "@/lib/account";
 import { STAMPS_FOR_REWARD } from "@/lib/cafe";
+import { perksFor } from "@/lib/perks";
+import { PASS } from "@/lib/pricing";
 
 // The signed-in guest's profile, stamps and recent orders
 export async function GET() {
@@ -8,10 +10,14 @@ export async function GET() {
   if (!c) return Response.json({ signedIn: false });
   const card = c.phone ? (db.prepare("SELECT stamps, rewards_used FROM loyalty WHERE phone = ?").get(c.phone) as { stamps: number; rewards_used: number } | undefined) : undefined;
   const orders = db
-    .prepare("SELECT code, status, total, giftcard_used, pay_status, created_at, lines FROM orders WHERE customer_id = ? OR (phone != '' AND phone = ?) ORDER BY id DESC LIMIT 30")
+    .prepare("SELECT code, status, total, giftcard_used, credit_used, tip, delivery_fee, pay_status, created_at, lines FROM orders WHERE customer_id = ? OR (phone != '' AND phone = ?) ORDER BY id DESC LIMIT 30")
     .all(c.id, c.phone ?? "__none__") as Record<string, unknown>[];
+  const perks = perksFor(c);
+  const orderCount = (db.prepare("SELECT COUNT(*) AS n FROM orders WHERE customer_id = ?").get(c.id) as { n: number }).n;
   return Response.json({
     signedIn: true,
+    pass: { active: !!perks.pass, until: perks.pass?.ends ?? null, usedToday: !!perks.pass && !perks.passDrink, price: PASS.price },
+    perks: { birthdayTreat: perks.birthdayTreat, passDrink: perks.passDrink, credit: perks.credit, canUseInvite: !c.referred_by && orderCount === 0 },
     customer: { name: c.name, email: c.email, phone: c.phone, birthday: c.birthday, favs: c.favs, referralCode: c.referral_code, credit: c.credit, memberSince: c.created_at },
     stamps: { count: card?.stamps ?? 0, rewardsUsed: card?.rewards_used ?? 0, needed: STAMPS_FOR_REWARD },
     orders: orders.map((o) => ({ ...o, lines: JSON.parse(String(o.lines)) })),

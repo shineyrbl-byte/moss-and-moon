@@ -16,6 +16,7 @@ export default function Visit() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [booked, setBooked] = useState<Booked | null>(null);
+  const [waitlisted, setWaitlisted] = useState<number | null>(null);
 
   useEffect(() => {
     const t = toDateStr(new Date());
@@ -31,11 +32,25 @@ export default function Visit() {
     fetch(`/api/bookings/availability?date=${form.date}`).then((r) => r.json()).then(setSlots).catch(() => setSlots([]));
   }, [form.date, booked]);
 
+  const need = form.guests >= 5 ? 2 : 1;
+  const chosen = slots?.find((s) => s.time === form.time);
+  const full = !!chosen && chosen.left < need;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.time) return setError("Please pick a time.");
     setBusy(true);
     setError("");
+    if (full) {
+      // That slot is full: join the waitlist instead
+      const r = await fetch("/api/waitlist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const d = await r.json();
+      setBusy(false);
+      if (!r.ok) return setError(d.error);
+      setWaitlisted(d.position);
+      toast("You're on the waitlist ✿");
+      return;
+    }
     const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     const d = await r.json();
     setBusy(false);
@@ -67,7 +82,14 @@ export default function Visit() {
       </div>
 
       <div className="booking card">
-        {booked ? (
+        {waitlisted !== null ? (
+          <div className="confirm">
+            <span className="big">⏳</span>
+            <h3>You&apos;re #{waitlisted} on the waitlist</h3>
+            <p className="muted">If a table opens up at {form.time}, we&apos;ll email {form.email} straight away.</p>
+            <button className="btn btn-ghost btn-sm" onClick={() => { setWaitlisted(null); setForm((f) => ({ ...f, time: "" })); }}>Pick another time</button>
+          </div>
+        ) : booked ? (
           <div className="confirm">
             <span className="big">🌸</span>
             <h3>See you soon, {booked.name}!</h3>
@@ -102,22 +124,20 @@ export default function Visit() {
                 <span className="small">No times left on this day — try another date.</span>
               ) : (
                 <div className="slots">
-                  {slots.map((s) => {
-                    const need = form.guests >= 5 ? 2 : 1;
-                    return (
-                      <button type="button" key={s.time} className={`chip ${form.time === s.time ? "on" : ""}`} disabled={s.left < need} onClick={() => setForm({ ...form, time: s.time })}>
-                        {s.time}
-                        <small>{s.left < need ? "full" : `${s.left} left`}</small>
-                      </button>
-                    );
-                  })}
+                  {slots.map((s) => (
+                    <button type="button" key={s.time} className={`chip ${form.time === s.time ? "on" : ""} ${s.left < need ? "is-full" : ""}`} onClick={() => setForm({ ...form, time: s.time })}>
+                      {s.time}
+                      <small>{s.left < need ? "full · waitlist" : `${s.left} left`}</small>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
-            <label className="field">Email (optional — we&apos;ll send a confirmation)<input className="input" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+            {full && <p className="reward-banner small">⏳ {form.time} is fully booked. Join the waitlist and we&apos;ll email you if a table opens up.</p>}
+            <label className="field">{full ? "Email (so we can tell you)" : "Email (optional — we'll send a confirmation)"}<input className="input" type="email" required={full} placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
             <label className="field">A little note (optional)<textarea className="input" rows={2} maxLength={200} placeholder="Window seat, birthday, a high chair…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
             {error && <p className="error">{error}</p>}
-            <button className="btn btn-pink full" disabled={busy}>{busy ? "Booking…" : "Reserve"}</button>
+            <button className="btn btn-pink full" disabled={busy}>{busy ? "One moment…" : full ? "Join the waitlist" : "Reserve"}</button>
           </form>
         )}
       </div>

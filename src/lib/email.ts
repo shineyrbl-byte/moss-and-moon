@@ -96,3 +96,17 @@ export function loginCodeEmail(code: string) {
   return [`Your Moss & Moon sign-in code: ${code}`, `<p>Here's your code to sign in. It works for 10 minutes.</p>${codeBox(code)}<p style="color:#8a6a5c;font-size:13px">Didn't ask for this? You can ignore this email.</p>`] as const;
 }
 
+export function referralRewardEmail() {
+  return [`Your friend just had their first coffee 💝`, `<p>Someone you invited placed their first order, so we've added <b>₹100 credit</b> to your account. It comes off your next order automatically.</p>${button(`${SITE()}/#menu`, "Spend it")}`] as const;
+}
+
+export function waitlistEmail(w: { name: string; date: string; time: string }) {
+  const when = new Date(w.date + "T00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  return [`A table just opened up, ${w.name} ✿`, `<p>Good news: a table freed up on <b>${when}</b> at <b>${esc(w.time)}</b>. It's first come, first served, so book it soon!</p>${button(`${SITE()}/#visit`, "Book it now")}`] as const;
+}
+
+export function passEmail(p: { ends: string }) {
+  const until = new Date(p.ends + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long" });
+  return [`Your Coffee Pass is active ☕`, `<p>One drink a day is on us until <b>${until}</b>. Just sign in when you order, and it comes off automatically.</p>${button(`${SITE()}/#menu`, "Order today's drink")}`] as const;
+}
+
