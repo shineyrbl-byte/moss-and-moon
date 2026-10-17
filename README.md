@@ -33,6 +33,10 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - ✨ **Golden hour**: 20% off bakes every day 3–5pm, applied automatically
 - ⏱ Live wait-time estimate (homepage, checkout, order page)
 - ♥ Favourites filter, and **My orders** with one-tap "order again"
+- 🤖 **Ask the barista**: AI chat (Claude) that recommends drinks from the live menu, with one-tap "Add". Keyword demo mode until an API key is added
+- 🪑 **Order from your table**: scan the table's QR code, order, and it's brought over (phone optional)
+- 📲 **Installable app** (PWA): add to home screen, works offline for pages you've seen
+- 🔔 **"Your order is ready" notifications**: real push notifications, even with the site closed
 - 📍 Live order tracking page (received → brewing → ready → collected), refreshes itself
 - 🎁 Stamp card — every order = 1 stamp, 10 stamps = a free drink, applied automatically
 - 🔮 "Find your drink" quiz
@@ -50,12 +54,18 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - New-order chime + count in the tab title
 - Payment status on every order, CSV export of all orders
 - Gift card list, and an **Emails** tab to preview every email the site sent
+- **Menu editor**: add, edit, hide, reorder and delete items, upload photos, mark sold out. Live instantly, no code
+- **Tables & QR**: printable QR cards for every table
+- 📺 **Now serving board** at `/board`: put it on the café TV (brewing / ready, with a chime)
 
 ## Where things live
 
 | What | File |
 | --- | --- |
-| Menu items, prices, photos | `src/lib/menu.ts` |
+| Menu | edit it at **/admin → Menu** (the starting menu is in `src/lib/menu.ts`) |
+| AI barista | `src/app/api/barista/route.ts` |
+| Push notifications | `src/lib/push.ts`, `public/sw.js` |
+| TV board | `src/app/board/page.tsx` |
 | Payments (Razorpay) | `src/lib/payments.ts` |
 | Emails & their templates | `src/lib/email.ts` |
 | Drink options, promo codes, happy hour, price maths | `src/lib/pricing.ts` |

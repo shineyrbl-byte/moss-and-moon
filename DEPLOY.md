@@ -89,3 +89,33 @@ cp .env.example .env.local   # optional, then edit
 npm install
 npm run dev                  # http://localhost:3000
 ```
+
+## 5. Turn on the AI barista (Claude)
+
+Until you do this, "Ask the barista" runs in **demo mode** (simple keyword matching).
+
+1. Get an API key at **https://console.anthropic.com** → API Keys (add a little credit under Billing).
+2. Add `ANTHROPIC_API_KEY=sk-ant-...` to your Railway variables (or `.env.local`).
+3. That's it — the chat header stops saying "demo mode".
+
+It uses **Claude Opus 5.5** at low effort, so replies are quick. Each message costs roughly
+₹1–2. Every visitor is limited to 20 messages per 10 minutes so nobody can run up your bill;
+change that in `src/app/api/barista/route.ts`. Set a monthly spend limit in the Anthropic
+console too, just in case.
+
+## 6. Order-ready notifications & the app
+
+Nothing to set up: notification keys are created automatically the first time they're needed
+and stored in the database.
+
+- **Android / desktop Chrome, Edge, Firefox:** guests tap "🔔 Notify me when it's ready" on their order page.
+- **iPhone:** Apple only allows notifications for sites added to the Home Screen
+  (Share → Add to Home Screen). The order page tells iPhone users this.
+- Notifications need HTTPS, which Railway provides. On your computer, `localhost` works too.
+
+## 7. Table QR codes & the TV board
+
+- **/admin → Tables & QR → Print QR cards.** Each code opens the menu for that table.
+  Set `SITE_URL` (step 2) so the codes point at your real address.
+- Open **/board** on the café TV, click **Full screen** and **Tap for sound**.
+
