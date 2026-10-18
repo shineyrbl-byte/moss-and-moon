@@ -435,6 +435,20 @@ function open() {
       note TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS training (
+      staff_id INTEGER NOT NULL,
+      station TEXT NOT NULL,
+      signed_by TEXT,
+      at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      PRIMARY KEY (staff_id, station)
+    );
+    CREATE TABLE IF NOT EXISTS quiz_results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      staff_id INTEGER NOT NULL,
+      score INTEGER NOT NULL,
+      out_of INTEGER NOT NULL,
+      at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,

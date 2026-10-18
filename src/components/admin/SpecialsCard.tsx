@@ -11,6 +11,7 @@ export default function SpecialsCard() {
   const [ideas, setIdeas] = useState<Idea[] | null>(null);
   const [provider, setProvider] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [added, setAdded] = useState<{ id: string; name: string }[]>([]);
   async function think() {
     setBusy(true);
     const r = await fetch("/api/admin/specials");
@@ -25,6 +26,7 @@ export default function SpecialsCard() {
     const d = await r.json();
     if (!r.ok) return toast(d.error);
     toast(`“${i.name}” is on today's menu ✿`);
+    setAdded((a) => [...a, { id: d.item.id, name: d.item.name }]);
     setIdeas((x) => x?.filter((y) => y !== i) ?? null);
   }
   const set = (idx: number, patch: Partial<Idea>) => setIdeas((x) => x!.map((y, j) => (j === idx ? { ...y, ...patch } : y)));
@@ -38,6 +40,7 @@ export default function SpecialsCard() {
         </span>
       </div>
       <p className="small muted">Ideas that use up overstocked ingredients and bakes that keep getting thrown away. Adding one puts it on the menu for today only.</p>
+      {added.map((a) => <p key={a.id} className="reward-banner small">✓ {a.name} is on today&apos;s menu. <a href={`/api/admin/story?item=${encodeURIComponent(a.id)}`} target="_blank">📸 Get an Instagram story image</a></p>)}
       {ideas && !ideas.length && <p className="small muted">No ideas right now.</p>}
       {ideas?.map((i, idx) => (
         <div key={idx} className="branch-row">

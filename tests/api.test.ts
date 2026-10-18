@@ -1529,3 +1529,36 @@ test("supplier prices: a rise is logged, flagged and costed", async () => {
   assert.equal(oat.history.length, 2);
   await s.api("/api/admin/stock", { method: "PATCH", json: { id: "milk-oat", cost: ing.cost } });
 });
+
+test("training: owner signs off stations; the recipe quiz is marked on the server", async () => {
+  await s.login();
+  const t = (await s.api("/api/admin/training")).body as { stations: { id: string }[]; team: { id: number; stations: Record<string, unknown> }[] };
+  const p = t.team[0];
+  const r = await s.api("/api/admin/training", { method: "PUT", json: { staffId: p.id, station: "espresso", trained: true } });
+  assert.ok(r.body.team.find((x: { id: number }) => x.id === p.id).stations.espresso);
+  const q = (await s.api("/api/admin/training/quiz")).body as { questions: { key: string; options: { id: string }[] }[] };
+  assert.equal(q.questions.length, 5);
+  assert.ok(q.questions.every((x) => x.options.length === 4));
+  // Pick the right one by asking the recipe API (a cheat only staff have)
+  const recipes = ((await s.api("/api/admin/recipes")).body as { recipes: Record<string, string> }).recipes;
+  const crypto = await import("node:crypto");
+  const h = (s2: string) => crypto.createHash("sha256").update(s2).digest("hex").slice(0, 16);
+  const answers = q.questions.map((x) => ({ key: x.key, choice: x.options.find((o) => recipes[o.id] && h(recipes[o.id]) === x.key)!.id }));
+  const g = await s.api("/api/admin/training/quiz", { method: "POST", json: { answers } });
+  assert.equal(g.body.score, 5);
+  assert.equal(g.body.passed, true);
+  const wrong = await s.api("/api/admin/training/quiz", { method: "POST", json: { answers: answers.map((a) => ({ ...a, choice: "nope" })) } });
+  assert.equal(wrong.body.score, 0);
+});
+
+test("story image: a tall PNG for a menu item, staff only", async () => {
+  assert.equal((await fetch(`${s.url}/api/admin/story?item=cookie`)).status, 401);
+  await s.login();
+  const r = await fetch(`${s.url}/api/admin/story?item=cookie`, { headers: { cookie: s.cookie() } });
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get("content-type"), "image/png");
+  const buf = Buffer.from(await r.arrayBuffer());
+  assert.equal(buf.readUInt32BE(16), 1080);
+  assert.equal(buf.readUInt32BE(20), 1920);
+  assert.equal((await fetch(`${s.url}/api/admin/story?item=nope`, { headers: { cookie: s.cookie() } })).status, 404);
+});

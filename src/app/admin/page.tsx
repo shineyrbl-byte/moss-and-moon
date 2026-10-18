@@ -44,6 +44,7 @@ import MissedSales from "@/components/admin/MissedSales";
 import NoShowLine from "@/components/admin/NoShowLine";
 import UseByCard from "@/components/admin/UseByCard";
 import PriceWatch from "@/components/admin/PriceWatch";
+import TrainingTab from "@/components/admin/TrainingTab";
 import ChecklistsTab from "@/components/admin/ChecklistsTab";
 import { useLive } from "@/components/useLive";
 
@@ -59,9 +60,9 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; branch?: string; deposit?: number; deposit_status?: string | null; table_no: number | null; preorder: string | null; preorder_code: string | null };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Catering", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Catering", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health"] as const;
 // What baristas can see (owners see everything)
-const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "Tables & QR", "Rota", "Notices"];
+const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "Tables & QR", "Rota", "Training", "Notices"];
 
 // A soft two-note "ding" when a new order arrives
 function chime() {
@@ -448,6 +449,7 @@ export default function AdminPage() {
       {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
       {tab === "Journal" && me?.role === "owner" && <JournalTab />}
       {tab === "Rota" && <RotaTab canEdit={me?.role === "owner"} />}
+      {tab === "Training" && <TrainingTab canEdit={me?.role === "owner"} />}
       {tab === "Health" && me?.role === "owner" && <HealthTab />}
       {tab === "Promos" && me?.role === "owner" && <PromosTab />}
 

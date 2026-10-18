@@ -73,6 +73,7 @@ export default function MenuEditor({ canEdit = true }: { canEdit?: boolean }) {
               <button className="chip" onClick={() => move(m, "down")} aria-label="Move down">↓</button>
               <button className="chip" onClick={() => toggleHidden(m)}>{m.hidden ? "Show" : "Hide"}</button>
               <button className="chip on" onClick={() => setEditing(m)}>Edit</button>
+              <a className="chip" href={`/api/admin/story?item=${encodeURIComponent(m.id)}`} target="_blank" title="Instagram story image" aria-label={`Instagram story image for ${m.name}`}>📸</a>
             </div>}
           </div>
         ))}

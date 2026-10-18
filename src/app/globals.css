@@ -1157,3 +1157,13 @@ body:has(.menu-card) .nav, body:has(.menu-card) .footer, body:has(.menu-card) .c
 .me-group.dog { border-color: var(--muted); }
 .me-group p { margin: 0.2rem 0 0; }
 .back-in-stock { display: flex; flex-direction: column; gap: 0.4rem; background: var(--pink-soft); border-radius: 14px; padding: 0.7rem 0.8rem; margin: 0.4rem 0; }
+
+/* Training */
+.rota.training th[scope="col"] { font-size: 0.75rem; white-space: normal; min-width: 4.5rem; }
+.rota.training td { text-align: center; }
+.train-box { display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); color: var(--on-pink); font-weight: 700; font: inherit; cursor: default; }
+button.train-box { cursor: pointer; }
+.train-box.on { background: var(--moss); border-color: var(--moss); }
+.quiz-q { border: 1px solid var(--line); border-radius: 14px; padding: 0.7rem 0.9rem; margin: 0.8rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.quiz-q.right { border-color: var(--moss); }
+.quiz-q.wrong { border-color: var(--pink-deep); }
