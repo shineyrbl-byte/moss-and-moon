@@ -31,7 +31,7 @@ export async function askJSON<T>(system: string, prompt: string, schema: JsonSch
       return { data: JSON.parse(text) as T, provider };
     }
     if (provider === "gemini") {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+      const call = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY! },
         body: JSON.stringify({
@@ -41,6 +41,12 @@ export async function askJSON<T>(system: string, prompt: string, schema: JsonSch
         }),
         signal: AbortSignal.timeout(30_000),
       });
+      let r = await call();
+      // Busy or rate-limited for a moment: try once more
+      if (r.status === 503 || r.status === 429 || r.status === 500) {
+        await new Promise((ok) => setTimeout(ok, 1200));
+        r = await call();
+      }
       if (!r.ok) {
         console.error("Gemini error", r.status, (await r.text()).slice(0, 300));
         return null;

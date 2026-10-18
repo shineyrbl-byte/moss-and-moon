@@ -57,7 +57,7 @@ export function parseVoiceOrder(text: string, menu: VoiceMenuItem[]): { lines: V
   const usual = /\b(my usual|the usual|usual)\b/.test(t);
   const lines: VoiceLine[] = [];
   const missed: string[] = [];
-  for (const part of t.split(/\b(?:and|plus|also|then)\b|,/).map((p) => p.trim()).filter(Boolean)) {
+  for (const part of t.split(/\b(?:and|plus|also|then|aur|or bhi)\b|,/).map((p) => p.trim()).filter(Boolean)) {
     if (/^(my |the )?usual$/.test(part)) continue;
     const item = bestItem(part, menu);
     if (!item) {

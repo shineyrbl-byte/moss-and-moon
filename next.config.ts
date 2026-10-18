@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 // Security headers for every page. The content policy only allows scripts, frames and
 // connections from this site, Razorpay (payments) and OpenStreetMap (the map).
 function securityHeaders() {
-  const https = (process.env.SITE_URL ?? "").startsWith("https://");
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://*.razorpay.com",
@@ -19,17 +18,18 @@ function securityHeaders() {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    ...(https ? ["upgrade-insecure-requests"] : []),
   ].join("; ");
+  const live = process.env.NODE_ENV === "production";
   return [
     // Next.js's own development tools need looser rules, so the policy is for the live site only
-    ...(process.env.NODE_ENV === "production" ? [{ key: "Content-Security-Policy", value: csp }] : []),
+    ...(live ? [{ key: "Content-Security-Policy", value: csp }] : []),
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "X-Frame-Options", value: "DENY" },
     { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
     { key: "Permissions-Policy", value: 'camera=(), geolocation=(), microphone=(self), payment=(self "https://checkout.razorpay.com" "https://api.razorpay.com"), interest-cohort=()' },
     { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
-    ...(https ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
+    // Browsers only obey this on https, so it's safe to always send (the address is only known when running)
+    ...(live ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
   ];
 }
 

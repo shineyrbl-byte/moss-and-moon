@@ -202,6 +202,8 @@ test("voice orders: numbers, options and several items", async () => {
   assert.equal(b.usual, true);
   assert.deepEqual(parseVoiceOrder("a unicorn frappe", menu).lines, []);
   assert.equal(parseVoiceOrder("a long black, extra shot", menu).lines[0].opts.shot, true);
+  const hinglish = parseVoiceOrder("ek iced rose latte aur do croissant", menu);
+  assert.deepEqual(hinglish.lines.map((l) => [l.itemId, l.qty]), [["rose-latte", 1], ["croissant", 2]], "Hinglish: aur = and, do = two");
 });
 
 test("allergens follow the milk you pick; calories follow size and sugar", async () => {
