@@ -22,6 +22,7 @@ import WasteTab from "@/components/admin/WasteTab";
 import NoticesTab from "@/components/admin/NoticesTab";
 import VisitorsPanel from "@/components/admin/VisitorsPanel";
 import TwoStep from "@/components/admin/TwoStep";
+import GmailConnect from "@/components/admin/GmailConnect";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -232,10 +233,11 @@ export default function AdminPage() {
           {mail && (
             <div className="mode-banner">
               <span>💳 Payments: <b>{mail.paymentMode === "razorpay" ? "Razorpay (live)" : "demo mode"}</b></span>
-              <span>✉️ Emails: <b>{mail.emailProvider === "gmail" ? `sending as Moss & Moon via Gmail` : mail.emailMode === "live" ? "sending via Resend" : "preview only (see Emails tab)"}</b></span>
+              <span>✉️ Emails: <b>{mail.emailProvider === "gmail-api" || mail.emailProvider === "gmail" ? `sending as Moss & Moon via Gmail` : mail.emailMode === "live" ? "sending via Resend" : "preview only (see Emails tab)"}</b></span>
               <span>🔔 A chime plays when a new order comes in, so keep this tab open.</span>
             </div>
           )}
+          {me?.role === "owner" && <GmailConnect />}
           {me?.role === "owner" && <OwnerEmails />}
           {me?.role === "owner" && <Backups />}
           {me?.role === "owner" && <TwoStep />}
@@ -434,7 +436,7 @@ export default function AdminPage() {
       {tab === "Emails" && mail && (
         <>
           <p className="muted" style={{ marginBottom: "1rem" }}>
-            {mail.emailProvider === "gmail"
+            {mail.emailProvider === "gmail-api" || mail.emailProvider === "gmail"
               ? `Emails are being sent as “Moss & Moon” from ${mail.emailFrom}, to any address guests type in.`
               : mail.emailMode === "live"
               ? "Emails are being sent through Resend. Without your own domain, Resend only delivers to the address you signed up with (see DEPLOY.md to send to everyone)."

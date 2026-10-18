@@ -76,15 +76,25 @@ Until you do this the site shows a **test payment screen**, so nothing is charge
 
 Guests get order, booking, ticket and gift emails from **Moss & Moon**. Pick one:
 
-**A. A café Gmail (free, sends to anyone, about 500 emails a day)**
-1. Create a Google account just for the café, e.g. `mossandmooncafe@gmail.com`.
-2. In that account: **Manage your Google Account → Security → 2-Step Verification** → turn it on.
-3. Then open **https://myaccount.google.com/apppasswords**, type a name like "Moss & Moon site" and click **Create**.
-   Google shows a 16-letter password. Copy it (spaces don't matter).
-4. In Railway → **web** → **Variables**, add:
-   - `GMAIL_USER` = the café Gmail address
-   - `GMAIL_APP_PASSWORD` = the 16-letter app password
-5. Guests now get emails from **Moss & Moon** `<mossandmooncafe@gmail.com>`. (Optional: `EMAIL_NAME` changes the name.)
+**A. The café Gmail (free, sends to anyone, about 500 emails a day)**
+
+Railway's Hobby plan blocks the normal email ports, so the site sends through Gmail's own
+web API instead. One-time setup, about 10 minutes, signed in as the café Gmail:
+
+1. Open **https://console.cloud.google.com** → project menu → **New project** → name it "Moss and Moon" → **Create**.
+2. Search for **Gmail API** → **Enable**.
+3. Open **Google Auth Platform** (or APIs & Services → OAuth consent screen) → **Get started**:
+   app name **Moss & Moon**, your email as support and contact email, audience **External** → **Create**.
+4. **Audience** → **Publish app** → **Confirm** (so the connection doesn't expire after 7 days).
+5. **Clients** → **Create client** → type **Web application** → under **Authorized redirect URIs** add
+   `https://moss-and-moon.up.railway.app/api/admin/gmail/callback` → **Create**. Copy the **Client ID** and **Client secret**.
+6. In Railway → **web** → **Variables** add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+7. On the site: **/admin → Overview → ✉️ Guest emails → Connect Gmail**, sign in with the café Gmail,
+   and if Google says the app isn't verified tap **Advanced → Go to Moss & Moon → Continue**.
+
+Guests then get emails from **Moss & Moon** `<your café Gmail>`. The site only asks Google for permission to *send*, never to read the inbox.
+
+(On a host that allows email ports, a Gmail **app password** also works: set `GMAIL_USER` and `GMAIL_APP_PASSWORD`.)
 
 **B. Resend with your own domain (most professional)**
 1. Get a domain, add it in **Resend → Domains** and add the DNS records it shows at your registrar.

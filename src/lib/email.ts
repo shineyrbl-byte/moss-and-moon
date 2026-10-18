@@ -7,6 +7,7 @@
 import "server-only";
 import nodemailer, { type Transporter } from "nodemailer";
 import dns from "node:dns/promises";
+import { connectedAddress, gmailApiReady, sendRaw } from "./gmailApi";
 import { db } from "./db";
 import { rupees, type QuoteLine } from "./pricing";
 import { reportError } from "./errors";
@@ -15,13 +16,26 @@ const SITE = () => process.env.SITE_URL || "http://localhost:3000";
 const FROM = () => process.env.EMAIL_FROM || "Moss & Moon <onboarding@resend.dev>";
 const NAME = () => process.env.EMAIL_NAME || "Moss & Moon";
 
-/** Which service sends: Resend with your own domain first, then Gmail, then Resend's test sender */
-export function emailProvider(): "resend" | "gmail" | null {
+/**
+ * Which service sends: Resend with your own domain first, then the connected Gmail (over
+ * Gmail's web API, which works on every host), then Gmail's mail server (needs the usual
+ * email ports, which Railway's Hobby plan blocks), then Resend's test sender.
+ */
+export function emailProvider(): "resend" | "gmail-api" | "gmail" | null {
   const resend = !!process.env.RESEND_API_KEY;
-  const gmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+  const smtp = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
   if (resend && !FROM().includes("resend.dev")) return "resend"; // a verified domain reaches everyone
-  if (gmail) return "gmail";
+  if (gmailApiReady()) return "gmail-api";
+  if (smtp) return "gmail";
   return resend ? "resend" : null;
+}
+export const sendingAddress = () => (emailProvider() === "gmail-api" ? connectedAddress() : emailProvider() === "gmail" ? process.env.GMAIL_USER ?? null : null);
+
+/** The finished email as raw bytes (for Gmail's API) */
+async function buildRaw(msg: { from: { name: string; address: string }; to: string; subject: string; html: string; attachments: { filename: string; content: Buffer }[] }) {
+  const t = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "windows" });
+  const info = await t.sendMail(msg);
+  return info.message as Buffer;
 }
 export const emailMode = () => (emailProvider() ? "live" : "preview");
 
@@ -59,6 +73,24 @@ export async function sendEmail(to: string, subject: string, body: string, attac
   const row = db.prepare("INSERT INTO outbox (to_email, subject, html, status) VALUES (?, ?, ?, ?)").run(to, subject, html, emailMode() === "live" ? "sending" : "preview only");
   if (emailMode() !== "live") return;
   const outbox = Number(row.lastInsertRowid);
+  if (emailProvider() === "gmail-api") {
+    try {
+      const raw = await buildRaw({
+        from: { name: NAME(), address: connectedAddress()! },
+        to,
+        subject,
+        html,
+        attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content) })),
+      });
+      await sendRaw(raw);
+      db.prepare("UPDATE outbox SET status = 'sent', error = NULL WHERE id = ?").run(outbox);
+    } catch (e) {
+      const err = String(e instanceof Error ? e.message : e).slice(0, 300);
+      db.prepare("UPDATE outbox SET status = 'failed', error = ? WHERE id = ?").run(err, outbox);
+      if (!opts.skipErrorReport) reportError("email", `Email didn't send (Gmail): ${err}`, `to: ${to}\nsubject: ${subject}`);
+    }
+    return;
+  }
   if (emailProvider() === "gmail") {
     try {
       await (await gmail()).sendMail({
