@@ -140,6 +140,9 @@ export default function CustomizeModal() {
               )}
               {item.stock !== undefined && item.stock <= 5 && item.stock > 0 && <p className="small" style={{ color: "var(--pink-ink)" }}>Only {item.stock} left</p>}
               <p className="small muted">Pick up at the counter, or choose delivery at checkout.</p>
+              {/beans/.test(item.id) && (
+                <p className="small"><button className="link-btn" onClick={() => { close(); router.push(me ? `/account?subscribe=${item.id}#beans` : "/account"); }}>☕ Get a bag every 2 or 4 weeks{me ? "" : " (sign in)"} →</button></p>
+              )}
             </>
           ) : (
             <>

@@ -12,6 +12,7 @@ import { newsletterTick } from "./newsletter";
 import { autoClockOut } from "./timesheets";
 import { reorderTick } from "./reorders";
 import { preorderTick } from "./preorders";
+import { subsTick } from "./beanSubs";
 
 const g = globalThis as { __mmJobs?: NodeJS.Timeout[] };
 
@@ -42,5 +43,6 @@ export function startJobs() {
     every(5 * 60_000, "auto clock-out", () => autoClockOut()),
     every(10 * 60_000, "supplier reorders", () => reorderTick()),
     every(20_000, "booking pre-orders", () => preorderTick()),
+    every(10 * 60_000, "bean subscriptions", () => subsTick()),
   ];
 }

@@ -1177,3 +1177,29 @@ test("booking a table from the floor plan, with a pre-order", async () => {
   const list = (await s.api("/api/bookings")).body as { code: string; table_no: number; preorder: string | null }[];
   assert.ok(list.some((b) => b.code === ok.body.code && b.table_no === 1 && b.preorder?.includes("×")));
 });
+
+test("bean subscriptions: start, skip, pause, resume and cancel", async () => {
+  await signIn("beans@example.com");
+  const list = (await s.api("/api/account/beans")).body as { beans: { id: string; variants: { id: string }[] }[]; subs: unknown[] };
+  assert.ok(list.beans.length >= 1 && list.subs.length === 0);
+  const bean = list.beans[0];
+  assert.equal((await s.api("/api/account/beans", { method: "POST", json: { itemId: bean.id, every: 28 } })).status, 400, "needs a phone first");
+  await s.api("/api/account", { method: "PATCH", json: { phone: "9811122233" } });
+  assert.equal((await s.api("/api/account/beans", { method: "POST", json: { itemId: bean.id, every: 10 } })).status, 400);
+  assert.equal((await s.api("/api/account/beans", { method: "POST", json: { itemId: bean.id, every: 28, method: "delivery", address: "x" } })).status, 400);
+  const d = new Date(Date.now() + 5 * 86_400_000);
+  const start = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const made = await s.api("/api/account/beans", { method: "POST", json: { itemId: bean.id, variant: bean.variants.at(-1)?.id, qty: 2, every: 14, start } });
+  assert.equal(made.status, 200, JSON.stringify(made.body));
+  const id = made.body.id;
+  const skip = await s.api("/api/account/beans", { method: "PATCH", json: { id, action: "skip" } });
+  const next = new Date(d.getTime() + 14 * 86_400_000);
+  assert.equal(skip.body.sub.next_date, `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`);
+  assert.equal((await s.api("/api/account/beans", { method: "PATCH", json: { id, action: "pause" } })).body.sub.status, "paused");
+  assert.equal((await s.api("/api/account/beans", { method: "PATCH", json: { id, action: "resume" } })).body.sub.status, "active");
+  const mine = (await s.api("/api/account/beans")).body as { subs: { label: string; price: number }[] };
+  assert.match(mine.subs[0].label, /^2 × /);
+  assert.ok(mine.subs[0].price > 0);
+  assert.equal((await s.api("/api/account/beans", { method: "PATCH", json: { id, action: "cancel" } })).status, 200);
+  assert.equal(((await s.api("/api/account/beans")).body as { subs: unknown[] }).subs.length, 0);
+});

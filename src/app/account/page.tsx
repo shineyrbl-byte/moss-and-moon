@@ -3,6 +3,8 @@ import Link from "next/link";
 import BadgesCard from "@/components/BadgesCard";
 import TierDietCards from "@/components/TierDietCards";
 import RegularOrders from "@/components/RegularOrders";
+import BeanSubs from "@/components/BeanSubs";
+import { Suspense } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { PASS, REFERRAL_CREDIT, orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { usePay } from "@/components/Payment";
@@ -182,6 +184,7 @@ function Profile({ acc, reload }: { acc: Account; reload: () => Promise<void> })
       <TierDietCards />
       <BadgesCard />
       <RegularOrders />
+      <Suspense fallback={null}><BeanSubs /></Suspense>
 
       <div className="account-grid">
         <PassCard acc={acc} reload={reload} />

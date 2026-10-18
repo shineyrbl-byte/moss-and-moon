@@ -279,6 +279,20 @@ function open() {
       expires TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS bean_subs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER NOT NULL,
+      item_id TEXT NOT NULL,
+      variant TEXT,
+      qty INTEGER NOT NULL DEFAULT 1,
+      every_days INTEGER NOT NULL,
+      method TEXT NOT NULL DEFAULT 'pickup',
+      address TEXT,
+      next_date TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      last_order TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,
