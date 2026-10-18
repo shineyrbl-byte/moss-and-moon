@@ -66,6 +66,13 @@ export async function POST(req: Request) {
     if (!["quoted", "accepted"].includes(t.status) || !t.amount) return Response.json({ error: t.status === "paid" || t.status === "done" ? "This is already paid ✿" : "There's no quote to pay yet." }, { status: 409 });
     amount = t.amount;
     label = "Catering";
+  } else if (kind === "wallet") {
+    const me = await currentCustomer();
+    const t = db.prepare("SELECT customer_id, amount, paid FROM wallet_topups WHERE id = ?").get(Number(c.replace("WALLET-", ""))) as { customer_id: number; amount: number; paid: number } | undefined;
+    if (!t || !me || t.customer_id !== me.id) return Response.json({ error: "Top-up not found." }, { status: 404 });
+    if (t.paid) return Response.json({ error: "This top-up is already paid ✿" }, { status: 409 });
+    amount = t.amount;
+    label = "Coffee wallet top-up";
   } else if (kind === "giftcard") {
     const g = db.prepare("SELECT amount, paid FROM giftcards WHERE code = ?").get(c) as { amount: number; paid: number } | undefined;
     if (!g) return Response.json({ error: "Gift card not found." }, { status: 404 });

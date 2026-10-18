@@ -1301,3 +1301,23 @@ test("second branch: own hours, its own bookings, and items sold only at one caf
   // Put back to one café so other tests see the usual setup
   assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { branches: [{ id: "main", name: "Willow Lane", address: "14 Willow Lane" }] } })).status, 200);
 });
+
+test("coffee wallet top-up adds the bonus; student discount needs a college email", async () => {
+  await signIn("wallet@example.com");
+  const before = (await s.api("/api/account/wallet")).body as { balance: number };
+  assert.equal((await s.api("/api/account/wallet", { method: "POST", json: { amount: 123 } })).status, 400);
+  const t = await s.api("/api/account/wallet", { method: "POST", json: { amount: 1000 } });
+  assert.equal(t.status, 200);
+  assert.equal((await s.api("/api/payments/start", { method: "POST", json: { kind: "wallet", code: t.body.code } })).body.amount, 1000);
+  assert.equal((await s.api("/api/payments/verify", { method: "POST", json: { kind: "wallet", code: t.body.code, demo: true } })).status, 200);
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "wallet", code: t.body.code, demo: true } }); // a double tap adds nothing
+  assert.equal(((await s.api("/api/account/wallet")).body as { balance: number }).balance, before.balance + 1075);
+
+  assert.equal((await s.api("/api/account/student", { method: "POST", json: { email: "me@gmail.com" } })).status, 400);
+  const sent = await s.api("/api/account/student", { method: "POST", json: { email: "me@goa.bits-pilani.ac.in" } });
+  assert.equal(sent.status, 200);
+  assert.equal((await s.api("/api/account/student", { method: "POST", json: { code: "000000" === sent.body.demoCode ? "111111" : "000000" } })).status, 400);
+  const ok = await s.api("/api/account/student", { method: "POST", json: { code: sent.body.demoCode } });
+  assert.equal(ok.body.verified, true);
+  assert.equal(((await s.api("/api/account")).body as { perks: { student: boolean } }).perks.student, true);
+});

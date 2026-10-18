@@ -16,6 +16,9 @@ export type Customer = {
   phone: string | null;
   birthday: string | null; // "MM-DD"
   diet?: string | null; // JSON: { vegan, gf, avoid: [allergens] }
+  student_until?: string | null;
+  student_email?: string | null;
+  student_code?: string | null; // never sent to the browser
   favs: string[];
   referral_code: string;
   referred_by: number | null;

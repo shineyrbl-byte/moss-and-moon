@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { useStore } from "../Store";
 import { hourText, type DayHours } from "@/lib/cafe";
 import { happyHourLabel, type HappyHour } from "@/lib/pricing";
+import { DEFAULT_LAST_HOUR, lastHourLabel, type LastHour } from "@/lib/cafe";
 import type { Category } from "@/lib/menu";
 
-type Config = { hours: Record<number, DayHours>; closures: { date: string; note: string }[]; happyHour: HappyHour };
+type Config = { hours: Record<number, DayHours>; closures: { date: string; note: string }[]; happyHour: HappyHour; lastHour?: LastHour };
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const ORDER = [1, 2, 3, 4, 5, 6, 0];
 const CATS: { id: Category; label: string }[] = [{ id: "coffee", label: "Coffee" }, { id: "tea", label: "Tea" }, { id: "cold", label: "Cold drinks" }, { id: "food", label: "Food" }, { id: "bakes", label: "Bakes" }, { id: "shop", label: "Shop" }];
@@ -39,6 +40,8 @@ export default function HoursEditor() {
   const setDay = (d: number, v: DayHours) => setC({ ...c, hours: { ...c.hours, [d]: v } });
   const hh = c.happyHour;
   const setHH = (patch: Partial<HappyHour>) => setC({ ...c, happyHour: { ...hh, ...patch } });
+  const lh = c.lastHour ?? DEFAULT_LAST_HOUR;
+  const setLH = (patch: Partial<LastHour>) => setC({ ...c, lastHour: { ...lh, ...patch } });
 
   return (
     <section className="card" style={{ padding: "1.2rem 1.3rem", display: "flex", flexDirection: "column", gap: "0.9rem" }}>
@@ -134,6 +137,32 @@ export default function HoursEditor() {
               })}
             </div>
             <p className="small muted">Guests see: “{happyHourLabel(hh)}”</p>
+          </>
+        )}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div className="toggle-row">
+          <b className="small">🌙 Last-hour deal <span className="muted" style={{ fontWeight: 400 }}>· sell leftovers before closing</span></b>
+          <button className={`switch ${lh.on ? "" : "off"}`} onClick={() => setLH({ on: !lh.on })} aria-pressed={lh.on} aria-label="Last-hour deal on" />
+        </div>
+        {lh.on && (
+          <>
+            <div className="row" style={{ alignItems: "center", gap: "0.4rem" }}>
+              <input className="input" type="number" min={1} max={90} style={{ width: "5rem" }} value={Math.round(lh.off * 100)} onChange={(e) => setLH({ off: Math.max(0.01, Math.min(0.9, Number(e.target.value) / 100)) })} aria-label="Last-hour discount percent" />
+              <span className="muted">% off, starting</span>
+              <select className="input" style={{ width: "auto" }} value={lh.minutes} onChange={(e) => setLH({ minutes: Number(e.target.value) })} aria-label="Minutes before closing">
+                {[30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m < 60 ? `${m} min` : `${m / 60} hour${m > 60 ? "s" : ""}`}</option>)}
+              </select>
+              <span className="muted">before closing</span>
+            </div>
+            <div className="chips" style={{ justifyContent: "flex-start" }}>
+              {CATS.filter((k) => k.id !== "shop").map((k) => {
+                const on = lh.cats.includes(k.id);
+                return <button key={k.id} className={`chip ${on ? "on" : ""}`} aria-pressed={on} onClick={() => setLH({ cats: on ? lh.cats.filter((x) => x !== k.id) : [...lh.cats, k.id] })}>{k.label}</button>;
+              })}
+            </div>
+            <p className="small muted">Guests see: “{lastHourLabel(lh)}”. It doesn&apos;t stack with golden hour.</p>
           </>
         )}
       </div>

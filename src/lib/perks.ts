@@ -34,8 +34,8 @@ export const yearVisits = (customerId: number) =>
   (db.prepare("SELECT COUNT(*) AS n FROM orders WHERE customer_id = ? AND created_at >= datetime('now','localtime','-365 days')").get(customerId) as { n: number }).n;
 
 export function perksFor(c: Customer | null) {
-  if (!c) return { credit: 0, birthdayTreat: false, passDrink: false, pass: null as ReturnType<typeof activePass> | null, tier: "bronze" as TierId, tierInfo: tierFor(0) };
+  if (!c) return { credit: 0, birthdayTreat: false, passDrink: false, pass: null as ReturnType<typeof activePass> | null, tier: "bronze" as TierId, tierInfo: tierFor(0), student: false, studentUntil: null as string | null };
   const pass = activePass(c.id) ?? null;
   const tierInfo = tierFor(yearVisits(c.id));
-  return { credit: c.credit, birthdayTreat: birthdayTreatAvailable(c), passDrink: !!pass && !passUsedToday(c.id), pass, tier: tierInfo.id, tierInfo };
+  return { credit: c.credit, birthdayTreat: birthdayTreatAvailable(c), passDrink: !!pass && !passUsedToday(c.id), pass, tier: tierInfo.id, tierInfo, student: !!c.student_until && c.student_until >= toDateStr(new Date()), studentUntil: c.student_until ?? null };
 }

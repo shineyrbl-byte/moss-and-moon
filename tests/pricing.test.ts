@@ -1,7 +1,7 @@
 // Unit tests for price maths (no server needed). Run: npm test
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { quote, unitPrice, cleanOptions, defaultOptions, describeOptions } from "../src/lib/pricing.ts";
+import { quote, unitPrice, cleanOptions, defaultOptions, describeOptions, isStudentEmail } from "../src/lib/pricing.ts";
 import { slotsFor, openStatus, demoStatus, forecastDay, quietestHour, busyLevel } from "../src/lib/cafe.ts";
 import type { MenuItem } from "../src/lib/menu.ts";
 
@@ -334,4 +334,19 @@ test("loyalty tiers and their free size upgrades", async () => {
   assert.equal(quote(lines, find, null, false, { tier: "silver" }).tierDiscount, 40, "silver: one cup");
   assert.equal(quote(lines, find, null, false, { tier: "gold" }).tierDiscount, 80, "gold: every cup");
   assert.equal(quote(lines, find, null, false, { tier: "bronze" }).tierDiscount, 0);
+});
+
+test("last-hour deal and student discount", () => {
+  const find = (id: string) => ({ croissant: { id: "croissant", cat: "bakes", name: "Croissant", desc: "", price: 100, img: "" }, latte: { id: "latte", cat: "coffee", name: "Latte", desc: "", price: 200, img: "" } } as Record<string, MenuItem>)[id];
+  const lines = [{ itemId: "croissant", qty: 2 }, { itemId: "latte", qty: 1 }];
+  const monday = new Date(2026, 9, 19, 19, 30);
+  const saturday = new Date(2026, 9, 24, 19, 30);
+  const q = quote(lines, find, null, false, { now: monday, lastHour: { off: 0.3, cats: ["bakes"] }, student: true });
+  assert.equal(q.lastHourDiscount, 60); // 30% of ₹200 of bakes
+  assert.equal(q.studentDiscount, Math.round(q.lines.find((l) => l.itemId === "latte")!.total * 0.1));
+  assert.equal(q.total, q.subtotal - 60 - q.studentDiscount);
+  assert.equal(quote(lines, find, null, false, { now: saturday, student: true }).studentDiscount, 0, "weekdays only");
+  assert.ok(isStudentEmail("f20240273@goa.bits-pilani.ac.in"));
+  assert.ok(isStudentEmail("a@stanford.edu"));
+  assert.ok(!isStudentEmail("a@gmail.com"));
 });

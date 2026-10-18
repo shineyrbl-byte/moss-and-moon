@@ -10,7 +10,7 @@ import { DICT, type Lang, type TKey } from "@/lib/i18n";
 export type Me = {
   name: string | null; email: string; phone: string | null; birthday: string | null; favs: string[]; referralCode: string; credit: number;
   diet?: { vegan: boolean; gf: boolean; avoid: string[] };
-  perks?: { birthdayTreat: boolean; passDrink: boolean; credit: number; canUseInvite: boolean; tier?: "bronze" | "silver" | "gold" };
+  perks?: { birthdayTreat: boolean; passDrink: boolean; credit: number; canUseInvite: boolean; tier?: "bronze" | "silver" | "gold"; student?: boolean; studentUntil?: string | null };
 };
 
 /** The group order this browser is adding to (hostToken only for the person who started it) */

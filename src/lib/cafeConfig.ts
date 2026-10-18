@@ -3,9 +3,10 @@ import "server-only";
 import { getSetting, setSetting } from "./db";
 import { DEFAULT_CONFIG, MAIN_BRANCH, applyConfig, cafeConfig, parseDate, toDateStr, type Branch, type CafeConfig, type Closure, type DayHours } from "./cafe";
 import { DEFAULT_HAPPY_HOUR, type HappyHour } from "./pricing";
+import { DEFAULT_LAST_HOUR, type LastHour } from "./cafe";
 import type { Category } from "./menu";
 
-export type FullConfig = CafeConfig & { happyHour: HappyHour; branches: Branch[] };
+export type FullConfig = CafeConfig & { happyHour: HappyHour; branches: Branch[]; lastHour: LastHour };
 export const MAX_BRANCHES = 4;
 const CATS: Category[] = ["coffee", "tea", "cold", "food", "bakes", "shop"];
 const hour = (v: unknown, lo: number, hi: number) => {
@@ -56,6 +57,18 @@ export function cleanConfig(raw: unknown, current: FullConfig = fullConfig()): F
     if (!cats.length) return { error: "Pick at least one menu section for golden hour." };
     happyHour = { on: h.on === undefined ? happyHour.on : !!h.on, from, to, off: Math.round(off * 100) / 100, cats, days };
   }
+  let lastHour = current.lastHour;
+  if (r.lastHour && typeof r.lastHour === "object") {
+    const l = r.lastHour as Record<string, unknown>;
+    const pct = Number(l.off);
+    const off = Number.isFinite(pct) ? pct / (pct > 1 ? 100 : 1) : lastHour.off;
+    const minutes = Math.round(Number(l.minutes ?? lastHour.minutes));
+    if (!(off > 0 && off <= 0.9)) return { error: "The last-hour discount should be between 1% and 90%." };
+    if (!(minutes >= 15 && minutes <= 180)) return { error: "The last-hour deal can start 15 to 180 minutes before closing." };
+    const cats = Array.isArray(l.cats) ? (l.cats.filter((c) => CATS.includes(c as Category)) as Category[]) : lastHour.cats;
+    if (!cats.length) return { error: "Pick at least one menu section for the last-hour deal." };
+    lastHour = { on: l.on === undefined ? lastHour.on : !!l.on, off: Math.round(off * 100) / 100, minutes, cats };
+  }
   let branches = current.branches;
   if (Array.isArray(r.branches)) {
     const out: Branch[] = [];
@@ -82,19 +95,19 @@ export function cleanConfig(raw: unknown, current: FullConfig = fullConfig()): F
     if (!out.some((b) => b.id === "main")) out.unshift(current.branches.find((b) => b.id === "main") ?? MAIN_BRANCH);
     branches = out;
   }
-  return { hours, closures, happyHour, branches };
+  return { hours, closures, happyHour, branches, lastHour };
 }
 
 export function fullConfig(): FullConfig {
   const c = cafeConfig() as CafeConfig & { happyHour?: HappyHour };
-  return { hours: c.hours, closures: c.closures, happyHour: c.happyHour ?? DEFAULT_HAPPY_HOUR, branches: c.branches?.length ? c.branches : [MAIN_BRANCH] };
+  return { hours: c.hours, closures: c.closures, happyHour: c.happyHour ?? DEFAULT_HAPPY_HOUR, branches: c.branches?.length ? c.branches : [MAIN_BRANCH], lastHour: (c as { lastHour?: LastHour }).lastHour ?? DEFAULT_LAST_HOUR };
 }
 
 /** Read the saved settings into memory (at start-up) */
 export function loadConfig() {
   let saved: Partial<FullConfig> = {};
   try { saved = JSON.parse(getSetting("cafe_config") ?? "{}"); } catch {}
-  applyConfig({ hours: { ...DEFAULT_CONFIG.hours, ...(saved.hours ?? {}) }, closures: saved.closures ?? [], happyHour: { ...DEFAULT_HAPPY_HOUR, ...(saved.happyHour ?? {}) }, branches: saved.branches?.length ? saved.branches : [MAIN_BRANCH] });
+  applyConfig({ hours: { ...DEFAULT_CONFIG.hours, ...(saved.hours ?? {}) }, closures: saved.closures ?? [], happyHour: { ...DEFAULT_HAPPY_HOUR, ...(saved.happyHour ?? {}) }, branches: saved.branches?.length ? saved.branches : [MAIN_BRANCH], lastHour: { ...DEFAULT_LAST_HOUR, ...(saved.lastHour ?? {}) } } as CafeConfig);
   return fullConfig();
 }
 

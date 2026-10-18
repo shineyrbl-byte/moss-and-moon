@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useEscape, useStore } from "./Store";
 import BranchPicker from "./BranchPicker";
+import { isLastHour, lastHour } from "@/lib/cafe";
 import { usePay } from "./Payment";
 import { photo } from "@/lib/menu";
-import { DELIVERY, HAPPY_HOUR, TIP_CHOICES, describeOptions, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
+import { DELIVERY, HAPPY_HOUR, TIP_CHOICES, describeOptions, happyHour, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
 import { STAMPS_FOR_REWARD, hoursOn } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
 
@@ -103,10 +104,12 @@ export default function CartDrawer() {
         birthdayTreat: !!me?.perks?.birthdayTreat && useBirthday,
         passDrink: !!me?.perks?.passDrink && usePass,
         tier: me?.perks?.tier,
+        lastHour: isLastHour(new Date(), branch) ? lastHour() : null,
+        student: !!me?.perks?.student,
         tipPercent: step === "checkout" ? tipPercent : 0,
         delivery,
       }),
-    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step]
+    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step, branch]
   );
   const times = useMemo(() => (step === "checkout" ? pickupTimes(branch) : []), [step, branch]);
   const hasSoldOut = lines.some((l) => soldOut.has(l.itemId) || !find(l.itemId));
@@ -202,11 +205,13 @@ export default function CartDrawer() {
   const summary = (
     <>
       <div className="sum-row"><span>{t("tray.subtotal")}</span><span>{rupees(q.subtotal)}</span></div>
-      {q.happyDiscount > 0 && <div className="sum-row discount"><span>Golden hour (bakes −20%)</span><span>−{rupees(q.happyDiscount)}</span></div>}
+      {q.happyDiscount > 0 && <div className="sum-row discount"><span>Golden hour (−{Math.round(happyHour().off * 100)}%)</span><span>−{rupees(q.happyDiscount)}</span></div>}
       {q.promoDiscount > 0 && <div className="sum-row discount"><span>Promo ({q.promoCode})</span><span>−{rupees(q.promoDiscount)}</span></div>}
       {q.loyaltyDiscount > 0 && <div className="sum-row discount"><span>Free drink reward</span><span>−{rupees(q.loyaltyDiscount)}</span></div>}
       {q.passDiscount > 0 && <div className="sum-row discount"><span>☕ Coffee Pass drink</span><span>−{rupees(q.passDiscount)}</span></div>}
       {q.tierDiscount > 0 && <div className="sum-row discount"><span>{me?.perks?.tier === "gold" ? "🥇 Gold: free upgrades" : "🥈 Silver: free upgrade"}</span><span>−{rupees(q.tierDiscount)}</span></div>}
+      {q.lastHourDiscount > 0 && <div className="sum-row discount"><span>🌙 Last-hour deal (−{Math.round(lastHour().off * 100)}%)</span><span>−{rupees(q.lastHourDiscount)}</span></div>}
+      {q.studentDiscount > 0 && <div className="sum-row discount"><span>🎓 Student (drinks −10%)</span><span>−{rupees(q.studentDiscount)}</span></div>}
       {q.birthdayDiscount > 0 && <div className="sum-row discount"><span>🎂 Birthday treat</span><span>−{rupees(q.birthdayDiscount)}</span></div>}
       {q.creditUsed > 0 && <div className="sum-row discount"><span>💝 Your credit</span><span>−{rupees(q.creditUsed)}</span></div>}
       {q.giftUsed > 0 && <div className="sum-row discount"><span>Gift card</span><span>−{rupees(q.giftUsed)}</span></div>}

@@ -23,7 +23,7 @@ export async function GET() {
   return Response.json({
     signedIn: true,
     pass: { active: !!perks.pass, until: perks.pass?.ends ?? null, usedToday: !!perks.pass && !perks.passDrink, price: PASS.price },
-    perks: { birthdayTreat: perks.birthdayTreat, passDrink: perks.passDrink, credit: perks.credit, canUseInvite: !c.referred_by && orderCount === 0, tier: perks.tier },
+    perks: { birthdayTreat: perks.birthdayTreat, passDrink: perks.passDrink, credit: perks.credit, canUseInvite: !c.referred_by && orderCount === 0, tier: perks.tier, student: perks.student, studentUntil: perks.studentUntil },
     tier: perks.tierInfo,
     customer: { name: c.name, email: c.email, phone: c.phone, birthday: c.birthday, favs: c.favs, referralCode: c.referral_code, credit: c.credit, memberSince: c.created_at, diet: parseDiet(c.diet) },
     stamps: { count: card?.stamps ?? 0, rewardsUsed: card?.rewards_used ?? 0, needed: STAMPS_FOR_REWARD },

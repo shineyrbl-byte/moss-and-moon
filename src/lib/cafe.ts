@@ -5,7 +5,7 @@ export type DayHours = [number, number] | null;
 export type Closure = { date: string; note: string };
 /** Opening hours and holidays. Owners edit these in Admin → Overview; the server keeps
  * the current settings on globalThis and sends them to the browser with every page. */
-export type CafeConfig = { hours: Record<number, DayHours>; closures: Closure[]; happyHour?: unknown; branches?: Branch[] };
+export type CafeConfig = { hours: Record<number, DayHours>; closures: Closure[]; happyHour?: unknown; branches?: Branch[]; lastHour?: unknown };
 
 /** A café location. The main one ("main") uses the café's hours; others can have their own. */
 export type Branch = { id: string; name: string; address: string; hours: Record<number, DayHours> | null; active: boolean };
@@ -16,6 +16,23 @@ export const DEFAULT_CONFIG: CafeConfig = { hours: DEFAULT_HOURS, closures: [] }
 
 export const cafeConfig = (): CafeConfig => (globalThis as { __mmConfig?: CafeConfig }).__mmConfig ?? DEFAULT_CONFIG;
 export const applyConfig = (c: CafeConfig) => void ((globalThis as { __mmConfig?: CafeConfig }).__mmConfig = c);
+
+// ----- last-hour deals: leftover bakes cheaper just before closing -----
+type Cat = "coffee" | "tea" | "cold" | "food" | "bakes" | "shop";
+export type LastHour = { on: boolean; off: number; minutes: number; cats: Cat[] };
+export const DEFAULT_LAST_HOUR: LastHour = { on: true, off: 0.3, minutes: 60, cats: ["bakes"] };
+export const lastHour = (): LastHour => ((cafeConfig().lastHour as LastHour | undefined) ?? DEFAULT_LAST_HOUR);
+/** The deal if it's on right now: the last hour (or however long the owner set) before this branch closes */
+export function isLastHour(now = new Date(), branch?: string | null) {
+  const l = lastHour();
+  if (!l.on || (typeof process !== "undefined" && process.env?.HAPPY_HOUR === "off")) return false;
+  const h = hoursOn(now, branch);
+  if (!h) return false;
+  const mins = now.getHours() * 60 + now.getMinutes();
+  return mins >= h[1] * 60 - l.minutes && mins < h[1] * 60;
+}
+const LH_WORDS: Record<string, string> = { coffee: "coffee", tea: "tea", cold: "cold drinks", food: "food", bakes: "bakes" };
+export const lastHourLabel = (l = lastHour()) => `Last-hour deal · ${Math.round(l.off * 100)}% off ${l.cats.map((c) => LH_WORDS[c] ?? c).join(" & ")} before we close`;
 
 /** Every branch, main first */
 export const allBranches = (): Branch[] => {

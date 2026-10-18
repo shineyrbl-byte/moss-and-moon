@@ -336,6 +336,15 @@ function open() {
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
     CREATE INDEX IF NOT EXISTS support_messages_chat ON support_messages (chat_code, id);
+    CREATE TABLE IF NOT EXISTS wallet_topups (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER NOT NULL,
+      amount INTEGER NOT NULL,
+      bonus INTEGER NOT NULL,
+      paid INTEGER NOT NULL DEFAULT 0,
+      payment_ref TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,
@@ -481,6 +490,9 @@ function open() {
 
   // Newer columns (added safely to databases created by older versions)
   addColumn(db, "orders", "email", "TEXT");
+  addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
+  addColumn(db, "customers", "student_email", "TEXT");
+  addColumn(db, "customers", "student_code", "TEXT"); // sha256 of a pending code, with its expiry
   addColumn(db, "orders", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "bookings", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "waitlist", "branch", "TEXT NOT NULL DEFAULT 'main'");

@@ -81,6 +81,15 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   }
 
+  if (body.kind === "wallet") {
+    const id = Number(code.replace("WALLET-", ""));
+    const t = db.prepare("SELECT customer_id, amount, bonus FROM wallet_topups WHERE id = ? AND paid = 0").get(id) as { customer_id: number; amount: number; bonus: number } | undefined;
+    // Mark it paid first, so a double tap can't add the money twice
+    if (t && db.prepare("UPDATE wallet_topups SET paid = 1, payment_ref = ? WHERE id = ? AND paid = 0").run(v.ref, id).changes)
+      db.prepare("UPDATE customers SET credit = credit + ? WHERE id = ?").run(t.amount + t.bonus, t.customer_id);
+    return Response.json({ ok: true });
+  }
+
   if (body.kind === "catering") {
     if (markCateringPaid(code, v.ref)) {
       const c = getCatering(code)!;

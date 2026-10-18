@@ -1,6 +1,7 @@
 // Prices and drink options. The server uses these same functions to
 // recalculate every order, so prices can't be changed from the browser.
 import type { Category, MenuItem } from "./menu";
+import type { LastHour } from "./cafe";
 
 /** Looks up a menu item by id (from the database on the server, from the loaded menu in the browser) */
 export type FindItem = (id: string) => MenuItem | undefined;
@@ -190,6 +191,8 @@ export type Quote = {
   birthdayDiscount: number; // free bake in your birthday week
   passDiscount: number; // coffee pass: one drink a day
   tierDiscount: number; // silver/gold members: free size upgrades
+  lastHourDiscount: number; // bakes cheaper just before closing
+  studentDiscount: number; // verified students, weekdays
   total: number; // goods after discounts
   creditUsed: number; // account credit (from invites)
   giftUsed: number; // paid from a gift card
@@ -220,6 +223,11 @@ export const isHappyHour = (now = new Date()) => {
   if (typeof process !== "undefined" && process.env?.HAPPY_HOUR === "off") return false;
   return h.on && h.days.includes(now.getDay()) && now.getHours() >= h.from && now.getHours() < h.to;
 };
+// ----- students: 10% off drinks on weekdays, for guests verified with a college email -----
+export const STUDENT = { off: 0.1, days: [1, 2, 3, 4, 5], months: 12 };
+/** College email domains we accept (e.g. name@goa.bits-pilani.ac.in, name@uni.edu) */
+export const isStudentEmail = (email: string) => /@([a-z0-9-]+\.)*(ac\.in|edu|edu\.in|ac\.uk|edu\.au)$/i.test(email.trim());
+
 /** Kept for older code: the golden-hour label and discount right now */
 export const HAPPY_HOUR = { get label() { return happyHourLabel(); }, get off() { return happyHour().off; } };
 
@@ -228,6 +236,8 @@ export const TIP_CHOICES = [0, 5, 10, 15];
 export const PASS = { price: 1499, days: 30, cap: 300, label: "Coffee Pass · one drink a day for 30 days" };
 export const BIRTHDAY_CAP = 250;
 export const REFERRAL_CREDIT = 100;
+/** Coffee wallet top-ups and the bonus each one adds */
+export const WALLET_TOPUPS = [{ amount: 500, bonus: 25 }, { amount: 1000, bonus: 75 }, { amount: 2000, bonus: 200 }];
 export const DELIVERY = { fee: 40, freeOver: 600, minOrder: 200 };
 
 /** What a stored order still needs paid (shared by server and browser) */
@@ -252,6 +262,10 @@ export function quote(
   extra: {
     now?: Date; giftBalance?: number; credit?: number; birthdayTreat?: boolean; passDrink?: boolean;
     tipPercent?: number; tipAmount?: number; delivery?: boolean; tier?: "bronze" | "silver" | "gold";
+    /** The last-hour deal, when it's on right now (the caller checks the branch's hours) */
+    lastHour?: Pick<LastHour, "off" | "cats"> | null;
+    /** A verified student */
+    student?: boolean;
   } = {}
 ): Quote {
   const lines: QuoteLine[] = [];
@@ -295,7 +309,13 @@ export function quote(
   const largeCups = lines.filter((l) => isDrink(l.cat!) && l.opts.size === "large").reduce((s, l) => s + l.qty, 0);
   const tierDiscount = extra.tier === "gold" ? largeCups * upgrade : extra.tier === "silver" ? Math.min(1, largeCups) * upgrade : 0;
 
-  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount - tierDiscount);
+  // Last-hour deal: on anything golden hour hasn't already discounted
+  const lh = extra.lastHour;
+  const lastHourDiscount = lh ? Math.round(lines.filter((l) => lh.cats.includes(l.cat!) && !(isGolden && hh.cats.includes(l.cat!))).reduce((s, l) => s + l.total, 0) * lh.off) : 0;
+  const day = (extra.now ?? new Date()).getDay();
+  const studentDiscount = extra.student && STUDENT.days.includes(day) ? Math.round(lines.filter((l) => isDrink(l.cat!)).reduce((s, l) => s + l.total, 0) * STUDENT.off) : 0;
+
+  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount - tierDiscount - lastHourDiscount - studentDiscount);
   const creditUsed = Math.min(total, Math.max(0, Math.floor(extra.credit ?? 0)));
   const giftUsed = Math.min(total - creditUsed, Math.max(0, Math.floor(extra.giftBalance ?? 0)));
   const deliveryFee = extra.delivery && lines.length ? (total >= DELIVERY.freeOver ? 0 : DELIVERY.fee) : 0;
@@ -306,7 +326,7 @@ export function quote(
         ? Math.round((total * (extra.tipPercent ?? 0)) / 100)
         : 0;
   return {
-    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount, tierDiscount,
+    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount, tierDiscount, lastHourDiscount, studentDiscount,
     total, creditUsed, giftUsed, deliveryFee, tip, due: total - creditUsed - giftUsed + deliveryFee + tip,
   };
 }

@@ -3,6 +3,7 @@
 import "server-only";
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "./db";
 import { DELIVERY, REFERRAL_CREDIT, quote, rupees } from "./pricing";
+import { isLastHour, lastHour } from "./cafe";
 import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, findBranch, hoursOn, toDateStr } from "./cafe";
 import { perksFor } from "./perks";
 import { checkStock, consumeStock } from "./stock";
@@ -103,6 +104,8 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     passDrink: perks.passDrink && body.usePass !== false,
     tipPercent: Number(body.tipPercent) || 0,
     tier: perks.tier,
+    lastHour: isLastHour(new Date(), branch.id) ? lastHour() : null,
+    student: perks.student,
     tipAmount: Number.isFinite(tipAmount) ? tipAmount : undefined,
     delivery: !!delivery,
   });
@@ -116,7 +119,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
 
   // Fully covered by credit / gift card = already paid
   const payStatus = q.due === 0 || opts.prepaid ? "paid" : payMethod === "online" ? "pending" : "unpaid";
-  const usedPerks = [q.passDiscount && "pass", q.birthdayDiscount && "birthday", q.loyaltyDiscount && "stamps", q.creditUsed && "credit", q.tierDiscount && `${perks.tier} upgrade`].filter(Boolean).join(",");
+  const usedPerks = [q.passDiscount && "pass", q.birthdayDiscount && "birthday", q.loyaltyDiscount && "stamps", q.creditUsed && "credit", q.tierDiscount && `${perks.tier} upgrade`, q.lastHourDiscount && "last hour", q.studentDiscount && "student"].filter(Boolean).join(",");
   const code = makeCode("MM", 6); // 1 billion possibilities, so order pages can't be guessed
   db.prepare(
     `INSERT INTO orders (code, name, phone, email, pickup, note, lines, subtotal, discount, total, promo,

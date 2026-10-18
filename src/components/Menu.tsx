@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { CATEGORIES, CATEGORY_ORDER, inTab, photo, type Diet, type MenuTab } from "@/lib/menu";
 import { HAPPY_HOUR, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
+import { isLastHour, lastHourLabel } from "@/lib/cafe";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
 import UsualCard from "./Usual";
@@ -14,6 +15,8 @@ export default function Menu() {
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [happy, setHappy] = useState(false);
   useEffect(() => setHappy(isHappyHour()), []);
+  const [lastNow, setLastNow] = useState(false);
+  useEffect(() => { setLastNow(isLastHour(new Date(), branch)); const t = setInterval(() => setLastNow(isLastHour(new Date(), branch)), 60_000); return () => clearInterval(t); }, [branch]);
   const [cat, setCat] = useState<MenuTab>("all");
   const [diet, setDiet] = useState<Diet[]>([]);
   const [avoid, setAvoid] = useState<Allergen[]>([]);
@@ -53,6 +56,7 @@ export default function Menu() {
         <h2>{t("menu.title1")} <em>{t("menu.title2")}</em></h2>
         <p className="lead">{t("menu.lead")}</p>
         <p className="happy-pill">{happy ? "✨ It's golden hour! " : "☀︎ "}{HAPPY_HOUR.label}</p>
+        {lastNow && <p className="happy-pill" style={{ marginTop: "0.4rem" }}>🌙 {lastHourLabel()}</p>}
       </div>
 
       <UsualCard />
