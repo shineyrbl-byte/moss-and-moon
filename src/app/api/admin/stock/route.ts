@@ -1,3 +1,4 @@
+import { recordPrice } from "@/lib/prices";
 import { db, cleanText, cleanEmail } from "@/lib/db";
 import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { getIngredients } from "@/lib/stock";
@@ -33,7 +34,9 @@ export async function PATCH(req: Request) {
     if (b.cost !== undefined) {
       const c = Number(b.cost);
       if (!(c >= 0 && c <= 10000)) return Response.json({ error: "Cost should be between ₹0 and ₹10,000 per unit." }, { status: 400 });
+      const old = (db.prepare("SELECT cost FROM ingredients WHERE id = ?").get(id) as { cost: number | null } | undefined)?.cost ?? null;
       db.prepare("UPDATE ingredients SET cost = ? WHERE id = ?").run(c, id);
+      if (old !== c) recordPrice(id, c, cleanText(b.price_note, 80) || null, old);
     }
   }
   publish({ type: "menu" });

@@ -42,6 +42,8 @@ import PriceWhatIf from "@/components/admin/PriceWhatIf";
 import MenuEngineering from "@/components/admin/MenuEngineering";
 import MissedSales from "@/components/admin/MissedSales";
 import NoShowLine from "@/components/admin/NoShowLine";
+import UseByCard from "@/components/admin/UseByCard";
+import PriceWatch from "@/components/admin/PriceWatch";
 import ChecklistsTab from "@/components/admin/ChecklistsTab";
 import { useLive } from "@/components/useLive";
 
@@ -433,7 +435,7 @@ export default function AdminPage() {
       {tab === "Menu" && <>{me?.role === "owner" && <SpecialsCard />}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
-      {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
+      {tab === "Stock" && <><UseByCard />{me?.role === "owner" && <PriceWatch />}<StockTab canEdit={me?.role === "owner"} /></>}
       {tab === "Tables & QR" && <TablesQR />}
       {tab === "Events" && <EventsTab canEdit={me?.role === "owner"} />}
       {tab === "Waste" && <WasteTab />}

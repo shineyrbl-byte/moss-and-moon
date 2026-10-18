@@ -1503,3 +1503,29 @@ test("big groups pay a deposit that becomes a gift card; a no-show keeps it", as
   await s.api("/api/bookings", { method: "PATCH", json: { code: b.code, status: "no-show" } });
   assert.equal((await s.api(`/api/giftcards/${b.deposit_card}`)).body.balance, 0);
 });
+
+test("use-by dates: soonest first, expired flagged, used or thrown", async () => {
+  await s.login();
+  const day = (n: number) => { const d = new Date(Date.now() + n * 86_400_000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  assert.equal((await s.api("/api/admin/batches", { method: "POST", json: { name: "Cream", useBy: "2020-01-01" } })).status, 400);
+  await s.api("/api/admin/batches", { method: "POST", json: { name: "Oat milk", amount: "6 cartons", useBy: day(5) } });
+  const r = await s.api("/api/admin/batches", { method: "POST", json: { name: "Croissants", useBy: day(0) } });
+  const list = r.body.batches as { id: number; name: string; state: string }[];
+  assert.deepEqual(list.map((b) => b.name), ["Croissants", "Oat milk"]);
+  assert.equal(list[0].state, "soon");
+  const after = await s.api("/api/admin/batches", { method: "PATCH", json: { id: list[0].id, status: "thrown" } });
+  assert.equal(after.body.batches.length, 1);
+  assert.equal(after.body.stats.thrown, 1);
+});
+
+test("supplier prices: a rise is logged, flagged and costed", async () => {
+  await s.login();
+  const ing = ((await s.api("/api/admin/stock")).body as { id: string; cost: number }[]).find((i) => i.id === "milk-oat")!;
+  assert.equal((await s.api("/api/admin/stock", { method: "PATCH", json: { id: "milk-oat", cost: ing.cost * 1.25, price_note: "new supplier" } })).status, 200);
+  const p = (await s.api("/api/admin/prices")).body as { items: { id: string; change: number; alert: boolean; history: unknown[] }[] };
+  const oat = p.items.find((i) => i.id === "milk-oat")!;
+  assert.equal(oat.alert, true);
+  assert.equal(Math.round(oat.change), 25);
+  assert.equal(oat.history.length, 2);
+  await s.api("/api/admin/stock", { method: "PATCH", json: { id: "milk-oat", cost: ing.cost } });
+});

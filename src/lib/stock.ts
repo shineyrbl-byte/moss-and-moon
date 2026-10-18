@@ -78,7 +78,7 @@ export function needsFor(item: MenuItem, o: Options): Map<string, number> {
   return out;
 }
 
-function totals(lines: QuoteLine[], find: (id: string) => MenuItem | undefined) {
+export function totals(lines: QuoteLine[], find: (id: string) => MenuItem | undefined) {
   const need = new Map<string, number>();
   for (const l of lines) {
     const item = find(l.itemId);

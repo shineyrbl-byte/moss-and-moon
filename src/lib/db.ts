@@ -418,6 +418,23 @@ function open() {
       sent_at TEXT,
       UNIQUE (item_id, email)
     );
+    CREATE TABLE IF NOT EXISTS batches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      amount TEXT,
+      use_by TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      staff_name TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      closed_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS ingredient_prices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ingredient_id TEXT NOT NULL,
+      cost REAL NOT NULL,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,
