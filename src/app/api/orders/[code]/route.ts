@@ -16,7 +16,7 @@ export async function GET(req: Request, { params }: Ctx) {
       `SELECT code, name, pickup, note, lines, subtotal, discount, total, promo, status, created_at,
               pay_method, pay_status, giftcard_used, happy_hour, table_no,
               tip, credit_used, delivery_fee, delivery_address, split_count, perks, group_code,
-              refund_amount, refunded_at, branch
+              refund_amount, refunded_at, branch, arrived_at, arrived_note
        FROM orders WHERE code = ?`
     )
     .get(code.toUpperCase()) as Record<string, unknown> | undefined;

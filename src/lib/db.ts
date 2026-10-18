@@ -624,6 +624,8 @@ function open() {
   addColumn(db, "customers", "student_email", "TEXT");
   addColumn(db, "customers", "student_code", "TEXT"); // sha256 of a pending code, with its expiry
   addColumn(db, "orders", "company_id", "INTEGER");
+  addColumn(db, "orders", "arrived_at", "TEXT");
+  addColumn(db, "orders", "arrived_note", "TEXT");
   addColumn(db, "orders", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "bookings", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "waitlist", "branch", "TEXT NOT NULL DEFAULT 'main'");

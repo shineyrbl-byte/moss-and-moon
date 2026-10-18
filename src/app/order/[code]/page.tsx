@@ -10,9 +10,11 @@ import { rememberOrder } from "@/lib/history";
 import NotifyButton from "@/components/NotifyButton";
 import InstallButton from "@/components/InstallButton";
 import { useLive } from "@/components/useLive";
+import ImHere from "@/components/ImHere";
 import { MakeRegular } from "@/components/RegularOrders";
 
 type Order = {
+  arrived_at?: string | null; arrived_note?: string | null;
   code: string; name: string; pickup: string; note: string; lines: QuoteLine[];
   subtotal: number; discount: number; total: number; promo: string | null; status: OrderStatus; created_at: string;
   pay_method: string; pay_status: "unpaid" | "pending" | "paid" | "refunded"; giftcard_used: number; happy_hour: number; ahead: number; table_no: number | null;
@@ -195,6 +197,7 @@ export default function OrderPage() {
           </span>
           <span className="code">{order.code}</span>
         </div>
+        {!isDelivery && !order.table_no && order.status !== "collected" && <div style={{ marginBottom: "1rem" }}><ImHere code={order.code} arrived={order.arrived_at ?? null} note={order.arrived_note ?? null} onDone={() => setReload((r) => r + 1)} /></div>}
 
         {order.lines.map((l, i) => (
           <div key={i} className="sum-row" style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--line)" }}>

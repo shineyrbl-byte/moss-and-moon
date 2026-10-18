@@ -12,6 +12,7 @@ import RushControl from "@/components/RushControl";
 import { activeBranches, findBranch } from "@/lib/cafe";
 
 type Order = {
+  arrived_at?: string | null; arrived_note?: string | null;
   vip?: boolean;
   branch?: string;
   priority?: number;
@@ -70,15 +71,46 @@ export default function StaffScreen() {
   soundRef.current = sound;
   const lock = useRef<{ release: () => Promise<void> } | null>(null);
 
+  // Taps made while the Wi-Fi was down, sent once it's back (latest status per order)
+  const [pending, setPending] = useState<Record<string, OrderStatus>>({});
+  const [offline, setOffline] = useState(false);
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
+  useEffect(() => { try { setPending(JSON.parse(localStorage.getItem("mm-kds-pending") || "{}")); } catch {} }, []);
+  const savePending = (p: Record<string, OrderStatus>) => { setPending(p); try { localStorage.setItem("mm-kds-pending", JSON.stringify(p)); } catch {} };
+  const flush = useCallback(async () => {
+    const left = { ...pendingRef.current };
+    for (const [code, status] of Object.entries(left)) {
+      try {
+        const r = await fetch(`/api/orders/${code}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+        if (r.ok || r.status === 404 || r.status === 400) delete left[code];
+      } catch { setOffline(true); return; }
+    }
+    savePending(left);
+    setOffline(false);
+  }, []);
+
+  // Back online: send what was saved
+  useEffect(() => {
+    const on = () => { void flush(); };
+    window.addEventListener("online", on);
+    return () => window.removeEventListener("online", on);
+  }, [flush]);
+
   const load = useCallback(async () => {
-    const r = await fetch("/api/orders?active=1");
+    let r: Response;
+    try { r = await fetch("/api/orders?active=1"); } catch { setOffline(true); return; }
+    setOffline(false);
+    if (Object.keys(pendingRef.current).length) void flush();
     if (r.status === 401) return setAuthed(false);
     setAuthed(true);
     const list = (await r.json()) as Order[];
     const ids = new Set(list.map((o) => o.code));
     if (seen.current && [...ids].some((c) => !seen.current!.has(c)) && soundRef.current) beep("order");
     seen.current = ids;
-    setOrders(list.reverse()); // oldest first: first in, first out
+    // Keep showing taps that haven't reached the server yet
+    const p = pendingRef.current;
+    setOrders(list.reverse().map((o) => (p[o.code] ? { ...o, status: p[o.code] } : o)).filter((o) => o.status !== "collected")); // oldest first
 
     const c = await fetch("/api/tables/call").then((x) => (x.ok ? x.json() : [])).catch(() => []);
     const callIds = new Set<number>((c as Call[]).map((x) => x.id));
@@ -93,12 +125,19 @@ export default function StaffScreen() {
     const c = setInterval(() => setNow(Date.now()), 15000);
     return () => { clearInterval(t); clearInterval(c); };
   }, [load]);
-  useLive(authed ? "/api/live?topic=staff" : null, (e) => e.type !== "menu" && load());
+  useLive(authed ? "/api/live?topic=staff" : null, (e) => { if (e.type === "order" && e.action === "here" && soundRef.current) beep("call"); if (e.type !== "menu") load(); });
 
   async function advance(o: Order) {
     const next = ORDER_STEPS[ORDER_STEPS.indexOf(o.status) + 1];
     setOrders((os) => os.map((x) => (x.code === o.code ? { ...x, status: next } : x)).filter((x) => x.status !== "collected"));
-    await fetch(`/api/orders/${o.code}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: next }) });
+    try {
+      const r = await fetch(`/api/orders/${o.code}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: next }) });
+      if (!r.ok && r.status >= 500) throw new Error("server");
+    } catch {
+      // No connection: remember it and send it later
+      savePending({ ...pendingRef.current, [o.code]: next });
+      setOffline(true);
+    }
   }
 
   async function doneCall(c: Call) {
@@ -149,6 +188,13 @@ export default function StaffScreen() {
         </div>
       </header>
 
+      {(offline || Object.keys(pending).length > 0) && (
+        <div className="kds-offline" role="status">
+          {offline ? "📡 No connection. Keep tapping: changes are saved on this tablet" : "↻ Sending saved changes"}
+          {Object.keys(pending).length > 0 && ` · ${Object.keys(pending).length} waiting to send`}
+          {!offline && <button className="link-btn small" onClick={() => void flush()}>Send now</button>}
+        </div>
+      )}
       {branches.length > 1 && (
         <div className="chips" style={{ justifyContent: "flex-start", padding: "0 1rem" }} role="radiogroup" aria-label="Show orders for">
           {[{ id: "all", name: "All branches" }, ...branches].map((b) => <button key={b.id} role="radio" aria-checked={only === b.id} className={`chip ${only === b.id ? "on" : ""}`} onClick={() => pickBranch(b.id)}>{b.name}</button>)}
@@ -187,6 +233,7 @@ export default function StaffScreen() {
                         <li key={i}><b>{l.qty}×</b> <button className="recipe-link" onClick={() => setRecipe({ itemId: l.itemId, note: l.note })} title="How to make it">{l.name}</button>{l.note && <small>{l.note}</small>}</li>
                       ))}
                     </ul>
+                    {o.arrived_at && <p className="ticket-here">👋 Here now{o.arrived_note ? `: ${o.arrived_note}` : ""} · bring it out</p>}
                     {o.note && <p className="ticket-note">📝 {o.note}</p>}
                     <div className="ticket-foot">
                       <span className={`status-tag ${o.pay_status}`}>{o.pay_status === "paid" ? "paid" : o.pay_method === "company" ? "company tab" : o.pay_status === "pending" ? "awaiting payment" : `collect ${rupees(orderDue(o))}`}</span>

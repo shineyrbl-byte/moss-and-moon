@@ -1616,3 +1616,13 @@ test("setup checklist lists what's missing", async () => {
   assert.ok(d.total >= 6 && d.done < d.total);
   assert.equal(d.items.find((i) => i.id === "payments")!.ok, false);
 });
+
+test("I'm here: pickup guests tell the team they've arrived", async () => {
+  const o = await s.api("/api/orders", { method: "POST", json: { name: "Here", phone: "9876500321", lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal((await s.api(`/api/orders/${o.body.code}/here`, { method: "POST", json: { note: "In my car outside: red Swift" } })).status, 200);
+  const v = await s.api(`/api/orders/${o.body.code}`);
+  assert.ok(v.body.arrived_at);
+  assert.equal(v.body.arrived_note, "In my car outside: red Swift");
+  const t = await s.api("/api/orders", { method: "POST", json: { name: "T", table: 2, lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal((await s.api(`/api/orders/${t.body.code}/here`, { method: "POST", json: {} })).status, 400);
+});
