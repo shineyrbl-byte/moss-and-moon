@@ -46,6 +46,12 @@ export async function POST(req: Request) {
       amount = left;
       label = `Order ${c}`;
     }
+  } else if (kind === "drinkgift") {
+    const g = db.prepare("SELECT amount, paid, item_name FROM drink_gifts WHERE code = ?").get(c) as { amount: number; paid: number; item_name: string } | undefined;
+    if (!g) return Response.json({ error: "Gift not found." }, { status: 404 });
+    if (g.paid) return Response.json({ error: "This gift is already paid ✿" }, { status: 409 });
+    amount = g.amount;
+    label = `A ${g.item_name} for a friend`;
   } else if (kind === "ticket") {
     const t = db.prepare("SELECT amount, paid, qty FROM tickets WHERE code = ?").get(c) as { amount: number; paid: number; qty: number } | undefined;
     if (!t) return Response.json({ error: "Ticket not found." }, { status: 404 });

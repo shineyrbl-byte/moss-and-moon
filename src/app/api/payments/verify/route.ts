@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { verifyPayment } from "@/lib/payments";
-import { giftCardEmail, orderPlacedEmail, passEmail, sendLater, ticketEmail } from "@/lib/email";
+import { drinkGiftEmail, drinkGiftSentEmail, giftCardEmail, orderPlacedEmail, passEmail, sendLater, ticketEmail } from "@/lib/email";
 import { EVENTS } from "@/lib/cafe";
 import { orderDue, PASS, type QuoteLine } from "@/lib/pricing";
 import { paidShares } from "@/lib/orderMoney";
@@ -39,6 +39,18 @@ export async function POST(req: Request) {
     const o = db.prepare("SELECT total, giftcard_used, credit_used, tip, delivery_fee FROM orders WHERE code = ?").get(code) as OrderRow;
     if (paidShares(code) >= orderDue(o)) orderPaid(code, null);
     else publish({ type: "order", code, action: "paid" });
+    return Response.json({ ok: true });
+  }
+
+  if (body.kind === "drinkgift") {
+    const r = db.prepare("UPDATE drink_gifts SET paid = 1, payment_ref = ? WHERE code = ? AND paid = 0").run(v.ref, code);
+    if (r.changes) {
+      const g = db.prepare("SELECT code, item_name, from_name, from_email, to_name, to_email, message, expires FROM drink_gifts WHERE code = ?").get(code) as {
+        code: string; item_name: string; from_name: string; from_email: string | null; to_name: string; to_email: string | null; message: string | null; expires: string;
+      };
+      if (g.to_email) sendLater(g.to_email, ...drinkGiftEmail(g));
+      if (g.from_email) sendLater(g.from_email, ...drinkGiftSentEmail(g));
+    }
     return Response.json({ ok: true });
   }
 

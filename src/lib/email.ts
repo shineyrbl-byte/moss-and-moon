@@ -140,6 +140,24 @@ export function receiptEmail(o: { code: string; name: string }) {
   ] as const;
 }
 
+export function drinkGiftEmail(g: { code: string; item_name: string; from_name: string; to_name: string; message: string | null; expires: string }) {
+  return [
+    `${g.from_name} bought you a ${g.item_name} ☕`,
+    `<p>Hi ${esc(g.to_name)}! <b>${esc(g.from_name)}</b> has bought you a <b>${esc(g.item_name)}</b> at Moss &amp; Moon.</p>
+     ${g.message ? `<p style="font-family:Georgia,serif;font-style:italic;font-size:18px;border-left:3px solid #e391a8;padding-left:12px">“${esc(g.message)}”</p>` : ""}
+     <p>Claim it from the link whenever you like (until ${esc(g.expires)}), or show the QR code at the counter.</p>
+     ${button(`${SITE()}/d/${g.code}`, "Open my drink")}`,
+  ] as const;
+}
+
+export function drinkGiftSentEmail(g: { code: string; item_name: string; to_name: string }) {
+  return [
+    `Your gift for ${g.to_name} is ready to send 🎁`,
+    `<p>You bought ${esc(g.to_name)} a <b>${esc(g.item_name)}</b>. If you haven't sent them the link yet, here it is:</p>
+     ${button(`${SITE()}/d/${g.code}`, "The gift link")}<p style="color:#8a6a5c;font-size:13px">It's valid for 90 days.</p>`,
+  ] as const;
+}
+
 export function passEmail(p: { ends: string }) {
   const until = new Date(p.ends + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long" });
   return [`Your Coffee Pass is active ☕`, `<p>One drink a day is on us until <b>${until}</b>. Just sign in when you order, and it comes off automatically.</p>${button(`${SITE()}/#menu`, "Order today's drink")}`] as const;

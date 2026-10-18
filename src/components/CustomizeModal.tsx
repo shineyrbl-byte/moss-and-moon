@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useEscape, useStore } from "./Store";
 import DrinkCup from "./DrinkCup";
+import { useRouter } from "next/navigation";
 import { photo } from "@/lib/menu";
 import { MILKS, SHOT_PRICE, SIZES, SWEETS, TEMPS, defaultOptions, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
 
@@ -11,6 +12,7 @@ export default function CustomizeModal() {
   const { customizing: item, setCustomizing, add, toast, soldOut } = useStore();
   const [opts, setOpts] = useState<Options>({});
   const [qty, setQty] = useState(1);
+  const router = useRouter();
 
   useEffect(() => {
     if (item) {
@@ -85,6 +87,16 @@ export default function CustomizeModal() {
               <strong>{qty}</strong>
               <button onClick={() => setQty((q) => Math.min(20, q + 1))} aria-label="One more">+</button>
             </div>
+            <span className="modal-actions">
+            {drink && !out && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => { close(); router.push(`/gift-a-drink?item=${encodeURIComponent(item.id)}&o=${encodeURIComponent(JSON.stringify(opts))}`); }}
+                title="Buy this drink for a friend"
+              >
+                🎁 Gift it
+              </button>
+            )}
             <button
               className="btn btn-pink"
               disabled={out}
@@ -96,6 +108,7 @@ export default function CustomizeModal() {
             >
               {out ? "Sold out" : `Add · ${rupees(unit * qty)}`}
             </button>
+            </span>
           </div>
         </div>
       </div>

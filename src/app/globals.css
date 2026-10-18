@@ -868,3 +868,16 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .promo-form { padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; }
 .promo-row { padding: 0.9rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .promo-live { background: color-mix(in srgb, var(--sage) 30%, var(--surface)); }
+
+/* ============ Buy a friend a coffee ============ */
+.gift-drink-preview { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1rem; margin-top: 1.2rem; }
+.gift-drink-photo { position: relative; width: 96px; height: 96px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
+.gift-drink-photo img, .drink-gift-photo img { object-fit: cover; }
+.gift-sent { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; background: var(--pink-soft); }
+.drink-gift { padding: 0; overflow: hidden; }
+.drink-gift-photo { position: relative; height: 220px; }
+.drink-gift-body { padding: 1.4rem 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.gift-msg { font-family: var(--font-serif), serif; font-style: italic; font-size: 1.35rem; border-left: 3px solid var(--pink-fill); padding-left: 0.9rem; margin: 0.4rem 0; }
+.drink-gift-qr { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 1rem; border-top: 2px dashed var(--line); background: var(--surface-2); }
+.drink-gift-qr img { background: #fff; border-radius: 10px; padding: 5px; }
+.modal-actions { display: flex; gap: 0.5rem; align-items: center; }

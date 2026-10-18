@@ -618,3 +618,28 @@ test("promo codes: owner creates them, limits and dates are enforced", async () 
   const list = (await s.api("/api/admin/promos")).body as { code: string; uses: number }[];
   assert.equal(list.find((p) => p.code === "TWICE")!.uses, 1);
 });
+
+test("buy a friend a coffee: pay once, claim once, straight into the queue", async () => {
+  assert.equal((await s.api("/api/drink-gifts", { method: "POST", json: { itemId: "cookie", fromName: "A", toName: "B" } })).status, 400, "drinks only");
+  const r = await s.api("/api/drink-gifts", { method: "POST", json: { itemId: "rose-latte", opts: { milk: "oat", size: "large" }, fromName: "Asha", toName: "Ravi", toEmail: "ravi@example.com", message: "For Monday" } });
+  assert.equal(r.status, 200);
+  const { code, amount } = r.body as { code: string; amount: number };
+  assert.equal(amount, 250 + 30 + 40, "price includes oat milk and large");
+  assert.equal((await s.api(`/api/drink-gifts/${code}/redeem`, { method: "POST", json: {} })).status, 404, "unpaid gifts can't be claimed");
+  await s.api("/api/payments/start", { method: "POST", json: { kind: "drinkgift", code } });
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "drinkgift", code, demo: true } });
+
+  const g = (await s.api(`/api/drink-gifts/${code}`)).body as { paid: boolean; fromName: string; to_email?: string };
+  assert.equal(g.paid, true);
+  assert.equal(g.to_email, undefined, "emails stay private");
+  const claim = await s.api(`/api/drink-gifts/${code}/redeem`, { method: "POST", json: { name: "Ravi" } });
+  assert.equal(claim.status, 200);
+  const orderCode = (claim.body as { orderCode: string }).orderCode;
+  const o = (await s.api(`/api/orders/${orderCode}`)).body as { pay_status: string; lines: { name: string; opts: { milk: string } }[] };
+  assert.equal(o.pay_status, "paid");
+  assert.equal(o.lines[0].opts.milk, "oat");
+  assert.equal((await s.api(`/api/drink-gifts/${code}/redeem`, { method: "POST", json: {} })).status, 409, "only once");
+  await s.login();
+  const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string }[] };
+  assert.ok(mail.emails.some((e) => e.to_email === "ravi@example.com"), "friend got an email");
+});

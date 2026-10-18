@@ -34,7 +34,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   const payMethod = body.payMethod === "online" ? "online" : "counter";
   if (!name) return Response.json({ error: "Please tell us your name." }, { status: 400 });
   // Phone is optional when ordering from a table (it's only needed for the stamp card)
-  if (phone.length !== 10 && !(table && !phone)) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
+  if (phone.length !== 10 && !(table && !phone) && !(opts.prepaid && !phone)) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
   if (body.email && !email) return Response.json({ error: "That email doesn't look right." }, { status: 400 });
   if (body.delivery && !table && delivery.length < 10) return Response.json({ error: "Please add your full delivery address." }, { status: 400 });
 

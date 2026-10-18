@@ -258,6 +258,25 @@ function open() {
       note TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS drink_gifts (
+      code TEXT PRIMARY KEY,
+      item_id TEXT NOT NULL,
+      item_name TEXT NOT NULL,
+      opts TEXT NOT NULL,
+      note TEXT NOT NULL DEFAULT '',
+      amount INTEGER NOT NULL,
+      from_name TEXT NOT NULL,
+      from_email TEXT,
+      to_name TEXT NOT NULL,
+      to_email TEXT,
+      message TEXT,
+      paid INTEGER NOT NULL DEFAULT 0,
+      payment_ref TEXT,
+      order_code TEXT,
+      redeemed_at TEXT,
+      expires TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
