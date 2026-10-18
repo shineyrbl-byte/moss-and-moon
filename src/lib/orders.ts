@@ -10,6 +10,7 @@ import { menuLookup } from "./menuStore";
 import type { currentCustomer } from "./account";
 import { publish } from "./live";
 import { orderPlacedEmail, referralRewardEmail, sendLater } from "./email";
+import { readyEstimate } from "./orderTiming";
 import { getGroup, isHost } from "./groups";
 import { checkPromo, usePromo } from "./promos";
 import { withCosts } from "./profit";
@@ -138,7 +139,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
 
   // Online orders get their email after payment goes through
   if (email && payStatus !== "pending")
-    sendLater(email, ...orderPlacedEmail({ code, name, lines: q.lines, total: q.due, pickup, paid: payStatus === "paid" }));
+    sendLater(email, ...orderPlacedEmail({ code, name, lines: q.lines, total: q.due, pickup, paid: payStatus === "paid", ready: readyEstimate({ code, pickup, table_no: table, delivery_address: delivery || null }).label, table, delivery: delivery || null }));
 
   publish({ type: "order", code, action: "new" });
   const badges = me ? newBadges(me) : [];

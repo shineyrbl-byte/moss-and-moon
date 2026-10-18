@@ -6,6 +6,7 @@
 // them in the staff dashboard (Emails tab). Nothing breaks either way.
 import "server-only";
 import nodemailer, { type Transporter } from "nodemailer";
+import dns from "node:dns/promises";
 import { db } from "./db";
 import { rupees, type QuoteLine } from "./pricing";
 import { reportError } from "./errors";
@@ -24,18 +25,30 @@ export function emailProvider(): "resend" | "gmail" | null {
 }
 export const emailMode = () => (emailProvider() ? "live" : "preview");
 
-let mailer: Transporter | null = null;
-function gmail() {
+let mailer: { t: Transporter; ip: string; at: number } | null = null;
+/**
+ * Gmail's mail server, always over IPv4: Railway can't reach IPv6 addresses, and Gmail's name
+ * often looks up to one first ("connect ENETUNREACH 2607:…"). We look up the IPv4 address
+ * ourselves and keep checking Gmail's certificate against smtp.gmail.com.
+ */
+async function gmail() {
   // (The automated tests swap in a pretend mail server that just records the message)
-  mailer ??= process.env.SMTP_TEST_JSON === "1"
-    ? nodemailer.createTransport({ jsonTransport: true })
-    : nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "") },
-      });
-  return mailer;
+  if (process.env.SMTP_TEST_JSON === "1") return (mailer ??= { t: nodemailer.createTransport({ jsonTransport: true }), ip: "", at: Date.now() }).t;
+  if (mailer && Date.now() - mailer.at < 10 * 60_000) return mailer.t;
+  const [ip] = await dns.resolve4("smtp.gmail.com");
+  mailer = {
+    ip,
+    at: Date.now(),
+    t: nodemailer.createTransport({
+      host: ip,
+      port: 465,
+      secure: true,
+      tls: { servername: "smtp.gmail.com" },
+      auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "") },
+      connectionTimeout: 15_000,
+    }),
+  };
+  return mailer.t;
 }
 
 export type Attachment = { filename: string; content: Uint8Array };
@@ -48,7 +61,7 @@ export async function sendEmail(to: string, subject: string, body: string, attac
   const outbox = Number(row.lastInsertRowid);
   if (emailProvider() === "gmail") {
     try {
-      await gmail().sendMail({
+      await (await gmail()).sendMail({
         from: { name: NAME(), address: process.env.GMAIL_USER! },
         to,
         subject,
@@ -57,6 +70,7 @@ export async function sendEmail(to: string, subject: string, body: string, attac
       });
       db.prepare("UPDATE outbox SET status = 'sent', error = NULL WHERE id = ?").run(outbox);
     } catch (e) {
+      mailer = null; // look the address up again next time
       const err = String(e instanceof Error ? e.message : e).slice(0, 300);
       db.prepare("UPDATE outbox SET status = 'failed', error = ? WHERE id = ?").run(err, outbox);
       if (!opts.skipErrorReport) reportError("email", `Email didn't send (Gmail): ${err}`, `to: ${to}\nsubject: ${subject}`);
@@ -105,11 +119,18 @@ const button = (href: string, label: string) =>
 const codeBox = (code: string) =>
   `<p style="font-family:monospace;font-size:22px;letter-spacing:3px;background:#fadbe3;display:inline-block;padding:8px 16px;border-radius:10px;margin:8px 0">${esc(code)}</p>`;
 
-export function orderPlacedEmail(o: { code: string; name: string; lines: QuoteLine[]; total: number; pickup: string; paid: boolean }) {
+export function orderPlacedEmail(o: { code: string; name: string; lines: QuoteLine[]; total: number; pickup: string; paid: boolean; ready?: string; table?: number | null; delivery?: string | null }) {
   const rows = o.lines.map((l) => `<tr><td style="padding:6px 0">${l.qty} × ${esc(l.name)}${l.note ? `<br><small style="color:#8a6a5c">${esc(l.note)}</small>` : ""}</td><td style="text-align:right">${rupees(l.total)}</td></tr>`).join("");
+  const when = o.ready ?? (o.pickup === "asap" ? "as soon as possible" : o.pickup);
+  const where = o.delivery
+    ? `On its way to <b>${esc(o.delivery)}</b> by <b>${esc(when)}</b>.`
+    : o.table
+      ? `We'll bring it to <b>table ${o.table}</b> at <b>${esc(when)}</b>.`
+      : `Ready to pick up at <b>${esc(when)}</b>.`;
   return [
-    `Thanks for your order, ${o.name}!`,
-    `<p>We've got it and it's in the queue. Pickup: <b>${o.pickup === "asap" ? "as soon as possible" : esc(o.pickup)}</b>.</p>
+    `Order confirmed, ${o.name} ☕ ${o.delivery ? "Arriving" : "Ready"} ${o.ready ? `at ${o.ready.replace(/^about /, "~")}` : "soon"}`,
+    `<p>We've got your order and it's in the queue. ${where}</p>
+     <p style="color:#8a6a5c;font-size:13px;margin-top:-4px">We'll email you again the moment it's ready.</p>
      ${codeBox(o.code)}
      <table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:14px">${rows}
      <tr><td style="padding-top:10px;border-top:1px dashed #ead9cc"><b>${o.paid ? "Paid" : "Pay at pickup"}</b></td><td style="text-align:right;padding-top:10px;border-top:1px dashed #ead9cc"><b>${rupees(o.total)}</b></td></tr></table>
@@ -117,13 +138,58 @@ export function orderPlacedEmail(o: { code: string; name: string; lines: QuoteLi
   ] as const;
 }
 
-export function orderReadyEmail(o: { code: string; name: string }) {
-  return [`Your order is ready, ${o.name} 🌸`, `<p>Come grab it from the pink counter. Show this code:</p>${codeBox(o.code)}${button(`${SITE()}/order/${o.code}`, "View order")}`] as const;
+export function orderReadyEmail(o: { code: string; name: string; table_no?: number | null; delivery_address?: string | null }): readonly [string, string] {
+  if (o.delivery_address)
+    return [`Your order is on its way, ${o.name} 🛵`, `<p>It's left the café and should be with you in about 20 minutes. Keep your phone close!</p>${codeBox(o.code)}${button(`${SITE()}/order/${o.code}`, "Track it")}`] as const;
+  if (o.table_no)
+    return [`Your order is ready, ${o.name} 🌸`, `<p>We're bringing it to <b>table ${o.table_no}</b> right now.</p>${codeBox(o.code)}`] as const;
+  return [`Your order is ready, ${o.name} 🌸`, `<p>Come grab it from the pink counter while it's fresh. Show this code:</p>${codeBox(o.code)}${button(`${SITE()}/order/${o.code}`, "View order")}`] as const;
+}
+
+export function pickupReminderEmail(o: { code: string; name: string; lines: QuoteLine[] }) {
+  return [
+    `Your ${o.lines[0]?.name ?? "order"} is waiting for you ☕`,
+    `<p>Hi ${esc(o.name)}, your order has been ready for a little while and we'd love you to have it while it's at its best.</p>
+     ${codeBox(o.code)}
+     <p style="color:#8a6a5c;font-size:13px">Running late? No problem, we'll keep it safe at the pink counter. Iced drinks may need fresh ice; just ask.</p>
+     ${button(`${SITE()}/order/${o.code}`, "View order")}`,
+  ] as const;
 }
 
 export function bookingEmail(b: { code: string; name: string; date: string; time: string; guests: number }) {
   const when = new Date(b.date + "T00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
-  return [`Your table is booked, ${b.name}`, `<p>Table for <b>${b.guests}</b> on <b>${when}</b> at <b>${b.time}</b>. We'll keep the window seat warm if we can.</p>${codeBox(b.code)}<p style="color:#8a6a5c;font-size:13px">Show this code when you arrive. Need to change plans? Just call us.</p>`] as const;
+  return [`Your table is booked, ${b.name} ✿ ${when}, ${b.time}`, `<p>Table for <b>${b.guests}</b> on <b>${when}</b> at <b>${b.time}</b>. We'll keep the window seat warm if we can.</p>${codeBox(b.code)}<p style="color:#8a6a5c;font-size:13px">Show this code when you arrive. The attached invite adds it to your calendar, and we'll send a reminder on the day. Need to change plans? Just call us.</p>`] as const;
+}
+
+export function bookingReminderEmail(b: { code: string; name: string; time: string; guests: number }) {
+  return [
+    `See you at ${b.time} today, ${b.name} 🌿`,
+    `<p>Just a little reminder: your table for <b>${b.guests}</b> is booked for <b>${esc(b.time)}</b> today at 14 Willow Lane.</p>${codeBox(b.code)}
+     <p style="color:#8a6a5c;font-size:13px">Can't make it? Please call so someone on the waitlist can have the table.</p>`,
+  ] as const;
+}
+
+/** A calendar invite (.ics) for a booking, so it shows up in Google/Apple/Outlook calendars */
+export function bookingInvite(b: { code: string; name: string; date: string; time: string; guests: number }) {
+  const start = `${b.date.replace(/-/g, "")}T${b.time.replace(":", "")}00`;
+  const endD = new Date(`${b.date}T${b.time}:00`);
+  endD.setMinutes(endD.getMinutes() + 90);
+  const p = (n: number) => String(n).padStart(2, "0");
+  const end = `${endD.getFullYear()}${p(endD.getMonth() + 1)}${p(endD.getDate())}T${p(endD.getHours())}${p(endD.getMinutes())}00`;
+  const ics = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Moss & Moon//Bookings//EN", "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${b.code}@mossandmoon`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
+    `DTSTART;TZID=Asia/Kolkata:${start}`,
+    `DTEND;TZID=Asia/Kolkata:${end}`,
+    `SUMMARY:Table for ${b.guests} at Moss & Moon`,
+    "LOCATION:Moss & Moon\\, 14 Willow Lane",
+    `DESCRIPTION:Booking ${b.code}. Show this code when you arrive.`,
+    "BEGIN:VALARM", "TRIGGER:-PT1H", "ACTION:DISPLAY", "DESCRIPTION:Moss & Moon in an hour", "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR",
+  ].join("\r\n");
+  return { filename: `moss-and-moon-${b.code}.ics`, content: new TextEncoder().encode(ics) };
 }
 
 export function rsvpEmail(e: { title: string; date: string; time: string; name: string }) {

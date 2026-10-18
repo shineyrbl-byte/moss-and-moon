@@ -3,6 +3,7 @@
 import "server-only";
 import { db } from "./db";
 import { sendEmail } from "./email";
+import { demoBaristaOn } from "./orderFlow";
 import type { QuoteLine } from "./pricing";
 
 const SITE = () => process.env.SITE_URL || "http://localhost:3000";
@@ -21,14 +22,17 @@ export function reviewAskEmail(o: { code: string; name: string; lines: QuoteLine
   ] as const;
 }
 
-/** Called every few minutes: ask about orders collected 2+ hours ago (daytime only) */
+/** Called every minute: ask about orders collected 2+ hours ago (daytime only).
+ * While the demo barista runs the café (a demo or test), it asks after 20 minutes instead. */
 export async function reviewTick(now = new Date()) {
   if (now.getHours() < 9 || now.getHours() >= 21) return;
+  const wait = demoBaristaOn() ? 20 : 120;
   const due = db
     .prepare(
       `SELECT code, name, email, lines FROM orders
        WHERE status = 'collected' AND review_asked = 0 AND email IS NOT NULL
-         AND created_at <= datetime('now','localtime','-2 hours') AND created_at >= datetime('now','localtime','-2 days')
+         AND COALESCE(collected_at, created_at) <= datetime('now','localtime','-${wait} minutes')
+         AND created_at >= datetime('now','localtime','-2 days')
        ORDER BY id LIMIT 20`
     )
     .all() as { code: string; name: string; email: string; lines: string }[];

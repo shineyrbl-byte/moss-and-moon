@@ -1,5 +1,5 @@
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "@/lib/db";
-import { bookingEmail, sendLater, waitlistEmail } from "@/lib/email";
+import { bookingEmail, bookingInvite, sendLater, waitlistEmail } from "@/lib/email";
 import { slotsFor, parseDate, toDateStr, TABLES_PER_SLOT } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { limited, tooMany } from "@/lib/rateLimit";
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
   const code = makeCode("TB", 6);
   db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(code, name, phone, email || null, date, time, guests, note);
-  if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests }));
+  if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests }), [bookingInvite({ code, name, date, time, guests })]);
   return Response.json({ code, name, date, time, guests });
 }
 

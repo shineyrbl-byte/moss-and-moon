@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { paymentMode, verifyPayment } from "@/lib/payments";
+import { readyEstimate } from "@/lib/orderTiming";
 import { drinkGiftEmail, drinkGiftSentEmail, giftCardEmail, orderPlacedEmail, passEmail, sendLater, ticketEmail } from "@/lib/email";
 import { EVENTS } from "@/lib/cafe";
 import { orderDue, PASS, type QuoteLine } from "@/lib/pricing";
@@ -8,14 +9,15 @@ import { publish } from "@/lib/live";
 import { toDateStr } from "@/lib/cafe";
 import { limited, tooMany } from "@/lib/rateLimit";
 
-type OrderRow = { code: string; name: string; email: string | null; lines: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pickup: string };
+type OrderRow = { code: string; name: string; email: string | null; lines: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pickup: string; table_no: number | null; delivery_address: string | null };
 
 function orderPaid(code: string, ref: string | null) {
   const r = db.prepare("UPDATE orders SET pay_status = 'paid', payment_ref = COALESCE(?, payment_ref) WHERE code = ? AND pay_status != 'paid'").run(ref, code);
   if (!r.changes) return;
   publish({ type: "order", code, action: "paid" });
-  const o = db.prepare("SELECT code, name, email, lines, total, giftcard_used, credit_used, tip, delivery_fee, pickup FROM orders WHERE code = ?").get(code) as OrderRow;
-  if (o.email) sendLater(o.email, ...orderPlacedEmail({ code, name: o.name, lines: JSON.parse(o.lines) as QuoteLine[], total: orderDue(o), pickup: o.pickup, paid: true }));
+  const o = db.prepare("SELECT code, name, email, lines, total, giftcard_used, credit_used, tip, delivery_fee, pickup, table_no, delivery_address FROM orders WHERE code = ?").get(code) as OrderRow;
+  if (o.email)
+    sendLater(o.email, ...orderPlacedEmail({ code, name: o.name, lines: JSON.parse(o.lines) as QuoteLine[], total: orderDue(o), pickup: o.pickup, paid: true, ready: readyEstimate(o).label, table: o.table_no, delivery: o.delivery_address }));
 }
 
 // Confirm a payment went through, then mark the order / share / gift card / pass as paid.

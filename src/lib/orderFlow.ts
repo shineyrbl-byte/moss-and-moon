@@ -16,8 +16,8 @@ export function setOrderStatus(code: string, status: OrderStatus, staffId?: numb
 
   if (status === "ready") {
     db.prepare("UPDATE orders SET ready_at = datetime('now','localtime') WHERE code = ?").run(code);
-    const o = db.prepare("SELECT code, name, email, table_no FROM orders WHERE code = ?").get(code) as {
-      code: string; name: string; email: string | null; table_no: number | null;
+    const o = db.prepare("SELECT code, name, email, table_no, delivery_address FROM orders WHERE code = ?").get(code) as {
+      code: string; name: string; email: string | null; table_no: number | null; delivery_address: string | null;
     };
     if (o.email) sendLater(o.email, ...orderReadyEmail(o));
     void notifyOrder(o.code, {
@@ -28,7 +28,8 @@ export function setOrderStatus(code: string, status: OrderStatus, staffId?: numb
   }
   // Collected + paying at the counter = paid
   if (status === "collected") {
-    db.prepare("UPDATE orders SET pay_status = 'paid' WHERE code = ? AND pay_status = 'unpaid'").run(code);
+    db.prepare("UPDATE orders SET pay_status = 'paid', collected_at = COALESCE(collected_at, datetime('now','localtime')) WHERE code = ? AND pay_status = 'unpaid'").run(code);
+    db.prepare("UPDATE orders SET collected_at = COALESCE(collected_at, datetime('now','localtime')) WHERE code = ?").run(code);
     void emailReceipt(code);
   }
   return true;
