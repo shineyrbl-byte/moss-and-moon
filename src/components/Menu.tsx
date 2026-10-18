@@ -6,6 +6,7 @@ import { HAPPY_HOUR, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
 import UsualCard from "./Usual";
+import VoiceOrder from "./VoiceOrder";
 
 export default function Menu() {
   const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t } = useStore();
@@ -39,6 +40,7 @@ export default function Menu() {
       </div>
 
       <UsualCard />
+      <VoiceOrder />
 
       <div className="menu-tools">
         <label className="search">

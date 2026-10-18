@@ -746,3 +746,15 @@ test("regular orders: set up, skip, pause, and they place themselves", async () 
   assert.equal((await s.api("/api/account/schedules", { method: "DELETE", json: { id } })).status, 200);
   await s.api("/api/account/logout", { method: "POST" });
 });
+
+test("voice order endpoint returns tray lines with full options", async () => {
+  const r = await s.api("/api/voice-order", { method: "POST", json: { text: "two iced honey oat lattes and a butter croissant" } });
+  assert.equal(r.status, 200);
+  const d = r.body as { by: string; lines: { itemId: string; qty: number; opts: { temp?: string; size?: string } }[] };
+  assert.equal(d.by, "simple");
+  assert.equal(d.lines[0].itemId, "honey-oat-latte");
+  assert.equal(d.lines[0].qty, 2);
+  assert.equal(d.lines[0].opts.temp, "iced");
+  assert.equal(d.lines[0].opts.size, "regular", "defaults filled in");
+  assert.equal(d.lines[1].itemId, "croissant");
+});

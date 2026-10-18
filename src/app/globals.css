@@ -917,3 +917,10 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .regular-form { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; margin-top: 1rem; width: 100%; }
 .regular-row { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap; padding: 0.7rem 0; border-top: 1px solid var(--line); }
 .regular-row p { margin: 0.15rem 0 0; }
+
+/* ============ Voice ordering ============ */
+.voice { display: flex; align-items: center; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
+.voice-btn { display: inline-flex; align-items: center; gap: 0.45rem; border-radius: 999px; padding: 0.5rem 1rem; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: 0.9rem; }
+.voice-btn.listening { background: var(--pink-fill); color: var(--on-pink); border-color: var(--pink-fill); animation: pulseRing 1.6s infinite; }
+.voice-btn.thinking { opacity: 0.7; }
+.voice-hint { flex-basis: 100%; text-align: center; }

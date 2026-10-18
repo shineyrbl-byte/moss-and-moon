@@ -181,3 +181,25 @@ test("badges and streaks", async () => {
   assert.ok(has("kind-soul"));
   assert.deepEqual(badges.find((b) => b.id === "matcha-lover")!.progress, { have: 4, need: 5 });
 });
+
+test("voice orders: numbers, options and several items", async () => {
+  const { parseVoiceOrder } = await import("../src/lib/voiceParse.ts");
+  const menu = [
+    { id: "honey-oat-latte", name: "Honey Oat Latte", cat: "coffee" },
+    { id: "rose-latte", name: "Rose Pistachio Latte", cat: "coffee" },
+    { id: "croissant", name: "Butter Croissant", cat: "bakes" },
+    { id: "chai", name: "Rose Masala Chai", cat: "tea" },
+    { id: "americano", name: "Long Black", cat: "coffee" },
+  ];
+  const a = parseVoiceOrder("Two iced oat rose lattes and a croissant please", menu);
+  assert.deepEqual(a.lines.map((l) => [l.itemId, l.qty]), [["rose-latte", 2], ["croissant", 1]]);
+  assert.equal(a.lines[0].opts.temp, "iced");
+  assert.equal(a.lines[0].opts.milk, "oat");
+  const b = parseVoiceOrder("one large masala chai with no sugar, plus my usual", menu);
+  assert.equal(b.lines[0].itemId, "chai");
+  assert.equal(b.lines[0].opts.size, "large");
+  assert.equal(b.lines[0].opts.sweet, "none");
+  assert.equal(b.usual, true);
+  assert.deepEqual(parseVoiceOrder("a unicorn frappe", menu).lines, []);
+  assert.equal(parseVoiceOrder("a long black, extra shot", menu).lines[0].opts.shot, true);
+});
