@@ -48,7 +48,7 @@ export default function Hero() {
         <div className="blob b2" />
         <span className="moon">☾</span>
         <div className="arch-img">
-          <Image src={photo("1600093463592-8e36ae95ef56", 1200)} alt="" fill priority sizes="(max-width: 900px) 70vw, 35vw" style={{ objectFit: "cover" }} />
+          <Image src={photo("1600093463592-8e36ae95ef56", 1200)} alt="" fill preload fetchPriority="high" quality={60} sizes="(max-width: 900px) 70vw, 35vw" style={{ objectFit: "cover" }} />
         </div>
         <div className="round-img">
           <Image src={photo("1569864358642-9d1684040f43", 600)} alt="" fill sizes="240px" style={{ objectFit: "cover" }} />

@@ -38,7 +38,7 @@ export default function SeasonLayer({ season: fromServer }: { season: SeasonId |
   return (
     <>
       {!hideBanner && (
-        <div className="season-banner" role="note">
+        <aside className="season-banner" aria-label={`${s.name} special`}>
           <span>{s.banner}</span>
           {drink && !drink.soldOut && (
             <button className="season-cta" onClick={() => setCustomizing(drink)}>Try it</button>
@@ -53,7 +53,7 @@ export default function SeasonLayer({ season: fromServer }: { season: SeasonId |
           >
             ✕
           </button>
-        </div>
+        </aside>
       )}
       <div className={`season-sky sky-${s.particle}`} aria-hidden>
         {dots.map((d, i) => (

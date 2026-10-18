@@ -18,8 +18,9 @@ import { currentSeason } from "@/lib/seasonStore";
 // Pages read the live menu from the database, so render them on each request
 export const dynamic = "force-dynamic";
 
-const serif = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "600"], style: ["normal", "italic"], variable: "--font-serif" });
-const sans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-sans" });
+// Variable fonts: one file covers every weight, so fewer downloads before the page shows
+const serif = Cormorant_Garamond({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-serif" });
+const sans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
 
 const SITE = process.env.SITE_URL || "http://localhost:3000";
 const DESCRIPTION = "Hand-poured coffee, pink lattes and warm bakes. Order ahead, book a table, collect stamps.";
