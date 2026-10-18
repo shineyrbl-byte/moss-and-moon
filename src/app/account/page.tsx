@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import BadgesCard from "@/components/BadgesCard";
 import { useCallback, useEffect, useState } from "react";
 import { PASS, REFERRAL_CREDIT, orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { usePay } from "@/components/Payment";
@@ -175,6 +176,8 @@ function Profile({ acc, reload }: { acc: Account; reload: () => Promise<void> })
       {acc.perks?.birthdayTreat && (
         <div className="reward-banner" style={{ marginTop: "1.2rem" }}>🎂 <b>Happy birthday week!</b> A free bake (up to ₹250) comes off your next order automatically.</div>
       )}
+
+      <BadgesCard />
 
       <div className="account-grid">
         <PassCard acc={acc} reload={reload} />

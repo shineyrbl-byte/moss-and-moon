@@ -165,3 +165,19 @@ test("rota helpers: weeks, hours and overlaps", async () => {
   assert.equal(overlaps({ start: "07:00", end: "13:00" }, { start: "13:00", end: "18:00" }), false, "back-to-back is fine");
   assert.equal(fmtTime("13:30"), "1:30pm");
 });
+
+test("badges and streaks", async () => {
+  const { computeBadges, streaks } = await import("../src/lib/badges.ts");
+  const o = (created_at: string, lines = [{ itemId: "matcha", name: "Ceremonial Matcha", cat: "tea", qty: 1 }], tip = 0) => ({ created_at, lines, tip });
+  const orders = [o("2026-10-14 07:30:00"), o("2026-10-15 07:45:00"), o("2026-10-16 07:10:00", undefined, 20), o("2026-10-18 20:00:00")];
+  assert.deepEqual(streaks(orders, "2026-10-18"), { current: 1, best: 3 });
+  assert.deepEqual(streaks(orders, "2026-10-20"), { current: 0, best: 3 }, "a gap breaks the streak");
+  const { badges } = computeBadges(orders, { reviews: 0, tickets: 0, giftsSent: 1 }, "2026-10-18");
+  const has = (id: string) => badges.find((b) => b.id === id)!.earned;
+  assert.ok(has("first-sip"));
+  assert.ok(has("streak-3"));
+  assert.ok(has("early-bird"), "three orders before 8am");
+  assert.ok(!has("night-owl"));
+  assert.ok(has("kind-soul"));
+  assert.deepEqual(badges.find((b) => b.id === "matcha-lover")!.progress, { have: 4, need: 5 });
+});

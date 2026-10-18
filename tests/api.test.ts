@@ -690,3 +690,18 @@ test("waste log: staff log leftovers, see the cost and tomorrow's bake plan", as
   assert.ok(d.plan.some((p) => p.itemId === "croissant"));
   assert.equal((await s.api("/api/admin/waste", { method: "DELETE", json: { id: e.id } })).status, 200);
 });
+
+test("badges: a signed-in guest earns them as they order", async () => {
+  const email = "badges@example.com";
+  const sent = await s.api("/api/account/code", { method: "POST", json: { email } });
+  await s.api("/api/account/verify", { method: "POST", json: { email, code: (sent.body as { demoCode: string }).demoCode } });
+  const first = await s.api("/api/orders", { method: "POST", json: { name: "Badger", phone: "9000013131", lines: [{ itemId: "matcha", qty: 1 }] } });
+  const got = (first.body as { newBadges: { id: string }[] }).newBadges.map((b) => b.id);
+  assert.ok(got.includes("first-sip"), "first order earns First sip");
+  const second = await s.api("/api/orders", { method: "POST", json: { name: "Badger", phone: "9000013131", lines: [{ itemId: "matcha", qty: 1 }] } });
+  assert.ok(!(second.body as { newBadges: { id: string }[] }).newBadges.some((b) => b.id === "first-sip"), "only announced once");
+  const b = (await s.api("/api/account/badges")).body as { badges: { id: string; earned: boolean }[]; streak: { current: number } };
+  assert.equal(b.streak.current, 1);
+  assert.ok(b.badges.find((x) => x.id === "first-sip")!.earned);
+  await s.api("/api/account/logout", { method: "POST" });
+});

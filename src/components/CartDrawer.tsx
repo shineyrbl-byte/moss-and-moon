@@ -172,6 +172,7 @@ export default function CartDrawer() {
       } else {
         toast(d.usedReward ? "Order placed — your free drink is on us! 🎉" : "Order placed! ☕");
       }
+      for (const b of (d.newBadges ?? []) as { icon: string; name: string }[]) setTimeout(() => toast(`${b.icon} New badge: ${b.name}!`), 1200);
       router.push(`/order/${d.code}`);
     } catch {
       setError("Couldn't reach the café. Please try again.");

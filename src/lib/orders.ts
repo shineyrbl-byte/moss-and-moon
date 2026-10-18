@@ -13,6 +13,7 @@ import { orderPlacedEmail, referralRewardEmail, sendLater } from "./email";
 import { getGroup, isHost } from "./groups";
 import { checkPromo, usePromo } from "./promos";
 import { withCosts } from "./profit";
+import { newBadges } from "./badgeStore";
 
 type Customer = Awaited<ReturnType<typeof currentCustomer>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,7 +141,8 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     sendLater(email, ...orderPlacedEmail({ code, name, lines: q.lines, total: q.due, pickup, paid: payStatus === "paid" }));
 
   publish({ type: "order", code, action: "new" });
-  return Response.json({ code, total: q.total, due: q.due, usedReward, perks: usedPerks, needsPayment: payStatus === "pending" });
+  const badges = me ? newBadges(me) : [];
+  return Response.json({ code, total: q.total, due: q.due, usedReward, perks: usedPerks, needsPayment: payStatus === "pending", newBadges: badges });
 }
 
 /** A friend who invited this guest gets their credit when the guest's first order lands */

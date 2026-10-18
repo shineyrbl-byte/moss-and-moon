@@ -903,3 +903,14 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .profit-col:hover .profit-bar, .profit-col:focus-visible .profit-bar { filter: brightness(1.12); }
 .waste-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.5rem 1rem; margin-top: 0.8rem; }
 .waste-item { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--line); }
+
+/* ============ Badges ============ */
+.streak { font-size: 0.9rem; padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--surface-2); }
+.streak.on { background: var(--pink-soft); font-weight: 500; }
+.badges { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.7rem; margin-top: 0.8rem; }
+.badge-tile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.2rem; padding: 0.8rem 0.6rem; border-radius: 16px; border: 1px dashed var(--line); }
+.badge-tile .badge-icon { font-size: 1.8rem; filter: grayscale(1); opacity: 0.45; }
+.badge-tile.earned { border-style: solid; background: var(--pink-soft); }
+.badge-tile.earned .badge-icon { filter: none; opacity: 1; }
+.badge-meter { width: 80%; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 0.2rem; }
+.badge-meter span { display: block; height: 100%; background: var(--pink-fill); border-radius: 3px; }
