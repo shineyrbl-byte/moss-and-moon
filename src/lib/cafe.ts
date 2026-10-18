@@ -92,3 +92,44 @@ export const GALLERY = [
   { img: "1509042239860-f550ce710b93", caption: "plants & pours" },
   { img: "1559925393-8be0ec4767c8", caption: "the terrace" },
 ];
+
+// ---------- "How busy is it?" ----------
+export type BusyLevel = "quiet" | "cosy" | "packed";
+
+/** A typical café day (0–1 per hour), used until there's enough order history */
+export const TYPICAL_DAY: Record<number, number> = {
+  7: 0.35, 8: 0.7, 9: 0.8, 10: 0.55, 11: 0.45, 12: 0.6, 13: 0.65, 14: 0.4, 15: 0.35, 16: 0.55, 17: 0.6, 18: 0.5, 19: 0.45, 20: 0.4, 21: 0.3,
+};
+
+export const busyLevel = (score: number): BusyLevel => (score < 0.34 ? "quiet" : score < 0.67 ? "cosy" : "packed");
+
+export const BUSY_LABEL: Record<BusyLevel, { icon: string; text: string }> = {
+  quiet: { icon: "🌿", text: "Quiet" },
+  cosy: { icon: "☕", text: "Cosy" },
+  packed: { icon: "🔥", text: "Packed" },
+};
+
+export const hourLabel = (h: number) => (h === 0 ? "12am" : h === 12 ? "12pm" : h > 12 ? `${h - 12}pm` : `${h}am`);
+
+/**
+ * Expected busyness for each open hour today (0–1).
+ * history: average orders per hour on this weekday (null when there isn't enough history yet).
+ */
+export function forecastDay(day: number, history: Record<number, number> | null, bookedGuests: Record<number, number> = {}) {
+  const [open, close] = HOURS[day];
+  const peak = history ? Math.max(1, ...Object.values(history)) : 1;
+  const out: { hour: number; score: number }[] = [];
+  for (let h = open; h < close; h++) {
+    const base = history ? (history[h] ?? 0) / peak : (TYPICAL_DAY[h] ?? 0.3);
+    const seats = Math.min(1, (bookedGuests[h] ?? 0) / (TABLES_PER_SLOT * 4));
+    out.push({ hour: h, score: Math.min(1, Math.round((base * 0.75 + seats * 0.25) * 100) / 100) });
+  }
+  return out;
+}
+
+/** The quietest hour still to come today */
+export function quietestHour(forecast: { hour: number; score: number }[], now = new Date()) {
+  const ahead = forecast.filter((f) => f.hour > now.getHours());
+  if (!ahead.length) return null;
+  return ahead.reduce((best, f) => (f.score < best.score ? f : best)).hour;
+}

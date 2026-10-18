@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { HOURS_LABEL, openStatus, toDateStr } from "@/lib/cafe";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
+import BusyMeter from "./BusyMeter";
 
 type Slot = { time: string; left: number };
 type Booked = { code: string; name: string; date: string; time: string; guests: number };
@@ -76,6 +77,7 @@ export default function Visit() {
         {status && (
           <div className="status-pill"><span className={`dot ${status.open ? "" : "closed"}`} />{status.text}</div>
         )}
+        <BusyMeter />
         <div className="map">
           <iframe title="Map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=73.8%2C15.38%2C73.84%2C15.4&layer=mapnik" />
         </div>

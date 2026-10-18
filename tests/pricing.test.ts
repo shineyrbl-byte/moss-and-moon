@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { quote, unitPrice, cleanOptions, defaultOptions, describeOptions } from "../src/lib/pricing.ts";
-import { slotsFor, openStatus, demoStatus } from "../src/lib/cafe.ts";
+import { slotsFor, openStatus, demoStatus, forecastDay, quietestHour, busyLevel } from "../src/lib/cafe.ts";
 import type { MenuItem } from "../src/lib/menu.ts";
 
 const latte: MenuItem = { id: "latte", cat: "coffee", name: "Latte", desc: "", price: 200, img: "x", traits: { energy: 1, sweet: 1, temp: "hot" } };
@@ -122,4 +122,21 @@ test("demo barista moves orders along over time", () => {
   assert.equal(demoStatus(15, false), "collected");
   assert.equal(demoStatus(15, true), "ready", "deliveries stay on their way a bit longer");
   assert.equal(demoStatus(25, true), "collected");
+});
+
+test("busy forecast covers opening hours and finds the quiet time", () => {
+  const monday = forecastDay(1, null);
+  assert.equal(monday[0].hour, 7);
+  assert.equal(monday.at(-1)!.hour, 19);
+  assert.ok(monday.every((f) => f.score >= 0 && f.score <= 1));
+  const at9 = new Date("2026-10-19T09:10:00");
+  assert.equal(quietestHour(monday, at9), 15, "mid-afternoon is quietest on a typical day");
+  const lateNight = new Date("2026-10-19T23:00:00");
+  assert.equal(quietestHour(monday, lateNight), null);
+  assert.equal(busyLevel(0.1), "quiet");
+  assert.equal(busyLevel(0.5), "cosy");
+  assert.equal(busyLevel(0.9), "packed");
+  // Bookings push an hour up
+  const booked = forecastDay(1, null, { 15: 24 });
+  assert.ok(booked.find((f) => f.hour === 15)!.score > monday.find((f) => f.hour === 15)!.score);
 });

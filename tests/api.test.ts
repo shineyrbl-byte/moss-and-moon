@@ -417,3 +417,12 @@ test("group orders: friends add drinks, host checks out, each pays their part", 
   assert.equal(paid.people.find((p) => p.person === "Ravi")!.paid, ravi.share);
   assert.equal((await s.api("/api/payments/start", { method: "POST", json: { kind: "share", code: orderCode, person: "Ravi" } })).status, 409, "can't pay twice");
 });
+
+test("busy meter reports a level and today's forecast", async () => {
+  const r = await s.api("/api/busy");
+  assert.equal(r.status, 200);
+  const b = r.body as { open: boolean; level: string | null; forecast: { hour: number }[] };
+  assert.ok(b.forecast.length > 5);
+  if (b.open) assert.ok(["quiet", "cosy", "packed"].includes(String(b.level)));
+  else assert.equal(b.level, null);
+});

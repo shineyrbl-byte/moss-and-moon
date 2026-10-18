@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { photo } from "@/lib/menu";
 import { openStatus } from "@/lib/cafe";
+import { BusyBadge } from "./BusyMeter";
 import { useStore } from "./Store";
 
 export default function Hero() {
@@ -22,9 +23,12 @@ export default function Hero() {
   return (
     <section className="section hero" id="top">
       <div>
-        <div className="status-pill" style={{ visibility: status ? "visible" : "hidden" }}>
-          <span className={`dot ${status?.open ? "" : "closed"}`} />
-          {status?.text ?? "…"}
+        <div className="row" style={{ alignItems: "center", gap: "0.5rem" }}>
+          <div className="status-pill" style={{ visibility: status ? "visible" : "hidden" }}>
+            <span className={`dot ${status?.open ? "" : "closed"}`} />
+            {status?.text ?? "…"}
+          </div>
+          <BusyBadge />
         </div>
         <h1>
           {t("hero.title1")} <br />
