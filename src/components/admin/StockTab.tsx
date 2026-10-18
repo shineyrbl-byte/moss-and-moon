@@ -1,9 +1,10 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import ShopStock from "./ShopStock";
+import Reorders from "./Reorders";
 import { useStore } from "../Store";
 
-type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number; cost: number | null };
+type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number; cost: number | null; supplier_name?: string | null; supplier_email?: string | null; reorder_qty?: number | null };
 // Costs are stored per g / ml / piece, but shown per kg / litre / piece
 const PER: Record<string, { label: string; x: number }> = { g: { label: "₹ per kg", x: 1000 }, ml: { label: "₹ per litre", x: 1000 }, pcs: { label: "₹ each", x: 1 } };
 const send = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -45,6 +46,7 @@ export default function StockTab({ canEdit }: { canEdit: boolean }) {
   return (
     <>
       <ShopStock />
+      <Reorders canEdit={canEdit} ingredients={items} onChange={load} />
       {low.length > 0 && <div className="reward-banner" style={{ marginBottom: "1rem" }}>⚠️ Running low: {low.map((i) => `${i.name} (${fmt(i.qty, i.unit)})`).join(", ")}</div>}
       <p className="muted small" style={{ marginBottom: "1rem" }}>
         Every order uses these up (size, milk choice and extra shots included). When something runs out, the drinks that need it show as sold out automatically.

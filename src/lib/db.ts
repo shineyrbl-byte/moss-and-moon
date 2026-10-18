@@ -381,6 +381,15 @@ function open() {
       clock_out TEXT,
       auto INTEGER NOT NULL DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS purchase_orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ingredient_id TEXT NOT NULL,
+      qty REAL NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      sent_at TEXT,
+      received_at TEXT
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -426,6 +435,9 @@ function open() {
   addColumn(db, "bookings", "reminded", "INTEGER NOT NULL DEFAULT 0");
   addColumn(db, "orders", "invoice_no", "TEXT");
   addColumn(db, "subscribers", "unsubscribed_at", "TEXT");
+  addColumn(db, "ingredients", "supplier_name", "TEXT");
+  addColumn(db, "ingredients", "supplier_email", "TEXT");
+  addColumn(db, "ingredients", "reorder_qty", "REAL");
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };

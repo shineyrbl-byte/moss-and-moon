@@ -5,7 +5,7 @@ import { db } from "./db";
 import type { MenuItem } from "./menu";
 import { isDrink, type Options, type QuoteLine } from "./pricing";
 
-export type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number; cost: number | null };
+export type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number; cost: number | null; supplier_name?: string | null; supplier_email?: string | null; reorder_qty?: number | null };
 
 // cost: rough Indian wholesale prices in ₹ per g or ml (owners can change them in Admin → Stock)
 export const DEFAULT_INGREDIENTS: Ingredient[] = [

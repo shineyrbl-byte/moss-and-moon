@@ -1061,3 +1061,20 @@ test("timesheets: staff clock in and out; tips are split by hours worked", async
   assert.ok(rep.tips >= 60);
   assert.equal(rep.people.reduce((t, p) => t + p.tip, 0), rep.tips, "every rupee of tips is shared out");
 });
+
+test("supplier reorders: low stock makes a draft; approving emails the supplier; receiving restocks", async () => {
+  await s.login();
+  await s.api("/api/admin/stock", { method: "PATCH", json: { id: "matcha", supplier_name: "Uji Tea Co", supplier_email: "orders@uji.example", reorder_qty: 1000 } });
+  const draft = await s.api("/api/admin/reorders", { method: "POST", json: { ingredientId: "matcha" } });
+  assert.equal(draft.status, 200);
+  assert.equal((await s.api("/api/admin/reorders", { method: "POST", json: { ingredientId: "matcha" } })).status, 409, "one open order at a time");
+  const id = (draft.body as { id: number }).id;
+  const before = ((await s.api("/api/admin/stock")).body as { id: string; qty: number }[]).find((i) => i.id === "matcha")!.qty;
+  assert.equal((await s.api("/api/admin/reorders", { method: "PATCH", json: { id, action: "receive" } })).status, 400, "send it first");
+  assert.equal((await s.api("/api/admin/reorders", { method: "PATCH", json: { id, action: "send", qty: 2000 } })).status, 200);
+  const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string; subject: string }[] };
+  assert.ok(mail.emails.some((e) => e.to_email === "orders@uji.example" && e.subject.includes("2 kg Matcha powder")));
+  assert.equal((await s.api("/api/admin/reorders", { method: "PATCH", json: { id, action: "receive" } })).status, 200);
+  const after = ((await s.api("/api/admin/stock")).body as { id: string; qty: number }[]).find((i) => i.id === "matcha")!.qty;
+  assert.equal(after - before, 2000);
+});
