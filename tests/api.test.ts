@@ -766,3 +766,21 @@ test("menu items come with allergens and calories", async () => {
   assert.equal(croissant.kcal, 280);
   assert.ok(items.filter((i) => i.kcal !== undefined).length >= 20);
 });
+
+test("noticeboard: notes wait for a barista, no links, max 3 a day", async () => {
+  const pin = (text: string) => s.api("/api/notices", { method: "POST", json: { kind: "lost", name: "Tara", text } });
+  assert.equal((await pin("short")).status, 400);
+  assert.equal((await pin("See my site https://spam.example for deals")).status, 400, "no links");
+  assert.equal((await pin("Found a blue umbrella by the window seat")).status, 200);
+  const publicBefore = (await s.api("/api/notices")).body as { text: string }[];
+  assert.ok(!publicBefore.some((n) => n.text.includes("blue umbrella")), "hidden until approved");
+  await pin("Looking for a study buddy for exams");
+  await pin("Swapping a copy of Norwegian Wood");
+  assert.equal((await pin("A fourth note on the same day")).status, 429);
+  await s.login();
+  const all = (await s.api("/api/notices?all=1")).body as { id: number; text: string; status: string }[];
+  const umbrella = all.find((n) => n.text.includes("blue umbrella"))!;
+  assert.equal(umbrella.status, "pending");
+  await s.api("/api/notices", { method: "PATCH", json: { id: umbrella.id, status: "approved" } });
+  assert.ok(((await s.api("/api/notices")).body as { text: string }[]).some((n) => n.text.includes("blue umbrella")));
+});

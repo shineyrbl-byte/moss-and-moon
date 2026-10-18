@@ -4,6 +4,7 @@ import Menu from "@/components/Menu";
 import Quiz from "@/components/Quiz";
 import Gallery from "@/components/Gallery";
 import Events from "@/components/Events";
+import NoticeboardTeaser from "@/components/NoticeboardTeaser";
 import Reviews from "@/components/Reviews";
 import Visit from "@/components/Visit";
 import Newsletter from "@/components/Newsletter";
@@ -25,6 +26,7 @@ export default function Home() {
       <Gallery />
       <Events />
       <Reviews />
+      <NoticeboardTeaser />
       <Visit />
       <Newsletter />
     </>

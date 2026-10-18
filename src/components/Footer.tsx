@@ -24,6 +24,7 @@ export default function Footer() {
             <li><Link href="/loyalty">{t("nav.stamps")}</Link></li>
             <li><Link href="/gift-cards">{t("nav.gift")}</Link></li>
             <li><Link href="/gift-a-drink">Buy a friend a coffee</Link></li>
+            <li><Link href="/noticeboard">Noticeboard</Link></li>
             <li><Link href="/orders">My orders</Link></li>
           </ul>
         </div>

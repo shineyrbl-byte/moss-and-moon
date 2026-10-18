@@ -303,6 +303,17 @@ function open() {
       last_order TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS notices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kind TEXT NOT NULL,
+      name TEXT NOT NULL,
+      text TEXT NOT NULL,
+      contact TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      ip_hash TEXT,
+      expires TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
