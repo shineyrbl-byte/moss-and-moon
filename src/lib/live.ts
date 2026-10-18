@@ -6,7 +6,8 @@ import { EventEmitter } from "node:events";
 export type LiveEvent =
   | { type: "order"; code: string; status?: string; action: "new" | "status" | "paid" }
   | { type: "menu" }
-  | { type: "call"; table: number; action: "new" | "done" };
+  | { type: "call"; table: number; action: "new" | "done" }
+  | { type: "group"; code: string };
 
 const g = globalThis as unknown as { __mmLive?: EventEmitter };
 const bus = g.__mmLive ?? (g.__mmLive = new EventEmitter().setMaxListeners(1000));

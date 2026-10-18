@@ -12,7 +12,12 @@ export type Me = {
   perks?: { birthdayTreat: boolean; passDrink: boolean; credit: number; canUseInvite: boolean };
 };
 
+/** The group order this browser is adding to (hostToken only for the person who started it) */
+export type GroupRef = { code: string; person: string; host: string; hostToken?: string; checkout?: boolean };
+
 type Store = {
+  group: GroupRef | null;
+  setGroup: (g: GroupRef | null) => void;
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (k: TKey) => string;
@@ -54,6 +59,7 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
   const [favs, setFavs] = useState<Set<string>>(new Set());
   const [me, setMe] = useState<Me | null>(null);
   const [lang, setLangState] = useState<Lang>("en");
+  const [group, setGroupState] = useState<GroupRef | null>(null);
   const favsSynced = useRef(false);
   const toastId = useRef(0);
 
@@ -70,6 +76,27 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
     if (!loaded) return;
     try { localStorage.setItem(STORAGE, JSON.stringify(lines)); } catch {}
   }, [lines, loaded]);
+
+  // Group order: remembered in this browser until it's placed
+  useEffect(() => {
+    try {
+      const g = JSON.parse(localStorage.getItem("mm-group") || "null");
+      if (g?.code && g?.person) setGroupState(g);
+    } catch {}
+  }, []);
+  const setGroup = useCallback((g: GroupRef | null) => {
+    setGroupState(g);
+    try {
+      if (g) {
+        localStorage.setItem("mm-group", JSON.stringify(g));
+        // Remember who you were in each group, so you can still pay your part later
+        const all = JSON.parse(localStorage.getItem("mm-groups") || "{}");
+        all[g.code] = { person: g.person, host: g.host, hostToken: g.hostToken };
+        localStorage.setItem("mm-groups", JSON.stringify(all));
+      }
+      else localStorage.removeItem("mm-group");
+    } catch {}
+  }, []);
 
   // Keep the menu (and sold-out flags) fresh
   const refreshSoldOut = useCallback(() => {
@@ -175,6 +202,8 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
 
   const value = useMemo<Store>(
     () => ({
+      group,
+      setGroup,
       lang,
       setLang,
       t,
@@ -200,7 +229,7 @@ export function StoreProvider({ children, initialMenu }: { children: React.React
       favs,
       toggleFav,
     }),
-    [lang, setLang, t, me, refreshMe, menu, find, table, setTable, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
+    [group, setGroup, lang, setLang, t, me, refreshMe, menu, find, table, setTable, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
   );
 
   return (

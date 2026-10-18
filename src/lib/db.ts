@@ -193,6 +193,55 @@ function open() {
       qty REAL NOT NULL DEFAULT 0,
       low_at REAL NOT NULL DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS groups (
+      code TEXT PRIMARY KEY,
+      host_name TEXT NOT NULL,
+      host_token TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      order_code TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS group_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      group_code TEXT NOT NULL,
+      person TEXT NOT NULL,
+      item_id TEXT NOT NULL,
+      opts TEXT NOT NULL,
+      qty INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS tickets (
+      code TEXT PRIMARY KEY,
+      event_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      qty INTEGER NOT NULL,
+      amount INTEGER NOT NULL,
+      paid INTEGER NOT NULL DEFAULT 0,
+      payment_ref TEXT,
+      checked_in INTEGER NOT NULL DEFAULT 0,
+      checked_in_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS shifts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      staff_id INTEGER NOT NULL,
+      day TEXT NOT NULL,
+      start TEXT NOT NULL,
+      end TEXT NOT NULL,
+      note TEXT
+    );
+    CREATE TABLE IF NOT EXISTS error_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      signature TEXT UNIQUE NOT NULL,
+      source TEXT NOT NULL,
+      message TEXT NOT NULL,
+      detail TEXT,
+      count INTEGER NOT NULL DEFAULT 1,
+      alerted_at TEXT,
+      first_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      last_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -224,6 +273,11 @@ function open() {
   addColumn(db, "orders", "perks", "TEXT"); // e.g. "pass,birthday"
   addColumn(db, "orders", "staff_id", "INTEGER");
   addColumn(db, "reviews", "photo", "TEXT");
+  addColumn(db, "orders", "refund_amount", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "orders", "refund_ref", "TEXT");
+  addColumn(db, "orders", "refunded_at", "TEXT");
+  addColumn(db, "orders", "group_code", "TEXT");
+  addColumn(db, "order_payments", "person", "TEXT");
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };

@@ -8,6 +8,7 @@ import { currentCustomer } from "@/lib/account";
 import { publish } from "@/lib/live";
 import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { orderPlacedEmail, referralRewardEmail, sendLater } from "@/lib/email";
+import { getGroup, isHost } from "@/lib/groups";
 
 // Place an order (pickup, table or delivery)
 export async function POST(req: Request) {
@@ -40,7 +41,14 @@ export async function POST(req: Request) {
       return Response.json({ error: "Please pick a pickup time during today's opening hours." }, { status: 400 });
   }
 
-  const raw = Array.isArray(body.lines) ? body.lines.slice(0, 30) : [];
+  // Checking out a group order: only the host can, and only once
+  const group = body.groupCode ? getGroup(String(body.groupCode)) : undefined;
+  if (body.groupCode) {
+    if (!group || !isHost(group, body.hostToken)) return Response.json({ error: "Only the person who started the group can check out." }, { status: 403 });
+    if (group.status !== "open") return Response.json({ error: "This group order has already been placed." }, { status: 409 });
+  }
+
+  const raw = Array.isArray(body.lines) ? body.lines.slice(0, group ? 60 : 30) : [];
   const me = await currentCustomer();
   const find = menuLookup();
   if (raw.some((l: { itemId: string }) => find(l.itemId)?.soldOut))
@@ -89,6 +97,11 @@ export async function POST(req: Request) {
   );
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
   consumeStock(q.lines);
+  if (group) {
+    db.prepare("UPDATE groups SET status = 'placed', order_code = ? WHERE code = ?").run(code, group.code);
+    db.prepare("UPDATE orders SET group_code = ? WHERE code = ?").run(group.code, code);
+    publish({ type: "group", code: group.code });
+  }
 
   if (me) {
     if (q.creditUsed) db.prepare("UPDATE customers SET credit = credit - ? WHERE id = ?").run(q.creditUsed, me.id);

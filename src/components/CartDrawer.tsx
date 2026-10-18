@@ -26,7 +26,7 @@ function pickupTimes() {
 const post = (url: string, body: unknown) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export default function CartDrawer() {
-  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me, t } = useStore();
+  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me, t, group, setGroup } = useStore();
   const pay = usePay();
   const router = useRouter();
   const [step, setStep] = useState<"tray" | "checkout">("tray");
@@ -115,6 +115,26 @@ export default function CartDrawer() {
     setCode("");
   }
 
+  const addingToGroup = !!group && !group.checkout;
+
+  // Group order (not the host's checkout): send these items to the shared tray
+  async function addToGroup() {
+    if (!group) return;
+    setBusy(true);
+    setError("");
+    const r = await post(`/api/groups/${group.code}/items`, { person: group.person, lines: lines.map(({ itemId, opts, qty }) => ({ itemId, opts, qty })) });
+    const d = await r.json();
+    setBusy(false);
+    if (!r.ok) {
+      if (r.status === 404 || r.status === 409) setGroup(null);
+      return setError(d.error);
+    }
+    clear();
+    close();
+    toast("Added to the group order 👯");
+    router.push(`/g/${group.code}`);
+  }
+
   async function placeOrder(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -130,6 +150,7 @@ export default function CartDrawer() {
         usePass,
         useBirthday,
         ...(delivery ? { delivery: { address } } : {}),
+        ...(group?.checkout ? { groupCode: group.code, hostToken: group.hostToken } : {}),
         lines: lines.map(({ itemId, opts, qty }) => ({ itemId, opts, qty })),
       });
       const d = await r.json();
@@ -139,6 +160,7 @@ export default function CartDrawer() {
       }
       try { localStorage.setItem("mm-me", JSON.stringify({ name: form.name, phone: form.phone, email: form.email })); } catch {}
       rememberOrder(d.code);
+      if (group?.checkout) setGroup(null);
       clear();
       setPromo(null);
       setGift(null);
@@ -190,6 +212,12 @@ export default function CartDrawer() {
         {step === "tray" ? (
           <>
             <div className="drawer-body">
+              {group && (
+                <div className="reward-banner group-note" style={{ marginTop: "0.8rem" }}>
+                  👯 {group.checkout ? <>Checking out <b>{group.host}&apos;s group order</b> for everyone.</> : <>Adding to <b>{group.host}&apos;s group order</b> as {group.person}.</>}{" "}
+                  <Link href={`/g/${group.code}`} className="link-btn" onClick={close}>See the group</Link>
+                </div>
+              )}
               {table && <div className="reward-banner table-note" style={{ marginTop: "0.8rem" }}>🪑 Ordering for <b>table {table}</b> — we&apos;ll bring it over.</div>}
               {q.happyHour && <div className="reward-banner" style={{ marginTop: "0.8rem" }}>✨ {HAPPY_HOUR.label}</div>}
               {!lines.length && (
@@ -238,7 +266,15 @@ export default function CartDrawer() {
             </div>
             <div className="drawer-foot">
               {summary}
-              <button className="btn full" disabled={!lines.length || hasSoldOut} onClick={() => setStep("checkout")}>{t("tray.checkout")}</button>
+              {error && addingToGroup && <p className="error small">{error}</p>}
+              {addingToGroup ? (
+                <button className="btn btn-pink full" disabled={!lines.length || hasSoldOut || busy} onClick={addToGroup}>{busy ? "Adding…" : "Add to the group order 👯"}</button>
+              ) : (
+                <button className="btn full" disabled={!lines.length || hasSoldOut} onClick={() => setStep("checkout")}>{t("tray.checkout")}</button>
+              )}
+              {!group && (
+                <Link href="/g/new" className="btn btn-ghost btn-sm full" style={{ marginTop: "0.5rem" }} onClick={close}>👯 Order with friends</Link>
+              )}
             </div>
           </>
         ) : (

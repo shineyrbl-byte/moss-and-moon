@@ -375,3 +375,45 @@ test("owner can switch the demo barista on and off", async () => {
   const off = await s.api("/api/admin/settings", { method: "PATCH", json: { demoBarista: false } });
   assert.equal(off.body.demoBarista, false);
 });
+
+test("group orders: friends add drinks, host checks out, each pays their part", async () => {
+  const g = await s.api("/api/groups", { method: "POST", json: { name: "Asha" } });
+  assert.equal(g.status, 200);
+  const { code, hostToken } = g.body as { code: string; hostToken: string };
+  assert.match(code, /^GR-/);
+
+  assert.equal((await s.api(`/api/groups/${code}/items`, { method: "POST", json: { person: "Asha", lines: [{ itemId: "cookie", qty: 2 }] } })).status, 200);
+  const added = await s.api(`/api/groups/${code}/items`, { method: "POST", json: { person: "Ravi", lines: [{ itemId: "cookie", qty: 1 }, { itemId: "nope", qty: 1 }] } });
+  assert.equal(added.status, 200);
+  const sum = added.body as { people: { person: string; subtotal: number; items: { id: number }[] }[]; subtotal: number };
+  assert.equal(sum.people.length, 2);
+  assert.equal(sum.people[0].subtotal, sum.people[1].subtotal * 2, "unknown items are skipped");
+
+  // Ravi can't remove Asha's item, but the host can remove anything
+  const ashaItem = sum.people[0].items[0].id;
+  assert.equal((await s.api(`/api/groups/${code}/items`, { method: "DELETE", json: { id: ashaItem, person: "Ravi" } })).status, 403);
+
+  // Only the host can check out
+  const order = { name: "Asha", phone: "9123456780", lines: [{ itemId: "cookie", qty: 3 }], groupCode: code };
+  assert.equal((await s.api("/api/orders", { method: "POST", json: { ...order, hostToken: "wrong-token-123" } })).status, 403);
+  const placed = await s.api("/api/orders", { method: "POST", json: { ...order, hostToken } });
+  assert.equal(placed.status, 200);
+  const orderCode = (placed.body as { code: string }).code;
+
+  const after = (await s.api(`/api/groups/${code}`)).body as { status: string; orderCode: string; due: number; people: { person: string; share: number }[] };
+  assert.equal(after.status, "placed");
+  assert.equal(after.orderCode, orderCode);
+  assert.ok(after.people.reduce((t, p) => t + p.share, 0) >= after.due, "shares cover the bill");
+  assert.equal((await s.api(`/api/groups/${code}/items`, { method: "POST", json: { person: "Late", lines: [{ itemId: "cookie", qty: 1 }] } })).status, 409);
+
+  // Ravi pays exactly his part (demo payments)
+  const ravi = after.people.find((p) => p.person === "Ravi")!;
+  const start = await s.api("/api/payments/start", { method: "POST", json: { kind: "share", code: orderCode, person: "Ravi" } });
+  assert.equal(start.status, 200);
+  assert.equal((start.body as { amount: number }).amount, ravi.share);
+  const shareId = (start.body as { shareId: number }).shareId;
+  assert.equal((await s.api("/api/payments/verify", { method: "POST", json: { kind: "share", code: orderCode, shareId, demo: true } })).status, 200);
+  const paid = (await s.api(`/api/groups/${code}`)).body as { people: { person: string; paid: number }[] };
+  assert.equal(paid.people.find((p) => p.person === "Ravi")!.paid, ravi.share);
+  assert.equal((await s.api("/api/payments/start", { method: "POST", json: { kind: "share", code: orderCode, person: "Ravi" } })).status, 409, "can't pay twice");
+});

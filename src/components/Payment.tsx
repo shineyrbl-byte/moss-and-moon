@@ -4,12 +4,12 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { rupees } from "@/lib/pricing";
 
-type Kind = "order" | "giftcard" | "share" | "pass";
+type Kind = "order" | "giftcard" | "share" | "pass" | "ticket";
 type Start =
   | { mode: "demo"; amount: number; label: string; code: string; kind: Kind; shareId?: number }
   | { mode: "razorpay"; amount: number; label: string; code: string; kind: Kind; keyId: string; orderId: string; shareId?: number };
 
-type PayFn = (kind: Kind, code: string, prefill?: { name?: string; email?: string; phone?: string }) => Promise<boolean>;
+type PayFn = (kind: Kind, code: string, prefill?: { name?: string; email?: string; phone?: string }, extra?: Record<string, unknown>) => Promise<boolean>;
 const Ctx = createContext<PayFn | null>(null);
 
 declare global {
@@ -37,9 +37,9 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState("");
   const resolver = useRef<((ok: boolean) => void) | null>(null);
 
-  const pay = useCallback<PayFn>(async (kind, code, prefill = {}) => {
+  const pay = useCallback<PayFn>(async (kind, code, prefill = {}, extra = {}) => {
     setError("");
-    const r = await fetch("/api/payments/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, code }) });
+    const r = await fetch("/api/payments/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...extra, kind, code }) });
     const start = (await r.json()) as Start & { error?: string };
     if (!r.ok) {
       alertLater(start.error ?? "Payment couldn't start.");

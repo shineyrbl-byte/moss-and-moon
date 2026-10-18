@@ -13,7 +13,8 @@ export async function GET(_req: Request, { params }: Ctx) {
     .prepare(
       `SELECT code, name, pickup, note, lines, subtotal, discount, total, promo, status, created_at,
               pay_method, pay_status, giftcard_used, happy_hour, table_no,
-              tip, credit_used, delivery_fee, delivery_address, split_count, perks
+              tip, credit_used, delivery_fee, delivery_address, split_count, perks, group_code,
+              refund_amount, refunded_at
        FROM orders WHERE code = ?`
     )
     .get(code.toUpperCase()) as Record<string, unknown> | undefined;

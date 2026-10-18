@@ -6,16 +6,20 @@ export const dynamic = "force-dynamic";
 // Server-Sent Events stream.
 //   ?topic=order&code=MM-XXXX  → updates for one order (guests)
 //   ?topic=board               → any order change (TV board, no details)
+//   ?topic=group&code=GR-XXXX  → changes to one group order
 //   ?topic=staff               → everything (staff only)
 export async function GET(req: Request) {
   const p = new URL(req.url).searchParams;
   const topic = p.get("topic");
   const code = (p.get("code") ?? "").toUpperCase();
   if (topic === "staff" && !(await isAdmin())) return new Response("Please log in", { status: 401 });
-  if (!["order", "board", "staff"].includes(topic ?? "")) return new Response("Unknown topic", { status: 400 });
+  if (!["order", "board", "staff", "group"].includes(topic ?? "")) return new Response("Unknown topic", { status: 400 });
 
   const wants = (e: LiveEvent) =>
-    topic === "staff" ? true : topic === "board" ? e.type === "order" : e.type === "order" && e.code === code;
+    topic === "staff" ? e.type !== "group"
+    : topic === "board" ? e.type === "order"
+    : topic === "group" ? e.type === "group" && e.code === code
+    : e.type === "order" && e.code === code;
 
   const enc = new TextEncoder();
   let cleanup = () => {};

@@ -16,6 +16,7 @@ type Order = {
   subtotal: number; discount: number; total: number; promo: string | null; status: OrderStatus; created_at: string;
   pay_method: string; pay_status: "unpaid" | "pending" | "paid"; giftcard_used: number; happy_hour: number; ahead: number; table_no: number | null;
   tip: number; credit_used: number; delivery_fee: number; delivery_address: string | null; split_count: number | null; perks: string | null; paidShares: number;
+  group_code: string | null; refund_amount: number; refunded_at: string | null;
 };
 
 const STEP_INFO: Record<OrderStatus, { icon: string; label: string; msg: string }> = {
@@ -131,7 +132,16 @@ export default function OrderPage() {
         </div>
       )}
 
-      {unpaid && (
+      {unpaid && order.group_code && (
+        <div className="pay-banner card">
+          <div>
+            <strong>👯 Group order · {rupees(left)} left to pay</strong>
+            <p className="small muted">Everyone pays their own part on the group page.</p>
+          </div>
+          <Link href={`/g/${order.group_code}`} className="btn btn-pink btn-sm">See who pays what</Link>
+        </div>
+      )}
+      {unpaid && !order.group_code && (
         <div className="pay-banner card">
           {order.split_count ? (
             <>

@@ -3,6 +3,8 @@ import { startPayment } from "@/lib/payments";
 import { orderDue } from "@/lib/pricing";
 import { currentCustomer } from "@/lib/account";
 import { paidShares } from "@/lib/orderMoney";
+import { personShare } from "@/lib/groups";
+import { cleanText } from "@/lib/db";
 
 type OrderRow = { name: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pay_status: string; split_count: number | null };
 
@@ -10,7 +12,8 @@ type OrderRow = { name: string; total: number; giftcard_used: number; credit_use
 // Begin paying for an order, one share of a split bill, a gift card or a coffee pass.
 // The amount always comes from the database, never from the browser.
 export async function POST(req: Request) {
-  const { kind, code } = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => ({}));
+  const { kind, code } = body;
   const c = String(code ?? "").toUpperCase();
 
   let amount = 0;
@@ -23,7 +26,16 @@ export async function POST(req: Request) {
     if (o.pay_status === "paid") return Response.json({ error: "This order is already paid ✿" }, { status: 409 });
     const left = orderDue(o) - paidShares(c);
     if (left <= 0) return Response.json({ error: "This order is already paid ✿" }, { status: 409 });
-    if (kind === "share") {
+    const person = cleanText(body.person, 30);
+    if (kind === "share" && person) {
+      // Group order: pay exactly your own part
+      const mine = personShare(c, person);
+      if (mine === null) return Response.json({ error: "We couldn't find your part of this order." }, { status: 404 });
+      if (mine <= 0) return Response.json({ error: "Your part is already paid ✿" }, { status: 409 });
+      amount = Math.min(left, mine);
+      shareId = Number(db.prepare("INSERT INTO order_payments (order_code, amount, person) VALUES (?, ?, ?)").run(c, amount, person).lastInsertRowid);
+      label = `${person}'s part of ${c}`;
+    } else if (kind === "share") {
       if (!o.split_count) return Response.json({ error: "Choose how many ways to split first." }, { status: 400 });
       amount = Math.min(left, Math.ceil(orderDue(o) / o.split_count));
       shareId = Number(db.prepare("INSERT INTO order_payments (order_code, amount) VALUES (?, ?)").run(c, amount).lastInsertRowid);

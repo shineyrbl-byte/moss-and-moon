@@ -377,6 +377,9 @@ h1.h2 { font-size: clamp(2.2rem, 4.5vw, 3.4rem); margin-bottom: 0.8rem; }
 
 /* ============ Order tracking & loyalty pages ============ */
 .page { padding: 4rem 6vw 6rem; max-width: 52rem; margin: 0 auto; min-height: 70vh; }
+.page.narrow { max-width: 40rem; }
+.group-person { padding: 1rem 1.2rem; }
+.group-person h2.h3 { font-size: 1.25rem; }
 .track { padding: 2rem; }
 .steps { display: grid; grid-template-columns: repeat(4, 1fr); margin: 2rem 0; position: relative; }
 .steps::before { content: ""; position: absolute; top: 1.6rem; left: 12.5%; right: 12.5%; height: 3px; background: var(--line); }
