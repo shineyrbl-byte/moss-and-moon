@@ -1262,3 +1262,15 @@ test("talk to a person: guest and staff chat, guests only see their own", async 
   assert.equal(after.status, "closed");
   assert.equal(after.messages.at(-1).sender, "system");
 });
+
+test("kiosk orders need a staff-signed-in tablet, but no phone", async () => {
+  const anon = await fetch(`${s.url}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json", Origin: s.url }, body: JSON.stringify({ kiosk: true, name: "Walk-in", lines: [{ itemId: "cookie", qty: 1 }] }) });
+  assert.equal(anon.status, 401);
+  await s.login();
+  const r = await s.api("/api/orders", { method: "POST", json: { kiosk: true, name: "Walk-in", payMethod: "online", lines: [{ itemId: "cookie", qty: 2 }] } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.needsPayment, false, "kiosk orders are always paid at the counter");
+  const o = (await s.api(`/api/orders/${r.body.code}`)).body as { note: string; pay_method: string; pickup: string };
+  assert.match(o.note, /Kiosk/);
+  assert.equal(o.pay_method, "counter");
+});

@@ -11,6 +11,11 @@ export async function POST(req: Request) {
   if (limited(req, "orders", 60, 600000)) return tooMany();
   const body = await req.json().catch(() => null);
   if (!body) return Response.json({ error: "Invalid request." }, { status: 400 });
+  // The self-order kiosk: a tablet signed in as staff. Orders there belong to nobody's account.
+  if (body.kiosk) {
+    if (!(await isAdmin())) return Response.json({ error: "Kiosk mode needs the tablet to be signed in as staff." }, { status: 401 });
+    return placeOrder({ ...body, payMethod: "counter", delivery: undefined, table: undefined, pickup: "asap", giftCard: undefined }, null as never, { kiosk: true });
+  }
   return placeOrder(body, await currentCustomer());
 }
 

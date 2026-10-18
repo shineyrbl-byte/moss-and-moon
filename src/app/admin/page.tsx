@@ -228,6 +228,7 @@ export default function AdminPage() {
         <div className="row">
           <SupportInbox onNew={chime} />
           <a className="btn btn-pink btn-sm" href="/staff">☕ Barista screen</a>
+          <a className="btn btn-ghost btn-sm" href="/kiosk" title="Open on a counter tablet so guests can order themselves">🖥 Kiosk</a>
           <button className="btn btn-ghost btn-sm" onClick={logout}>Log out</button>
         </div>
       </div>

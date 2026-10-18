@@ -22,6 +22,8 @@ export type OrderInput = Record<string, any>;
 export type PlaceOptions = {
   /** Already paid some other way (e.g. a gifted drink): no payment needed */
   prepaid?: { method: string; ref: string };
+  /** Placed on the café's self-order kiosk (a staff-signed-in tablet): phone is optional */
+  kiosk?: boolean;
 };
 
 /** Place an order. Returns the same JSON response the checkout API sends. */
@@ -29,7 +31,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   const name = cleanText(body.name, 40);
   const phone = cleanPhone(body.phone);
   const email = cleanEmail(body.email);
-  const note = cleanText(body.note, 200);
+  const note = opts.kiosk ? ["🖥 Kiosk", cleanText(body.note, 180)].filter(Boolean).join(" · ") : cleanText(body.note, 200);
   const tableNo = Math.floor(Number(body.table));
   const table = tableNo >= 1 && tableNo <= TABLE_COUNT ? tableNo : null;
   const delivery = !table && body.delivery ? cleanText(body.delivery.address, 200) : "";
@@ -37,7 +39,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   const payMethod = body.payMethod === "online" ? "online" : "counter";
   if (!name) return Response.json({ error: "Please tell us your name." }, { status: 400 });
   // Phone is optional when ordering from a table (it's only needed for the stamp card)
-  if (phone.length !== 10 && !(table && !phone) && !(opts.prepaid && !phone)) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
+  if (phone.length !== 10 && !(table && !phone) && !(opts.prepaid && !phone) && !(opts.kiosk && !phone)) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
   if (body.email && !email) return Response.json({ error: "That email doesn't look right." }, { status: 400 });
   if (body.delivery && !table && delivery.length < 10) return Response.json({ error: "Please add your full delivery address." }, { status: 400 });
 
