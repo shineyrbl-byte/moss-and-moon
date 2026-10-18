@@ -41,6 +41,7 @@ import SpecialsCard from "@/components/admin/SpecialsCard";
 import CombosCard from "@/components/admin/CombosCard";
 import CakesTab from "@/components/admin/CakesTab";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
+import OwnerAlertsCard from "@/components/admin/OwnerAlertsCard";
 import PriceWhatIf from "@/components/admin/PriceWhatIf";
 import MenuEngineering from "@/components/admin/MenuEngineering";
 import MissedSales from "@/components/admin/MissedSales";
@@ -79,7 +80,7 @@ const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
 ];
 /** Words that find a tab in "Jump to…" */
 const KEYWORDS: Partial<Record<Tab, string>> = {
-  Settings: "hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
+  Settings: "alerts notifications push phone hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
   Analytics: "profit menu engineering missed sales price what if retention coming back visitors insights",
   Stock: "ingredients use-by expiry supplier prices reorder shop stock",
   Checklists: "opening closing fridge temperature equipment repairs maintenance",
@@ -503,6 +504,7 @@ export default function AdminPage() {
           <GmailConnect />
           <GstCard />
           <WifiCard />
+          <OwnerAlertsCard />
           <OwnerEmails />
           <Backups />
           <TwoStep />

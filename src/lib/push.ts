@@ -46,3 +46,30 @@ export async function notifyOrder(orderCode: string, payload: { title: string; b
     })
   );
 }
+
+// ----- Alerts for the owner's phone -----
+export const OWNER_ALERTS = [
+  { id: "review", label: "A 1–2★ review" },
+  { id: "big", label: "A big order (₹2,000+)" },
+  { id: "catering", label: "A new catering or cake order" },
+  { id: "soldout", label: "Guests trying to order something sold out" },
+  { id: "cashup", label: "A cash-up that's ₹50+ out" },
+] as const;
+export type OwnerAlert = (typeof OWNER_ALERTS)[number]["id"];
+const OWNER_KEY = "OWNER";
+
+export function ownerAlertPrefs(): Record<OwnerAlert, boolean> {
+  let saved: Partial<Record<OwnerAlert, boolean>> = {};
+  try { saved = JSON.parse(getSetting("owner_alerts") ?? "{}"); } catch {}
+  return Object.fromEntries(OWNER_ALERTS.map((a) => [a.id, saved[a.id] !== false])) as Record<OwnerAlert, boolean>;
+}
+export const setOwnerAlertPrefs = (p: Partial<Record<OwnerAlert, boolean>>) => setSetting("owner_alerts", JSON.stringify({ ...ownerAlertPrefs(), ...p }));
+export const saveOwnerDevice = (sub: webpush.PushSubscription) => saveSubscription(OWNER_KEY, sub);
+export const ownerDevices = () => (db.prepare("SELECT COUNT(*) AS n FROM push_subs WHERE order_code = ?").get(OWNER_KEY) as { n: number }).n;
+export const forgetOwnerDevices = () => db.prepare("DELETE FROM push_subs WHERE order_code = ?").run(OWNER_KEY);
+
+/** Ping the owner's phones (if that kind of alert is on). Never throws; fire and forget. */
+export function alertOwner(kind: OwnerAlert, title: string, body: string, url = "/admin") {
+  if (!ownerAlertPrefs()[kind]) return;
+  void notifyOrder(OWNER_KEY, { title, body, url }).catch(() => {});
+}

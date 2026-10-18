@@ -7,6 +7,7 @@ import { Suspense } from "react";
 const CartDrawer = dynamic(() => import("./CartDrawer"), { ssr: false });
 const CustomizeModal = dynamic(() => import("./CustomizeModal"), { ssr: false });
 const BaristaChat = dynamic(() => import("./BaristaChat"), { ssr: false });
+const ReorderLink = dynamic(() => import("./ReorderLink"), { ssr: false });
 
 export default function Overlays() {
   return (
@@ -14,6 +15,7 @@ export default function Overlays() {
       <CartDrawer />
       <CustomizeModal />
       <Suspense fallback={null}><BaristaChat /></Suspense>
+      <Suspense fallback={null}><ReorderLink /></Suspense>
     </>
   );
 }

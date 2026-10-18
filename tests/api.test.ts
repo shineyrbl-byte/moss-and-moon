@@ -1850,3 +1850,22 @@ test("split by item: each pays for what they had, the last one pays the rest", a
   await s.api("/api/payments/verify", { method: "POST", json: { kind: "share", code, shareId: b.body.shareId, demo: true } });
   assert.equal((await s.api(`/api/orders/${code}`)).body.pay_status, "paid");
 });
+
+test("owner alerts settings, handover notes and the reorder link", async () => {
+  await s.login();
+  const a = (await s.api("/api/admin/alerts")).body as { prefs: Record<string, boolean>; devices: number; publicKey: string };
+  assert.equal(a.prefs.review, true);
+  assert.ok(a.publicKey.length > 20);
+  assert.equal((await s.api("/api/admin/alerts", { method: "POST", json: { prefs: { big: false } } })).body.prefs.big, false);
+  await s.api("/api/admin/alerts", { method: "POST", json: { prefs: { big: true } } });
+  assert.equal((await s.api("/api/admin/alerts", { method: "POST", json: { subscription: { endpoint: "http://not-https", keys: {} } } })).status, 400);
+
+  assert.equal((await s.api("/api/admin/handover", { method: "POST", json: { text: "" } })).status, 400);
+  const notes = (await s.api("/api/admin/handover", { method: "POST", json: { text: "Oat milk is low" } })).body as { id: number; text: string }[];
+  const n = notes.find((x) => x.text === "Oat milk is low")!;
+  const after = (await s.api("/api/admin/handover", { method: "PATCH", json: { id: n.id } })).body as { id: number }[];
+  assert.ok(!after.some((x) => x.id === n.id));
+
+  const home = await fetch(`${s.url}/?reorder=MM-NOPE`);
+  assert.equal(home.status, 200);
+});

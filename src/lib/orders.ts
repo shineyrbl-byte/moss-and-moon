@@ -1,6 +1,7 @@
 // Placing an order: shared by the checkout, scheduled orders and gifted drinks.
 // Prices, stock, perks and promo codes are always worked out here on the server.
 import "server-only";
+import { alertOwner } from "./push";
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "./db";
 import { REFERRAL_CREDIT, REWARDS, combosAt, combosConfig, deliveryTerms, findPincode, findReward, quote, rupees } from "./pricing";
 import { isLastHour, lastHour } from "./cafe";
@@ -201,6 +202,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     sendLater(email, ...orderPlacedEmail({ code, name, lines: q.lines, total: q.due, pickup, paid: payStatus === "paid", ready: readyEstimate({ code, pickup, table_no: table, delivery_address: deliveryAddress || null, delivery_eta: terms?.minutes ?? null }).label, table, delivery: deliveryAddress || null }));
 
   publish({ type: "order", code, action: "new" });
+  if (q.due >= 2000) alertOwner("big", `Big order: ${rupees(q.due)}`, `${name} · ${q.lines.reduce((s, l) => s + l.qty, 0)} items · ${code}`, "/admin#Orders");
   const badges = me ? newBadges(me) : [];
   return Response.json({ code, total: q.total, due: q.due, usedReward, perks: usedPerks, needsPayment: payStatus === "pending", newBadges: badges });
 }

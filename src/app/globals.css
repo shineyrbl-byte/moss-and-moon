@@ -1248,3 +1248,5 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .pair-ph { position: relative; width: 48px; height: 48px; border-radius: 10px; overflow: hidden; }
 .pair-ph img { object-fit: cover; }
 .split-items { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); width: 100%; }
+.handover { display: flex; flex-direction: column; gap: 0.35rem; margin: 0 1rem 0.6rem; }
+.handover-note { display: flex; justify-content: space-between; gap: 0.6rem; align-items: center; background: var(--surface-2); border-left: 4px solid var(--caramel); border-radius: 10px; padding: 0.45rem 0.7rem; }

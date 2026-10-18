@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useStore } from "../Store";
 import EquipmentCard from "./EquipmentCard";
+import HandoverNotes from "../HandoverNotes";
 
 type Item = { id: number; text: string; kind: "tick" | "temp"; done: { staff_name: string | null; value: number | null; done_at: string } | null; warn: boolean };
 type List = { id: string; label: string; icon: string; items: Item[]; done: number; total: number };
@@ -67,6 +68,7 @@ export default function ChecklistsTab({ canEdit }: { canEdit: boolean }) {
           </ul>
         </section>
       ))}
+      <section className="card" style={{ padding: "1rem 0.2rem 0.6rem" }}><h3 style={{ fontSize: "1.1rem", padding: "0 1rem" }}>📝 Notes for the next shift</h3><HandoverNotes /></section>
       <EquipmentCard canEdit={canEdit} />
       {canEdit && (
         <section className="card" style={{ padding: "1rem 1.2rem" }}>

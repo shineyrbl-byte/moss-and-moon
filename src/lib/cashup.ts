@@ -1,5 +1,6 @@
 // Daily cash-up: what the counter should have taken vs what staff counted
 import "server-only";
+import { alertOwner } from "./push";
 import { db } from "./db";
 import { orderDue } from "./pricing";
 
@@ -28,5 +29,8 @@ export function saveCashup(day: string, v: { float: number; cash: number; upi: n
     `INSERT INTO cashups (day, float_start, cash, upi, card, expected, note, staff_id, staff_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(day) DO UPDATE SET float_start = excluded.float_start, cash = excluded.cash, upi = excluded.upi, card = excluded.card, expected = excluded.expected, note = excluded.note, staff_id = excluded.staff_id, staff_name = excluded.staff_name, created_at = datetime('now','localtime')`,
   ).run(day, v.float, v.cash, v.upi, v.card, expected, v.note || null, staff.id || null, staff.name);
-  return getCashup(day)!;
+  const c = getCashup(day)!;
+  const diff = difference(c);
+  if (Math.abs(diff) >= 50) alertOwner("cashup", `Cash-up ${diff > 0 ? "over" : "short"} by ₹${Math.abs(diff)}`, `${staff.name}${v.note ? `: ${v.note}` : ""}`, "/admin#Cash-up");
+  return c;
 }

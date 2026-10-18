@@ -1,4 +1,5 @@
 import { db, cleanText } from "@/lib/db";
+import { alertOwner } from "@/lib/push";
 import { isOurPhoto } from "@/lib/uploads";
 import { ownerEmail } from "@/lib/owner";
 import { sendLater } from "@/lib/email";
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
   db.prepare("INSERT INTO reviews (name, rating, text, photo, order_code) VALUES (?, ?, ?, ?, ?)").run(name, rating, text, photo, orderCode);
 
   // A heads-up for the owner when someone wasn't happy, so they can make it right
+  if (rating <= 2) alertOwner("review", `${rating}★ review from ${name}`, text.slice(0, 120), "/admin#Reviews");
   if (rating <= 2 && ownerEmail())
     sendLater(ownerEmail(), `A guest gave ${rating} star${rating === 1 ? "" : "s"} 😟`, `<p><b>${esc(name)}</b>${orderCode ? ` (order ${esc(orderCode)})` : ""} wrote:</p><p style="font-style:italic">“${esc(text)}”</p><p style="color:#8a6a5c;font-size:13px">You can reply in person, or remove the review in Admin → Reviews if it's not genuine.</p>`);
   return Response.json({ ok: true });

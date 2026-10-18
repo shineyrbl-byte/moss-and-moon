@@ -289,7 +289,8 @@ export function refundEmail(r: { code: string; name: string; amount: number; rea
 export function receiptEmail(o: { code: string; name: string }) {
   return [
     `Your Moss & Moon receipt (${o.code})`,
-    `<p>Thanks for visiting, ${esc(o.name)}! Your receipt is attached as a PDF.</p>${button(`${SITE()}/order/${o.code}`, "View your order")}
+    `<p>Thanks for visiting, ${esc(o.name)}! Your receipt is attached as a PDF.</p>${button(`${SITE()}/?reorder=${o.code}`, "Order the same again")}
+     <p style="margin:6px 0"><a href="${SITE()}/order/${o.code}" style="color:#8a6a5c">View this order</a></p>
      <p style="color:#8a6a5c;font-size:13px">Loved it? A quick review makes our day ✿</p>`,
   ] as const;
 }

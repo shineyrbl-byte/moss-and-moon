@@ -273,6 +273,7 @@ export default function OrderPage() {
       <div className="row" style={{ justifyContent: "center", marginTop: "1rem" }}>
         <MakeRegular lines={order.lines.map((l) => ({ itemId: l.itemId, opts: l.opts, qty: l.qty }))} />
         <a href={`/api/orders/${order.code}/receipt`} className="btn btn-ghost btn-sm" target="_blank" rel="noreferrer">🧾 Receipt (PDF)</a>
+        <a href={`/?reorder=${order.code}`} className="btn btn-ghost btn-sm">🔁 Same again</a>
         <Link href="/orders" className="btn btn-ghost btn-sm">My orders</Link>
         <Link href="/account" className="btn btn-ghost btn-sm">My account</Link>
         <Link href="/#menu" className="btn btn-sm">Order something else</Link>

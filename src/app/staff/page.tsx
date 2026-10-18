@@ -9,6 +9,7 @@ import { useLive } from "@/components/useLive";
 import SupportInbox from "@/components/SupportInbox";
 import RecipeBook from "@/components/RecipeBook";
 import RushControl from "@/components/RushControl";
+import HandoverNotes from "@/components/HandoverNotes";
 import { activeBranches, findBranch } from "@/lib/cafe";
 
 type Order = {
@@ -188,6 +189,7 @@ export default function StaffScreen() {
         </div>
       </header>
 
+      <HandoverNotes />
       {(offline || Object.keys(pending).length > 0) && (
         <div className="kds-offline" role="status">
           {offline ? "📡 No connection. Keep tapping: changes are saved on this tablet" : "↻ Sending saved changes"}

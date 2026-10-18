@@ -1,5 +1,6 @@
 // Sales we missed because something was sold out, and "tell me when it's back" emails
 import "server-only";
+import { alertOwner } from "./push";
 import { db } from "./db";
 import { getMenu, menuLookup } from "./menuStore";
 import { sendEmail } from "./email";
@@ -12,7 +13,11 @@ export function recordMissed(items: { itemId: string; qty?: number }[], reason: 
   const add = db.prepare("INSERT INTO missed_sales (item_id, item_name, qty, reason) VALUES (?, ?, ?, ?)");
   for (const i of items) {
     const m = find(i.itemId);
-    if (m) add.run(m.id, m.name, Math.max(1, Math.min(20, Math.floor(i.qty ?? 1))), reason);
+    if (!m) continue;
+    // First time today someone misses it: tell the owner
+    const first = !db.prepare("SELECT 1 FROM missed_sales WHERE item_id = ? AND date(created_at) = date('now','localtime')").get(m.id);
+    add.run(m.id, m.name, Math.max(1, Math.min(20, Math.floor(i.qty ?? 1))), reason);
+    if (first && reason !== "wanted") alertOwner("soldout", `${m.name} is sold out`, "A guest just tried to order it. Make more, or mark it back when it's ready.", "/admin#Stock");
   }
 }
 

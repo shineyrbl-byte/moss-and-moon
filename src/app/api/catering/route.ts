@@ -1,4 +1,5 @@
 import { db, makeCode, cleanEmail, cleanPhone, cleanText } from "@/lib/db";
+import { alertOwner } from "@/lib/push";
 import { ownerGate } from "@/lib/auth";
 import { parseDate, toDateStr } from "@/lib/cafe";
 import { cateringRequestEmail, sendLater } from "@/lib/email";
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
   sendLater(email, ...cateringRequestEmail({ code, name, event_date: date, event_time: time, guests }));
   const owner = ownerEmail();
   if (owner) sendLater(owner, `New catering request: ${guests} guests on ${date}`, `<p><b>${esc(name)}</b> (${esc(email)}, ${phone}) would like catering for <b>${guests}</b> on <b>${date} at ${time}</b> (${kind}, ${method}).</p><p style="white-space:pre-line">${esc(details)}</p><p>Send a quote from Staff → Catering.</p>`);
+  alertOwner("catering", `Catering request: ${guests} guests`, `${name} · ${date} at ${time}`, "/admin#Catering");
   return Response.json({ ok: true, code });
 }
 
