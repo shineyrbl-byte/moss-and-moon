@@ -21,6 +21,7 @@ import ProfitPanel from "@/components/admin/ProfitPanel";
 import WasteTab from "@/components/admin/WasteTab";
 import NoticesTab from "@/components/admin/NoticesTab";
 import VisitorsPanel from "@/components/admin/VisitorsPanel";
+import TwoStep from "@/components/admin/TwoStep";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -67,6 +68,8 @@ export default function AdminPage() {
   const [pass, setPass] = useState("");
   const [username, setUsername] = useState("");
   const [loginErr, setLoginErr] = useState("");
+  const [needCode, setNeedCode] = useState(false);
+  const [otp, setOtp] = useState("");
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
   const [stats, setStats] = useState<Stats | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -125,8 +128,14 @@ export default function AdminPage() {
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
-    const r = await fetch("/api/admin/login", json("POST", { username, password: pass }));
-    if (!r.ok) return setLoginErr((await r.json()).error);
+    const r = await fetch("/api/admin/login", json("POST", { username, password: pass, ...(needCode ? { code: otp } : {}) }));
+    if (!r.ok) {
+      const d = await r.json();
+      if (d.needCode) setNeedCode(true);
+      return setLoginErr(d.error);
+    }
+    setNeedCode(false);
+    setOtp("");
     const d = await r.json();
     setPass("");
     if (d.staff?.role !== "owner") setTab("Orders");
@@ -181,8 +190,13 @@ export default function AdminPage() {
         <form className="card" style={{ padding: "1.5rem", marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.8rem" }} onSubmit={login}>
           <label className="field">Username <span className="small">(leave empty if you&apos;re the owner)</span><input className="input" autoComplete="username" autoFocus value={username} onChange={(e) => setUsername(e.target.value)} /></label>
           <label className="field">{username.trim() ? "Password" : "Owner passcode"}<input className="input" type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} /></label>
+          {needCode && (
+            <label className="field">6-digit code from your authenticator app (or a backup code)
+              <input className="input" inputMode="numeric" autoComplete="one-time-code" autoFocus value={otp} onChange={(e) => setOtp(e.target.value)} />
+            </label>
+          )}
           {loginErr && <p className="error small">{loginErr}</p>}
-          <button className="btn btn-pink">Log in</button>
+          <button className="btn btn-pink">{needCode ? "Check code" : "Log in"}</button>
           <p className="small muted">Owners log in with the passcode set in ADMIN_PASSCODE. Staff get their own username from the owner (Team tab).</p>
         </form>
       </div>
@@ -224,6 +238,7 @@ export default function AdminPage() {
           )}
           {me?.role === "owner" && <OwnerEmails />}
           {me?.role === "owner" && <Backups />}
+          {me?.role === "owner" && <TwoStep />}
           {season && (
             <div className="mode-banner">
               <span>

@@ -219,3 +219,19 @@ test("allergens follow the milk you pick; calories follow size and sugar", async
   assert.equal(canAvoid(latte, "nuts"), false);
   assert.equal(canAvoid(chai, "nuts"), true);
 });
+
+test("one-time codes match the standard test vectors", async () => {
+  const { codeAt, verify, base32Encode, base32Decode } = await import("../src/lib/totp.ts");
+  // RFC 6238 test secret "12345678901234567890", 6 digits
+  const secret = base32Encode(Buffer.from("12345678901234567890"));
+  assert.equal(base32Decode(secret).toString(), "12345678901234567890");
+  assert.equal(codeAt(secret, Math.floor(59 / 30)), "287082");
+  assert.equal(codeAt(secret, Math.floor(1111111109 / 30)), "081804");
+  assert.equal(codeAt(secret, Math.floor(1234567890 / 30)), "005924");
+  const now = 1_700_000_000_000;
+  const code = codeAt(secret, Math.floor(now / 30_000));
+  assert.ok(verify(secret, code, now) !== null);
+  assert.ok(verify(secret, code, now + 30_000) !== null, "one step of clock drift is fine");
+  assert.equal(verify(secret, code, now + 120_000), null);
+  assert.equal(verify(secret, "abc", now), null);
+});

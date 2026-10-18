@@ -939,3 +939,4 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 @media (prefers-reduced-motion: reduce) { .note { animation: none; rotate: 0deg !important; } }
 .viz-list { list-style: none; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.3rem; }
 .viz-list li { display: flex; justify-content: space-between; gap: 0.6rem; border-bottom: 1px solid var(--line); padding: 0.2rem 0; }
+.backup-codes { font-family: ui-monospace, Menlo, monospace; font-size: 1rem; letter-spacing: 0.06em; background: var(--surface); border-radius: 10px; padding: 0.7rem 1rem; margin: 0.6rem 0; columns: 2; }

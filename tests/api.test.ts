@@ -802,3 +802,28 @@ test("visitor stats: counted once a day, no bots or staff pages", async () => {
   assert.deepEqual(r.referrers.map((x) => x.ref), ["instagram.com"]);
   assert.ok(r.devices.some((d) => d.device === "phone"));
 });
+
+test("two-step login: set up, codes required, no reuse, backup codes work once", async () => {
+  const { codeAt, stepNow } = await import("../src/lib/totp.ts");
+  await s.login();
+  const start = await s.api("/api/admin/2fa", { method: "POST", json: { action: "start" } });
+  const secret = (start.body as { secret: string }).secret;
+  assert.match((start.body as { qr: string }).qr, /<svg/);
+  assert.equal((await s.api("/api/admin/2fa", { method: "POST", json: { action: "confirm", code: "000000" } })).status, 400);
+  const on = await s.api("/api/admin/2fa", { method: "POST", json: { action: "confirm", code: codeAt(secret, stepNow()) } });
+  assert.equal(on.status, 200);
+  const backup = (on.body as { backupCodes: string[] }).backupCodes;
+  assert.equal(backup.length, 8);
+
+  const login = (body: object) => fetch(`${s.url}/api/admin/login`, { method: "POST", headers: { "Content-Type": "application/json", "x-forwarded-for": "10.9.9.9" }, body: JSON.stringify({ passcode: "test-passcode", ...body }) });
+  const noCode = await login({});
+  assert.equal(noCode.status, 401);
+  assert.equal(((await noCode.json()) as { needCode: boolean }).needCode, true);
+  assert.equal((await login({ code: codeAt(secret, stepNow()) })).status, 401, "the code used to switch it on can't be reused");
+  assert.equal((await login({ code: codeAt(secret, stepNow() + 1) })).status, 200, "the next code works");
+  assert.equal((await login({ code: backup[0] })).status, 200, "a backup code works");
+  assert.equal((await login({ code: backup[0] })).status, 401, "but only once");
+
+  assert.equal((await s.api("/api/admin/2fa", { method: "POST", json: { action: "off", code: backup[1] } })).status, 200);
+  assert.equal((await login({})).status, 200, "off again");
+});
