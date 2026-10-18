@@ -19,6 +19,10 @@ export type MenuItem = {
   /** Seasonal: only on the menu between these dates (YYYY-MM-DD, either can be left empty) */
   from?: string;
   until?: string;
+  /** Allergens in the item itself (a drink's milk is added on top, see lib/nutrition.ts) */
+  allergens?: ("milk" | "nuts" | "gluten" | "egg" | "soy" | "sesame")[];
+  /** Rough calories, regular size as it usually comes */
+  kcal?: number;
   /** What one costs to make in ₹, on top of tracked ingredients (e.g. a whole croissant from the bakery) */
   cost?: number;
   /** Festival special: only on the menu during this season (see lib/seasons.ts) */

@@ -203,3 +203,19 @@ test("voice orders: numbers, options and several items", async () => {
   assert.deepEqual(parseVoiceOrder("a unicorn frappe", menu).lines, []);
   assert.equal(parseVoiceOrder("a long black, extra shot", menu).lines[0].opts.shot, true);
 });
+
+test("allergens follow the milk you pick; calories follow size and sugar", async () => {
+  const { allergensFor, kcalFor, canAvoid } = await import("../src/lib/nutrition.ts");
+  const latte = { id: "rose-latte", cat: "coffee", allergens: ["nuts", "milk"] as ("nuts" | "milk")[], kcal: 260 };
+  const chai = { id: "chai", cat: "tea", allergens: [], kcal: 160 };
+  assert.deepEqual(allergensFor(chai, { milk: "whole" }), ["milk"]);
+  assert.deepEqual(allergensFor(chai, { milk: "almond" }), ["nuts"]);
+  assert.deepEqual(allergensFor(chai, { milk: "none" }), []);
+  assert.deepEqual(allergensFor(latte, { milk: "oat" }), ["milk", "nuts", "gluten"], "pistachio cream still has milk");
+  assert.equal(kcalFor(chai, { size: "regular", milk: "whole", sweet: "normal" }), 160);
+  assert.ok(kcalFor(chai, { size: "large", milk: "whole" })! > 160);
+  assert.ok(kcalFor(chai, { milk: "none", sweet: "none" })! < 60);
+  assert.equal(kcalFor({ id: "x", cat: "tea" }, {}), null);
+  assert.equal(canAvoid(latte, "nuts"), false);
+  assert.equal(canAvoid(chai, "nuts"), true);
+});

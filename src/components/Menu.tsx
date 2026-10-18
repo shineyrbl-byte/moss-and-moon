@@ -7,6 +7,7 @@ import { useStore } from "./Store";
 import Reveal from "./Reveal";
 import UsualCard from "./Usual";
 import VoiceOrder from "./VoiceOrder";
+import { ALLERGENS, allergensFor, canAvoid, kcalFor } from "@/lib/nutrition";
 
 export default function Menu() {
   const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t } = useStore();
@@ -15,6 +16,7 @@ export default function Menu() {
   useEffect(() => setHappy(isHappyHour()), []);
   const [cat, setCat] = useState<Category | "all">("all");
   const [diet, setDiet] = useState<Diet[]>([]);
+  const [avoid, setAvoid] = useState<("nuts" | "egg")[]>([]);
   const [q, setQ] = useState("");
 
   const items = useMemo(() => {
@@ -24,9 +26,10 @@ export default function Menu() {
         (cat === "all" || m.cat === cat) &&
         (!onlyFavs || favs.has(m.id)) &&
         diet.every((d) => m.diet?.includes(d)) &&
+        avoid.every((a) => canAvoid(m, a)) &&
         (!s || `${m.name} ${m.desc} ${m.badge ?? ""}`.toLowerCase().includes(s))
     );
-  }, [menu, cat, diet, q, onlyFavs, favs]);
+  }, [menu, cat, diet, avoid, q, onlyFavs, favs]);
 
   const toggleDiet = (d: Diet) => setDiet((ds) => (ds.includes(d) ? ds.filter((x) => x !== d) : [...ds, d]));
 
@@ -56,6 +59,11 @@ export default function Menu() {
         <div className="chips">
           <button className={`chip ${diet.includes("vegan") ? "on" : ""}`} onClick={() => toggleDiet("vegan")}>{t("menu.vegan")}</button>
           <button className={`chip ${diet.includes("gf") ? "on" : ""}`} onClick={() => toggleDiet("gf")}>{t("menu.gf")}</button>
+          {(["nuts", "egg"] as const).map((a) => (
+            <button key={a} className={`chip ${avoid.includes(a) ? "on" : ""}`} aria-pressed={avoid.includes(a)} onClick={() => setAvoid((x) => (x.includes(a) ? x.filter((y) => y !== a) : [...x, a]))}>
+              {a === "nuts" ? "Nut-free" : "Egg-free"}
+            </button>
+          ))}
           <button className={`chip ${onlyFavs ? "on" : ""}`} onClick={() => setOnlyFavs((v) => !v)}>{t("menu.favs")}{favs.size ? ` (${favs.size})` : ""}</button>
         </div>
       </div>
@@ -77,6 +85,17 @@ export default function Menu() {
                 <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)}>{m.name}</h3>
                 {happy && m.cat === "bakes" && <span className="small" style={{ color: "var(--pink-deep)" }}>golden hour −20%</span>}
                 <p>{m.desc}</p>
+                {(() => {
+                  const al = allergensFor(m, defaultOptions(m));
+                  const kc = kcalFor(m, defaultOptions(m));
+                  if (!al.length && kc === null) return null;
+                  return (
+                    <span className="item-facts" title={al.length ? `Contains: ${al.join(", ")}` : undefined}>
+                      {kc !== null && <>~{kc} kcal</>}
+                      {al.length > 0 && <> · <span aria-hidden>{al.map((a) => ALLERGENS.find((x) => x.id === a)!.icon).join("")}</span><span className="sr-only">Contains {al.join(", ")}</span></>}
+                    </span>
+                  );
+                })()}
                 <div className="item-foot">
                   <div>
                     <span className="price">{rupees(m.price)}</span>

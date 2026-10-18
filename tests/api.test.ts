@@ -758,3 +758,11 @@ test("voice order endpoint returns tray lines with full options", async () => {
   assert.equal(d.lines[0].opts.size, "regular", "defaults filled in");
   assert.equal(d.lines[1].itemId, "croissant");
 });
+
+test("menu items come with allergens and calories", async () => {
+  const items = ((await s.api("/api/menu")).body as { items: { id: string; allergens?: string[]; kcal?: number }[] }).items;
+  const croissant = items.find((i) => i.id === "croissant")!;
+  assert.deepEqual(croissant.allergens, ["gluten", "milk", "egg"]);
+  assert.equal(croissant.kcal, 280);
+  assert.ok(items.filter((i) => i.kcal !== undefined).length >= 20);
+});

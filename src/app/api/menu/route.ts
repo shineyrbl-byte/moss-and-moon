@@ -4,6 +4,7 @@ import { deleteItem, getMenu, moveItem, saveItem } from "@/lib/menuStore";
 import type { Category, Diet, MenuItem } from "@/lib/menu";
 import { publish } from "@/lib/live";
 import { SEASONS } from "@/lib/seasons";
+import { ALLERGENS } from "@/lib/nutrition";
 
 // The menu (with sold-out flags). Staff can add ?all=1 to include hidden items.
 export async function GET(req: Request) {
@@ -69,6 +70,8 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(until ? { until } : {}),
     ...(uses.length ? { uses } : {}),
     ...(typeof b.season === "string" && b.season in SEASONS ? { season: b.season } : {}),
+    ...(Array.isArray(b.allergens) ? { allergens: ALLERGENS.map((a) => a.id).filter((a) => (b.allergens as unknown[]).includes(a)) } : {}),
+    ...(b.kcal !== undefined && b.kcal !== "" && Number(b.kcal) >= 0 && Number(b.kcal) <= 3000 ? { kcal: Math.round(Number(b.kcal)) } : {}),
     ...(b.cost !== undefined && b.cost !== "" && Number(b.cost) >= 0 && Number(b.cost) <= 5000 ? { cost: Math.round(Number(b.cost) * 100) / 100 } : {}),
   };
 }

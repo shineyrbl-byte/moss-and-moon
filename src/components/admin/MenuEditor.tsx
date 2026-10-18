@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CATEGORIES, photo, type Category, type Diet, type MenuItem } from "@/lib/menu";
 import { rupees } from "@/lib/pricing";
 import { SEASONS } from "@/lib/seasons";
+import { ALLERGENS, type Allergen } from "@/lib/nutrition";
 import { useStore } from "../Store";
 
 const send = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -189,6 +190,21 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
               <input className="input" type="date" value={f.until ?? ""} onChange={(e) => set("until", e.target.value || undefined)} aria-label="Season ends" />
             </div>
           </div>
+          <div className="field">Allergens in the item itself {f.cat !== "bakes" ? "(milk is added automatically from the milk the guest picks)" : ""}
+            <div className="chips" style={{ justifyContent: "flex-start" }}>
+              {ALLERGENS.map((a) => {
+                const on = (f.allergens ?? []).includes(a.id);
+                return (
+                  <button type="button" key={a.id} className={`chip ${on ? "on" : ""}`} aria-pressed={on} onClick={() => set("allergens", on ? (f.allergens ?? []).filter((x) => x !== a.id) : [...(f.allergens ?? []), a.id as Allergen])}>
+                    {a.icon} {a.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <label className="field">Calories (optional, regular size as it usually comes)
+            <input className="input" type="number" min={0} max={3000} value={f.kcal ?? ""} onChange={(e) => set("kcal", e.target.value === "" ? undefined : Number(e.target.value))} placeholder="e.g. 190" />
+          </label>
           <label className="field">Cost to make (optional, ₹){f.cat === "bakes" ? ": what one costs you to bake or buy" : ": anything not tracked in Stock (syrups, cream…)"}
             <input className="input" type="number" min={0} step="0.5" value={f.cost ?? ""} onChange={(e) => set("cost", e.target.value === "" ? undefined : Number(e.target.value))} placeholder={f.cat === "bakes" ? "e.g. 45" : "e.g. 12"} />
           </label>

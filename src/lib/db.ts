@@ -7,6 +7,7 @@ import path from "node:path";
 import { SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
+import { NUTRITION } from "./nutrition";
 
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
 
@@ -363,6 +364,19 @@ function open() {
     const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
     SEASONAL_ITEMS.forEach((m, i) => add.run(m.id, JSON.stringify(m), -40 + i)); // shown first while in season
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_seasonal', '1')").run();
+  }
+
+  // Allergens & calories for the starting menu (once; items an owner already set are left alone)
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_nutrition'").get()) {
+    const rows = db.prepare("SELECT id, data FROM menu_items").all() as { id: string; data: string }[];
+    const upd = db.prepare("UPDATE menu_items SET data = ? WHERE id = ?");
+    for (const r of rows) {
+      const n = NUTRITION[r.id];
+      const d = JSON.parse(r.data);
+      if (!n || d.allergens || d.kcal !== undefined) continue;
+      upd.run(JSON.stringify({ ...d, allergens: n.allergens, kcal: n.kcal }), r.id);
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_nutrition', '1')").run();
   }
 
   const count = db.prepare("SELECT COUNT(*) AS n FROM reviews").get() as { n: number };

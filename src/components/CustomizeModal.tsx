@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useEscape, useStore } from "./Store";
 import DrinkCup from "./DrinkCup";
+import { ALLERGENS, allergensFor, kcalFor } from "@/lib/nutrition";
 import { useRouter } from "next/navigation";
 import { photo } from "@/lib/menu";
 import { MILKS, SHOT_PRICE, SIZES, SWEETS, TEMPS, defaultOptions, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
@@ -57,6 +58,16 @@ export default function CustomizeModal() {
             <div>
               <h3 style={{ fontSize: "2rem" }}>{item.name}</h3>
               <p className="muted">{item.desc}</p>
+              {(() => {
+                const al = allergensFor(item, opts);
+                const kc = kcalFor(item, opts);
+                return (
+                  <p className="small facts" aria-live="polite">
+                    {al.length ? <>Contains: <b>{al.map((a) => ALLERGENS.find((x) => x.id === a)!.label.toLowerCase()).join(", ")}</b></> : "No common allergens"}
+                    {kc !== null && <> · about {kc * qty} kcal</>}
+                  </p>
+                );
+              })()}
             </div>
             {drink && <DrinkCup item={item} opts={opts} />}
           </div>
@@ -81,6 +92,7 @@ export default function CustomizeModal() {
             </div>
           )}
 
+          <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so please tell us about severe allergies.</p>
           <div className="toggle-row">
             <div className="stepper">
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="One less">−</button>

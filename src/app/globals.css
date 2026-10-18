@@ -924,3 +924,5 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .voice-btn.listening { background: var(--pink-fill); color: var(--on-pink); border-color: var(--pink-fill); animation: pulseRing 1.6s infinite; }
 .voice-btn.thinking { opacity: 0.7; }
 .voice-hint { flex-basis: 100%; text-align: center; }
+.item-facts { display: block; font-size: 0.78rem; color: var(--muted); margin-top: -0.2rem; }
+.facts { margin-top: 0.3rem; }
