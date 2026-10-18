@@ -69,7 +69,7 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 ## Tests
 
 ```bash
-npm test           # 82 tests: price maths, the whole API against a real server, and payments against a fake Razorpay
+npm test           # 81 tests: price maths, the whole API against a real server, and payments against a fake Razorpay
 npm run test:e2e   # 9 browser tests: ordering, booking, group orders, tickets, gifting a drink, phone layout, security headers
 ```
 
