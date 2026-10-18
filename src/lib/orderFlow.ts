@@ -2,7 +2,8 @@ import { db, getSetting, setSetting } from "@/lib/db";
 import { DEMO_TIMES, ORDER_STEPS, demoStatus, type OrderStatus } from "@/lib/cafe";
 
 export { DEMO_TIMES };
-import { orderReadyEmail, sendLater } from "@/lib/email";
+import { orderReadyEmail, receiptEmail, sendLater } from "@/lib/email";
+import { receiptPdf, type ReceiptOrder } from "@/lib/receipt";
 import { notifyOrder } from "@/lib/push";
 import { publish } from "@/lib/live";
 
@@ -26,8 +27,28 @@ export function setOrderStatus(code: string, status: OrderStatus, staffId?: numb
     });
   }
   // Collected + paying at the counter = paid
-  if (status === "collected") db.prepare("UPDATE orders SET pay_status = 'paid' WHERE code = ? AND pay_status = 'unpaid'").run(code);
+  if (status === "collected") {
+    db.prepare("UPDATE orders SET pay_status = 'paid' WHERE code = ? AND pay_status = 'unpaid'").run(code);
+    void emailReceipt(code);
+  }
   return true;
+}
+
+/** Email the PDF receipt once the order is collected */
+async function emailReceipt(code: string) {
+  try {
+    const row = db
+      .prepare(
+        `SELECT code, name, email, created_at, lines, subtotal, discount, total, promo, giftcard_used, credit_used, tip, delivery_fee, refund_amount,
+                pay_method, pay_status, table_no, delivery_address, pickup FROM orders WHERE code = ?`
+      )
+      .get(code) as (Omit<ReceiptOrder, "lines"> & { lines: string; email: string | null }) | undefined;
+    if (!row?.email) return;
+    const pdf = await receiptPdf({ ...row, lines: JSON.parse(row.lines) });
+    sendLater(row.email, ...receiptEmail(row), [{ filename: `moss-and-moon-${code}.pdf`, content: pdf }]);
+  } catch (e) {
+    console.error("Receipt email failed", e);
+  }
 }
 
 // ---------- Demo barista ----------

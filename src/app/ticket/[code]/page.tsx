@@ -49,8 +49,8 @@ export default function TicketPage() {
 
   return (
     <div className="page narrow">
-      <div className={`ticket card ${t.checkedIn ? "used" : ""}`}>
-        <div className="ticket-top">
+      <div className={`evt-ticket card ${t.checkedIn ? "used" : ""}`}>
+        <div className="evt-top">
           <p className="eyebrow" style={{ margin: 0 }}>ticket {t.code}</p>
           <h1 className="h2" style={{ margin: "0.3rem 0" }}>{ev?.title ?? "Event"}</h1>
           {when && (
@@ -60,7 +60,7 @@ export default function TicketPage() {
           )}
           <p className="muted">14 Willow Lane · {t.name}{t.qty > 1 ? ` + ${t.qty - 1}` : ""}</p>
         </div>
-        <div className="ticket-stub">
+        <div className="evt-stub">
           {t.paid ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -521,3 +521,16 @@ test("refunds: owner refunds part, then the rest, never more than was paid", asy
   assert.equal(o.pay_status, "refunded");
   assert.equal(o.refund_amount, due);
 });
+
+test("receipts: PDF download and an email when the order is collected", async () => {
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Receipt", phone: "9000044444", email: "receipt@example.com", lines: [{ itemId: "rose-latte", qty: 1, opts: { milk: "oat" } }, { itemId: "cookie", qty: 2 }] } });
+  const code = (placed.body as { code: string }).code;
+  const pdf = await fetch(`${s.url}/api/orders/${code}/receipt`);
+  assert.equal(pdf.headers.get("content-type"), "application/pdf");
+  assert.equal(Buffer.from(await pdf.arrayBuffer()).subarray(0, 4).toString(), "%PDF");
+  await s.login();
+  await s.api(`/api/orders/${code}`, { method: "PATCH", json: { status: "collected" } });
+  await new Promise((r) => setTimeout(r, 300));
+  const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string; subject: string }[] };
+  assert.ok(mail.emails.some((e) => e.to_email === "receipt@example.com" && e.subject.includes("receipt")), "receipt email sent");
+});

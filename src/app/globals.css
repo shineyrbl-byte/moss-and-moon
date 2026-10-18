@@ -801,13 +801,13 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 :root[data-season="valentines"] .blob.b2 { background: var(--pink); }
 
 /* ============ Event tickets ============ */
-.ticket { padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr auto; }
-.ticket-top { padding: 1.6rem; }
-.ticket-stub { padding: 1.4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; border-left: 2px dashed var(--line); background: var(--surface-2); text-align: center; }
-.ticket-stub img { background: #fff; border-radius: 12px; padding: 6px; }
-.ticket.used .ticket-stub img { opacity: 0.35; }
-@media (max-width: 600px) { .ticket { grid-template-columns: 1fr; } .ticket-stub { border-left: none; border-top: 2px dashed var(--line); } }
-@media print { .nav, .footer, .chat-fab, .season-banner, .season-sky, .table-banner, .toasts { display: none !important; } .ticket { box-shadow: none; border: 1px solid #ccc; } }
+.evt-ticket { padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr auto; }
+.evt-top { padding: 1.6rem; }
+.evt-stub { padding: 1.4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; border-left: 2px dashed var(--line); background: var(--surface-2); text-align: center; }
+.evt-stub img { background: #fff; border-radius: 12px; padding: 6px; }
+.evt-ticket.used .evt-stub img { opacity: 0.35; }
+@media (max-width: 600px) { .evt-ticket { grid-template-columns: 1fr; } .evt-stub { border-left: none; border-top: 2px dashed var(--line); } }
+@media print { .nav, .footer, .chat-fab, .season-banner, .season-sky, .table-banner, .toasts { display: none !important; } .evt-ticket { box-shadow: none; border: 1px solid #ccc; } }
 
 /* ============ Drink builder cup ============ */
 .modal-title-row { display: flex; gap: 1rem; align-items: center; justify-content: space-between; }
@@ -826,3 +826,18 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .summary-preview iframe { width: 100%; height: 420px; border: none; border-radius: 10px; background: #fffaf6; }
 .refund-form { display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px dashed var(--line); padding-top: 0.7rem; }
 .status-tag.refunded { background: var(--surface-2); }
+
+/* ============ Kitchen ticket ============ */
+.printing-ticket .nav, .printing-ticket .footer, .printing-ticket .chat-fab, .printing-ticket .season-banner, .printing-ticket .season-sky, .printing-ticket .table-banner { display: none !important; }
+.printing-ticket body { background: #fff; color: #000; }
+.printing-ticket body::before { display: none; }
+.kt { width: 72mm; margin: 1.5rem auto; font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: #000; background: #fff; padding: 4mm; }
+.kt-head { display: flex; justify-content: space-between; align-items: baseline; }
+.kt-code { font-size: 22px; letter-spacing: 1px; }
+.kt-where { font-size: 18px; font-weight: 700; margin: 4px 0; }
+.kt-line { margin: 6px 0; font-size: 15px; }
+.kt-small { font-size: 11px; padding-left: 1.6em; }
+.kt-note { font-weight: 700; }
+.kt hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+.kt-btn { font: inherit; padding: 6px 12px; border: 1px solid #000; background: #fff; border-radius: 6px; }
+@media print { @page { size: 80mm auto; margin: 0; } .kt { margin: 0; } .kt-btn { display: none; } }

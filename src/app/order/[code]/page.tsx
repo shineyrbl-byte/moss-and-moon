@@ -225,6 +225,7 @@ export default function OrderPage() {
         This page updates by itself. Bookmark it, or show the code at the counter.
       </p>
       <div className="row" style={{ justifyContent: "center", marginTop: "1rem" }}>
+        <a href={`/api/orders/${order.code}/receipt`} className="btn btn-ghost btn-sm" target="_blank" rel="noreferrer">🧾 Receipt (PDF)</a>
         <Link href="/orders" className="btn btn-ghost btn-sm">My orders</Link>
         <Link href="/account" className="btn btn-ghost btn-sm">My account</Link>
         <Link href="/#menu" className="btn btn-sm">Order something else</Link>

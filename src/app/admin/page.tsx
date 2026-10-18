@@ -321,7 +321,10 @@ export default function AdminPage() {
                   {o.refund_amount > 0 && <span className="small">↩ {rupees(o.refund_amount)} refunded</span>}
                   <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
                     <strong>{rupees(orderDue(o))}</strong>
-                    {next && <button className="btn btn-pink btn-sm" onClick={() => advance(o)}>Mark {next} →</button>}
+                    <span className="row" style={{ gap: "0.4rem" }}>
+                      <a className="btn btn-ghost btn-sm" href={`/print/${o.code}`} target="_blank" rel="noreferrer" aria-label={`Print kitchen ticket for ${o.code}`}>🖨</a>
+                      {next && <button className="btn btn-pink btn-sm" onClick={() => advance(o)}>Mark {next} →</button>}
+                    </span>
                   </div>
                   {me?.role === "owner" && (o.pay_method === "online" || (o.paid_shares ?? 0) > 0) && (
                     <RefundButton code={o.code} refundable={(o.pay_status === "paid" || o.pay_status === "refunded" ? orderDue(o) : (o.paid_shares ?? 0)) - o.refund_amount} onDone={load} />

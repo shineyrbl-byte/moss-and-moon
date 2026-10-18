@@ -164,7 +164,10 @@ export default function StaffScreen() {
                     {o.note && <p className="ticket-note">📝 {o.note}</p>}
                     <div className="ticket-foot">
                       <span className={`status-tag ${o.pay_status}`}>{o.pay_status === "paid" ? "paid" : o.pay_status === "pending" ? "awaiting payment" : `collect ${rupees(orderDue(o))}`}</span>
-                      <button className="btn btn-pink" onClick={() => advance(o)}>{NEXT_LABEL[o.status]}</button>
+                      <span className="row" style={{ gap: "0.4rem" }}>
+                        <a className="btn btn-ghost" href={`/print/${o.code}`} target="_blank" rel="noreferrer" aria-label={`Print ticket for ${o.code}`}>🖨</a>
+                        <button className="btn btn-pink" onClick={() => advance(o)}>{NEXT_LABEL[o.status]}</button>
+                      </span>
                     </div>
                   </article>
                 );

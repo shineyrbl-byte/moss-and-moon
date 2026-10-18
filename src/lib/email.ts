@@ -10,7 +10,9 @@ const FROM = () => process.env.EMAIL_FROM || "Moss & Moon <onboarding@resend.dev
 
 export const emailMode = () => (process.env.RESEND_API_KEY ? "live" : "preview");
 
-export async function sendEmail(to: string, subject: string, body: string) {
+export type Attachment = { filename: string; content: Uint8Array };
+
+export async function sendEmail(to: string, subject: string, body: string, attachments: Attachment[] = []) {
   if (!to) return;
   const html = layout(subject, body);
   const row = db.prepare("INSERT INTO outbox (to_email, subject, html, status) VALUES (?, ?, ?, ?)").run(to, subject, html, emailMode() === "live" ? "sending" : "preview only");
@@ -19,7 +21,10 @@ export async function sendEmail(to: string, subject: string, body: string) {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM(), to, subject, html }),
+      body: JSON.stringify({
+        from: FROM(), to, subject, html,
+        ...(attachments.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content).toString("base64") })) } : {}),
+      }),
     });
     const ok = r.ok;
     const err = ok ? null : (await r.text()).slice(0, 300);
@@ -30,7 +35,7 @@ export async function sendEmail(to: string, subject: string, body: string) {
 }
 
 /** Send without making the customer wait for it */
-export const sendLater = (to: string, subject: string, body: string) => void sendEmail(to, subject, body).catch(() => {});
+export const sendLater = (to: string, subject: string, body: string, attachments?: Attachment[]) => void sendEmail(to, subject, body, attachments).catch(() => {});
 
 // ---------- templates ----------
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
@@ -121,6 +126,14 @@ export function refundEmail(r: { code: string; name: string; amount: number; rea
     `Your refund of ${rupees(r.amount)} is on its way`,
     `<p>Hi ${esc(r.name)}, we've refunded <b>${rupees(r.amount)}</b> for order <b>${esc(r.code)}</b>.${r.reason ? ` (${esc(r.reason)})` : ""}</p>
      <p style="color:#8a6a5c;font-size:13px">It usually reaches your bank, card or UPI app in 5 to 7 working days. Sorry for the trouble, and we hope to see you again soon ✿</p>`,
+  ] as const;
+}
+
+export function receiptEmail(o: { code: string; name: string }) {
+  return [
+    `Your Moss & Moon receipt (${o.code})`,
+    `<p>Thanks for visiting, ${esc(o.name)}! Your receipt is attached as a PDF.</p>${button(`${SITE()}/order/${o.code}`, "View your order")}
+     <p style="color:#8a6a5c;font-size:13px">Loved it? A quick review makes our day ✿</p>`,
   ] as const;
 }
 
