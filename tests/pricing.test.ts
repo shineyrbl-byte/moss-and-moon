@@ -311,3 +311,14 @@ test("hours labels group days, and closures close a date", async () => {
   assert.deepEqual(slotsFor("2026-10-21"), []);
   applyConfig(DEFAULT_CONFIG);
 });
+
+test("the text formatter makes simple marks into safe HTML", async () => {
+  const { renderMarkdown } = await import("../src/lib/markdown.ts");
+  const html = renderMarkdown("## Hello\n\nSome **bold** and *soft* words, [a link](https://x.example/a).\n\n- one\n- two\n\n<script>alert(1)</script> [bad](javascript:alert(1))");
+  assert.match(html, /<h2>Hello<\/h2>/);
+  assert.match(html, /<strong>bold<\/strong> and <em>soft<\/em>/);
+  assert.match(html, /<a href="https:\/\/x.example\/a">a link<\/a>/);
+  assert.match(html, /<ul><li>one<\/li><li>two<\/li><\/ul>/);
+  assert.ok(!html.includes("<script"), "HTML is escaped");
+  assert.ok(!html.includes('href="javascript'), "only http(s) links");
+});

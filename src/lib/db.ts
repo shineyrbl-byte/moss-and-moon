@@ -342,6 +342,23 @@ function open() {
       data TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS newsletters (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      subject TEXT NOT NULL,
+      body TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      recipients INTEGER NOT NULL DEFAULT 0,
+      sent_count INTEGER NOT NULL DEFAULT 0,
+      failed_count INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      sent_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS newsletter_sends (
+      newsletter_id INTEGER NOT NULL,
+      email TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'queued',
+      PRIMARY KEY (newsletter_id, email)
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -386,6 +403,7 @@ function open() {
   addColumn(db, "orders", "pickup_reminded", "INTEGER NOT NULL DEFAULT 0");
   addColumn(db, "bookings", "reminded", "INTEGER NOT NULL DEFAULT 0");
   addColumn(db, "orders", "invoice_no", "TEXT");
+  addColumn(db, "subscribers", "unsubscribed_at", "TEXT");
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };

@@ -32,7 +32,7 @@ export function emailProvider(): "resend" | "gmail-api" | "gmail" | null {
 export const sendingAddress = () => (emailProvider() === "gmail-api" ? connectedAddress() : emailProvider() === "gmail" ? process.env.GMAIL_USER ?? null : null);
 
 /** The finished email as raw bytes (for Gmail's API) */
-async function buildRaw(msg: { from: { name: string; address: string }; to: string; subject: string; html: string; attachments: { filename: string; content: Buffer }[] }) {
+async function buildRaw(msg: { from: { name: string; address: string }; to: string; subject: string; html: string; attachments: { filename: string; content: Buffer }[]; headers?: Record<string, string> }) {
   const t = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "windows" });
   const info = await t.sendMail(msg);
   return info.message as Buffer;
@@ -67,11 +67,11 @@ async function gmail() {
 
 export type Attachment = { filename: string; content: Uint8Array };
 
-export async function sendEmail(to: string, subject: string, body: string, attachments: Attachment[] = [], opts: { skipErrorReport?: boolean } = {}) {
-  if (!to) return;
+export async function sendEmail(to: string, subject: string, body: string, attachments: Attachment[] = [], opts: { skipErrorReport?: boolean; headers?: Record<string, string> } = {}): Promise<boolean> {
+  if (!to) return false;
   const html = layout(subject, body);
   const row = db.prepare("INSERT INTO outbox (to_email, subject, html, status) VALUES (?, ?, ?, ?)").run(to, subject, html, emailMode() === "live" ? "sending" : "preview only");
-  if (emailMode() !== "live") return;
+  if (emailMode() !== "live") return true; // preview mode: saved in the outbox
   const outbox = Number(row.lastInsertRowid);
   if (emailProvider() === "gmail-api") {
     try {
@@ -81,15 +81,17 @@ export async function sendEmail(to: string, subject: string, body: string, attac
         subject,
         html,
         attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content) })),
+        headers: opts.headers,
       });
       await sendRaw(raw);
       db.prepare("UPDATE outbox SET status = 'sent', error = NULL WHERE id = ?").run(outbox);
+      return true;
     } catch (e) {
       const err = String(e instanceof Error ? e.message : e).slice(0, 300);
       db.prepare("UPDATE outbox SET status = 'failed', error = ? WHERE id = ?").run(err, outbox);
       if (!opts.skipErrorReport) reportError("email", `Email didn't send (Gmail): ${err}`, `to: ${to}\nsubject: ${subject}`);
     }
-    return;
+    return false;
   }
   if (emailProvider() === "gmail") {
     try {
@@ -99,15 +101,17 @@ export async function sendEmail(to: string, subject: string, body: string, attac
         subject,
         html,
         attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content) })),
+        headers: opts.headers,
       });
       db.prepare("UPDATE outbox SET status = 'sent', error = NULL WHERE id = ?").run(outbox);
+      return true;
     } catch (e) {
       mailer = null; // look the address up again next time
       const err = String(e instanceof Error ? e.message : e).slice(0, 300);
       db.prepare("UPDATE outbox SET status = 'failed', error = ? WHERE id = ?").run(err, outbox);
       if (!opts.skipErrorReport) reportError("email", `Email didn't send (Gmail): ${err}`, `to: ${to}\nsubject: ${subject}`);
     }
-    return;
+    return false;
   }
   try {
     const r = await fetch("https://api.resend.com/emails", {
@@ -116,15 +120,18 @@ export async function sendEmail(to: string, subject: string, body: string, attac
       body: JSON.stringify({
         from: FROM(), to, subject, html,
         ...(attachments.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content).toString("base64") })) } : {}),
+        ...(opts.headers ? { headers: opts.headers } : {}),
       }),
     });
     const ok = r.ok;
     const err = ok ? null : (await r.text()).slice(0, 300);
     db.prepare("UPDATE outbox SET status = ?, error = ? WHERE id = ?").run(ok ? "sent" : "failed", err, Number(row.lastInsertRowid));
     if (!ok && !opts.skipErrorReport) reportError("email", `Email didn't send: ${err}`, `to: ${to}\nsubject: ${subject}`);
+    return ok;
   } catch (e) {
     db.prepare("UPDATE outbox SET status = 'failed', error = ? WHERE id = ?").run(String(e).slice(0, 300), Number(row.lastInsertRowid));
     if (!opts.skipErrorReport) reportError("email", `Email didn't send: ${String(e)}`, `subject: ${subject}`);
+    return false;
   }
 }
 
@@ -134,7 +141,8 @@ export const sendLater = (to: string, subject: string, body: string, attachments
 // ---------- templates ----------
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-function layout(title: string, body: string) {
+/** The branded email wrapper (exported for previews in the admin page) */
+export function layout(title: string, body: string) {
   return `<!doctype html><html><body style="margin:0;background:#f5ece4;font-family:Helvetica,Arial,sans-serif;color:#3b2720">
   <div style="max-width:520px;margin:0 auto;padding:32px 16px">
     <div style="text-align:center;font-family:Georgia,serif;font-size:28px;margin-bottom:20px">Moss <i style="color:#c25b78">&amp;</i> Moon</div>

@@ -8,6 +8,7 @@ import { reviewTick } from "./reviewRequests";
 import { weeklyTick } from "./insights";
 import { scheduleTick } from "./schedules";
 import { reminderTick } from "./reminders";
+import { newsletterTick } from "./newsletter";
 
 const g = globalThis as { __mmJobs?: NodeJS.Timeout[] };
 
@@ -34,5 +35,6 @@ export function startJobs() {
     every(5 * 60_000, "weekly report", () => weeklyTick()),
     every(20_000, "regular orders", () => scheduleTick()),
     every(30_000, "reminders", () => reminderTick()),
+    every(20_000, "newsletter", () => newsletterTick()),
   ];
 }

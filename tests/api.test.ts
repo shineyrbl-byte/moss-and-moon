@@ -937,3 +937,33 @@ test("GST: paid orders get running tax invoice numbers and a monthly report", as
   assert.match(csv, /"209\.52","5\.24","5\.24","220\.00"/);
   await s.api("/api/admin/gst", { method: "PUT", json: { on: false } });
 });
+
+test("newsletter: draft, test, send to subscribers, one-click unsubscribe", async () => {
+  await s.login();
+  await s.api("/api/admin/settings", { method: "PATCH", json: { ownerEmail: "owner@example.com" } });
+  for (const e of ["reader1@example.com", "reader2@example.com"]) await s.api("/api/newsletter", { method: "POST", json: { email: e } });
+  const dr = (await s.api("/api/admin/newsletter/draft", { method: "POST", json: { idea: "the new frappé" } })).body as { subject: string; body: string };
+  assert.ok(dr.subject && dr.body.length > 40, "a starting draft without AI");
+  const saved = await s.api("/api/admin/newsletter", { method: "POST", json: { subject: "Frappé season ✿", body: "Hello!\n\n**New:** the frappé." } });
+  const id = (saved.body as { id: number }).id;
+  assert.equal((await s.api("/api/admin/newsletter/send", { method: "POST", json: { id, test: true } })).status, 200);
+  const sent = await s.api("/api/admin/newsletter/send", { method: "POST", json: { id } });
+  assert.ok((sent.body as { recipients: number }).recipients >= 2);
+  let n: { status: string; sent_count: number } | undefined;
+  for (let i = 0; i < 40 && n?.status !== "sent"; i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    n = ((await s.api("/api/admin/newsletter")).body as { newsletters: { id: number; status: string; sent_count: number }[] }).newsletters.find((x) => x.id === id);
+  }
+  assert.equal(n?.status, "sent");
+  const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string; subject: string; html: string }[] };
+  const r1 = mail.emails.find((e) => e.to_email === "reader1@example.com" && e.subject === "Frappé season ✿")!;
+  assert.ok(r1, "subscriber got it");
+  assert.ok(mail.emails.some((e) => e.to_email === "owner@example.com" && e.subject.startsWith("[Test]")));
+  // The unsubscribe link in their email works, and a wrong token doesn't
+  const link = /href="(http[^"]+unsubscribe[^"]+)"/.exec(r1.html)![1].replace(/&amp;/g, "&");
+  const u = new URL(link);
+  assert.match(await (await fetch(`${s.url}${u.pathname}?e=${u.searchParams.get("e")}&t=wrong`)).text(), /didn't work/);
+  assert.match(await (await fetch(`${s.url}${u.pathname}${u.search}`)).text(), /unsubscribed/);
+  const after = (await s.api("/api/admin/newsletter")).body as { unsubscribed: number };
+  assert.ok(after.unsubscribed >= 1);
+});

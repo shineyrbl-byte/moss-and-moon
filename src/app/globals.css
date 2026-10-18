@@ -955,3 +955,10 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .event-form { display: flex; flex-direction: column; gap: 0.7rem; border: 1px dashed var(--line); border-radius: 14px; padding: 0.9rem; }
 .event-thumb { position: relative; width: 90px; height: 64px; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
 .event-thumb img { object-fit: cover; }
+.newsletter-editor { padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.newsletter-split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.newsletter-preview { border: 1px solid var(--line); border-radius: 14px; padding: 0.9rem 1rem; background: var(--surface); max-height: 420px; overflow: auto; }
+.newsletter-preview h3 { font-size: 1.35rem; margin: 0.3rem 0 0.6rem; }
+.newsletter-preview p, .newsletter-preview ul { margin: 0 0 0.7rem; }
+.newsletter-preview a { color: var(--pink-ink); text-decoration: underline; }
+@media (max-width: 760px) { .newsletter-split { grid-template-columns: 1fr; } }
