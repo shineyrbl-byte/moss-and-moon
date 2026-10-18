@@ -18,6 +18,7 @@ import HealthTab from "@/components/admin/HealthTab";
 import PromosTab from "@/components/admin/PromosTab";
 import InsightsCard from "@/components/admin/InsightsCard";
 import ProfitPanel from "@/components/admin/ProfitPanel";
+import WasteTab from "@/components/admin/WasteTab";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -32,9 +33,9 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR", "Team", "Rota", "Promos", "Gift cards", "Emails", "Reviews", "Health"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Tables & QR", "Team", "Rota", "Promos", "Gift cards", "Emails", "Reviews", "Health"] as const;
 // What baristas can see (owners see everything)
-const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR", "Rota"];
+const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Tables & QR", "Rota"];
 
 // A soft two-note "ding" when a new order arrives
 function chime() {
@@ -387,6 +388,7 @@ export default function AdminPage() {
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}
       {tab === "Events" && <EventsTab />}
+      {tab === "Waste" && <WasteTab />}
       {tab === "Rota" && <RotaTab canEdit={me?.role === "owner"} />}
       {tab === "Health" && me?.role === "owner" && <HealthTab />}
       {tab === "Promos" && me?.role === "owner" && <PromosTab />}

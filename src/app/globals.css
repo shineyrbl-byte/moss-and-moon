@@ -901,3 +901,5 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .profit-bar { width: 100%; max-width: 22px; background: var(--viz-bar); border-radius: 4px 4px 0 0; transition: height 0.4s; }
 .profit-bar.neg { background: var(--muted); }
 .profit-col:hover .profit-bar, .profit-col:focus-visible .profit-bar { filter: brightness(1.12); }
+.waste-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.5rem 1rem; margin-top: 0.8rem; }
+.waste-item { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--line); }

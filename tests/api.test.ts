@@ -677,3 +677,16 @@ test("profit: costs are saved with each order and add up", async () => {
   assert.equal(rep.profit, rep.revenue - rep.cost - ((rep as unknown as { waste: number }).waste ?? 0));
   assert.equal((await s.api("/api/admin/stock", { method: "PATCH", json: { id: "espresso-beans", cost: -1 } })).status, 400);
 });
+
+test("waste log: staff log leftovers, see the cost and tomorrow's bake plan", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/waste", { method: "POST", json: { entries: [{ itemId: "croissant", qty: 0 }] } })).status, 400);
+  const r = await s.api("/api/admin/waste", { method: "POST", json: { entries: [{ itemId: "croissant", qty: 3, reason: "leftover" }, { itemId: "nope", qty: 2 }] } });
+  assert.equal((r.body as { logged: number }).logged, 1);
+  const d = (await s.api("/api/admin/waste")).body as { entries: { id: number; item_name: string; qty: number; cost: number }[]; plan: { itemId: string }[] };
+  const e = d.entries.find((x) => x.item_name === "Butter Croissant")!;
+  assert.equal(e.qty, 3);
+  assert.ok(Math.abs(e.cost - 3 * 150 * 0.35) < 0.01, "no cost set, so 35% of the price");
+  assert.ok(d.plan.some((p) => p.itemId === "croissant"));
+  assert.equal((await s.api("/api/admin/waste", { method: "DELETE", json: { id: e.id } })).status, 200);
+});
