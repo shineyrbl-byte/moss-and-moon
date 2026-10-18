@@ -4,7 +4,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { MenuItem } from "@/lib/menu";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
-import { TABLE_COUNT, applyConfig, type CafeConfig } from "@/lib/cafe";
+import { TABLE_COUNT, activeBranches, applyConfig, type CafeConfig } from "@/lib/cafe";
 import { DICT, type Lang, type TKey } from "@/lib/i18n";
 
 export type Me = {
@@ -28,6 +28,9 @@ type Store = {
   find: (id: string) => MenuItem | undefined;
   table: number | null;
   setTable: (n: number | null) => void;
+  /** Which café the guest is ordering from or booking at ("main" unless there are more) */
+  branch: string;
+  setBranch: (id: string) => void;
   lines: CartLine[];
   count: number;
   add: (itemId: string, opts: Options, qty?: number) => void;
@@ -53,6 +56,7 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
   applyConfig(config);
   const [menu, setMenu] = useState<MenuItem[]>(initialMenu);
   const [table, setTableState] = useState<number | null>(null);
+  const [branch, setBranchState] = useState("main");
   const [lines, setLines] = useState<CartLine[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -123,6 +127,16 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
         sessionStorage.setItem("mm-table", String(n));
       }
     } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      const b = localStorage.getItem("mm-branch");
+      if (b && activeBranches().some((x) => x.id === b)) setBranchState(b);
+    } catch {}
+  }, []);
+  const setBranch = useCallback((id: string) => {
+    setBranchState(id);
+    try { localStorage.setItem("mm-branch", id); } catch {}
   }, []);
   const setTable = useCallback((n: number | null) => {
     setTableState(n);
@@ -216,6 +230,8 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
       find,
       table,
       setTable,
+      branch: table ? "main" : branch,
+      setBranch,
       lines,
       count: lines.reduce((s, l) => s + l.qty, 0),
       add,
@@ -232,7 +248,7 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
       favs,
       toggleFav,
     }),
-    [group, setGroup, lang, setLang, t, me, refreshMe, menu, find, table, setTable, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
+    [group, setGroup, lang, setLang, t, me, refreshMe, menu, find, table, setTable, branch, setBranch, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
   );
 
   return (

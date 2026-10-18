@@ -196,12 +196,12 @@ export function pickupReminderEmail(o: { code: string; name: string; lines: Quot
   ] as const;
 }
 
-export function bookingEmail(b: { code: string; name: string; date: string; time: string; guests: number; table?: number | null; preorder?: string[]; preorderTotal?: number }) {
+export function bookingEmail(b: { code: string; name: string; date: string; time: string; guests: number; table?: number | null; preorder?: string[]; preorderTotal?: number; branch?: string; address?: string }) {
   const when = new Date(b.date + "T00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
   const pre = b.preorder?.length
     ? `<p style="margin:12px 0 4px"><b>Ready when you arrive:</b></p><ul style="margin:0;padding-left:20px">${b.preorder.map((x) => `<li>${esc(x)}</li>`).join("")}</ul><p style="color:#8a6a5c;font-size:13px;margin-top:4px">About ₹${(b.preorderTotal ?? 0).toLocaleString("en-IN")}, paid at the café. We start making it 15 minutes before your booking.</p>`
     : "";
-  return [`Your table is booked, ${b.name} ✿ ${when}, ${b.time}`, `<p>${b.table ? `Table <b>${b.table}</b>` : "Table"} for <b>${b.guests}</b> on <b>${when}</b> at <b>${b.time}</b>.${b.table ? "" : " We'll keep the window seat warm if we can."}</p>${pre}${codeBox(b.code)}<p style="color:#8a6a5c;font-size:13px">Show this code when you arrive. The attached invite adds it to your calendar, and we'll send a reminder on the day. Need to change plans? Just call us.</p>`] as const;
+  return [`Your table is booked, ${b.name} ✿ ${when}, ${b.time}`, `<p>${b.table ? `Table <b>${b.table}</b>` : "Table"} for <b>${b.guests}</b> on <b>${when}</b> at <b>${b.time}</b>${b.branch ? ` at <b>${esc(b.branch)}</b>${b.address ? ` (${esc(b.address)})` : ""}` : ""}.${b.table ? "" : " We'll keep the window seat warm if we can."}</p>${pre}${codeBox(b.code)}<p style="color:#8a6a5c;font-size:13px">Show this code when you arrive. The attached invite adds it to your calendar, and we'll send a reminder on the day. Need to change plans? Just call us.</p>`] as const;
 }
 
 export function bookingReminderEmail(b: { code: string; name: string; time: string; guests: number }) {

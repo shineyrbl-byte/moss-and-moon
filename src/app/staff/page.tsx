@@ -7,9 +7,11 @@ import { ORDER_STEPS, type OrderStatus } from "@/lib/cafe";
 import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useLive } from "@/components/useLive";
 import SupportInbox from "@/components/SupportInbox";
+import { activeBranches, findBranch } from "@/lib/cafe";
 
 type Order = {
   vip?: boolean;
+  branch?: string;
   priority?: number;
   id: number; code: string; name: string; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number;
   pay_method: string; pay_status: string; status: OrderStatus; created_at: string; table_no: number | null;
@@ -54,6 +56,11 @@ export default function StaffScreen() {
   const [now, setNow] = useState(Date.now());
   const [sound, setSound] = useState(true);
   const [awake, setAwake] = useState(false);
+  // With more than one café, each tablet can show just its own branch
+  const [only, setOnly] = useState("all");
+  useEffect(() => { try { setOnly(localStorage.getItem("mm-kds-branch") || "all"); } catch {} }, []);
+  const pickBranch = (id: string) => { setOnly(id); try { localStorage.setItem("mm-kds-branch", id); } catch {} };
+  const branches = activeBranches();
   const seen = useRef<Set<string> | null>(null);
   const seenCalls = useRef<Set<number> | null>(null);
   const soundRef = useRef(sound);
@@ -136,6 +143,11 @@ export default function StaffScreen() {
         </div>
       </header>
 
+      {branches.length > 1 && (
+        <div className="chips" style={{ justifyContent: "flex-start", padding: "0 1rem" }} role="radiogroup" aria-label="Show orders for">
+          {[{ id: "all", name: "All branches" }, ...branches].map((b) => <button key={b.id} role="radio" aria-checked={only === b.id} className={`chip ${only === b.id ? "on" : ""}`} onClick={() => pickBranch(b.id)}>{b.name}</button>)}
+        </div>
+      )}
       {calls.length > 0 && (
         <div className="kds-calls">
           {calls.map((c) => (
@@ -148,7 +160,7 @@ export default function StaffScreen() {
 
       <div className="kds-cols">
         {COLUMNS.map((col) => {
-          const list = orders.filter((o) => o.status === col.status).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)); // gold members first
+          const list = orders.filter((o) => o.status === col.status && (only === "all" || (o.branch ?? "main") === only)).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)); // gold members first
           return (
             <section key={col.status} className={`kds-col ${col.status}`}>
               <h2>{col.title} <span>{list.length}</span></h2>
@@ -157,7 +169,7 @@ export default function StaffScreen() {
                 return (
                   <article key={o.code} className={`ticket ${mins >= 10 && o.status !== "ready" ? "late" : ""}`}>
                     <div className="ticket-top">
-                      <strong>{o.code}</strong>
+                      <strong>{o.code}{branches.length > 1 && only === "all" && <span className="branch-tag">{findBranch(o.branch).name}</span>}</strong>
                       <span className="ticket-time">{mins}m</span>
                     </div>
                     <div className="ticket-who">

@@ -1274,3 +1274,30 @@ test("kiosk orders need a staff-signed-in tablet, but no phone", async () => {
   assert.match(o.note, /Kiosk/);
   assert.equal(o.pay_method, "counter");
 });
+
+test("second branch: own hours, its own bookings, and items sold only at one café", async () => {
+  await s.login();
+  const allDay = Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map((d) => [d, [0, 24]]));
+  const put = await s.api("/api/admin/cafe-config", { method: "PUT", json: { branches: [{ id: "main", name: "Willow Lane", address: "14 Willow Lane" }, { name: "Fontainhas", address: "3 Rua de Ourem", hours: allDay }] } });
+  assert.equal(put.status, 200, JSON.stringify(put.body));
+  const b = (put.body as { branches: { id: string; name: string }[] }).branches;
+  assert.deepEqual(b.map((x) => x.id), ["main", "fontainhas"]);
+  // Bad branch hours are refused
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { branches: [{ id: "main", name: "Main" }, { name: "X", hours: { 1: [10, 9] } }] } })).status, 400);
+  // An order at the new branch is tagged with it (open 24h, so it works whatever the time)
+  const r = await s.api("/api/orders", { method: "POST", json: { name: "Branch", phone: "9876512345", branch: "fontainhas", lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  const o = (await s.api(`/api/orders/${r.body.code}`)).body as { branch: string };
+  assert.equal(o.branch, "fontainhas");
+  assert.equal((await s.api("/api/orders", { method: "POST", json: { name: "B", phone: "9876512345", branch: "nowhere", lines: [{ itemId: "cookie", qty: 1 }] } })).status, 400);
+  // Booking slots are per branch, and the floor plan is only at the main café
+  const d = new Date(Date.now() + 3 * 86_400_000);
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const slots = (await s.api(`/api/bookings/availability?date=${date}&branch=fontainhas`)).body as { time: string }[];
+  assert.equal(slots[0].time, "00:00");
+  assert.equal(((await s.api(`/api/bookings/tables?date=${date}&time=10:00&branch=fontainhas`)).body as { tables: unknown[] }).tables.length, 0);
+  const bk = await s.api("/api/bookings", { method: "POST", json: { name: "Rui", phone: "9876512399", date, time: "01:00", guests: 2, branch: "fontainhas" } });
+  assert.equal(bk.status, 200, JSON.stringify(bk.body));
+  // Put back to one café so other tests see the usual setup
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { branches: [{ id: "main", name: "Willow Lane", address: "14 Willow Lane" }] } })).status, 200);
+});

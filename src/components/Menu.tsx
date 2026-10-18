@@ -10,7 +10,7 @@ import VoiceOrder from "./VoiceOrder";
 import { ALLERGENS, allergensFor, canAvoid, kcalFor, type Allergen } from "@/lib/nutrition";
 
 export default function Menu() {
-  const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t } = useStore();
+  const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t, branch } = useStore();
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [happy, setHappy] = useState(false);
   useEffect(() => setHappy(isHappyHour()), []);
@@ -36,12 +36,13 @@ export default function Menu() {
     return menu.filter(
       (m) =>
         inTab(m, cat) &&
+        (!m.branches?.length || m.branches.includes(branch)) &&
         (!onlyFavs || favs.has(m.id)) &&
         diet.every((d) => m.diet?.includes(d)) &&
         avoid.every((a) => canAvoid(m, a)) &&
         (!s || `${m.name} ${m.desc} ${m.badge ?? ""}`.toLowerCase().includes(s))
     ).sort((a, b) => CATEGORY_ORDER.indexOf(a.cat) - CATEGORY_ORDER.indexOf(b.cat));
-  }, [menu, cat, diet, avoid, q, onlyFavs, favs]);
+  }, [menu, cat, diet, avoid, q, onlyFavs, favs, branch]);
 
   const toggleDiet = (d: Diet) => setDiet((ds) => (ds.includes(d) ? ds.filter((x) => x !== d) : [...ds, d]));
 

@@ -6,6 +6,7 @@ import { rupees } from "@/lib/pricing";
 import { SEASONS } from "@/lib/seasons";
 import { ALLERGENS, type Allergen } from "@/lib/nutrition";
 import { useStore } from "../Store";
+import { activeBranches } from "@/lib/cafe";
 
 const send = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
@@ -159,6 +160,16 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
               <button type="button" className={`chip ${f.diet?.includes("gf") ? "on" : ""}`} onClick={() => toggleDiet("gf")}>🌾 Gluten-free</button>
             </div>
           </div>
+          {activeBranches().length > 1 && (
+            <div className="field">Sold at <span className="muted small">· none picked = every branch</span>
+              <div className="chips" style={{ justifyContent: "flex-start" }}>
+                {activeBranches().map((br) => {
+                  const on = !!f.branches?.includes(br.id);
+                  return <button type="button" key={br.id} aria-pressed={on} className={`chip ${on ? "on" : ""}`} onClick={() => set("branches", on ? (f.branches ?? []).filter((x) => x !== br.id) : [...(f.branches ?? []), br.id])}>{br.name}</button>;
+                })}
+              </div>
+            </div>
+          )}
           <div className="field">Photo
             <div className="row" style={{ alignItems: "center" }}>
               <label className="btn btn-ghost btn-sm" style={{ cursor: "pointer" }}>

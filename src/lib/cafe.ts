@@ -5,7 +5,11 @@ export type DayHours = [number, number] | null;
 export type Closure = { date: string; note: string };
 /** Opening hours and holidays. Owners edit these in Admin → Overview; the server keeps
  * the current settings on globalThis and sends them to the browser with every page. */
-export type CafeConfig = { hours: Record<number, DayHours>; closures: Closure[]; happyHour?: unknown };
+export type CafeConfig = { hours: Record<number, DayHours>; closures: Closure[]; happyHour?: unknown; branches?: Branch[] };
+
+/** A café location. The main one ("main") uses the café's hours; others can have their own. */
+export type Branch = { id: string; name: string; address: string; hours: Record<number, DayHours> | null; active: boolean };
+export const MAIN_BRANCH: Branch = { id: "main", name: "Willow Lane", address: "14 Willow Lane", hours: null, active: true };
 
 export const DEFAULT_HOURS: Record<number, DayHours> = { 0: [9, 18], 1: [7, 20], 2: [7, 20], 3: [7, 20], 4: [7, 20], 5: [7, 20], 6: [8, 22] };
 export const DEFAULT_CONFIG: CafeConfig = { hours: DEFAULT_HOURS, closures: [] };
@@ -13,22 +17,35 @@ export const DEFAULT_CONFIG: CafeConfig = { hours: DEFAULT_HOURS, closures: [] }
 export const cafeConfig = (): CafeConfig => (globalThis as { __mmConfig?: CafeConfig }).__mmConfig ?? DEFAULT_CONFIG;
 export const applyConfig = (c: CafeConfig) => void ((globalThis as { __mmConfig?: CafeConfig }).__mmConfig = c);
 
+/** Every branch, main first */
+export const allBranches = (): Branch[] => {
+  const list = cafeConfig().branches ?? [];
+  const main = list.find((b) => b.id === "main");
+  return [{ ...MAIN_BRANCH, ...main, id: "main", hours: null, active: true }, ...list.filter((b) => b.id !== "main")];
+};
+export const activeBranches = () => allBranches().filter((b) => b.active);
+/** A branch by id; unknown or closed-down ids fall back to the main café */
+export const findBranch = (id?: string | null) => activeBranches().find((b) => b.id === id) ?? allBranches()[0];
+
 /** The usual hours on a weekday (0 = Sunday), ignoring holidays */
-export const weeklyHours = (day: number): DayHours => cafeConfig().hours[day] ?? null;
+export const weeklyHours = (day: number, branch?: string | null): DayHours => {
+  const b = branch && branch !== "main" ? findBranch(branch) : null;
+  return (b?.hours ? b.hours[day] : cafeConfig().hours[day]) ?? null;
+};
 export const closureOn = (d: Date) => cafeConfig().closures.find((c) => c.date === toDateStr(d)) ?? null;
-/** Hours on a particular date: null if it's a closed weekday or a holiday */
-export const hoursOn = (d: Date): DayHours => (closureOn(d) ? null : weeklyHours(d.getDay()));
+/** Hours on a particular date: null if it's a closed weekday or a holiday (holidays apply to every branch) */
+export const hoursOn = (d: Date, branch?: string | null): DayHours => (closureOn(d) ? null : weeklyHours(d.getDay(), branch));
 
 export const hourText = (x: number) => (x === 0 || x === 24 ? "12am" : x === 12 ? "12pm" : x > 12 ? `${x - 12}pm` : `${x}am`);
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** "Mon – Fri 7am – 8pm" style rows, grouping days in a row with the same hours (Monday first) */
-export function hoursLabel() {
+export function hoursLabel(branch?: string | null) {
   const order = [1, 2, 3, 4, 5, 6, 0];
   const rows: { days: string; time: string; from: number; to: number }[] = [];
   for (const d of order) {
-    const h = weeklyHours(d);
+    const h = weeklyHours(d, branch);
     const time = h ? `${hourText(h[0])} – ${hourText(h[1])}` : "Closed";
     const last = rows[rows.length - 1];
     if (last && last.time === time) last.to = d;
@@ -70,10 +87,10 @@ export function parseDate(s: string) {
 }
 
 /** Bookable times for a date: every 30 min, last booking 1 hour before close. */
-export function slotsFor(dateStr: string): string[] {
+export function slotsFor(dateStr: string, branch?: string | null): string[] {
   const d = parseDate(dateStr);
   if (!d) return [];
-  const h = hoursOn(d);
+  const h = hoursOn(d, branch);
   if (!h) return [];
   const [open, close] = h;
   const out: string[] = [];
@@ -87,13 +104,13 @@ export function slotsFor(dateStr: string): string[] {
   return out;
 }
 
-export function openStatus(now = new Date()) {
+export function openStatus(now = new Date(), branch?: string | null) {
   const closure = closureOn(now);
-  const today = hoursOn(now);
+  const today = hoursOn(now, branch);
   const nextOpen = () => {
     for (let i = 1; i <= 14; i++) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 12);
-      const h = hoursOn(d);
+      const h = hoursOn(d, branch);
       if (h) return i === 1 ? `tomorrow at ${hourText(h[0])}` : `${DAY_NAMES[d.getDay()]} at ${hourText(h[0])}`;
     }
     return "soon";

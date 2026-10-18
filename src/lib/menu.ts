@@ -41,6 +41,8 @@ export type MenuItem = {
   /** Ingredients used per item (leave empty to use sensible defaults for drinks) */
   uses?: { ingredient: string; amount: number }[];
   soldOut?: boolean; // filled in from the database
+  /** Only sold at these branches (unset = everywhere) */
+  branches?: string[];
 };
 
 export const photo = (img: string, w = 900) =>

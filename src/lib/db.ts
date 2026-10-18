@@ -481,6 +481,9 @@ function open() {
 
   // Newer columns (added safely to databases created by older versions)
   addColumn(db, "orders", "email", "TEXT");
+  addColumn(db, "orders", "branch", "TEXT NOT NULL DEFAULT 'main'");
+  addColumn(db, "bookings", "branch", "TEXT NOT NULL DEFAULT 'main'");
+  addColumn(db, "waitlist", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "bookings", "table_no", "INTEGER");
   addColumn(db, "bookings", "preorder", "TEXT"); // JSON order lines, placed 15 min before
   addColumn(db, "bookings", "preorder_code", "TEXT");

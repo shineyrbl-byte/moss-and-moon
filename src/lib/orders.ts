@@ -3,7 +3,7 @@
 import "server-only";
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "./db";
 import { DELIVERY, REFERRAL_CREDIT, quote, rupees } from "./pricing";
-import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, hoursOn, toDateStr } from "./cafe";
+import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, findBranch, hoursOn, toDateStr } from "./cafe";
 import { perksFor } from "./perks";
 import { checkStock, consumeStock } from "./stock";
 import { menuLookup, shopShortfall, takeShopStock } from "./menuStore";
@@ -43,11 +43,15 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   if (body.email && !email) return Response.json({ error: "That email doesn't look right." }, { status: 400 });
   if (body.delivery && !table && delivery.length < 10) return Response.json({ error: "Please add your full delivery address." }, { status: 400 });
 
+  // Which branch: table QR codes are at the main café
+  const branch = table ? findBranch("main") : findBranch(typeof body.branch === "string" ? body.branch : null);
+  if (body.branch && !table && branch.id !== body.branch) return Response.json({ error: "That branch isn't taking orders right now." }, { status: 400 });
+
   // Closed all day (a holiday or a weekly day off): no orders, except gifted drinks being claimed later
-  const todayHours = hoursOn(new Date());
+  const todayHours = hoursOn(new Date(), branch.id);
   if (!todayHours && !opts.prepaid) {
     const c = closureOn(new Date());
-    return Response.json({ error: `Sorry, we're closed today${c?.note ? ` (${c.note})` : ""}. See you soon ☕` }, { status: 409 });
+    return Response.json({ error: `Sorry, ${branch.id === "main" ? "we're" : `${branch.name} is`} closed today${c?.note ? ` (${c.note})` : ""}. See you soon ☕` }, { status: 409 });
   }
   const [open, close] = todayHours ?? [0, 24];
   const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
@@ -69,6 +73,8 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
 
   const raw = Array.isArray(body.lines) ? body.lines.slice(0, group ? 60 : 30) : [];
   const find = menuLookup();
+  const notHere = raw.map((l: { itemId: string }) => find(l.itemId)).find((m: { branches?: string[] } | undefined) => m?.branches?.length && !m.branches.includes(branch.id));
+  if (notHere) return Response.json({ error: `Sorry, ${notHere.name} isn't available at ${branch.name}. Please remove it.` }, { status: 409 });
   if (raw.some((l: { itemId: string }) => find(l.itemId)?.soldOut))
     return Response.json({ error: "Sorry, something in your tray just sold out. Please remove it." }, { status: 409 });
 
@@ -115,13 +121,13 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   db.prepare(
     `INSERT INTO orders (code, name, phone, email, pickup, note, lines, subtotal, discount, total, promo,
        pay_method, pay_status, giftcard_code, giftcard_used, happy_hour, table_no, customer_id,
-       tip, credit_used, delivery_fee, delivery_address, perks)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       tip, credit_used, delivery_fee, delivery_address, perks, branch)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     code, name, phone, email || null, pickup, note, JSON.stringify(withCosts(q.lines, find)), q.subtotal,
     q.subtotal - q.total, q.total, q.promoCode,
     opts.prepaid ? opts.prepaid.method : q.due === 0 && q.giftUsed + q.creditUsed > 0 ? "giftcard" : payMethod, payStatus, gift?.code ?? null, q.giftUsed, q.happyHour ? 1 : 0, table, me?.id ?? null,
-    q.tip, q.creditUsed, q.deliveryFee, delivery || null, usedPerks || null
+    q.tip, q.creditUsed, q.deliveryFee, delivery || null, usedPerks || null, branch.id
   );
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
   consumeStock(q.lines);

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useEscape, useStore } from "./Store";
+import BranchPicker from "./BranchPicker";
 import { usePay } from "./Payment";
 import { photo } from "@/lib/menu";
 import { DELIVERY, HAPPY_HOUR, TIP_CHOICES, describeOptions, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
@@ -14,9 +15,9 @@ type Loyalty = { stamps: number; hasReward: boolean; found: boolean };
 type Gift = { code: string; balance: number };
 
 /** Pickup times for today in 15-minute steps */
-function pickupTimes() {
+function pickupTimes(branch?: string) {
   const now = new Date();
-  const today = hoursOn(now);
+  const today = hoursOn(now, branch);
   if (!today) return [];
   const [, close] = today;
   const start = Math.ceil((now.getHours() * 60 + now.getMinutes() + 15) / 15) * 15;
@@ -28,7 +29,7 @@ function pickupTimes() {
 const post = (url: string, body: unknown) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export default function CartDrawer() {
-  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me, t, group, setGroup } = useStore();
+  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me, t, group, setGroup, branch } = useStore();
   const pay = usePay();
   const router = useRouter();
   const [step, setStep] = useState<"tray" | "checkout">("tray");
@@ -107,7 +108,7 @@ export default function CartDrawer() {
       }),
     [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step]
   );
-  const times = useMemo(() => (step === "checkout" ? pickupTimes() : []), [step]);
+  const times = useMemo(() => (step === "checkout" ? pickupTimes(branch) : []), [step, branch]);
   const hasSoldOut = lines.some((l) => soldOut.has(l.itemId) || !find(l.itemId));
 
   // One box for both promo codes and gift cards
@@ -160,6 +161,7 @@ export default function CartDrawer() {
         ...form,
         payMethod,
         table,
+        branch,
         promo: promo?.code,
         giftCard: gift?.code,
         tipPercent,
@@ -320,6 +322,7 @@ export default function CartDrawer() {
                 </div>
               ) : (
                 <>
+                  <BranchPicker label={mode === "delivery" ? "Deliver from" : "Pick up from"} onChange={() => setForm((f) => ({ ...f, pickup: "asap" }))} />
                   <div className="chips" style={{ justifyContent: "flex-start" }} role="radiogroup" aria-label="Pickup or delivery">
                     <button type="button" className={`chip ${mode === "pickup" ? "on" : ""}`} onClick={() => setMode("pickup")} role="radio" aria-checked={mode === "pickup"}>🛍 {t("checkout.pickup")}</button>
                     <button type="button" className={`chip ${mode === "delivery" ? "on" : ""}`} onClick={() => setMode("delivery")} role="radio" aria-checked={mode === "delivery"}>🛵 {t("checkout.delivery")}</button>

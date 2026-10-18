@@ -5,6 +5,7 @@ import type { Addon, Category, Diet, MenuItem } from "@/lib/menu";
 import { publish } from "@/lib/live";
 import { SEASONS } from "@/lib/seasons";
 import { ALLERGENS } from "@/lib/nutrition";
+import { allBranches } from "@/lib/cafe";
 
 // The menu (with sold-out flags). Staff can add ?all=1 to include hidden items.
 export async function GET(req: Request) {
@@ -83,6 +84,12 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(cat === "shop" && Array.isArray(b.variants) && b.variants.length ? { variants: cleanVariants(b.variants) } : {}),
     ...(cat === "shop" && b.stock !== undefined && b.stock !== "" && b.stock !== null && Number(b.stock) >= 0 ? { stock: Math.min(9999, Math.round(Number(b.stock))) } : {}),
     ...(Array.isArray(b.addons) && (cat === "food" || cat === "bakes") && b.addons.length ? { addons: cleanAddons(b.addons) } : {}),
+    // Only at some branches (empty, or every branch, means everywhere)
+    ...(() => {
+      const ids = allBranches().map((x) => x.id);
+      const only = Array.isArray(b.branches) ? ids.filter((id) => (b.branches as unknown[]).includes(id)) : [];
+      return only.length && only.length < ids.length ? { branches: only } : {};
+    })(),
     ...(b.cost !== undefined && b.cost !== "" && Number(b.cost) >= 0 && Number(b.cost) <= 5000 ? { cost: Math.round(Number(b.cost) * 100) / 100 } : {}),
   };
 }

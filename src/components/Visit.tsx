@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { hoursLabel, openStatus, toDateStr } from "@/lib/cafe";
+import { findBranch, hoursLabel, openStatus, toDateStr } from "@/lib/cafe";
+import BranchPicker from "./BranchPicker";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
 import BusyMeter from "./BusyMeter";
@@ -11,7 +12,8 @@ type Slot = { time: string; left: number };
 type Booked = { code: string; name: string; date: string; time: string; guests: number; table: number | null; preorderText: string | null };
 
 export default function Visit() {
-  const { toast, t, lines, find, clear } = useStore();
+  const { toast, t, lines, find, clear, branch } = useStore();
+  const here = findBranch(branch);
   const [table, setTable] = useState<number | null>(null);
   const [preorder, setPreorder] = useState(false);
   const [today, setToday] = useState("");
@@ -26,16 +28,16 @@ export default function Visit() {
   useEffect(() => {
     const t = toDateStr(new Date());
     setToday(t);
-    setStatus(openStatus());
     setForm((f) => ({ ...f, date: t }));
   }, []);
+  useEffect(() => { setStatus(openStatus(new Date(), branch)); setForm((f) => ({ ...f, time: "" })); setTable(null); }, [branch]);
 
   // Load free times whenever the date changes
   useEffect(() => {
     if (!form.date) return;
     setSlots(null);
-    fetch(`/api/bookings/availability?date=${form.date}`).then((r) => r.json()).then(setSlots).catch(() => setSlots([]));
-  }, [form.date, booked]);
+    fetch(`/api/bookings/availability?date=${form.date}&branch=${branch}`).then((r) => r.json()).then(setSlots).catch(() => setSlots([]));
+  }, [form.date, booked, branch]);
 
   const need = form.guests >= 5 ? 2 : 1;
   const foodLines = lines.filter((l) => { const m = find(l.itemId); return m && m.cat !== "shop"; });
@@ -50,7 +52,7 @@ export default function Visit() {
     setError("");
     if (full) {
       // That slot is full: join the waitlist instead
-      const r = await fetch("/api/waitlist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const r = await fetch("/api/waitlist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, branch }) });
       const d = await r.json();
       setBusy(false);
       if (!r.ok) return setError(d.error);
@@ -59,7 +61,7 @@ export default function Visit() {
       return;
     }
     const pre = preorder ? lines.filter((l) => find(l.itemId)?.cat !== "shop").map(({ itemId, opts, qty }) => ({ itemId, opts, qty })) : [];
-    const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, table, preorder: pre }) });
+    const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, branch, table: branch === "main" ? table : null, preorder: pre }) });
     const d = await r.json();
     setBusy(false);
     if (!r.ok) return setError(d.error);
@@ -71,7 +73,7 @@ export default function Visit() {
 
   const weekdayIdx = new Date().getDay();
   // Which row of the hours list is today (rows group days with the same hours, Monday first)
-  const rows = hoursLabel();
+  const rows = hoursLabel(branch);
   const mondayFirst = (d: number) => (d + 6) % 7;
   const todayRow = rows.findIndex((r) => mondayFirst(weekdayIdx) >= mondayFirst(r.from) && mondayFirst(weekdayIdx) <= mondayFirst(r.to));
 
@@ -80,7 +82,8 @@ export default function Visit() {
       <div>
         <p className="eyebrow">{t("visit.eyebrow")}</p>
         <h2>{t("visit.title1")} <em>{t("visit.title2")}</em></h2>
-        <p className="lead">14 Willow Lane, your favourite neighbourhood. Look for the pink door and the bicycles outside.</p>
+        <BranchPicker label="Visit" />
+        <p className="lead">{branch === "main" ? `${here.address}, your favourite neighbourhood. Look for the pink door and the bicycles outside.` : `${here.name}: ${here.address}`}</p>
         <ul className="hours">
           {rows.map((h, i) => (
             <li key={h.days} className={status && i === todayRow ? "today" : ""}><span>{h.days}</span><span>{h.time}</span></li>
@@ -148,7 +151,7 @@ export default function Visit() {
                 </div>
               )}
             </div>
-            {!full && <TablePicker date={form.date} time={form.time} guests={form.guests} value={table} onChange={setTable} />}
+            {!full && branch === "main" && <TablePicker date={form.date} time={form.time} guests={form.guests} value={table} onChange={setTable} />}
             {!full && form.time && foodLines.length > 0 && (
               <label className="addon" style={{ alignItems: "flex-start" }}>
                 <input type="checkbox" checked={preorder} onChange={(e) => setPreorder(e.target.checked)} />

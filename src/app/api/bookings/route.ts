@@ -1,16 +1,16 @@
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "@/lib/db";
 import { bookingEmail, bookingInvite, sendLater, waitlistEmail } from "@/lib/email";
-import { slotsFor, parseDate, toDateStr, TABLES_PER_SLOT } from "@/lib/cafe";
+import { activeBranches, findBranch, slotsFor, parseDate, toDateStr, TABLES_PER_SLOT } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { limited, tooMany } from "@/lib/rateLimit";
 import { checkTable, cleanPreorder } from "@/lib/preorders";
 import { rupees } from "@/lib/pricing";
 
 /** Tables used in a slot. Groups of 5+ take two tables. */
-function tablesUsed(date: string, time: string) {
+function tablesUsed(date: string, time: string, branch: string) {
   const r = db
-    .prepare("SELECT COALESCE(SUM(CASE WHEN guests >= 5 THEN 2 ELSE 1 END), 0) AS n FROM bookings WHERE date = ? AND time = ? AND status = 'confirmed'")
-    .get(date, time) as { n: number };
+    .prepare("SELECT COALESCE(SUM(CASE WHEN guests >= 5 THEN 2 ELSE 1 END), 0) AS n FROM bookings WHERE date = ? AND time = ? AND branch = ? AND status = 'confirmed'")
+    .get(date, time, branch) as { n: number };
   return r.n;
 }
 
@@ -26,6 +26,8 @@ export async function POST(req: Request) {
   const guests = Math.floor(Number(b.guests));
   const note = cleanText(b.note, 200);
   const email = cleanEmail(b.email);
+  const branch = findBranch(b.branch);
+  if (b.branch && branch.id !== b.branch) return Response.json({ error: "That branch isn't taking bookings right now." }, { status: 400 });
   if (b.email && !email) return Response.json({ error: "That email doesn't look right." }, { status: 400 });
 
   if (!name) return Response.json({ error: "Please tell us your name." }, { status: 400 });
@@ -33,14 +35,15 @@ export async function POST(req: Request) {
   if (!(guests >= 1 && guests <= 8)) return Response.json({ error: "We can seat 1–8 guests online. Call us for bigger groups!" }, { status: 400 });
   const d = parseDate(date);
   if (!d || date < toDateStr(new Date())) return Response.json({ error: "Please pick a date from today onwards." }, { status: 400 });
-  if (!slotsFor(date).includes(time)) return Response.json({ error: "That time isn't available — please pick another." }, { status: 400 });
+  if (!slotsFor(date, branch.id).includes(time)) return Response.json({ error: "That time isn't available — please pick another." }, { status: 400 });
 
   const need = guests >= 5 ? 2 : 1;
-  if (tablesUsed(date, time) + need > TABLES_PER_SLOT)
+  if (tablesUsed(date, time, branch.id) + need > TABLES_PER_SLOT)
     return Response.json({ error: "That slot just filled up. Try another time?" }, { status: 409 });
 
   // Optional: a table from the floor plan, and food to have ready on arrival
   const table = b.table ? Math.floor(Number(b.table)) : null;
+  if (table && branch.id !== "main") return Response.json({ error: `Table picking is only at ${findBranch("main").name} for now.` }, { status: 400 });
   if (table) {
     const problem = checkTable(table, date, time, guests);
     if (problem) return Response.json({ error: problem }, { status: 409 });
@@ -49,10 +52,10 @@ export async function POST(req: Request) {
   if (Array.isArray(b.preorder) && b.preorder.length && !pre.lines.length) return Response.json({ error: "Those pre-order items aren't on the menu any more." }, { status: 400 });
 
   const code = makeCode("TB", 6);
-  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
-    code, name, phone, email || null, date, time, guests, note, table, pre.lines.length ? JSON.stringify(pre.lines) : null,
+  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder, branch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    code, name, phone, email || null, date, time, guests, note, table, pre.lines.length ? JSON.stringify(pre.lines) : null, branch.id,
   );
-  const extra = { table, preorder: pre.items, preorderTotal: pre.total };
+  const extra = { table, preorder: pre.items, preorderTotal: pre.total, ...(activeBranches().length > 1 ? { branch: branch.name, address: branch.address } : {}) };
   if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests, ...extra }), [bookingInvite({ code, name, date, time, guests })]);
   return Response.json({ code, name, date, time, guests, ...extra, preorderText: pre.items.length ? `${pre.items.join(", ")} · about ${rupees(pre.total)}, pay at the café` : null });
 }
@@ -74,8 +77,8 @@ export async function PATCH(req: Request) {
   if (!["confirmed", "cancelled", "seated"].includes(status)) return Response.json({ error: "Unknown status." }, { status: 400 });
   db.prepare("UPDATE bookings SET status = ? WHERE code = ?").run(status, String(code));
   if (status === "cancelled") {
-    const b = db.prepare("SELECT date, time FROM bookings WHERE code = ?").get(String(code)) as { date: string; time: string } | undefined;
-    const w = b && (db.prepare("SELECT id, name, email, date, time FROM waitlist WHERE date = ? AND time = ? AND status = 'waiting' ORDER BY id LIMIT 1").get(b.date, b.time) as
+    const b = db.prepare("SELECT date, time, branch FROM bookings WHERE code = ?").get(String(code)) as { date: string; time: string; branch: string } | undefined;
+    const w = b && (db.prepare("SELECT id, name, email, date, time FROM waitlist WHERE date = ? AND time = ? AND branch = ? AND status = 'waiting' ORDER BY id LIMIT 1").get(b.date, b.time, b.branch) as
       | { id: number; name: string; email: string; date: string; time: string }
       | undefined);
     if (w) {

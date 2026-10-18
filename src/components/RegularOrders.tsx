@@ -12,7 +12,7 @@ const dayName = (d: string) => new Date(d + "T12:00").toLocaleDateString("en-IN"
 
 /** Pickup times that work on at least one open day */
 function pickupTimes() {
-  const open = [0, 1, 2, 3, 4, 5, 6].map(weeklyHours).filter((h): h is [number, number] => !!h);
+  const open = [0, 1, 2, 3, 4, 5, 6].map((d) => weeklyHours(d)).filter((h): h is [number, number] => !!h);
   if (!open.length) return [];
   const earliest = Math.min(...open.map(([o]) => o));
   const latest = Math.max(...open.map(([, c]) => c));

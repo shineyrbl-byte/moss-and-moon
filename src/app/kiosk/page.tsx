@@ -12,7 +12,7 @@ const DONE_S = 20;
 
 /** Self-order kiosk: a tablet on the counter, signed in as staff. Guests order and pay at the counter. */
 export default function Kiosk() {
-  const { menu, find, lines, setQty, clear, setCustomizing, customizing, soldOut } = useStore();
+  const { menu, find, lines, setQty, clear, setCustomizing, customizing, soldOut, branch } = useStore();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [stage, setStage] = useState<"start" | "order" | "done">("start");
   const [tab, setTab] = useState<MenuTab>("coffee");
@@ -62,7 +62,7 @@ export default function Kiosk() {
   }, [stage, reset]);
 
   const tabs = CATEGORIES.filter((c) => c.id !== "all" && c.id !== "shop");
-  const items = useMemo(() => menu.filter((m) => m.cat !== "shop" && inTab(m, tab)), [menu, tab]);
+  const items = useMemo(() => menu.filter((m) => m.cat !== "shop" && inTab(m, tab) && (!m.branches?.length || m.branches.includes(branch))), [menu, tab, branch]);
   const tray = lines.filter((l) => find(l.itemId));
   const subtotal = tray.reduce((s, l) => s + unitPrice(find(l.itemId)!, l.opts) * l.qty, 0);
   const count = tray.reduce((s, l) => s + l.qty, 0);
@@ -73,7 +73,7 @@ export default function Kiosk() {
     setError("");
     const r = await fetch("/api/orders", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kiosk: true, name, phone, lines: tray.map(({ itemId, opts, qty }) => ({ itemId, opts, qty })) }),
+      body: JSON.stringify({ kiosk: true, branch, name, phone, lines: tray.map(({ itemId, opts, qty }) => ({ itemId, opts, qty })) }),
     });
     const d = await r.json();
     setBusy(false);

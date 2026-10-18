@@ -13,7 +13,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 /** Tables already booked within 90 minutes of this time */
 export function takenTables(date: string, time: string, exceptCode?: string) {
-  const rows = db.prepare("SELECT code, time, table_no FROM bookings WHERE date = ? AND table_no IS NOT NULL AND status IN ('confirmed','seated')").all(date) as { code: string; time: string; table_no: number }[];
+  const rows = db.prepare("SELECT code, time, table_no FROM bookings WHERE date = ? AND branch = 'main' AND table_no IS NOT NULL AND status IN ('confirmed','seated')").all(date) as { code: string; time: string; table_no: number }[];
   return new Set(rows.filter((r) => r.code !== exceptCode && Math.abs(mins(r.time) - mins(time)) < TABLE_GAP).map((r) => r.table_no));
 }
 
@@ -53,15 +53,15 @@ export function cleanPreorder(raw: unknown) {
   return { lines, items, total };
 }
 
-type Row = { code: string; name: string; phone: string; email: string | null; date: string; time: string; guests: number; table_no: number | null; preorder: string };
+type Row = { code: string; name: string; phone: string; email: string | null; date: string; time: string; guests: number; table_no: number | null; preorder: string; branch: string };
 
 /** Called every minute: send each pre-order to the kitchen 15 minutes before the booking */
 export async function preorderTick(now = new Date()) {
   const today = toDateStr(now);
-  if (!hoursOn(now)) return;
   const nowMins = now.getHours() * 60 + now.getMinutes();
-  const rows = db.prepare("SELECT code, name, phone, email, date, time, guests, table_no, preorder FROM bookings WHERE date = ? AND status IN ('confirmed','seated') AND preorder IS NOT NULL AND preorder_code IS NULL").all(today) as Row[];
+  const rows = db.prepare("SELECT code, name, phone, email, date, time, guests, table_no, preorder, branch FROM bookings WHERE date = ? AND status IN ('confirmed','seated') AND preorder IS NOT NULL AND preorder_code IS NULL").all(today) as Row[];
   for (const b of rows) {
+    if (!hoursOn(now, b.branch)) continue;
     const due = mins(b.time) - PREORDER_LEAD;
     if (nowMins < due) continue;
     if (nowMins > mins(b.time) + 60) { // the server was down: too late to make it now
@@ -72,7 +72,7 @@ export async function preorderTick(now = new Date()) {
     if (db.prepare("UPDATE bookings SET preorder_code = 'placing' WHERE code = ? AND preorder_code IS NULL").run(b.code).changes === 0) continue;
     const customer = b.email ? db.prepare("SELECT * FROM customers WHERE email = ?").get(b.email) : null;
     const res = await placeOrder(
-      { name: b.name, phone: b.phone, email: b.email ?? undefined, table: b.table_no ?? undefined, pickup: mins(b.time) > nowMins ? b.time : "asap", payMethod: "counter", note: `📅 Pre-order for booking ${b.code} (${b.guests} at ${b.time})`, lines: JSON.parse(b.preorder) },
+      { name: b.name, phone: b.phone, email: b.email ?? undefined, table: b.table_no ?? undefined, pickup: mins(b.time) > nowMins ? b.time : "asap", branch: b.branch, payMethod: "counter", note: `📅 Pre-order for booking ${b.code} (${b.guests} at ${b.time})`, lines: JSON.parse(b.preorder) },
       (customer ?? null) as never,
     );
     const d = await res.json().catch(() => ({}));
