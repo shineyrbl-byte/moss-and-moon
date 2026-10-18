@@ -25,6 +25,20 @@ export const STAMPS_FOR_REWARD = 10;
 export const ORDER_STEPS = ["received", "brewing", "ready", "collected"] as const;
 export type OrderStatus = (typeof ORDER_STEPS)[number];
 
+// Demo barista timings (see lib/orderFlow.ts)
+/** Minutes after the order starts at which it reaches each status */
+export const DEMO_TIMES: Record<Exclude<OrderStatus, "received">, number> = { brewing: 1, ready: 3, collected: 15 };
+const DELIVERY_EXTRA = 10; // a delivery spends longer "on its way"
+
+/** Where an order should be now, given minutes since it started */
+export function demoStatus(minutes: number, delivery: boolean): OrderStatus {
+  if (minutes >= DEMO_TIMES.collected + (delivery ? DELIVERY_EXTRA : 0)) return "collected";
+  if (minutes >= DEMO_TIMES.ready) return "ready";
+  if (minutes >= DEMO_TIMES.brewing) return "brewing";
+  return "received";
+}
+
+
 const pad = (n: number) => String(n).padStart(2, "0");
 export const toDateStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 

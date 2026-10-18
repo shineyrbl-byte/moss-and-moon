@@ -366,3 +366,12 @@ test("seasonal items only show in season", async () => {
   assert.equal((await order({ name: "A", phone: "9876543210", lines: [{ itemId: past.body.item.id, qty: 1 }] })).status, 400);
   assert.equal((await s.api("/api/menu", { method: "POST", json: { name: "Backwards", cat: "coffee", price: 1, img: "abc", from: "2030-02-01", until: "2030-01-01" } })).status, 400);
 });
+
+test("owner can switch the demo barista on and off", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/settings")).body.demoBarista, false, "tests start with it off");
+  const on = await s.api("/api/admin/settings", { method: "PATCH", json: { demoBarista: true } });
+  assert.equal(on.body.demoBarista, true);
+  const off = await s.api("/api/admin/settings", { method: "PATCH", json: { demoBarista: false } });
+  assert.equal(off.body.demoBarista, false);
+});

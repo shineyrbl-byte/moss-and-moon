@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { quote, unitPrice, cleanOptions, defaultOptions, describeOptions } from "../src/lib/pricing.ts";
-import { slotsFor, openStatus } from "../src/lib/cafe.ts";
+import { slotsFor, openStatus, demoStatus } from "../src/lib/cafe.ts";
 import type { MenuItem } from "../src/lib/menu.ts";
 
 const latte: MenuItem = { id: "latte", cat: "coffee", name: "Latte", desc: "", price: 200, img: "x", traits: { energy: 1, sweet: 1, temp: "hot" } };
@@ -113,4 +113,13 @@ test("birthday treat and account credit", () => {
   assert.equal(q.creditUsed, 100);
   assert.equal(q.giftUsed, 150);
   assert.equal(q.due, 0);
+});
+
+test("demo barista moves orders along over time", () => {
+  assert.equal(demoStatus(0.5, false), "received");
+  assert.equal(demoStatus(1, false), "brewing");
+  assert.equal(demoStatus(3, false), "ready");
+  assert.equal(demoStatus(15, false), "collected");
+  assert.equal(demoStatus(15, true), "ready", "deliveries stay on their way a bit longer");
+  assert.equal(demoStatus(25, true), "collected");
 });

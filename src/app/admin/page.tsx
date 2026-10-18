@@ -64,6 +64,7 @@ export default function AdminPage() {
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [mail, setMail] = useState<{ emails: Email[]; emailMode: string; paymentMode: string } | null>(null);
   const [preview, setPreview] = useState<Email | null>(null);
+  const [demoBarista, setDemoBarista] = useState<boolean | null>(null);
   const lastMaxId = useRef<number | null>(null);
 
   const load = useCallback(async () => {
@@ -73,6 +74,7 @@ export default function AdminPage() {
     setMe(staff);
     setAuthed(true);
     const owner = staff.role === "owner";
+    fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : null)).then((d) => d && setDemoBarista(d.demoBarista)).catch(() => {});
     const ownerOnly = (url: string, fallback: unknown) => (owner ? fetch(url).then((r) => r.json()) : Promise.resolve(fallback));
     const [o, b, rv, gc, em, st] = await Promise.all([
       fetch(`/api/orders${showDone ? "" : "?active=1"}`).then((r) => r.json()),
@@ -115,6 +117,11 @@ export default function AdminPage() {
     setPass("");
     if (d.staff?.role !== "owner") setTab("Orders");
     load();
+  }
+
+  async function toggleDemoBarista() {
+    const r = await fetch("/api/admin/settings", json("PATCH", { demoBarista: !demoBarista }));
+    if (r.ok) setDemoBarista((await r.json()).demoBarista);
   }
 
   async function logout() {
@@ -190,6 +197,21 @@ export default function AdminPage() {
               <span>💳 Payments: <b>{mail.paymentMode === "razorpay" ? "Razorpay (live)" : "demo mode"}</b></span>
               <span>✉️ Emails: <b>{mail.emailMode === "live" ? "sending via Resend" : "preview only (see Emails tab)"}</b></span>
               <span>🔔 A chime plays when a new order comes in, so keep this tab open.</span>
+            </div>
+          )}
+          {demoBarista !== null && (
+            <div className="mode-banner">
+              <span>
+                🤖 Demo barista: <b>{demoBarista ? "on" : "off"}</b>.{" "}
+                {demoBarista
+                  ? "Orders move along by themselves (brewing after 1 min, ready at 3, collected at 15). Turn this off when real staff run the counter."
+                  : "Staff move orders along on the barista screen."}
+              </span>
+              {me?.role === "owner" && (
+                <button className="btn btn-ghost btn-sm" onClick={toggleDemoBarista} aria-pressed={demoBarista}>
+                  {demoBarista ? "Turn off" : "Turn on"}
+                </button>
+              )}
             </div>
           )}
           <div className="kpis">
