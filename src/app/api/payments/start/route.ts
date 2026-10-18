@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   if (kind === "order" || kind === "share") {
     const o = db.prepare("SELECT name, total, giftcard_used, credit_used, tip, delivery_fee, pay_status, split_count FROM orders WHERE code = ?").get(c) as OrderRow | undefined;
     if (!o) return Response.json({ error: "Order not found." }, { status: 404 });
-    if (o.pay_status === "paid") return Response.json({ error: "This order is already paid ✿" }, { status: 409 });
+    if (o.pay_status === "paid" || o.pay_status === "refunded") return Response.json({ error: "This order is already paid ✿" }, { status: 409 });
     const left = orderDue(o) - paidShares(c);
     if (left <= 0) return Response.json({ error: "This order is already paid ✿" }, { status: 409 });
     const person = cleanText(body.person, 30);

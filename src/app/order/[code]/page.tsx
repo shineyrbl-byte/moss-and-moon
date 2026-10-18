@@ -14,7 +14,7 @@ import { useLive } from "@/components/useLive";
 type Order = {
   code: string; name: string; pickup: string; note: string; lines: QuoteLine[];
   subtotal: number; discount: number; total: number; promo: string | null; status: OrderStatus; created_at: string;
-  pay_method: string; pay_status: "unpaid" | "pending" | "paid"; giftcard_used: number; happy_hour: number; ahead: number; table_no: number | null;
+  pay_method: string; pay_status: "unpaid" | "pending" | "paid" | "refunded"; giftcard_used: number; happy_hour: number; ahead: number; table_no: number | null;
   tip: number; credit_used: number; delivery_fee: number; delivery_address: string | null; split_count: number | null; perks: string | null; paidShares: number;
   group_code: string | null; refund_amount: number; refunded_at: string | null;
 };
@@ -108,7 +108,7 @@ export default function OrderPage() {
 
   const due = orderDue(order);
   const left = Math.max(0, due - order.paidShares);
-  const unpaid = order.pay_status !== "paid" && left > 0;
+  const unpaid = order.pay_status !== "paid" && order.pay_status !== "refunded" && left > 0;
   const share = order.split_count ? Math.ceil(due / order.split_count) : 0;
   const sharesPaid = order.split_count ? Math.round(order.paidShares / share) : 0;
   const payLabel = isDelivery ? "Pay on delivery" : order.table_no ? "Pay at the table" : "Pay at pickup";
@@ -213,8 +213,9 @@ export default function OrderPage() {
           {order.giftcard_used > 0 && <div className="sum-row discount"><span>Gift card</span><span>−{rupees(order.giftcard_used)}</span></div>}
           {order.delivery_fee > 0 && <div className="sum-row"><span>Delivery</span><span>{rupees(order.delivery_fee)}</span></div>}
           {order.tip > 0 && <div className="sum-row"><span>Tip for the team 💛</span><span>{rupees(order.tip)}</span></div>}
+          {order.refund_amount > 0 && <div className="sum-row discount"><span>Refunded{order.refunded_at ? ` on ${order.refunded_at.slice(0, 10)}` : ""}</span><span>−{rupees(order.refund_amount)}</span></div>}
           <div className="sum-row total">
-            <span>{order.pay_status === "paid" ? "Paid ✓" : payLabel}</span>
+            <span>{order.pay_status === "refunded" ? "Refunded" : order.pay_status === "paid" ? "Paid ✓" : payLabel}</span>
             <span>{rupees(due)}</span>
           </div>
         </div>

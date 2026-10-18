@@ -116,6 +116,14 @@ export function ticketEmail(t: { code: string; name: string; qty: number; title:
   ] as const;
 }
 
+export function refundEmail(r: { code: string; name: string; amount: number; reason: string }) {
+  return [
+    `Your refund of ${rupees(r.amount)} is on its way`,
+    `<p>Hi ${esc(r.name)}, we've refunded <b>${rupees(r.amount)}</b> for order <b>${esc(r.code)}</b>.${r.reason ? ` (${esc(r.reason)})` : ""}</p>
+     <p style="color:#8a6a5c;font-size:13px">It usually reaches your bank, card or UPI app in 5 to 7 working days. Sorry for the trouble, and we hope to see you again soon ✿</p>`,
+  ] as const;
+}
+
 export function passEmail(p: { ends: string }) {
   const until = new Date(p.ends + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long" });
   return [`Your Coffee Pass is active ☕`, `<p>One drink a day is on us until <b>${until}</b>. Just sign in when you order, and it comes off automatically.</p>${button(`${SITE()}/#menu`, "Order today's drink")}`] as const;

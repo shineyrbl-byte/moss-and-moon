@@ -496,3 +496,28 @@ test("nightly summary: owner email settings, preview and send", async () => {
   const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string; subject: string }[] };
   assert.ok(mail.emails.some((e) => e.to_email === "owner@example.com" && /Today at Moss/.test(e.subject)), "summary lands in the outbox");
 });
+
+test("refunds: owner refunds part, then the rest, never more than was paid", async () => {
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Refund", phone: "9000022222", payMethod: "online", lines: [{ itemId: "cookie", qty: 3 }] } });
+  const { code, due } = placed.body as { code: string; due: number };
+  await s.api("/api/payments/start", { method: "POST", json: { kind: "order", code } });
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "order", code, demo: true } });
+
+  const counter = await s.api("/api/orders", { method: "POST", json: { name: "Cash", phone: "9000033333", payMethod: "counter", lines: [{ itemId: "cookie", qty: 1 }] } });
+  const refund = (c: string, json: unknown) => s.api(`/api/orders/${c}/refund`, { method: "POST", json });
+
+  const anon = await fetch(`${s.url}/api/orders/${code}/refund`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  assert.equal(anon.status, 401, "owners only");
+  await s.login();
+  assert.equal((await refund((counter.body as { code: string }).code, {})).status, 409, "counter payments are refunded in cash");
+  assert.equal((await refund(code, { amount: due + 1 })).status, 400);
+  const part = await refund(code, { amount: 50, reason: "Cookie was cold" });
+  assert.equal(part.status, 200);
+  assert.equal((part.body as { left: number }).left, due - 50);
+  const rest = await refund(code, {});
+  assert.equal((rest.body as { refunded: number }).refunded, due - 50);
+  assert.equal((await refund(code, {})).status, 409, "nothing left to refund");
+  const o = (await s.api(`/api/orders/${code}`)).body as { pay_status: string; refund_amount: number };
+  assert.equal(o.pay_status, "refunded");
+  assert.equal(o.refund_amount, due);
+});

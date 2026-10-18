@@ -11,6 +11,7 @@ import { useStore } from "@/components/Store";
 import { SEASONS } from "@/lib/seasons";
 import EventsTab from "@/components/admin/EventsTab";
 import OwnerEmails from "@/components/admin/OwnerEmails";
+import RefundButton from "@/components/admin/RefundButton";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -19,7 +20,7 @@ type Stats = {
   giftCards: number; giftSold: number; giftOutstanding: number; paidOnline: number;
   top: { name: string; qty: number }[]; days: { day: string; label: string; revenue: number; orders: number }[];
 };
-type Order = { id: number; code: string; name: string; phone: string; table_no: number | null; email: string | null; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; delivery_address: string | null; pay_method: string; pay_status: string; status: OrderStatus; created_at: string };
+type Order = { id: number; code: string; name: string; phone: string; table_no: number | null; email: string | null; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; delivery_address: string | null; pay_method: string; pay_status: string; status: OrderStatus; created_at: string; refund_amount: number; paid_shares?: number };
 type Gift = { code: string; amount: number; balance: number; from_name: string; to_name: string; to_email: string; paid: number; created_at: string };
 type Email = { id: number; to_email: string; subject: string; html: string; status: string; error: string | null; created_at: string };
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
@@ -305,7 +306,7 @@ export default function AdminPage() {
                   <div className="row" style={{ justifyContent: "space-between" }}>
                     <strong>{o.code}</strong>
                     <span>
-                      <span className={`status-tag ${o.pay_status}`}>{o.pay_status === "paid" ? (o.pay_method === "giftcard" ? "gift card" : "paid") : o.pay_status === "pending" ? "awaiting payment" : "pay at counter"}</span>{" "}
+                      <span className={`status-tag ${o.pay_status}`}>{o.pay_status === "refunded" ? "refunded" : o.pay_status === "paid" ? (o.pay_method === "giftcard" ? "gift card" : "paid") : o.pay_status === "pending" ? "awaiting payment" : "pay at counter"}</span>{" "}
                       <span className={`status-tag ${o.status}`}>{o.status}</span>
                     </span>
                   </div>
@@ -317,10 +318,14 @@ export default function AdminPage() {
                     {o.lines.map((l, i) => <li key={i}>{l.qty} × {l.name}{l.note && <small className="muted"> ({l.note})</small>}</li>)}
                   </ul>
                   {o.note && <span className="small">📝 {o.note}</span>}
+                  {o.refund_amount > 0 && <span className="small">↩ {rupees(o.refund_amount)} refunded</span>}
                   <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
                     <strong>{rupees(orderDue(o))}</strong>
                     {next && <button className="btn btn-pink btn-sm" onClick={() => advance(o)}>Mark {next} →</button>}
                   </div>
+                  {me?.role === "owner" && (o.pay_method === "online" || (o.paid_shares ?? 0) > 0) && (
+                    <RefundButton code={o.code} refundable={(o.pay_status === "paid" || o.pay_status === "refunded" ? orderDue(o) : (o.paid_shares ?? 0)) - o.refund_amount} onDone={load} />
+                  )}
                 </div>
               );
             })}

@@ -9,6 +9,7 @@ import { publish } from "@/lib/live";
 import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { orderPlacedEmail, referralRewardEmail, sendLater } from "@/lib/email";
 import { getGroup, isHost } from "@/lib/groups";
+import { paidShares } from "@/lib/orderMoney";
 
 // Place an order (pickup, table or delivery)
 export async function POST(req: Request) {
@@ -158,5 +159,5 @@ export async function GET(req: Request) {
   const rows = db
     .prepare(`SELECT * FROM orders ${active ? "WHERE status != 'collected'" : ""} ORDER BY id DESC LIMIT 100`)
     .all() as Record<string, unknown>[];
-  return Response.json(rows.map((r) => ({ ...r, lines: JSON.parse(String(r.lines)) })));
+  return Response.json(rows.map((r) => ({ ...r, lines: JSON.parse(String(r.lines)), paid_shares: paidShares(String(r.code)) })));
 }
