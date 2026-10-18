@@ -25,6 +25,7 @@ import TwoStep from "@/components/admin/TwoStep";
 import GmailConnect from "@/components/admin/GmailConnect";
 import HoursEditor from "@/components/admin/HoursEditor";
 import BranchesCard from "@/components/admin/BranchesCard";
+import LinksCard from "@/components/admin/LinksCard";
 import GstCard from "@/components/admin/GstCard";
 import NewsletterTab from "@/components/admin/NewsletterTab";
 import GuestsTab from "@/components/admin/GuestsTab";
@@ -38,6 +39,8 @@ import SupportInbox from "@/components/SupportInbox";
 import WinbackCard from "@/components/admin/WinbackCard";
 import SpecialsCard from "@/components/admin/SpecialsCard";
 import PriceWhatIf from "@/components/admin/PriceWhatIf";
+import MenuEngineering from "@/components/admin/MenuEngineering";
+import MissedSales from "@/components/admin/MissedSales";
 import ChecklistsTab from "@/components/admin/ChecklistsTab";
 import { useLive } from "@/components/useLive";
 
@@ -257,6 +260,7 @@ export default function AdminPage() {
           )}
           {me?.role === "owner" && <HoursEditor />}
           {me?.role === "owner" && <BranchesCard />}
+          {me?.role === "owner" && <LinksCard />}
           {me?.role === "owner" && <GmailConnect />}
           {me?.role === "owner" && <GstCard />}
           {me?.role === "owner" && <WifiCard />}
@@ -424,7 +428,7 @@ export default function AdminPage() {
       )}
 
       {tab === "Menu" && <>{me?.role === "owner" && <SpecialsCard />}<MenuEditor canEdit={me?.role === "owner"} /></>}
-      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><PriceWhatIf /><Analytics /></>}
+      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}

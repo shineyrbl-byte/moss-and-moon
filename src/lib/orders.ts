@@ -4,6 +4,7 @@ import "server-only";
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "./db";
 import { DELIVERY, REFERRAL_CREDIT, quote, rupees } from "./pricing";
 import { isLastHour, lastHour } from "./cafe";
+import { recordMissed } from "./missed";
 import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, findBranch, hoursOn, toDateStr } from "./cafe";
 import { perksFor } from "./perks";
 import { checkStock, consumeStock } from "./stock";
@@ -76,8 +77,10 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   const find = menuLookup();
   const notHere = raw.map((l: { itemId: string }) => find(l.itemId)).find((m: { branches?: string[] } | undefined) => m?.branches?.length && !m.branches.includes(branch.id));
   if (notHere) return Response.json({ error: `Sorry, ${notHere.name} isn't available at ${branch.name}. Please remove it.` }, { status: 409 });
-  if (raw.some((l: { itemId: string }) => find(l.itemId)?.soldOut))
+  if (raw.some((l: { itemId: string }) => find(l.itemId)?.soldOut)) {
+    recordMissed(raw.filter((l: { itemId: string }) => find(l.itemId)?.soldOut), "sold out");
     return Response.json({ error: "Sorry, something in your tray just sold out. Please remove it." }, { status: 409 });
+  }
 
   // Gift card (optional)
   let gift: { code: string; balance: number } | undefined;
@@ -113,8 +116,10 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   if (delivery && q.total < DELIVERY.minOrder) return Response.json({ error: `Delivery needs an order of at least ${rupees(DELIVERY.minOrder)}.` }, { status: 400 });
 
   const short = shopShortfall(q.lines);
+  if (short) recordMissed(q.lines.filter((l) => l.name === short.name), "low stock");
   if (short) return Response.json({ error: short.left ? `Only ${short.left} × ${short.name} left. Please change the quantity.` : `Sorry, ${short.name} just sold out.` }, { status: 409 });
   const stock = checkStock(q.lines);
+  if (stock) recordMissed(q.lines, "low stock");
   if (stock) return Response.json({ error: `Sorry, we've just run out of ${stock} for that. Please pick something else.` }, { status: 409 });
 
   // Fully covered by credit / gift card = already paid

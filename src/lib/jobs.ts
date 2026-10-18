@@ -14,6 +14,7 @@ import { reorderTick } from "./reorders";
 import { preorderTick } from "./preorders";
 import { subsTick } from "./beanSubs";
 import { winbackTick } from "./winback";
+import { stockAlertTick } from "./missed";
 
 const g = globalThis as { __mmJobs?: NodeJS.Timeout[] };
 
@@ -46,5 +47,6 @@ export function startJobs() {
     every(20_000, "booking pre-orders", () => preorderTick()),
     every(10 * 60_000, "bean subscriptions", () => subsTick()),
     every(60 * 60_000, "we miss you emails", () => winbackTick()),
+    every(3 * 60_000, "back in stock emails", () => stockAlertTick()),
   ];
 }

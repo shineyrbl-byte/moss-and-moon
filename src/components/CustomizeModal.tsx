@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useEscape, useStore } from "./Store";
 import DrinkCup from "./DrinkCup";
+import BackInStock from "./BackInStock";
 import { ALLERGENS, allergensFor, kcalFor } from "@/lib/nutrition";
 import { useRouter } from "next/navigation";
 import { photo } from "@/lib/menu";
@@ -172,6 +173,7 @@ export default function CustomizeModal() {
             </>
           )}
 
+          {out && <BackInStock itemId={item.id} name={item.name} email={me?.email ?? ""} />}
           {item.cat !== "shop" && <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so please tell us about severe allergies.</p>}
           <div className="toggle-row">
             <div className="stepper">

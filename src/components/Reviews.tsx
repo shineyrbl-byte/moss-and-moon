@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import GoogleNudge from "./GoogleNudge";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
 
@@ -17,6 +18,7 @@ export default function Reviews() {
   const [hover, setHover] = useState(0);
   const [error, setError] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [happy, setHappy] = useState<string | null>(null);
 
   const load = useCallback(() => {
     fetch("/api/reviews").then((r) => r.json()).then(setData).catch(() => {});
@@ -29,6 +31,7 @@ export default function Reviews() {
     const r = await fetch("/api/reviews", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     const d = await r.json();
     if (!r.ok) return setError(d.error);
+    if (form.rating >= 4) setHappy(form.text);
     setForm({ name: "", text: "", rating: 0, photo: "" });
     setWriting(false);
     toast("Thank you for the kind words 🌸");
@@ -94,6 +97,7 @@ export default function Reviews() {
         {!writing && <button className="btn btn-sm" onClick={() => setWriting(true)}>{t("reviews.write")}</button>}
       </div>
 
+      {happy !== null && !writing && <GoogleNudge text={happy} />}
       {writing && (
         <form className="review-form card" onSubmit={submit}>
           <h3>How was your visit?</h3>

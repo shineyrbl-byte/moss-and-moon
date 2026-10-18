@@ -6,6 +6,7 @@ import { photo } from "@/lib/menu";
 import { rupees } from "@/lib/pricing";
 import { useStore } from "./Store";
 import HumanChat, { savedSession } from "./HumanChat";
+import { whatsappUrl } from "@/lib/cafe";
 import { useSearchParams } from "next/navigation";
 
 type Rec = { itemId: string; reason: string };
@@ -129,7 +130,7 @@ export default function BaristaChat() {
             <input className="input" placeholder="What are you in the mood for?" value={text} maxLength={500} onChange={(e) => setText(e.target.value)} aria-label="Message the barista" />
             <button className="btn btn-sm" disabled={busy || !text.trim()} aria-label="Send">➤</button>
           </form>
-          <p className="tiny muted" style={{ textAlign: "center", margin: "-0.3rem 0 0.6rem" }}><button className="link-btn tiny" onClick={() => setHuman(true)}>👋 Talk to a person instead</button></p>
+          <p className="tiny muted" style={{ textAlign: "center", margin: "-0.3rem 0 0.6rem" }}><button className="link-btn tiny" onClick={() => setHuman(true)}>👋 Talk to a person instead</button>{whatsappUrl() && <> · <a className="link-btn tiny" href={whatsappUrl("Hi Moss & Moon! ")!} target="_blank" rel="noopener noreferrer">WhatsApp us</a></>}</p>
           </>}
         </section>
       )}

@@ -1437,3 +1437,28 @@ test("printable menu shows the live menu with prices", async () => {
   assert.match(html, /₹220/);
   assert.match(html, /Scan to order ahead/);
 });
+
+test("missed sales and back-in-stock requests are counted", async () => {
+  await s.login();
+  await s.api("/api/menu", { method: "PATCH", json: { itemId: "fudge-cake", soldOut: true } });
+  const fail = await s.api("/api/orders", { method: "POST", json: { name: "Miss", phone: "9876500777", lines: [{ itemId: "fudge-cake", qty: 2 }] } });
+  assert.equal(fail.status, 409);
+  assert.equal((await s.api("/api/stock-alerts", { method: "POST", json: { itemId: "fudge-cake", email: "bad" } })).status, 400);
+  assert.equal((await s.api("/api/stock-alerts", { method: "POST", json: { itemId: "fudge-cake", email: "fudge@example.com" } })).status, 200);
+  const rows = (await s.api("/api/admin/missed")).body as { item_id: string; qty: number; waiting: number; lost: number }[];
+  const r = rows.find((x) => x.item_id === "fudge-cake")!;
+  assert.equal(r.qty, 3);
+  assert.equal(r.waiting, 1);
+  assert.ok(r.lost > 0);
+  await s.api("/api/menu", { method: "PATCH", json: { itemId: "fudge-cake", soldOut: false } });
+});
+
+test("café links: Google review link and WhatsApp number are checked", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { links: { googleReview: "https://evil.example/review", whatsapp: "" } } })).status, 400);
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { links: { googleReview: "", whatsapp: "123" } } })).status, 400);
+  const ok = await s.api("/api/admin/cafe-config", { method: "PUT", json: { links: { googleReview: "https://g.page/r/abc123/review", whatsapp: "98765 43210" } } });
+  assert.equal(ok.status, 200);
+  assert.deepEqual(ok.body.links, { googleReview: "https://g.page/r/abc123/review", whatsapp: "9876543210" });
+  await s.api("/api/admin/cafe-config", { method: "PUT", json: { links: { googleReview: "", whatsapp: "" } } });
+});

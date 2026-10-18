@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { hoursLabel } from "@/lib/cafe";
+import { hoursLabel, whatsappUrl } from "@/lib/cafe";
 import InstallButton from "./InstallButton";
 import { useStore } from "./Store";
 
@@ -27,6 +27,7 @@ export default function Footer() {
             <li><Link href="/noticeboard">Noticeboard</Link></li>
             <li><Link href="/journal">Journal</Link></li>
             <li><Link href="/catering">Catering</Link></li>
+            {whatsappUrl() && <li><a href={whatsappUrl()!} target="_blank" rel="noopener noreferrer">WhatsApp us</a></li>}
             <li><Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link></li>
             <li><Link href="/orders">My orders</Link></li>
           </ul>

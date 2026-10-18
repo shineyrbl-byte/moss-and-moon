@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import GoogleNudge from "@/components/GoogleNudge";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import type { QuoteLine } from "@/lib/pricing";
@@ -40,6 +41,7 @@ function ReviewVisit() {
         <span style={{ fontSize: "3rem" }}>{rating >= 4 ? "🌸" : "🤍"}</span>
         <h1 className="h2">Thank you, <em>{form.name}</em></h1>
         <p className="lead">{rating >= 4 ? "That made our day. See you again soon ☕" : "Sorry it wasn't perfect. We've passed this to the team and we'll do better."}</p>
+        {rating >= 4 && <GoogleNudge text={form.text} />}
         <Link href="/#menu" className="btn" style={{ marginTop: "1.5rem" }}>Back to the menu</Link>
       </div>
     );

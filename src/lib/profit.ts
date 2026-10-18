@@ -42,7 +42,7 @@ export function profitReport(days = 30) {
   const rows = db.prepare("SELECT created_at, lines, total, refund_amount FROM orders WHERE date(created_at) >= ?").all(since) as Row[];
   const find = menuLookup();
   const costs = costTable();
-  const items = new Map<string, { name: string; qty: number; revenue: number; cost: number; guessed: boolean }>();
+  const items = new Map<string, { name: string; cat: string; qty: number; revenue: number; cost: number; guessed: boolean }>();
   const byDay = new Map<string, { revenue: number; cost: number }>();
   let revenue = 0, cost = 0, guessedLines = 0, lineCount = 0;
 
@@ -59,7 +59,7 @@ export function profitReport(days = 30) {
       orderCost += c;
       lineCount++;
       if (guessed) guessedLines++;
-      const it = items.get(l.name) ?? { name: l.name, qty: 0, revenue: 0, cost: 0, guessed: false };
+      const it = items.get(l.name) ?? { name: l.name, cat: l.cat ?? item?.cat ?? "", qty: 0, revenue: 0, cost: 0, guessed: false };
       it.qty += l.qty;
       it.revenue += (l.total / gross) * net; // share of the discounts
       it.cost += c;
