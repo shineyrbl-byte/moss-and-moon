@@ -105,6 +105,17 @@ export function waitlistEmail(w: { name: string; date: string; time: string }) {
   return [`A table just opened up, ${w.name} ✿`, `<p>Good news: a table freed up on <b>${when}</b> at <b>${esc(w.time)}</b>. It's first come, first served, so book it soon!</p>${button(`${SITE()}/#visit`, "Book it now")}`] as const;
 }
 
+export function ticketEmail(t: { code: string; name: string; qty: number; title: string; date: string; time: string }) {
+  const when = new Date(`${t.date}T${t.time}`).toLocaleString("en-IN", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
+  return [
+    `Your ticket${t.qty > 1 ? "s" : ""} for ${t.title} 🎟`,
+    `<p>Hi ${esc(t.name)}! You're coming to <b>${esc(t.title)}</b> on <b>${when}</b>${t.qty > 1 ? ` with <b>${t.qty} tickets</b>` : ""}.</p>
+     ${codeBox(t.code)}
+     <p style="color:#8a6a5c;font-size:13px">Show the QR code on your ticket page at the door.</p>
+     ${button(`${SITE()}/ticket/${t.code}`, "Open my ticket")}`,
+  ] as const;
+}
+
 export function passEmail(p: { ends: string }) {
   const until = new Date(p.ends + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long" });
   return [`Your Coffee Pass is active ☕`, `<p>One drink a day is on us until <b>${until}</b>. Just sign in when you order, and it comes off automatically.</p>${button(`${SITE()}/#menu`, "Order today's drink")}`] as const;

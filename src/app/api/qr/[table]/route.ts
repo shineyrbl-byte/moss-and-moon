@@ -1,14 +1,6 @@
 import QRCode from "qrcode";
 import { TABLE_COUNT } from "@/lib/cafe";
-
-/** The site's public address (works behind Railway's proxy too) */
-function origin(req: Request) {
-  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, "");
-  const h = req.headers;
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
+import { origin } from "@/lib/site";
 
 // QR code (SVG) that opens the menu for one table, e.g. /api/qr/5
 export async function GET(req: Request, { params }: { params: Promise<{ table: string }> }) {

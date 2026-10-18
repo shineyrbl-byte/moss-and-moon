@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { verifyPayment } from "@/lib/payments";
-import { giftCardEmail, orderPlacedEmail, passEmail, sendLater } from "@/lib/email";
+import { giftCardEmail, orderPlacedEmail, passEmail, sendLater, ticketEmail } from "@/lib/email";
+import { EVENTS } from "@/lib/cafe";
 import { orderDue, PASS, type QuoteLine } from "@/lib/pricing";
 import { paidShares } from "@/lib/orderMoney";
 import { publish } from "@/lib/live";
@@ -38,6 +39,16 @@ export async function POST(req: Request) {
     const o = db.prepare("SELECT total, giftcard_used, credit_used, tip, delivery_fee FROM orders WHERE code = ?").get(code) as OrderRow;
     if (paidShares(code) >= orderDue(o)) orderPaid(code, null);
     else publish({ type: "order", code, action: "paid" });
+    return Response.json({ ok: true });
+  }
+
+  if (body.kind === "ticket") {
+    const r = db.prepare("UPDATE tickets SET paid = 1, payment_ref = ? WHERE code = ? AND paid = 0").run(v.ref, code);
+    if (r.changes) {
+      const t = db.prepare("SELECT code, event_id, name, email, qty FROM tickets WHERE code = ?").get(code) as { code: string; event_id: string; name: string; email: string; qty: number };
+      const ev = EVENTS.find((e) => e.id === t.event_id);
+      if (ev) sendLater(t.email, ...ticketEmail({ ...t, title: ev.title, date: ev.date, time: ev.time }));
+    }
     return Response.json({ ok: true });
   }
 

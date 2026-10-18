@@ -1,8 +1,9 @@
 import { db, cleanText } from "@/lib/db";
 import { EVENTS, toDateStr } from "@/lib/cafe";
 import { rsvpEmail, sendLater } from "@/lib/email";
+import { seatsTaken } from "@/lib/tickets";
 
-const going = (id: string) => (db.prepare("SELECT COUNT(*) AS n FROM rsvps WHERE event_id = ?").get(id) as { n: number }).n;
+const going = seatsTaken;
 
 export async function GET() {
   const today = toDateStr(new Date());
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
   const name = cleanText(b?.name, 40);
   const email = cleanText(b?.email, 100).toLowerCase();
   if (!ev) return Response.json({ error: "Event not found." }, { status: 404 });
+  if (ev.price) return Response.json({ error: "This event needs a ticket." }, { status: 400 });
   if (!name || !/^\S+@\S+\.\S+$/.test(email)) return Response.json({ error: "Please add your name and email." }, { status: 400 });
   if (going(ev.id) >= ev.capacity) return Response.json({ error: "Sorry, this one is full!" }, { status: 409 });
   try {

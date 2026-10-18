@@ -45,6 +45,12 @@ export async function POST(req: Request) {
       amount = left;
       label = `Order ${c}`;
     }
+  } else if (kind === "ticket") {
+    const t = db.prepare("SELECT amount, paid, qty FROM tickets WHERE code = ?").get(c) as { amount: number; paid: number; qty: number } | undefined;
+    if (!t) return Response.json({ error: "Ticket not found." }, { status: 404 });
+    if (t.paid) return Response.json({ error: "This ticket is already paid ✿" }, { status: 409 });
+    amount = t.amount;
+    label = `Event ticket${t.qty > 1 ? "s" : ""} (${t.qty})`;
   } else if (kind === "giftcard") {
     const g = db.prepare("SELECT amount, paid FROM giftcards WHERE code = ?").get(c) as { amount: number; paid: number } | undefined;
     if (!g) return Response.json({ error: "Gift card not found." }, { status: 404 });

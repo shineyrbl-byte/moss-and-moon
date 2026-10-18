@@ -799,3 +799,12 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 :root[data-season="christmas"] .blob.b2 { background: #6f9a72; }
 :root[data-season="valentines"] { --season-bg: #a8455f; --season-fg: #fff; }
 :root[data-season="valentines"] .blob.b2 { background: var(--pink); }
+
+/* ============ Event tickets ============ */
+.ticket { padding: 0; overflow: hidden; display: grid; grid-template-columns: 1fr auto; }
+.ticket-top { padding: 1.6rem; }
+.ticket-stub { padding: 1.4rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; border-left: 2px dashed var(--line); background: var(--surface-2); text-align: center; }
+.ticket-stub img { background: #fff; border-radius: 12px; padding: 6px; }
+.ticket.used .ticket-stub img { opacity: 0.35; }
+@media (max-width: 600px) { .ticket { grid-template-columns: 1fr; } .ticket-stub { border-left: none; border-top: 2px dashed var(--line); } }
+@media print { .nav, .footer, .chat-fab, .season-banner, .season-sky, .table-banner, .toasts { display: none !important; } .ticket { box-shadow: none; border: 1px solid #ccc; } }

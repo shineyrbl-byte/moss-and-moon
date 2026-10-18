@@ -133,10 +133,10 @@ test("bookings respect table limits", async () => {
 });
 
 test("events, reviews and newsletter", async () => {
-  const ev = (await s.api("/api/events")).body;
-  if (ev.length) {
-    assert.equal((await s.api("/api/events", { method: "POST", json: { eventId: ev[0].id, name: "A", email: "a@example.com" } })).status, 200);
-    assert.equal((await s.api("/api/events", { method: "POST", json: { eventId: ev[0].id, name: "A", email: "a@example.com" } })).status, 409);
+  const free = ((await s.api("/api/events")).body as { id: string; price: number }[]).find((e) => !e.price);
+  if (free) {
+    assert.equal((await s.api("/api/events", { method: "POST", json: { eventId: free.id, name: "A", email: "a@example.com" } })).status, 200);
+    assert.equal((await s.api("/api/events", { method: "POST", json: { eventId: free.id, name: "A", email: "a@example.com" } })).status, 409);
   }
   assert.equal((await s.api("/api/reviews", { method: "POST", json: { name: "A", rating: 5, text: "Lovely place!" } })).status, 200);
   assert.equal((await s.api("/api/reviews", { method: "POST", json: { name: "A", rating: 9, text: "Lovely place!" } })).status, 400);
@@ -456,4 +456,30 @@ test("seasonal drinks appear only in their season", async () => {
   assert.ok(!xmas.includes("saffron-pista-latte"), "other festivals stay hidden");
   assert.equal((await s.api("/api/admin/settings", { method: "PATCH", json: { season: "summer" } })).status, 400);
   await s.api("/api/admin/settings", { method: "PATCH", json: { season: "auto" } });
+});
+
+test("paid event tickets: reserve, pay, check in once", async () => {
+  const ev = ((await s.api("/api/events")).body as { id: string; price: number; spotsLeft: number }[]).find((e) => e.price > 0)!;
+  assert.ok(ev, "there is a paid event");
+  assert.equal((await s.api("/api/events", { method: "POST", json: { eventId: ev.id, name: "A", email: "a@example.com" } })).status, 400, "paid events need a ticket");
+  assert.equal((await s.api("/api/tickets", { method: "POST", json: { eventId: ev.id, name: "Tara", email: "tara@example.com", qty: 9 } })).status, 400);
+  const r = await s.api("/api/tickets", { method: "POST", json: { eventId: ev.id, name: "Tara", email: "tara@example.com", qty: 2 } });
+  assert.equal(r.status, 200);
+  const { code, amount } = r.body as { code: string; amount: number };
+  assert.equal(amount, ev.price * 2);
+  // Held seats count straight away
+  const after = ((await s.api("/api/events")).body as { id: string; spotsLeft: number }[]).find((e) => e.id === ev.id)!;
+  assert.equal(after.spotsLeft, ev.spotsLeft - 2);
+
+  const start = await s.api("/api/payments/start", { method: "POST", json: { kind: "ticket", code } });
+  assert.equal((start.body as { amount: number }).amount, amount, "price comes from the server");
+  assert.equal((await s.api("/api/payments/verify", { method: "POST", json: { kind: "ticket", code, demo: true } })).status, 200);
+  const t = (await s.api(`/api/tickets/${code}`)).body as { paid: boolean; checkedIn: boolean; email?: string };
+  assert.equal(t.paid, true);
+  assert.equal(t.email, undefined, "email stays private");
+  assert.equal((await s.api(`/api/tickets/${code}/qr`)).status, 200);
+
+  await s.login();
+  assert.equal((await s.api(`/api/tickets/${code}`, { method: "PATCH" })).status, 200);
+  assert.equal((await s.api(`/api/tickets/${code}`, { method: "PATCH" })).status, 409, "only once");
 });
