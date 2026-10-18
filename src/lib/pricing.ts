@@ -192,6 +192,8 @@ export type Quote = {
   passDiscount: number; // coffee pass: one drink a day
   tierDiscount: number; // silver/gold members: free size upgrades
   lastHourDiscount: number; // bakes cheaper just before closing
+  comboDiscount: number; // combo deals
+  combos: { id: string; name: string; count: number; saving: number }[];
   studentDiscount: number; // verified students, weekdays
   total: number; // goods after discounts
   creditUsed: number; // account credit (from invites)
@@ -227,6 +229,51 @@ export const isHappyHour = (now = new Date()) => {
 export const STUDENT = { off: 0.1, days: [1, 2, 3, 4, 5], months: 12 };
 /** College email domains we accept (e.g. name@goa.bits-pilani.ac.in, name@uni.edu) */
 export const isStudentEmail = (email: string) => /@([a-z0-9-]+\.)*(ac\.in|edu|edu\.in|ac\.uk|edu\.au)$/i.test(email.trim());
+
+// ----- combo deals: e.g. any coffee + a bake for ₹299 -----
+export type ComboSlot = { label: string; cats?: Category[]; items?: string[] };
+export type Combo = { id: string; name: string; slots: ComboSlot[]; price: number; on: boolean; from?: number; to?: number };
+export const DEFAULT_COMBOS: Combo[] = [
+  { id: "breakfast", name: "Breakfast combo", slots: [{ label: "Any coffee", cats: ["coffee"] }, { label: "Any bake", cats: ["bakes"] }], price: 299, on: true, from: 7, to: 11 },
+  { id: "lunch", name: "Lunch combo", slots: [{ label: "Any food", cats: ["food"] }, { label: "Any cold drink", cats: ["cold"] }], price: 449, on: true, from: 12, to: 15 },
+];
+/** The combos in the café settings (shared with the browser like golden hour) */
+export const combosConfig = (): Combo[] => ((globalThis as { __mmConfig?: { combos?: Combo[] } }).__mmConfig?.combos ?? DEFAULT_COMBOS);
+/** Combos on offer at this time of day */
+export const combosAt = (list: Combo[] | undefined, now = new Date()) => {
+  // (The automated tests switch time-of-day deals off so prices don't change with the clock)
+  const timedOff = typeof process !== "undefined" && process.env?.HAPPY_HOUR === "off";
+  return (list ?? []).filter((c) => c.on && c.slots.length >= 2 && (c.from === undefined || c.to === undefined ? true : !timedOff && now.getHours() >= c.from && now.getHours() < c.to));
+};
+const fits = (s: ComboSlot, l: QuoteLine) => l.cat !== "shop" && ((s.items?.length && s.items.includes(l.itemId)) || (!s.items?.length && (s.cats ?? []).includes(l.cat!)));
+
+/** Match the tray to combos: each unit is used once, and a combo only counts when it saves money */
+export function matchCombos(lines: QuoteLine[], combos: Combo[]) {
+  const used = lines.map(() => 0);
+  const applied: { id: string; name: string; count: number; saving: number }[] = [];
+  for (const c of combos) {
+    for (let guard = 0; guard < 20; guard++) {
+      const pick: number[] = [];
+      for (const s of c.slots) {
+        // The dearest unit that fits this slot and isn't taken yet
+        let best = -1;
+        lines.forEach((l, i) => {
+          const free = l.qty - used[i] - pick.filter((p) => p === i).length;
+          if (free > 0 && fits(s, l) && (best < 0 || l.unit > lines[best].unit)) best = i;
+        });
+        if (best < 0) break;
+        pick.push(best);
+      }
+      if (pick.length < c.slots.length) break;
+      const worth = pick.reduce((sum, i) => sum + lines[i].unit, 0);
+      if (worth <= c.price) break;
+      pick.forEach((i) => used[i]++);
+      const a = applied.find((x) => x.id === c.id);
+      if (a) { a.count++; a.saving += worth - c.price; } else applied.push({ id: c.id, name: c.name, count: 1, saving: worth - c.price });
+    }
+  }
+  return { applied, used, discount: applied.reduce((s, a) => s + a.saving, 0) };
+}
 
 /** Kept for older code: the golden-hour label and discount right now */
 export const HAPPY_HOUR = { get label() { return happyHourLabel(); }, get off() { return happyHour().off; } };
@@ -266,6 +313,8 @@ export function quote(
     lastHour?: Pick<LastHour, "off" | "cats"> | null;
     /** A verified student */
     student?: boolean;
+    /** Combo deals on offer right now (see combosAt) */
+    combos?: Combo[];
   } = {}
 ): Quote {
   const lines: QuoteLine[] = [];
@@ -279,16 +328,18 @@ export function quote(
   }
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
 
+  // Combos first; whatever they use doesn't get golden-hour or last-hour money off as well
+  const combo = matchCombos(lines, extra.combos ?? []);
+  const left = (i: number) => (lines[i].qty - combo.used[i]) * lines[i].unit;
   const isGolden = isHappyHour(extra.now);
   const bakes = lines.filter((l) => l.cat === "bakes"); // birthday treats are for bakes (not savoury food)
   const hh = happyHour();
-  const golden = lines.filter((l) => hh.cats.includes(l.cat!));
-  const happyDiscount = isGolden ? Math.round(golden.reduce((s, l) => s + l.total, 0) * hh.off) : 0;
+  const happyDiscount = isGolden ? Math.round(lines.reduce((s, l, i) => s + (hh.cats.includes(l.cat!) ? left(i) : 0), 0) * hh.off) : 0;
 
   // A code on its own (e.g. in tests) is looked up in the starting codes
   const p = typeof promo === "string" ? DEFAULT_PROMOS.find((x) => x.code === promo.trim().toUpperCase()) : promo ?? undefined;
   const code = p?.code ?? null;
-  const promoDiscount = p ? promoDiscountFor(p, subtotal - happyDiscount) : 0;
+  const promoDiscount = p ? promoDiscountFor(p, subtotal - happyDiscount - combo.discount) : 0;
 
   // One entry per drink cup, so a pass and a loyalty reward can't use the same cup
   const cups = lines.filter((l) => isDrink(l.cat!)).flatMap((l) => Array.from({ length: l.qty }, () => ({ unit: l.unit, base: l.base ?? l.unit })));
@@ -311,11 +362,11 @@ export function quote(
 
   // Last-hour deal: on anything golden hour hasn't already discounted
   const lh = extra.lastHour;
-  const lastHourDiscount = lh ? Math.round(lines.filter((l) => lh.cats.includes(l.cat!) && !(isGolden && hh.cats.includes(l.cat!))).reduce((s, l) => s + l.total, 0) * lh.off) : 0;
+  const lastHourDiscount = lh ? Math.round(lines.reduce((s, l, i) => s + (lh.cats.includes(l.cat!) && !(isGolden && hh.cats.includes(l.cat!)) ? left(i) : 0), 0) * lh.off) : 0;
   const day = (extra.now ?? new Date()).getDay();
   const studentDiscount = extra.student && STUDENT.days.includes(day) ? Math.round(lines.filter((l) => isDrink(l.cat!)).reduce((s, l) => s + l.total, 0) * STUDENT.off) : 0;
 
-  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount - tierDiscount - lastHourDiscount - studentDiscount);
+  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount - tierDiscount - lastHourDiscount - studentDiscount - combo.discount);
   const creditUsed = Math.min(total, Math.max(0, Math.floor(extra.credit ?? 0)));
   const giftUsed = Math.min(total - creditUsed, Math.max(0, Math.floor(extra.giftBalance ?? 0)));
   const deliveryFee = extra.delivery && lines.length ? (total >= DELIVERY.freeOver ? 0 : DELIVERY.fee) : 0;
@@ -326,7 +377,7 @@ export function quote(
         ? Math.round((total * (extra.tipPercent ?? 0)) / 100)
         : 0;
   return {
-    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount, tierDiscount, lastHourDiscount, studentDiscount,
+    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount, tierDiscount, lastHourDiscount, studentDiscount, comboDiscount: combo.discount, combos: combo.applied,
     total, creditUsed, giftUsed, deliveryFee, tip, due: total - creditUsed - giftUsed + deliveryFee + tip,
   };
 }

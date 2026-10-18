@@ -28,7 +28,7 @@ export default function HoursEditor() {
 
   async function save() {
     // Branches are saved by their own card, so leave them out here
-    const r = await fetch("/api/admin/cafe-config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...c, branches: undefined, links: undefined }) });
+    const r = await fetch("/api/admin/cafe-config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...c, branches: undefined, links: undefined, combos: undefined }) });
     const d = await r.json();
     if (!r.ok) return toast(d.error);
     const { clashingBookings, ...rest } = d;

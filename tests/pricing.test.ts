@@ -1,7 +1,7 @@
 // Unit tests for price maths (no server needed). Run: npm test
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { quote, unitPrice, cleanOptions, defaultOptions, describeOptions, isStudentEmail } from "../src/lib/pricing.ts";
+import { quote, unitPrice, cleanOptions, defaultOptions, describeOptions, isStudentEmail, matchCombos, type Combo } from "../src/lib/pricing.ts";
 import { slotsFor, openStatus, demoStatus, forecastDay, quietestHour, busyLevel } from "../src/lib/cafe.ts";
 import type { MenuItem } from "../src/lib/menu.ts";
 
@@ -349,4 +349,25 @@ test("last-hour deal and student discount", () => {
   assert.ok(isStudentEmail("f20240273@goa.bits-pilani.ac.in"));
   assert.ok(isStudentEmail("a@stanford.edu"));
   assert.ok(!isStudentEmail("a@gmail.com"));
+});
+
+test("combo deals: matched once per unit, only when they save money, and they don't stack with golden hour", () => {
+  const items: Record<string, MenuItem> = {
+    latte: { id: "latte", cat: "coffee", name: "Latte", desc: "", price: 220, img: "" },
+    chai: { id: "chai", cat: "tea", name: "Chai", desc: "", price: 150, img: "" },
+    croissant: { id: "croissant", cat: "bakes", name: "Croissant", desc: "", price: 150, img: "" },
+    cookie: { id: "cookie", cat: "bakes", name: "Cookie", desc: "", price: 60, img: "" },
+  };
+  const find = (id: string) => items[id];
+  const combos: Combo[] = [{ id: "bf", name: "Breakfast", price: 299, on: true, slots: [{ label: "Coffee", cats: ["coffee"] }, { label: "Bake", cats: ["bakes"] }] }];
+  // 2 lattes + 1 croissant + 1 cookie: one combo with the croissant (saves 71), one with the cookie isn't worth it (280 < 299)
+  const q = quote([{ itemId: "latte", qty: 2 }, { itemId: "croissant", qty: 1 }, { itemId: "cookie", qty: 1 }], find, null, false, { combos });
+  assert.deepEqual(q.combos, [{ id: "bf", name: "Breakfast", count: 1, saving: 71 }]);
+  assert.equal(q.total, q.subtotal - 71);
+  // Two of each: two combos
+  assert.equal(quote([{ itemId: "latte", qty: 2 }, { itemId: "croissant", qty: 2 }], find, null, false, { combos }).comboDiscount, 142);
+  // Tea doesn't count as coffee
+  assert.equal(quote([{ itemId: "chai", qty: 1 }, { itemId: "croissant", qty: 1 }], find, null, false, { combos }).comboDiscount, 0);
+  const m = matchCombos(quote([{ itemId: "latte", qty: 1 }, { itemId: "croissant", qty: 1 }], find).lines, combos);
+  assert.deepEqual(m.used, [1, 1]);
 });

@@ -38,6 +38,7 @@ import CateringTab from "@/components/admin/CateringTab";
 import SupportInbox from "@/components/SupportInbox";
 import WinbackCard from "@/components/admin/WinbackCard";
 import SpecialsCard from "@/components/admin/SpecialsCard";
+import CombosCard from "@/components/admin/CombosCard";
 import PriceWhatIf from "@/components/admin/PriceWhatIf";
 import MenuEngineering from "@/components/admin/MenuEngineering";
 import MissedSales from "@/components/admin/MissedSales";
@@ -503,7 +504,7 @@ export default function AdminPage() {
           <TwoStep />
         </div>
       )}
-      {tab === "Menu" && <>{me?.role === "owner" && <SpecialsCard />}<MenuEditor canEdit={me?.role === "owner"} /></>}
+      {tab === "Menu" && <>{me?.role === "owner" && <><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <><UseByCard />{me?.role === "owner" && <PriceWatch />}<StockTab canEdit={me?.role === "owner"} /></>}

@@ -2,7 +2,8 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { CATEGORIES, CATEGORY_ORDER, inTab, photo, type Diet, type MenuTab } from "@/lib/menu";
-import { HAPPY_HOUR, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
+import { HAPPY_HOUR, combosAt, combosConfig, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
+import { hourText } from "@/lib/cafe";
 import { isLastHour, lastHourLabel } from "@/lib/cafe";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
@@ -16,6 +17,8 @@ export default function Menu() {
   const [happy, setHappy] = useState(false);
   useEffect(() => setHappy(isHappyHour()), []);
   const [lastNow, setLastNow] = useState(false);
+  const [combos, setCombos] = useState<ReturnType<typeof combosConfig>>([]);
+  useEffect(() => { const f = () => setCombos(combosAt(combosConfig())); f(); const t = setInterval(f, 60_000); return () => clearInterval(t); }, []);
   useEffect(() => { setLastNow(isLastHour(new Date(), branch)); const t = setInterval(() => setLastNow(isLastHour(new Date(), branch)), 60_000); return () => clearInterval(t); }, [branch]);
   const [cat, setCat] = useState<MenuTab>("all");
   const [diet, setDiet] = useState<Diet[]>([]);
@@ -57,6 +60,11 @@ export default function Menu() {
         <p className="lead">{t("menu.lead")}</p>
         <p className="happy-pill">{happy ? "✨ It's golden hour! " : "☀︎ "}{HAPPY_HOUR.label}</p>
         {lastNow && <p className="happy-pill" style={{ marginTop: "0.4rem" }}>🌙 {lastHourLabel()}</p>}
+        {combos.length > 0 && (
+          <div className="combo-strip">
+            {combos.map((c) => <span key={c.id} className="combo-pill">🍱 <b>{c.name}</b>: {c.slots.map((s) => s.label.toLowerCase()).join(" + ")} for {rupees(c.price)}{c.from !== undefined ? ` · ${hourText(c.from)}–${hourText(c.to!)}` : ""}</span>)}
+          </div>
+        )}
       </div>
 
       <UsualCard />

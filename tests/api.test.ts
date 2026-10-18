@@ -1688,3 +1688,17 @@ test("menu board, allergen chart and the menu writer", async () => {
   const after = ((await fetch(`${s.url}/api/menu`).then((r) => r.json())) as { items: { id: string; nameHi?: string }[] }).items.find((m) => m.id === "honey-oat-latte")!;
   assert.equal(after.nameHi, "हनी ओट लाटे");
 });
+
+test("combos: the owner sets them, the server applies them to an order", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { combos: [{ name: "Solo", price: 100, slots: [{ label: "Coffee", cats: ["coffee"] }] }] } })).status, 400, "needs two parts");
+  const ok = await s.api("/api/admin/cafe-config", { method: "PUT", json: { combos: [{ name: "Test combo", price: 250, slots: [{ label: "Coffee", cats: ["coffee"] }, { label: "Bake", cats: ["bakes"] }] }] } });
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+  const o = await s.api("/api/orders", { method: "POST", json: { name: "Combo", phone: "9876500654", lines: [{ itemId: "honey-oat-latte", qty: 1, opts: { size: "regular", milk: "oat" } }, { itemId: "croissant", qty: 1 }] } });
+  assert.equal(o.status, 200, JSON.stringify(o.body));
+  assert.equal(o.body.total, 250);
+  assert.match(o.body.perks, /combo/);
+  // Back to the starting combos (they're time-limited, so they're off in tests)
+  const { DEFAULT_COMBOS } = await import("../src/lib/pricing.ts");
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { combos: DEFAULT_COMBOS } })).status, 200);
+});
