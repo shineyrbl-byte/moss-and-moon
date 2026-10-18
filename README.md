@@ -1,6 +1,6 @@
 # Moss & Moon ☾ — an aesthetic café website
 
-**Live site:** https://web-production-7884e.up.railway.app (every push to `main` deploys automatically)
+**Live site:** https://moss-and-moon.up.railway.app (every push to `main` deploys automatically)
 
 A full-stack café site built with **Next.js 16 + React 19 + TypeScript**, with a real backend
 (Next.js API routes + **SQLite**, built into Node — nothing extra to install).
