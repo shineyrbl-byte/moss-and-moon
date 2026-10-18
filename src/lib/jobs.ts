@@ -9,6 +9,7 @@ import { weeklyTick } from "./insights";
 import { scheduleTick } from "./schedules";
 import { reminderTick } from "./reminders";
 import { newsletterTick } from "./newsletter";
+import { autoClockOut } from "./timesheets";
 
 const g = globalThis as { __mmJobs?: NodeJS.Timeout[] };
 
@@ -36,5 +37,6 @@ export function startJobs() {
     every(20_000, "regular orders", () => scheduleTick()),
     every(30_000, "reminders", () => reminderTick()),
     every(20_000, "newsletter", () => newsletterTick()),
+    every(5 * 60_000, "auto clock-out", () => autoClockOut()),
   ];
 }

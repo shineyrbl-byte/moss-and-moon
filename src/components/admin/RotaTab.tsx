@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { SHIFT_PRESETS, fmtTime, shiftHours, type Shift } from "@/lib/rota";
 import { toDateStr } from "@/lib/cafe";
 import { useStore } from "../Store";
+import Timesheets from "./Timesheets";
 
 type Data = { week: string; days: string[]; shifts: Shift[]; team: { id: number; name: string; role: string }[]; me: number };
 const json = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -107,6 +108,7 @@ export default function RotaTab({ canEdit }: { canEdit: boolean }) {
           </div>
         </form>
       )}
+      <Timesheets week={d.week} canEdit={canEdit} />
     </div>
   );
 }

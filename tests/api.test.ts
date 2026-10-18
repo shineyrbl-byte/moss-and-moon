@@ -1034,3 +1034,30 @@ test("surprise wheel lands on a real drink; at most one discount a day", async (
   }
   assert.ok(codes <= 1, "one discount per visitor per day");
 });
+
+test("timesheets: staff clock in and out; tips are split by hours worked", async () => {
+  await s.login();
+  await s.api("/api/admin/staff", { method: "POST", json: { name: "Tara", username: "tara", password: "flat-white-7", role: "barista" } });
+  const staffLogin = async () => {
+    const r = await fetch(`${s.url}/api/admin/login`, { method: "POST", headers: { "Content-Type": "application/json", "x-forwarded-for": "10.5.5.5" }, body: JSON.stringify({ username: "tara", password: "flat-white-7" }) });
+    return r.headers.get("set-cookie")!.split(";")[0];
+  };
+  const cookie = await staffLogin();
+  const clock = (action: string) => fetch(`${s.url}/api/staff/clock`, { method: "POST", headers: { "Content-Type": "application/json", cookie }, body: JSON.stringify({ action }) });
+  assert.equal((await clock("in")).status, 200);
+  assert.equal((await clock("in")).status, 409, "already clocked in");
+  assert.equal((await clock("out")).status, 200);
+  // Owner view: a pretend 4-hour shift for the tip split
+  const db = new (await import("node:sqlite")).DatabaseSync((await import("node:path")).join(s.dataDir, "cafe.db"));
+  const id = (db.prepare("SELECT id FROM staff WHERE username = 'tara'").get() as { id: number }).id;
+  db.prepare("UPDATE timesheets SET clock_in = datetime('now','localtime','-4 hours'), clock_out = datetime('now','localtime') WHERE staff_id = ?").run(id);
+  db.close();
+  await s.api("/api/orders", { method: "POST", json: { name: "Tipper", phone: "9000025656", payMethod: "online", tipAmount: 60, lines: [{ itemId: "cookie", qty: 1 }] } }).then(async (r) => {
+    await s.api("/api/payments/verify", { method: "POST", json: { kind: "order", code: (r.body as { code: string }).code, demo: true } });
+  });
+  const rep = (await s.api("/api/admin/timesheets")).body as { tips: number; people: { name: string; worked: number; tip: number }[] };
+  const tara = rep.people.find((p) => p.name === "Tara")!;
+  assert.ok(Math.abs(tara.worked - 4) < 0.05);
+  assert.ok(rep.tips >= 60);
+  assert.equal(rep.people.reduce((t, p) => t + p.tip, 0), rep.tips, "every rupee of tips is shared out");
+});

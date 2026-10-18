@@ -374,6 +374,13 @@ function open() {
       published_at TEXT,
       updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS timesheets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      staff_id INTEGER NOT NULL,
+      clock_in TEXT NOT NULL,
+      clock_out TEXT,
+      auto INTEGER NOT NULL DEFAULT 0
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
