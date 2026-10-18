@@ -38,18 +38,26 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 🪑 **Order from your table** by scanning its QR code, and **call staff** from the table
 - 📍 Live order tracking, "it's ready" **push notifications**, PDF **receipts**
 - ✨ Golden hour (20% off bakes 3–5pm), stamp card (10 stamps = free drink)
+- ☕ **Bean subscription**: a bag every 2 or 4 weeks, pickup or delivery, pay on handover; pause, skip or cancel any time
+- 🖥 **Self-order kiosk** (`/kiosk`): a counter tablet signed in as staff, with big tiles and an automatic reset
+- 🧺 **Catering** (`/catering`): requests for 10+ guests, a quote from the owner, then accept and pay online or on the day
+- 🏠 **More than one café**: guests pick a branch when ordering or booking
 
 **Guests & community**
 - 👤 **Accounts** with a sign-in code by email: favourites on every device, order history, birthday treat, referrals with credit, a monthly **Coffee Pass**
 - 🏅 **Streaks and badges**: 16 badges like Early bird, Matcha lover and Kind soul
+- 🥇 **Loyalty tiers**: Silver (10 visits a year) gets a free size upgrade each order; Gold (30) gets free upgrades on every drink and jumps the queue
+- 🥗 **Dietary profile**: save vegan, gluten-free and allergens to avoid; the menu filters itself and warns about clashes
 - 📌 **Community noticeboard**: lost & found, study buddies and book swaps, approved by staff
 - 📰 **Journal**: blog posts with their own pages, in the sitemap for Google
 - ✉️ **Emails from "Moss & Moon"** to any guest: order confirmed (with the ready time), it's ready, pickup reminder, PDF receipt, "How was it?" review request, booking confirmation with a calendar invite, and a reminder before the booking. Sent through the café Gmail via Gmail's API (works on Railway's Hobby plan), or Resend with your own domain
 - ⭐ Verified-visit reviews from those emails
 - 📅 Table booking with real availability and a **waitlist** that emails you when a table frees up
+- 🗺 **Pick your table** on a floor plan, and **pre-order** your tray to be ready when you arrive
 - 🎟 **Events**: free RSVPs, and **paid tickets** for classes with a QR code checked at the door
 - 🌿 **"How busy is it?"** meter with today's forecast and the quietest time to visit
 - 🤖 **Ask the barista**: AI chat (free Google Gemini, or Claude) that recommends drinks from the live menu
+- 👋 **Talk to a person**: hand the chat over to staff, with live replies (emailed if the guest has left)
 - ⭐ Reviews with photos, 🎁 gift cards, 💌 newsletter, 🔮 "find your drink" quiz, café ambience sounds
 - 🎉 **Seasonal themes**: Diwali, monsoon, Christmas and Valentine's, each with a banner, animation and special drink
 - 🌸 Day and ☾ night themes, English / हिन्दी, installable app that works offline
@@ -71,6 +79,11 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - ⏱ **Clock-in & timesheets**: hours worked vs the rota, and tips split by hours worked
 - 📦 **Supplier reorders**: low stock makes a draft order; approve it to email the supplier, then mark it received
 - 💰 **Profit tracking** from ingredient costs, per day and per item; 🧺 **waste log** with tomorrow's bake plan
+- 📒 **Monthly P&L**: sales, tickets, catering, cost of goods, waste and your expenses (rent, wages, bills) for a true net profit
+- 💵 **Daily cash-up**: count the till against what the counter should have taken; the nightly email flags any difference
+- 🔁 **Repeat-customer chart**: how many of each month's new guests come back within 30 days
+- 📶 **Wi-Fi QR** on receipts and table cards
+- 💬 **Guest chats inbox** on the barista screen and dashboard
 - ✨ **AI weekly insights**: review summary and practical ideas from your numbers (Claude or free Gemini)
 - 👀 **Visitor stats** without cookies or trackers
 - 🔐 **Two-step login** for owners, and a security check-up in the Health tab (see [SECURITY.md](SECURITY.md))
