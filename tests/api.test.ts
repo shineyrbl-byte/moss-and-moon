@@ -426,3 +426,21 @@ test("busy meter reports a level and today's forecast", async () => {
   if (b.open) assert.ok(["quiet", "cosy", "packed"].includes(String(b.level)));
   else assert.equal(b.level, null);
 });
+
+test("my usual: the drink you order most, how you like it", async () => {
+  const codes: string[] = [];
+  const place = async (lines: unknown[]) => {
+    const r = await s.api("/api/orders", { method: "POST", json: { name: "Usual", phone: "9000011111", lines } });
+    codes.push((r.body as { code: string }).code);
+  };
+  await place([{ itemId: "rose-latte", qty: 1, opts: { milk: "oat", temp: "iced" } }, { itemId: "cookie", qty: 1 }]);
+  await place([{ itemId: "rose-latte", qty: 2, opts: { milk: "oat", temp: "iced" } }]);
+  await place([{ itemId: "chai", qty: 1 }]);
+  const r = await s.api(`/api/usual?codes=${codes.join(",")}`);
+  const u = (r.body as { usual: { itemId: string; opts: { milk: string; temp: string }; orders: number } }).usual;
+  assert.equal(u.itemId, "rose-latte");
+  assert.equal(u.opts.milk, "oat");
+  assert.equal(u.opts.temp, "iced");
+  assert.equal(u.orders, 2);
+  assert.equal(((await s.api("/api/usual")).body as { usual: null }).usual, null, "no history, no usual");
+});

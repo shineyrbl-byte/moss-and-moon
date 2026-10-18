@@ -5,6 +5,7 @@ import { CATEGORIES, photo, type Category, type Diet } from "@/lib/menu";
 import { HAPPY_HOUR, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
+import UsualCard from "./Usual";
 
 export default function Menu() {
   const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t } = useStore();
@@ -36,6 +37,8 @@ export default function Menu() {
         <p className="lead">{t("menu.lead")}</p>
         <p className="happy-pill">{happy ? "✨ It's golden hour! " : "☀︎ "}{HAPPY_HOUR.label}</p>
       </div>
+
+      <UsualCard />
 
       <div className="menu-tools">
         <label className="search">
