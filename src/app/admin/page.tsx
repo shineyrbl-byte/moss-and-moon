@@ -20,6 +20,7 @@ import InsightsCard from "@/components/admin/InsightsCard";
 import ProfitPanel from "@/components/admin/ProfitPanel";
 import WasteTab from "@/components/admin/WasteTab";
 import NoticesTab from "@/components/admin/NoticesTab";
+import VisitorsPanel from "@/components/admin/VisitorsPanel";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -384,7 +385,7 @@ export default function AdminPage() {
       )}
 
       {tab === "Menu" && <MenuEditor canEdit={me?.role === "owner"} />}
-      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><ProfitPanel /><Analytics /></>}
+      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><ProfitPanel /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}

@@ -314,6 +314,19 @@ function open() {
       expires TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS visits (
+      day TEXT NOT NULL,
+      vid TEXT NOT NULL,
+      device TEXT NOT NULL,
+      PRIMARY KEY (day, vid)
+    );
+    CREATE TABLE IF NOT EXISTS page_views (
+      day TEXT NOT NULL,
+      path TEXT NOT NULL,
+      ref TEXT NOT NULL DEFAULT '',
+      n INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (day, path, ref)
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,

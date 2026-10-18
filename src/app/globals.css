@@ -937,3 +937,5 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .note .pin { position: absolute; top: 6px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #f6a2b8, #b8506e); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35); }
 .note-kind, .note-by { color: #6b4f45; }
 @media (prefers-reduced-motion: reduce) { .note { animation: none; rotate: 0deg !important; } }
+.viz-list { list-style: none; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.3rem; }
+.viz-list li { display: flex; justify-content: space-between; gap: 0.6rem; border-bottom: 1px solid var(--line); padding: 0.2rem 0; }

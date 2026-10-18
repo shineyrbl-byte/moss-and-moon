@@ -784,3 +784,21 @@ test("noticeboard: notes wait for a barista, no links, max 3 a day", async () =>
   await s.api("/api/notices", { method: "PATCH", json: { id: umbrella.id, status: "approved" } });
   assert.ok(((await s.api("/api/notices")).body as { text: string }[]).some((n) => n.text.includes("blue umbrella")));
 });
+
+test("visitor stats: counted once a day, no bots or staff pages", async () => {
+  const hit = (path: string, ua: string, ip = "10.1.1.1", ref = "") => fetch(`${s.url}/api/stats`, { method: "POST", headers: { "Content-Type": "application/json", "user-agent": ua, "x-forwarded-for": ip }, body: JSON.stringify({ path, ref }) });
+  const phone = "Mozilla/5.0 (Linux; Android 14) Mobile Safari/537.36";
+  await hit("/", phone, "10.1.1.1", "https://www.instagram.com/mossandmoon");
+  await hit("/order/MM-ABCD", phone, "10.1.1.1");
+  await hit("/order/MM-WXYZ", phone, "10.1.1.1");
+  await hit("/", "Mozilla/5.0 (Macintosh) Safari/605", "10.1.1.2");
+  await hit("/", "Googlebot/2.1", "10.1.1.3");
+  await hit("/admin", phone, "10.1.1.4");
+  await s.login();
+  const r = (await s.api("/api/admin/visitors?days=7")).body as { visitors: number; views: number; pages: { path: string; n: number }[]; referrers: { ref: string }[]; devices: { device: string }[] };
+  assert.equal(r.visitors, 2, "two real visitors; the bot and the staff page don't count");
+  assert.equal(r.views, 4);
+  assert.equal(r.pages.find((p) => p.path === "/order/[code]")!.n, 2, "order pages are grouped");
+  assert.deepEqual(r.referrers.map((x) => x.ref), ["instagram.com"]);
+  assert.ok(r.devices.some((d) => d.device === "phone"));
+});
