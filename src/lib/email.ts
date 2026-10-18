@@ -317,3 +317,17 @@ export function passEmail(p: { ends: string }) {
   return [`Your Coffee Pass is active ☕`, `<p>One drink a day is on us until <b>${until}</b>. Just sign in when you order, and it comes off automatically.</p>${button(`${SITE()}/#menu`, "Order today's drink")}`] as const;
 }
 
+
+// ---------- catering ----------
+type CateringMail = { code: string; name: string; event_date: string; event_time: string; guests: number; amount?: number | null; quote_note?: string | null };
+const cateringWhen = (c: CateringMail) => `${new Date(c.event_date + "T12:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })} at ${c.event_time}`;
+
+export function cateringRequestEmail(c: CateringMail) {
+  return [`We got your catering request, ${c.name} ✿`, `<p>Thank you! We'll look at your request for <b>${c.guests} guests</b> on <b>${esc(cateringWhen(c))}</b> and send a quote within a day.</p>${codeBox(c.code)}${button(`${SITE()}/catering/${c.code}`, "See your request")}`] as const;
+}
+export function cateringQuoteEmail(c: CateringMail) {
+  return [`Your catering quote: ${rupees(c.amount ?? 0)}`, `<p>Hi ${esc(c.name)}, here's our quote for <b>${c.guests} guests</b> on <b>${esc(cateringWhen(c))}</b>:</p><p style="font-size:26px;font-family:Georgia,serif;margin:8px 0">${rupees(c.amount ?? 0)}</p>${c.quote_note ? `<p style="white-space:pre-line">${esc(c.quote_note)}</p>` : ""}${button(`${SITE()}/catering/${c.code}`, "Accept and pay")}<p style="color:#8a6a5c;font-size:13px">You can pay online now, or on the day. Questions? Just reply to this email.</p>`] as const;
+}
+export function cateringConfirmedEmail(c: CateringMail & { paid: boolean }) {
+  return [`Catering confirmed for ${cateringWhen(c)} 🌸`, `<p>All set, ${esc(c.name)}! We'll have everything ready for your <b>${c.guests} guests</b> on <b>${esc(cateringWhen(c))}</b>.</p><p>${c.paid ? `<b>${rupees(c.amount ?? 0)} paid</b>. Thank you!` : `<b>${rupees(c.amount ?? 0)}</b> to pay on the day.`}</p>${codeBox(c.code)}${button(`${SITE()}/catering/${c.code}`, "View booking")}`] as const;
+}

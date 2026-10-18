@@ -1203,3 +1203,36 @@ test("bean subscriptions: start, skip, pause, resume and cancel", async () => {
   assert.equal((await s.api("/api/account/beans", { method: "PATCH", json: { id, action: "cancel" } })).status, 200);
   assert.equal(((await s.api("/api/account/beans")).body as { subs: unknown[] }).subs.length, 0);
 });
+
+test("catering: request, quote, accept and pay", async () => {
+  const d = new Date(Date.now() + 5 * 86_400_000);
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const base = { name: "Nisha", email: "nisha@example.com", phone: "9800011122", date, time: "11:00", guests: 25, kind: "office", method: "pickup", details: "Coffee and croissants for the team" };
+  assert.equal((await s.api("/api/catering", { method: "POST", json: { ...base, guests: 4 } })).status, 400);
+  assert.equal((await s.api("/api/catering", { method: "POST", json: { ...base, date: "2020-01-01" } })).status, 400);
+  const made = await s.api("/api/catering", { method: "POST", json: base });
+  assert.equal(made.status, 200);
+  const code = made.body.code as string;
+  // Nothing to pay or accept before a quote
+  assert.equal((await s.api(`/api/catering/${code}`, { method: "POST", json: { action: "accept" } })).status, 409);
+  assert.equal((await s.api("/api/payments/start", { method: "POST", json: { kind: "catering", code } })).status, 409);
+  // Only the owner can quote
+  const anon = await fetch(`${s.url}/api/catering/${code}`, { method: "PATCH", headers: { "Content-Type": "application/json", Origin: s.url }, body: JSON.stringify({ amount: 1 }) });
+  assert.equal(anon.status, 401);
+  await s.login();
+  assert.equal((await s.api(`/api/catering/${code}`, { method: "PATCH", json: { amount: 7500, note: "25 coffees and 25 croissants" } })).status, 200);
+  const view = (await s.api(`/api/catering/${code}`)).body as { status: string; amount: number; quoteNote: string };
+  assert.equal(view.status, "quoted");
+  assert.equal(view.amount, 7500);
+  const start = await s.api("/api/payments/start", { method: "POST", json: { kind: "catering", code } });
+  assert.equal(start.status, 200);
+  assert.equal(start.body.amount, 7500);
+  assert.equal((await s.api("/api/payments/verify", { method: "POST", json: { kind: "catering", code, demo: true } })).status, 200);
+  assert.equal(((await s.api(`/api/catering/${code}`)).body as { status: string; paid: boolean }).paid, true);
+  // Shows up in the owner's list and in P&L for the month it was paid
+  const list = (await s.api("/api/catering")).body as { code: string; status: string }[];
+  assert.equal(list.find((c) => c.code === code)?.status, "paid");
+  const p = (await s.api("/api/admin/pnl")).body as { catering: number };
+  assert.ok(p.catering >= 7500);
+  assert.equal((await s.api(`/api/catering/${code}`, { method: "PATCH", json: { status: "done" } })).body.status, "done");
+});

@@ -26,6 +26,7 @@ export default function Footer() {
             <li><Link href="/gift-a-drink">Buy a friend a coffee</Link></li>
             <li><Link href="/noticeboard">Noticeboard</Link></li>
             <li><Link href="/journal">Journal</Link></li>
+            <li><Link href="/catering">Catering</Link></li>
             <li><Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link></li>
             <li><Link href="/orders">My orders</Link></li>
           </ul>

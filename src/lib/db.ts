@@ -293,6 +293,27 @@ function open() {
       last_order TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS catering (
+      code TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      event_date TEXT NOT NULL,
+      event_time TEXT NOT NULL,
+      guests INTEGER NOT NULL,
+      kind TEXT NOT NULL,
+      method TEXT NOT NULL DEFAULT 'pickup',
+      address TEXT,
+      details TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'requested',
+      amount INTEGER,
+      quote_note TEXT,
+      pay_choice TEXT,
+      payment_ref TEXT,
+      quoted_at TEXT,
+      paid_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,

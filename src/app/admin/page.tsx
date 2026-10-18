@@ -32,6 +32,7 @@ import WifiCard from "@/components/admin/WifiCard";
 import RetentionPanel from "@/components/admin/RetentionPanel";
 import CashupTab from "@/components/admin/CashupTab";
 import PnlTab from "@/components/admin/PnlTab";
+import CateringTab from "@/components/admin/CateringTab";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -46,7 +47,7 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; table_no: number | null; preorder: string | null; preorder_code: string | null };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Catering", "Menu", "Stock", "Waste", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health"] as const;
 // What baristas can see (owners see everything)
 const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Cash-up", "Tables & QR", "Rota", "Notices"];
 
@@ -421,6 +422,7 @@ export default function AdminPage() {
       {tab === "Events" && <EventsTab canEdit={me?.role === "owner"} />}
       {tab === "Waste" && <WasteTab />}
       {tab === "Cash-up" && <CashupTab />}
+      {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
       {tab === "Notices" && <NoticesTab />}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}

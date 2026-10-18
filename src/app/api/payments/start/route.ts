@@ -60,6 +60,12 @@ export async function POST(req: Request) {
     if (t.paid) return Response.json({ error: "This ticket is already paid ✿" }, { status: 409 });
     amount = t.amount;
     label = `Event ticket${t.qty > 1 ? "s" : ""} (${t.qty})`;
+  } else if (kind === "catering") {
+    const t = db.prepare("SELECT amount, status FROM catering WHERE code = ?").get(c) as { amount: number | null; status: string } | undefined;
+    if (!t) return Response.json({ error: "Catering request not found." }, { status: 404 });
+    if (!["quoted", "accepted"].includes(t.status) || !t.amount) return Response.json({ error: t.status === "paid" || t.status === "done" ? "This is already paid ✿" : "There's no quote to pay yet." }, { status: 409 });
+    amount = t.amount;
+    label = "Catering";
   } else if (kind === "giftcard") {
     const g = db.prepare("SELECT amount, paid FROM giftcards WHERE code = ?").get(c) as { amount: number; paid: number } | undefined;
     if (!g) return Response.json({ error: "Gift card not found." }, { status: 404 });

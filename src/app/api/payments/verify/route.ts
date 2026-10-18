@@ -8,6 +8,8 @@ import { paidShares } from "@/lib/orderMoney";
 import { publish } from "@/lib/live";
 import { toDateStr } from "@/lib/cafe";
 import { limited, tooMany } from "@/lib/rateLimit";
+import { getCatering, markCateringPaid } from "@/lib/catering";
+import { cateringConfirmedEmail } from "@/lib/email";
 
 type OrderRow = { code: string; name: string; email: string | null; lines: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pickup: string; table_no: number | null; delivery_address: string | null };
 
@@ -75,6 +77,14 @@ export async function POST(req: Request) {
       const t = db.prepare("SELECT code, event_id, name, email, qty FROM tickets WHERE code = ?").get(code) as { code: string; event_id: string; name: string; email: string; qty: number };
       const ev = findEvent(t.event_id);
       if (ev) sendLater(t.email, ...ticketEmail({ ...t, title: ev.title, date: ev.date, time: ev.time }));
+    }
+    return Response.json({ ok: true });
+  }
+
+  if (body.kind === "catering") {
+    if (markCateringPaid(code, v.ref)) {
+      const c = getCatering(code)!;
+      sendLater(c.email, ...cateringConfirmedEmail({ ...c, paid: true }));
     }
     return Response.json({ ok: true });
   }
