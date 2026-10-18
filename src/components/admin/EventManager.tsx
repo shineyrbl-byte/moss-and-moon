@@ -7,7 +7,7 @@ import type { CafeEvent } from "@/lib/cafe";
 import { useStore } from "../Store";
 
 type Ev = CafeEvent & { spotsLeft: number };
-const blank = { id: "", title: "", date: "", time: "18:00", desc: "", img: "", capacity: 20, price: 0 };
+const blank = { id: "", title: "", date: "", time: "18:00", desc: "", img: "", capacity: 20, price: 0, repeat: "none", times: 4 };
 const json = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 /** Owner: add, edit and delete events (free RSVP when the price is ₹0) */
@@ -26,8 +26,16 @@ export default function EventManager({ onChange }: { onChange?: () => void }) {
     const r = await fetch("/api/events", json("PUT", { ...f, id: f.id || undefined }));
     const d = await r.json();
     if (!r.ok) return toast(d.error);
-    toast(f.id ? "Event updated ✓" : "Event added ✓ It's on the site now.");
+    toast(f.id ? "Event updated ✓" : d.created ? `${d.created} events added ✓` : "Event added ✓ It's on the site now.");
     setF(null);
+    load();
+    onChange?.();
+  }
+  async function removeSeries(id: string) {
+    const r = await fetch("/api/events", json("DELETE", { id, series: true }));
+    const d = await r.json();
+    if (!r.ok) return toast(d.error);
+    toast(`Removed ${d.removed} date${d.removed === 1 ? "" : "s"}${d.kept ? `; kept ${d.kept} with tickets sold` : ""}`);
     load();
     onChange?.();
   }
@@ -62,6 +70,16 @@ export default function EventManager({ onChange }: { onChange?: () => void }) {
           <div className="row">
             <label className="field">Date<input className="input" type="date" required min={f.id ? undefined : today} value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></label>
             <label className="field">Starts<input className="input" type="time" required value={f.time} onChange={(e) => setF({ ...f, time: e.target.value })} /></label>
+            {!f.id && (
+              <label className="field">Repeats
+                <span className="row" style={{ gap: "0.4rem" }}>
+                  <select className="input" value={f.repeat} onChange={(e) => setF({ ...f, repeat: e.target.value })}>
+                    <option value="none">Just once</option><option value="weekly">Every week</option><option value="fortnightly">Every 2 weeks</option><option value="monthly">Every month</option>
+                  </select>
+                  {f.repeat !== "none" && <><input className="input" type="number" min={2} max={26} style={{ width: "4.5rem" }} value={f.times} onChange={(e) => setF({ ...f, times: Number(e.target.value) })} aria-label="How many times" /><span className="small muted">times</span></>}
+                </span>
+              </label>
+            )}
             <label className="field">Spots<input className="input" type="number" min={1} max={500} required value={f.capacity} onChange={(e) => setF({ ...f, capacity: Number(e.target.value) })} /></label>
             <label className="field">Ticket price (₹, 0 = free RSVP)<input className="input" type="number" min={0} max={20000} value={f.price} onChange={(e) => setF({ ...f, price: Number(e.target.value) })} /></label>
           </div>
@@ -87,7 +105,8 @@ export default function EventManager({ onChange }: { onChange?: () => void }) {
           <li key={e.id} className={e.date < today ? "muted" : ""}>
             <span><b>{e.title}</b> · {new Date(`${e.date}T${e.time}`).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}{e.date < today ? " · past" : ""}</span>
             <span className="small">{e.price ? rupees(e.price) : "free"} · {e.capacity - e.spotsLeft}/{e.capacity}</span>
-            <button className="link-btn" onClick={() => setF({ id: e.id, title: e.title, date: e.date, time: e.time, desc: e.desc, img: e.img, capacity: e.capacity, price: e.price })}>Edit</button>
+            <button className="link-btn" onClick={() => setF({ id: e.id, title: e.title, date: e.date, time: e.time, desc: e.desc, img: e.img, capacity: e.capacity, price: e.price, repeat: "none", times: 4 })}>Edit</button>
+            {e.series && <button className="link-btn" onClick={() => removeSeries(e.id)} title="Remove this and every later date in the series">Remove series</button>}
           </li>
         ))}
         {list && !list.length && <li className="muted"><span>No events yet.</span><span /><span /></li>}

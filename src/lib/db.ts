@@ -569,6 +569,9 @@ function open() {
   addColumn(db, "orders", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "bookings", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "waitlist", "branch", "TEXT NOT NULL DEFAULT 'main'");
+  addColumn(db, "bookings", "deposit", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "bookings", "deposit_status", "TEXT"); // due | paid | kept
+  addColumn(db, "bookings", "deposit_card", "TEXT"); // gift card that carries the deposit to the bill
   addColumn(db, "bookings", "table_no", "INTEGER");
   addColumn(db, "bookings", "preorder", "TEXT"); // JSON order lines, placed 15 min before
   addColumn(db, "bookings", "preorder_code", "TEXT");

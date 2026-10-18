@@ -5,11 +5,12 @@ import { isAdmin, unauthorized } from "@/lib/auth";
 import { limited, tooMany } from "@/lib/rateLimit";
 import { checkTable, cleanPreorder } from "@/lib/preorders";
 import { rupees } from "@/lib/pricing";
+import { depositFor, markNoShow } from "@/lib/deposits";
 
 /** Tables used in a slot. Groups of 5+ take two tables. */
 function tablesUsed(date: string, time: string, branch: string) {
   const r = db
-    .prepare("SELECT COALESCE(SUM(CASE WHEN guests >= 5 THEN 2 ELSE 1 END), 0) AS n FROM bookings WHERE date = ? AND time = ? AND branch = ? AND status = 'confirmed'")
+    .prepare("SELECT COALESCE(SUM(CASE WHEN guests >= 5 THEN 2 ELSE 1 END), 0) AS n FROM bookings WHERE date = ? AND time = ? AND branch = ? AND status IN ('confirmed','pending')")
     .get(date, time, branch) as { n: number };
   return r.n;
 }
@@ -52,9 +53,14 @@ export async function POST(req: Request) {
   if (Array.isArray(b.preorder) && b.preorder.length && !pre.lines.length) return Response.json({ error: "Those pre-order items aren't on the menu any more." }, { status: 400 });
 
   const code = makeCode("TB", 6);
-  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder, branch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+  // Big groups hold the table with a deposit, paid next
+  const deposit = depositFor(guests);
+  if (deposit && !email) return Response.json({ error: "For groups this size we need an email for the deposit receipt." }, { status: 400 });
+  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder, branch, status, deposit, deposit_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
     code, name, phone, email || null, date, time, guests, note, table, pre.lines.length ? JSON.stringify(pre.lines) : null, branch.id,
+    deposit ? "pending" : "confirmed", deposit, deposit ? "due" : null,
   );
+  if (deposit) return Response.json({ code, name, date, time, guests, table, needsDeposit: true, deposit });
   const extra = { table, preorder: pre.items, preorderTotal: pre.total, ...(activeBranches().length > 1 ? { branch: branch.name, address: branch.address } : {}) };
   if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests, ...extra }), [bookingInvite({ code, name, date, time, guests })]);
   return Response.json({ code, name, date, time, guests, ...extra, preorderText: pre.items.length ? `${pre.items.join(", ")} · about ${rupees(pre.total)}, pay at the café` : null });
@@ -74,8 +80,9 @@ export async function GET() {
 export async function PATCH(req: Request) {
   if (!(await isAdmin())) return unauthorized();
   const { code, status } = await req.json().catch(() => ({}));
-  if (!["confirmed", "cancelled", "seated"].includes(status)) return Response.json({ error: "Unknown status." }, { status: 400 });
+  if (!["confirmed", "cancelled", "seated", "no-show"].includes(status)) return Response.json({ error: "Unknown status." }, { status: 400 });
   db.prepare("UPDATE bookings SET status = ? WHERE code = ?").run(status, String(code));
+  if (status === "no-show") markNoShow(String(code));
   if (status === "cancelled") {
     const b = db.prepare("SELECT date, time, branch FROM bookings WHERE code = ?").get(String(code)) as { date: string; time: string; branch: string } | undefined;
     const w = b && (db.prepare("SELECT id, name, email, date, time FROM waitlist WHERE date = ? AND time = ? AND branch = ? AND status = 'waiting' ORDER BY id LIMIT 1").get(b.date, b.time, b.branch) as

@@ -66,6 +66,12 @@ export async function POST(req: Request) {
     if (!["quoted", "accepted"].includes(t.status) || !t.amount) return Response.json({ error: t.status === "paid" || t.status === "done" ? "This is already paid ✿" : "There's no quote to pay yet." }, { status: 409 });
     amount = t.amount;
     label = "Catering";
+  } else if (kind === "booking") {
+    const t = db.prepare("SELECT deposit, deposit_status, status FROM bookings WHERE code = ?").get(c) as { deposit: number; deposit_status: string | null; status: string } | undefined;
+    if (!t) return Response.json({ error: "Booking not found." }, { status: 404 });
+    if (t.deposit_status !== "due" || t.status !== "pending") return Response.json({ error: t.deposit_status === "paid" ? "The deposit is already paid ✿" : "This booking was let go. Please book again." }, { status: 409 });
+    amount = t.deposit;
+    label = "Table deposit";
   } else if (kind === "wallet") {
     const me = await currentCustomer();
     const t = db.prepare("SELECT customer_id, amount, paid FROM wallet_topups WHERE id = ?").get(Number(c.replace("WALLET-", ""))) as { customer_id: number; amount: number; paid: number } | undefined;

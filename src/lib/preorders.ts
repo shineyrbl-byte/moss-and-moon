@@ -13,7 +13,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 /** Tables already booked within 90 minutes of this time */
 export function takenTables(date: string, time: string, exceptCode?: string) {
-  const rows = db.prepare("SELECT code, time, table_no FROM bookings WHERE date = ? AND branch = 'main' AND table_no IS NOT NULL AND status IN ('confirmed','seated')").all(date) as { code: string; time: string; table_no: number }[];
+  const rows = db.prepare("SELECT code, time, table_no FROM bookings WHERE date = ? AND branch = 'main' AND table_no IS NOT NULL AND status IN ('confirmed','seated','pending')").all(date) as { code: string; time: string; table_no: number }[];
   return new Set(rows.filter((r) => r.code !== exceptCode && Math.abs(mins(r.time) - mins(time)) < TABLE_GAP).map((r) => r.table_no));
 }
 

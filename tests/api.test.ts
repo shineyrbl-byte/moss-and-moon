@@ -125,7 +125,7 @@ test("bookings respect table limits", async () => {
   const date = tomorrow();
   const slots = (await s.api(`/api/bookings/availability?date=${date}`)).body;
   const time = slots[0].time;
-  const r = await s.api("/api/bookings", { method: "POST", json: { name: "Big Group", phone: "9444444444", date, time, guests: 6 } });
+  const r = await s.api("/api/bookings", { method: "POST", json: { name: "Big Group", phone: "9444444444", date, time, guests: 5 } });
   assert.equal(r.status, 200);
   const after = (await s.api(`/api/bookings/availability?date=${date}`)).body.find((x: { time: string }) => x.time === time);
   assert.equal(after.left, slots[0].left - 2);
@@ -1461,4 +1461,45 @@ test("café links: Google review link and WhatsApp number are checked", async ()
   assert.equal(ok.status, 200);
   assert.deepEqual(ok.body.links, { googleReview: "https://g.page/r/abc123/review", whatsapp: "9876543210" });
   await s.api("/api/admin/cafe-config", { method: "PUT", json: { links: { googleReview: "", whatsapp: "" } } });
+});
+
+test("repeating events: one form makes the whole series, and the series can be removed", async () => {
+  await s.login();
+  const d = new Date(Date.now() + 3 * 86_400_000);
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const r = await s.api("/api/events", { method: "PUT", json: { title: "Weekly Open Mic", date, time: "19:00", desc: "Bring a song", capacity: 30, price: 0, repeat: "weekly", times: 4 } });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.created, 4);
+  const all = ((await s.api("/api/events?all=1")).body as { id: string; date: string; series?: string }[]).filter((e) => e.series === r.body.series);
+  assert.equal(all.length, 4);
+  const gap = (new Date(all[1].date).getTime() - new Date(all[0].date).getTime()) / 86_400_000;
+  assert.equal(Math.round(gap), 7);
+  const del = await s.api("/api/events", { method: "DELETE", json: { id: all[1].id, series: true } });
+  assert.equal(del.body.removed, 3);
+  assert.equal(((await s.api("/api/events?all=1")).body as { series?: string }[]).filter((e) => e.series === r.body.series).length, 1);
+});
+
+test("big groups pay a deposit that becomes a gift card; a no-show keeps it", async () => {
+  let date = "", time = "";
+  for (let i = 4; i < 12 && !time; i++) {
+    const d = new Date(Date.now() + i * 86_400_000);
+    date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    time = ((await s.api(`/api/bookings/availability?date=${date}`)).body as { time: string }[])[4]?.time ?? "";
+  }
+  const base = { name: "Party", phone: "9876500999", date, time, guests: 7 };
+  assert.equal((await s.api("/api/bookings", { method: "POST", json: base })).status, 400, "needs an email");
+  const r = await s.api("/api/bookings", { method: "POST", json: { ...base, email: "party@example.com" } });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.needsDeposit, true);
+  assert.equal(r.body.deposit, 700);
+  const start = await s.api("/api/payments/start", { method: "POST", json: { kind: "booking", code: r.body.code } });
+  assert.equal(start.body.amount, 700);
+  assert.equal((await s.api("/api/payments/verify", { method: "POST", json: { kind: "booking", code: r.body.code, demo: true } })).status, 200);
+  await s.login();
+  const b = ((await s.api("/api/bookings")).body as { code: string; status: string; deposit_status: string; deposit_card: string }[]).find((x) => x.code === r.body.code)!;
+  assert.equal(b.status, "confirmed");
+  assert.equal(b.deposit_status, "paid");
+  assert.equal((await s.api(`/api/giftcards/${b.deposit_card}`)).body.balance, 700);
+  await s.api("/api/bookings", { method: "PATCH", json: { code: b.code, status: "no-show" } });
+  assert.equal((await s.api(`/api/giftcards/${b.deposit_card}`)).body.balance, 0);
 });

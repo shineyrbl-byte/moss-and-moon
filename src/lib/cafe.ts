@@ -76,6 +76,8 @@ export function hoursLabel(branch?: string | null) {
 }
 
 export const TABLES_PER_SLOT = 6;
+/** Groups this big pay a small deposit online, which comes off their bill */
+export const DEPOSIT = { minGuests: 6, perGuest: 100, holdMinutes: 30 };
 /** Tables with a QR code for ordering from your seat (1 to TABLE_COUNT) */
 export const TABLE_COUNT = 12;
 export const STAMPS_FOR_REWARD = 10;
@@ -144,7 +146,7 @@ export function openStatus(now = new Date(), branch?: string | null) {
 }
 
 /** price 0 = free (just RSVP); otherwise guests buy a ticket */
-export type CafeEvent = { id: string; title: string; date: string; time: string; desc: string; img: string; capacity: number; price: number };
+export type CafeEvent = { id: string; title: string; date: string; time: string; desc: string; img: string; capacity: number; price: number; /** events made together as a repeating series */ series?: string };
 
 /** The starting events (owners add and edit events in Admin → Events) */
 export const SEED_EVENTS: CafeEvent[] = [

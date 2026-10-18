@@ -7,6 +7,8 @@ import Reveal from "./Reveal";
 import BusyMeter from "./BusyMeter";
 import TablePicker from "./TablePicker";
 import { unitPrice, rupees } from "@/lib/pricing";
+import { usePay } from "./Payment";
+import { DEPOSIT } from "@/lib/cafe";
 
 type Slot = { time: string; left: number };
 type Booked = { code: string; name: string; date: string; time: string; guests: number; table: number | null; preorderText: string | null };
@@ -15,6 +17,8 @@ export default function Visit() {
   const { toast, t, lines, find, clear, branch } = useStore();
   const here = findBranch(branch);
   const [table, setTable] = useState<number | null>(null);
+  const pay = usePay();
+  const [unpaid, setUnpaid] = useState<(Booked & { deposit: number }) | null>(null);
   const [preorder, setPreorder] = useState(false);
   const [today, setToday] = useState("");
   const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
@@ -65,6 +69,13 @@ export default function Visit() {
     const d = await r.json();
     setBusy(false);
     if (!r.ok) return setError(d.error);
+    if (d.needsDeposit) {
+      setUnpaid(d);
+      const ok = await pay("booking", d.code, { name: form.name, email: form.email, phone: form.phone });
+      if (!ok) return;
+      setUnpaid(null);
+      toast("Deposit paid. Table booked! 🌸");
+    }
     setBooked(d);
     setTable(null);
     if (pre.length) { clear(); setPreorder(false); }
@@ -105,6 +116,13 @@ export default function Visit() {
             <h3>You&apos;re #{waitlisted} on the waitlist</h3>
             <p className="muted">If a table opens up at {form.time}, we&apos;ll email {form.email} straight away.</p>
             <button className="btn btn-ghost btn-sm" onClick={() => { setWaitlisted(null); setForm((f) => ({ ...f, time: "" })); }}>Pick another time</button>
+          </div>
+        ) : unpaid ? (
+          <div className="confirm">
+            <span className="big">⏳</span>
+            <h3>Almost there, {unpaid.name}</h3>
+            <p className="muted">Groups of {DEPOSIT.minGuests}+ pay a {rupees(unpaid.deposit)} deposit to hold the table. It comes off your bill. We&apos;ll hold it for {DEPOSIT.holdMinutes} minutes.</p>
+            <button className="btn btn-pink" onClick={async () => { if (await pay("booking", unpaid.code, { name: form.name, email: form.email, phone: form.phone })) { setBooked(unpaid); setUnpaid(null); toast("Deposit paid. Table booked! 🌸"); } }}>Pay {rupees(unpaid.deposit)} deposit</button>
           </div>
         ) : booked ? (
           <div className="confirm">
@@ -159,8 +177,9 @@ export default function Visit() {
               </label>
             )}
             {!full && form.time && !foodLines.length && <p className="tiny muted">Tip: add drinks and food to your tray first and we&apos;ll have them ready when you arrive.</p>}
+            {!full && form.guests >= DEPOSIT.minGuests && <p className="small muted">For {DEPOSIT.minGuests} or more we take a {rupees(form.guests * DEPOSIT.perGuest)} deposit online. It comes off your bill.</p>}
             {full && <p className="reward-banner small">⏳ {form.time} is fully booked. Join the waitlist and we&apos;ll email you if a table opens up.</p>}
-            <label className="field">{full ? "Email (so we can tell you)" : "Email (optional — we'll send a confirmation)"}<input className="input" type="email" required={full} placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+            <label className="field">{full ? "Email (so we can tell you)" : "Email (optional — we'll send a confirmation)"}<input className="input" type="email" required={full || form.guests >= DEPOSIT.minGuests} placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
             <label className="field">A little note (optional)<textarea className="input" rows={2} maxLength={200} placeholder="Window seat, birthday, a high chair…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
             {error && <p className="error">{error}</p>}
             <button className="btn btn-pink full" disabled={busy}>{busy ? "One moment…" : full ? "Join the waitlist" : "Reserve"}</button>
