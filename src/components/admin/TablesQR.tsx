@@ -1,9 +1,15 @@
 "use client";
+import { useEffect, useState } from "react";
 import { TABLE_COUNT } from "@/lib/cafe";
 
 // Printable QR codes, one per table. Guests scan → menu opens for that table.
 export default function TablesQR() {
   const tables = Array.from({ length: TABLE_COUNT }, (_, i) => i + 1);
+  const [wifi, setWifi] = useState<{ ssid: string; password: string; security: string; onTables: boolean } | null>(null);
+  useEffect(() => {
+    fetch("/api/admin/wifi").then((r) => (r.ok ? r.json() : null)).then(setWifi).catch(() => {});
+  }, []);
+  const showWifi = !!wifi?.ssid && wifi.onTables;
   return (
     <>
       <div className="row no-print" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
@@ -24,6 +30,13 @@ export default function TablesQR() {
             <img src={`/api/qr/${n}`} alt={`QR code for table ${n}`} width={160} height={160} />
             <strong>Table {n}</strong>
             <small>Scan to order from your seat ✿</small>
+            {showWifi && (
+              <span className="qr-wifi">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/api/admin/wifi/qr" alt="Wi-Fi QR code" width={64} height={64} />
+                <small>📶 <b>{wifi!.ssid}</b>{wifi!.security !== "nopass" ? <><br />{wifi!.password}</> : null}</small>
+              </span>
+            )}
           </div>
         ))}
       </div>

@@ -28,6 +28,7 @@ import GstCard from "@/components/admin/GstCard";
 import NewsletterTab from "@/components/admin/NewsletterTab";
 import GuestsTab from "@/components/admin/GuestsTab";
 import JournalTab from "@/components/admin/JournalTab";
+import WifiCard from "@/components/admin/WifiCard";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -245,6 +246,7 @@ export default function AdminPage() {
           {me?.role === "owner" && <HoursEditor />}
           {me?.role === "owner" && <GmailConnect />}
           {me?.role === "owner" && <GstCard />}
+          {me?.role === "owner" && <WifiCard />}
           {me?.role === "owner" && <OwnerEmails />}
           {me?.role === "owner" && <Backups />}
           {me?.role === "owner" && <TwoStep />}

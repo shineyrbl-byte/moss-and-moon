@@ -1078,3 +1078,12 @@ test("supplier reorders: low stock makes a draft; approving emails the supplier;
   const after = ((await s.api("/api/admin/stock")).body as { id: string; qty: number }[]).find((i) => i.id === "matcha")!.qty;
   assert.equal(after - before, 2000);
 });
+
+test("wi-fi: owner sets it; staff get the QR; it's not public", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/wifi", { method: "PUT", json: { ssid: "Moss", password: "short", security: "WPA" } })).status, 400);
+  assert.equal((await s.api("/api/admin/wifi", { method: "PUT", json: { ssid: "MossAndMoon-Guest", password: "pinklatte123", security: "WPA", onReceipts: true, onTables: true } })).status, 200);
+  const qr = await fetch(`${s.url}/api/admin/wifi/qr`, { headers: { cookie: s.cookie() } });
+  assert.equal(qr.headers.get("content-type"), "image/svg+xml");
+  assert.equal((await fetch(`${s.url}/api/admin/wifi/qr`)).status, 401, "not on the public site");
+});

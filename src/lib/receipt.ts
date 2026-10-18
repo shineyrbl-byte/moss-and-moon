@@ -3,6 +3,7 @@ import "server-only";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { orderDue, type QuoteLine } from "./pricing";
 import { SAC, gstSettings, invoiceNumber, taxSplit } from "./gst";
+import { wifiQrPng, wifiSettings } from "./wifi";
 
 export type ReceiptOrder = {
   code: string; name: string; created_at: string; lines: QuoteLine[]; subtotal: number; discount: number; total: number; promo: string | null;
@@ -92,6 +93,18 @@ export async function receiptPdf(o: ReceiptOrder) {
   const method = o.pay_method === "online" ? "Paid online" : o.pay_method === "giftcard" ? "Covered by gift card / credit" : "Paid at the counter";
   page.drawText(o.pay_status === "unpaid" ? "Not paid yet" : method, { x: 40, y, size: 9, font: sans, color: MUTED });
 
+  // Café Wi-Fi: scan to join
+  const wifi = wifiSettings();
+  if (wifi.ssid && wifi.onReceipts) {
+    const img = await pdf.embedPng(await wifiQrPng(wifi));
+    page.drawImage(img, { x: width - 40 - 64, y: 24, width: 64, height: 64 });
+    // Text sits just left of the QR code
+    const edge = width - 40 - 64 - 8;
+    const at = (t: string, yy: number, f = sans) => page.drawText(t, { x: edge - f.widthOfTextAtSize(t, 8), y: yy, size: 8, font: f, color: MUTED });
+    at("Free Wi-Fi: scan to join", 70, bold);
+    at(plain(wifi.ssid).slice(0, 32), 58);
+    if (wifi.security !== "nopass") at(`Password: ${plain(wifi.password).slice(0, 32)}`, 46);
+  }
   page.drawText("Thank you for slowing down with us.", { x: 40, y: 34, size: 11, font: serifI, color: PINK });
   return pdf.save();
 }
