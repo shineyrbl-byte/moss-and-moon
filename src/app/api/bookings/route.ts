@@ -3,6 +3,8 @@ import { bookingEmail, bookingInvite, sendLater, waitlistEmail } from "@/lib/ema
 import { slotsFor, parseDate, toDateStr, TABLES_PER_SLOT } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { limited, tooMany } from "@/lib/rateLimit";
+import { checkTable, cleanPreorder } from "@/lib/preorders";
+import { rupees } from "@/lib/pricing";
 
 /** Tables used in a slot. Groups of 5+ take two tables. */
 function tablesUsed(date: string, time: string) {
@@ -37,10 +39,22 @@ export async function POST(req: Request) {
   if (tablesUsed(date, time) + need > TABLES_PER_SLOT)
     return Response.json({ error: "That slot just filled up. Try another time?" }, { status: 409 });
 
+  // Optional: a table from the floor plan, and food to have ready on arrival
+  const table = b.table ? Math.floor(Number(b.table)) : null;
+  if (table) {
+    const problem = checkTable(table, date, time, guests);
+    if (problem) return Response.json({ error: problem }, { status: 409 });
+  }
+  const pre = cleanPreorder(b.preorder);
+  if (Array.isArray(b.preorder) && b.preorder.length && !pre.lines.length) return Response.json({ error: "Those pre-order items aren't on the menu any more." }, { status: 400 });
+
   const code = makeCode("TB", 6);
-  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(code, name, phone, email || null, date, time, guests, note);
-  if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests }), [bookingInvite({ code, name, date, time, guests })]);
-  return Response.json({ code, name, date, time, guests });
+  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    code, name, phone, email || null, date, time, guests, note, table, pre.lines.length ? JSON.stringify(pre.lines) : null,
+  );
+  const extra = { table, preorder: pre.items, preorderTotal: pre.total };
+  if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests, ...extra }), [bookingInvite({ code, name, date, time, guests })]);
+  return Response.json({ code, name, date, time, guests, ...extra, preorderText: pre.items.length ? `${pre.items.join(", ")} · about ${rupees(pre.total)}, pay at the café` : null });
 }
 
 // Staff: upcoming bookings
@@ -48,8 +62,9 @@ export async function GET() {
   if (!(await isAdmin())) return unauthorized();
   const rows = db
     .prepare("SELECT * FROM bookings WHERE date >= ? ORDER BY date, time LIMIT 200")
-    .all(toDateStr(new Date()));
-  return Response.json(rows);
+    .all(toDateStr(new Date())) as { preorder: string | null }[];
+  // Spell out pre-orders for the staff list
+  return Response.json(rows.map((r) => ({ ...r, preorder: r.preorder ? cleanPreorder(JSON.parse(r.preorder)).items.join(", ") : null })));
 }
 
 // Staff: cancel a booking

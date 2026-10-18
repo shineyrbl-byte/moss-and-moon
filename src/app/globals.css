@@ -1021,3 +1021,25 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .pnl-pos span, .pnl-neg span { width: 60%; max-width: 38px; display: block; }
 .pnl-pos span { background: var(--moss); border-radius: 4px 4px 0 0; }
 .pnl-neg span { background: var(--pink-deep); border-radius: 0 0 4px 4px; }
+
+/* Floor plan table picker */
+.floor { width: 100%; max-width: 420px; height: auto; margin: 0.3rem 0; touch-action: manipulation; }
+.floor-room { fill: var(--surface-2); stroke: var(--line); stroke-width: 0.6; }
+.floor-counter { fill: var(--latte); }
+.floor-label { font-size: 3px; fill: var(--muted); letter-spacing: 0.1px; }
+.floor-hatch { stroke: var(--muted); stroke-width: 0.6; opacity: 0.45; }
+.floor-table ellipse, .floor-table rect { stroke-width: 0.6; transition: fill 0.15s; }
+.floor-no { font-size: 4.2px; font-weight: 700; pointer-events: none; }
+.floor-seats { font-size: 2.6px; pointer-events: none; }
+.floor-table.ok { cursor: pointer; }
+.floor-table.ok ellipse, .floor-table.ok rect { fill: var(--surface); stroke: var(--moss); }
+.floor-table.ok:hover ellipse, .floor-table.ok:hover rect, .floor-table.ok:focus-visible ellipse, .floor-table.ok:focus-visible rect { fill: var(--pink-soft); }
+.floor-table:focus-visible { outline: none; }
+.floor-table:focus-visible ellipse, .floor-table:focus-visible rect { stroke: var(--text); stroke-width: 1; }
+.floor-table.ok text { fill: var(--text); }
+.floor-table.on ellipse, .floor-table.on rect { fill: var(--pink-fill); stroke: var(--pink-fill); }
+.floor-table.on text { fill: var(--on-pink); }
+.floor-table.small { opacity: 0.45; }
+.floor-table.small ellipse, .floor-table.small rect { fill: var(--surface); stroke: var(--line); }
+.floor-table.small text, .floor-table.taken text { fill: var(--muted); }
+.floor-table.taken ellipse, .floor-table.taken rect { fill: url(#floor-taken); stroke: var(--line); }

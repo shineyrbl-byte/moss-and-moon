@@ -4,12 +4,16 @@ import { hoursLabel, openStatus, toDateStr } from "@/lib/cafe";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
 import BusyMeter from "./BusyMeter";
+import TablePicker from "./TablePicker";
+import { unitPrice, rupees } from "@/lib/pricing";
 
 type Slot = { time: string; left: number };
-type Booked = { code: string; name: string; date: string; time: string; guests: number };
+type Booked = { code: string; name: string; date: string; time: string; guests: number; table: number | null; preorderText: string | null };
 
 export default function Visit() {
-  const { toast, t } = useStore();
+  const { toast, t, lines, find, clear } = useStore();
+  const [table, setTable] = useState<number | null>(null);
+  const [preorder, setPreorder] = useState(false);
   const [today, setToday] = useState("");
   const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "" });
@@ -34,6 +38,8 @@ export default function Visit() {
   }, [form.date, booked]);
 
   const need = form.guests >= 5 ? 2 : 1;
+  const foodLines = lines.filter((l) => { const m = find(l.itemId); return m && m.cat !== "shop"; });
+  const trayTotal = foodLines.reduce((s, l) => s + unitPrice(find(l.itemId)!, l.opts) * l.qty, 0);
   const chosen = slots?.find((s) => s.time === form.time);
   const full = !!chosen && chosen.left < need;
 
@@ -52,11 +58,14 @@ export default function Visit() {
       toast("You're on the waitlist ✿");
       return;
     }
-    const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    const pre = preorder ? lines.filter((l) => find(l.itemId)?.cat !== "shop").map(({ itemId, opts, qty }) => ({ itemId, opts, qty })) : [];
+    const r = await fetch("/api/bookings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, table, preorder: pre }) });
     const d = await r.json();
     setBusy(false);
     if (!r.ok) return setError(d.error);
     setBooked(d);
+    setTable(null);
+    if (pre.length) { clear(); setPreorder(false); }
     toast("Table booked! See you soon 🌸");
   }
 
@@ -99,9 +108,10 @@ export default function Visit() {
             <span className="big">🌸</span>
             <h3>See you soon, {booked.name}!</h3>
             <p className="muted">
-              Table for {booked.guests} on{" "}
+              {booked.table ? `Table ${booked.table}` : "Table"} for {booked.guests} on{" "}
               {new Date(booked.date + "T00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })} at {booked.time}
             </p>
+            {booked.preorderText && <p className="small">🍽 Ready when you arrive: {booked.preorderText}</p>}
             <span className="code">{booked.code}</span>
             <p className="small muted">Show this code when you arrive.</p>
             <button className="btn btn-ghost btn-sm" onClick={() => { setBooked(null); setForm((f) => ({ ...f, time: "", note: "" })); }}>Book another</button>
@@ -138,6 +148,14 @@ export default function Visit() {
                 </div>
               )}
             </div>
+            {!full && <TablePicker date={form.date} time={form.time} guests={form.guests} value={table} onChange={setTable} />}
+            {!full && form.time && foodLines.length > 0 && (
+              <label className="addon" style={{ alignItems: "flex-start" }}>
+                <input type="checkbox" checked={preorder} onChange={(e) => setPreorder(e.target.checked)} />
+                <span>Have my tray ready when I arrive <span className="muted small">· {foodLines.reduce((s, l) => s + l.qty, 0)} item{foodLines.reduce((s, l) => s + l.qty, 0) === 1 ? "" : "s"}, about {rupees(trayTotal)}, pay at the café. We start it 15 minutes before.</span></span>
+              </label>
+            )}
+            {!full && form.time && !foodLines.length && <p className="tiny muted">Tip: add drinks and food to your tray first and we&apos;ll have them ready when you arrive.</p>}
             {full && <p className="reward-banner small">⏳ {form.time} is fully booked. Join the waitlist and we&apos;ll email you if a table opens up.</p>}
             <label className="field">{full ? "Email (so we can tell you)" : "Email (optional — we'll send a confirmation)"}<input className="input" type="email" required={full} placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
             <label className="field">A little note (optional)<textarea className="input" rows={2} maxLength={200} placeholder="Window seat, birthday, a high chair…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>

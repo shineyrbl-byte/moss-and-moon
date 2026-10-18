@@ -43,7 +43,7 @@ type Stats = {
 type Order = { id: number; code: string; name: string; phone: string; table_no: number | null; email: string | null; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; delivery_address: string | null; pay_method: string; pay_status: string; status: OrderStatus; created_at: string; refund_amount: number; paid_shares?: number };
 type Gift = { code: string; amount: number; balance: number; from_name: string; to_name: string; to_email: string; paid: number; created_at: string };
 type Email = { id: number; to_email: string; subject: string; html: string; status: string; error: string | null; created_at: string };
-type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
+type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; table_no: number | null; preorder: string | null; preorder_code: string | null };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
 const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health"] as const;
@@ -379,11 +379,11 @@ export default function AdminPage() {
         <div className="card table-wrap" style={{ padding: "1rem" }}>
           {!bookings.length ? <p className="muted">No upcoming bookings.</p> : (
             <table className="table">
-              <thead><tr><th>Date</th><th>Time</th><th>Name</th><th>Guests</th><th>Phone</th><th>Note</th><th>Status</th><th /></tr></thead>
+              <thead><tr><th>Date</th><th>Time</th><th>Name</th><th>Guests</th><th>Table</th><th>Phone</th><th>Note</th><th>Status</th><th /></tr></thead>
               <tbody>
                 {bookings.map((b) => (
                   <tr key={b.code} style={{ opacity: b.status === "cancelled" ? 0.45 : 1 }}>
-                    <td>{b.date}</td><td>{b.time}</td><td>{b.name}<br /><small className="muted">{b.code}</small></td><td>{b.guests}</td><td>{b.phone}</td><td>{b.note}</td>
+                    <td>{b.date}</td><td>{b.time}</td><td>{b.name}<br /><small className="muted">{b.code}</small></td><td>{b.guests}</td><td>{b.table_no ?? <span className="muted">any</span>}</td><td>{b.phone}</td><td>{b.note}{b.preorder && <><br /><small>🍽 {b.preorder}{b.preorder_code && b.preorder_code !== "placing" ? <span className="muted"> · {["failed", "missed"].includes(b.preorder_code) ? b.preorder_code : `sent as ${b.preorder_code}`}</span> : <span className="muted"> · goes to the kitchen 15 min before</span>}</small></>}</td>
                     <td><span className="status-tag">{b.status}</span></td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       {b.status === "confirmed" && <>

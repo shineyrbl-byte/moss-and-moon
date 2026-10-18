@@ -424,6 +424,9 @@ function open() {
 
   // Newer columns (added safely to databases created by older versions)
   addColumn(db, "orders", "email", "TEXT");
+  addColumn(db, "bookings", "table_no", "INTEGER");
+  addColumn(db, "bookings", "preorder", "TEXT"); // JSON order lines, placed 15 min before
+  addColumn(db, "bookings", "preorder_code", "TEXT");
   addColumn(db, "orders", "pay_method", "TEXT NOT NULL DEFAULT 'counter'"); // counter | online
   addColumn(db, "orders", "pay_status", "TEXT NOT NULL DEFAULT 'unpaid'"); // unpaid | pending | paid
   addColumn(db, "orders", "payment_ref", "TEXT");

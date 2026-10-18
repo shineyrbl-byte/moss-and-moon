@@ -1144,3 +1144,36 @@ test("P&L: expenses (one-off and every month) come off the profit", async () => 
   assert.equal(p.byCategory.rent, 30000);
   assert.equal(p.trend.length, 6);
 });
+
+test("booking a table from the floor plan, with a pre-order", async () => {
+  const day = new Date(Date.now() + 2 * 86_400_000);
+  let date = "", time = "";
+  for (let i = 2; i < 10 && !time; i++) {
+    const d = new Date(Date.now() + i * 86_400_000);
+    date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const slots = (await s.api(`/api/bookings/availability?date=${date}`)).body as { time: string }[];
+    time = slots[2]?.time ?? "";
+  }
+  void day;
+  assert.ok(time, "found an open day");
+  const plan = (await s.api(`/api/bookings/tables?date=${date}&time=${time}&guests=2`)).body as { tables: { no: number; seats: number; free: boolean; fits: boolean }[] };
+  assert.ok(plan.tables.length >= 6 && plan.tables.every((t) => t.free));
+  const base = { name: "Tara", phone: "9876500011", date, time, guests: 2 };
+  // Too small a table for the group
+  assert.equal((await s.api("/api/bookings", { method: "POST", json: { ...base, guests: 4, table: 1 } })).status, 409);
+  const ok = await s.api("/api/bookings", { method: "POST", json: { ...base, table: 1, preorder: [{ itemId: "cookie", qty: 2 }, { itemId: "nope", qty: 1 }] } });
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+  assert.equal(ok.body.table, 1);
+  assert.equal(ok.body.preorder.length, 1);
+  assert.match(ok.body.preorder[0], /^2 × /);
+  // Same table 30 minutes later clashes; a different table is fine
+  const [h, m] = time.split(":").map(Number);
+  const later = `${String(h + (m === 30 ? 1 : 0)).padStart(2, "0")}:${m === 30 ? "00" : "30"}`;
+  assert.equal((await s.api("/api/bookings", { method: "POST", json: { ...base, time: later, table: 1 } })).status, 409);
+  const after = (await s.api(`/api/bookings/tables?date=${date}&time=${later}&guests=2`)).body as { tables: { no: number; free: boolean }[] };
+  assert.equal(after.tables.find((t) => t.no === 1)!.free, false);
+  assert.equal((await s.api("/api/bookings", { method: "POST", json: { ...base, time: later, table: 2 } })).status, 200);
+  await s.login();
+  const list = (await s.api("/api/bookings")).body as { code: string; table_no: number; preorder: string | null }[];
+  assert.ok(list.some((b) => b.code === ok.body.code && b.table_no === 1 && b.preorder?.includes("×")));
+});
