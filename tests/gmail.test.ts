@@ -18,12 +18,14 @@ before(async () => {
       res.setHeader("Content-Type", "application/json");
       if (req.url === "/token") {
         const p = new URLSearchParams(body);
-        if (p.get("grant_type") === "authorization_code" && p.get("code") === "good-code") return res.end(JSON.stringify({ access_token: "at1", refresh_token: "rt-secret-123", expires_in: 3600 }));
+        const idToken = `x.${Buffer.from(JSON.stringify({ email: "mossmooncafe@gmail.com", email_verified: true })).toString("base64url")}.sig`;
+        if (p.get("grant_type") === "authorization_code" && p.get("code") === "good-code") return res.end(JSON.stringify({ access_token: "at1", refresh_token: "rt-secret-123", id_token: idToken, scope: "openid https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email", expires_in: 3600 }));
         if (p.get("grant_type") === "refresh_token" && p.get("refresh_token") === "rt-secret-123") return res.end(JSON.stringify({ access_token: "at2", expires_in: 3600 }));
         res.statusCode = 400;
         return res.end(JSON.stringify({ error: "invalid_grant" }));
       }
-      if (req.url === "/gmail/v1/users/me/profile") return res.end(JSON.stringify({ emailAddress: "mossmooncafe@gmail.com" }));
+      // Like real Google: reading the mailbox profile isn't allowed with send-only permission
+      if (req.url === "/gmail/v1/users/me/profile") { res.statusCode = 403; return res.end("{}"); }
       if (req.url === "/gmail/v1/users/me/messages/send") {
         if (!/^Bearer at[12]$/.test(String(req.headers.authorization))) { res.statusCode = 401; return res.end("{}"); }
         sent.push(Buffer.from(JSON.parse(body).raw, "base64url").toString());
@@ -51,7 +53,8 @@ test("owner connects Gmail; guest emails go out from Moss & Moon through Gmail's
   const start = await fetch(`${s.url}/api/admin/gmail/connect`, { headers: { cookie: s.cookie() }, redirect: "manual" });
   assert.equal(start.status, 302);
   const to = new URL(start.headers.get("location")!);
-  assert.equal(to.searchParams.get("scope"), "https://www.googleapis.com/auth/gmail.send", "only asks to send, not to read mail");
+  const scopes = to.searchParams.get("scope")!.split(" ");
+  assert.deepEqual(scopes.sort(), ["email", "https://www.googleapis.com/auth/gmail.send", "openid"], "only asks to send (and which address), never to read mail");
   const state = to.searchParams.get("state")!;
   const stateCookie = start.headers.get("set-cookie")!.split(";")[0];
 

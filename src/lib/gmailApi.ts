@@ -9,8 +9,10 @@ import { db, getSetting, setSetting } from "./db";
 const AUTH_URL = () => process.env.GOOGLE_AUTH_URL || "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = () => `${process.env.GOOGLE_OAUTH_BASE || "https://oauth2.googleapis.com"}/token`;
 const SEND_URL = () => `${process.env.GMAIL_API_BASE || "https://gmail.googleapis.com"}/gmail/v1/users/me/messages/send`;
-const PROFILE_URL = () => `${process.env.GMAIL_API_BASE || "https://gmail.googleapis.com"}/gmail/v1/users/me/profile`;
+const USERINFO_URL = () => process.env.GOOGLE_USERINFO_URL || "https://openidconnect.googleapis.com/v1/userinfo";
 export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.send";
+// "openid email" only tells us which address it is; reading mail would need far more, and we never ask for it
+const SCOPES = `openid email ${GMAIL_SCOPE}`;
 
 export const googleConfigured = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 const site = () => (process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
@@ -42,7 +44,7 @@ export function authUrl(state: string) {
     client_id: process.env.GOOGLE_CLIENT_ID!,
     redirect_uri: redirectUri(),
     response_type: "code",
-    scope: GMAIL_SCOPE,
+    scope: SCOPES,
     access_type: "offline",
     prompt: "consent", // always hand back a refresh token
     state,
@@ -56,7 +58,7 @@ async function tokenRequest(body: Record<string, string>) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID!, client_secret: process.env.GOOGLE_CLIENT_SECRET!, ...body }),
   });
-  const d = (await r.json().catch(() => ({}))) as { access_token?: string; refresh_token?: string; expires_in?: number; error?: string; error_description?: string };
+  const d = (await r.json().catch(() => ({}))) as { access_token?: string; refresh_token?: string; id_token?: string; expires_in?: number; scope?: string; error?: string; error_description?: string };
   if (!r.ok || !d.access_token) throw new Error(d.error_description || d.error || `Google said ${r.status}`);
   return d;
 }
@@ -67,13 +69,27 @@ let access: { token: string; until: number } | null = null;
 export async function connect(code: string) {
   const d = await tokenRequest({ code, grant_type: "authorization_code", redirect_uri: redirectUri() });
   if (!d.refresh_token) throw new Error("Google didn't give a long-lived permission. Remove the app from your Google account's third-party access and connect again.");
-  const p = await fetch(PROFILE_URL(), { headers: { Authorization: `Bearer ${d.access_token}` } }).then((r) => r.json()).catch(() => ({}));
-  const email = String((p as { emailAddress?: string }).emailAddress ?? "");
-  if (!email) throw new Error("Couldn't read the Gmail address.");
+  if (d.scope && !d.scope.split(" ").includes(GMAIL_SCOPE)) throw new Error("Please tick “Send email on your behalf” on Google's screen, then connect again.");
+  const email = emailFromIdToken(d.id_token) ?? (await emailFromUserinfo(d.access_token!));
+  if (!email) throw new Error("Couldn't read the Gmail address. Please connect again and allow Google to share your email address.");
   setSetting("gmail_api_token", seal(d.refresh_token));
   setSetting("gmail_api_address", email);
   access = { token: d.access_token!, until: Date.now() + ((d.expires_in ?? 3600) - 120) * 1000 };
   return email;
+}
+
+/** The id_token came straight from Google's token endpoint over https, so its email can be read directly */
+function emailFromIdToken(idToken?: string) {
+  try {
+    const payload = JSON.parse(Buffer.from(String(idToken).split(".")[1], "base64url").toString());
+    return payload.email && payload.email_verified !== false ? String(payload.email) : null;
+  } catch {
+    return null;
+  }
+}
+async function emailFromUserinfo(token: string) {
+  const u = await fetch(USERINFO_URL(), { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({}));
+  return (u as { email?: string }).email ?? null;
 }
 
 export function disconnect() {
