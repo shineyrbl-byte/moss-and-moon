@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useStore } from "../Store";
+import EquipmentCard from "./EquipmentCard";
 
 type Item = { id: number; text: string; kind: "tick" | "temp"; done: { staff_name: string | null; value: number | null; done_at: string } | null; warn: boolean };
 type List = { id: string; label: string; icon: string; items: Item[]; done: number; total: number };
@@ -66,6 +67,7 @@ export default function ChecklistsTab({ canEdit }: { canEdit: boolean }) {
           </ul>
         </section>
       ))}
+      <EquipmentCard canEdit={canEdit} />
       {canEdit && (
         <section className="card" style={{ padding: "1rem 1.2rem" }}>
           <div className="sum-row" style={{ alignItems: "center" }}>

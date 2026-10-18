@@ -1099,3 +1099,6 @@ body:has(.kiosk) .nav, body:has(.kiosk) .footer, body:has(.kiosk) .chat-fab, bod
 .check-list li:last-child { border-bottom: 0; }
 .check-list li.done > label > span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
 .check-list input[type="checkbox"] { width: 1.3rem; height: 1.3rem; margin-top: 0.1rem; accent-color: var(--pink-fill); }
+.rota.staffing td { text-align: center; font-size: 0.78rem; min-width: 2.6rem; padding: 0.3rem 0.2rem; }
+.rota.staffing td.short { background: var(--pink-soft); color: var(--pink-ink); font-weight: 700; }
+.rota.staffing td.over { color: var(--muted); }

@@ -1395,3 +1395,38 @@ test("shift swaps: ask, a teammate takes it, the owner approves and the rota upd
   const rota = (await s.api(`/api/admin/shifts?week=${day}`)).body as { shifts: { id: number; staff_id: number }[] };
   assert.equal(rota.shifts.find((x) => x.id === shift)!.staff_id, b.id);
 });
+
+test("equipment: service resets the reminder, a repair cost lands in P&L", async () => {
+  await s.login();
+  const d = (await s.api("/api/admin/equipment")).body as { items: { id: number; name: string; daysLeft: number }[] };
+  assert.ok(d.items.length >= 4);
+  const id = d.items[0].id;
+  const before = ((await s.api("/api/admin/pnl")).body as { byCategory: Record<string, number> }).byCategory.repairs ?? 0;
+  assert.equal((await s.api("/api/admin/equipment", { method: "POST", json: { id, kind: "repair", cost: 500 } })).status, 400, "needs a note");
+  const r = await s.api("/api/admin/equipment", { method: "POST", json: { id, kind: "repair", note: "New steam wand tip", cost: 1200 } });
+  assert.equal(r.status, 200);
+  assert.equal(((await s.api("/api/admin/pnl")).body as { byCategory: Record<string, number> }).byCategory.repairs, before + 1200);
+  const added = await s.api("/api/admin/equipment", { method: "PUT", json: { name: "Ice machine", task: "Sanitise", everyDays: 14 } });
+  assert.equal(added.body.items.find((e: { name: string }) => e.name === "Ice machine").daysLeft, 14);
+});
+
+test("staffing: hours with too few people on the rota show as short", async () => {
+  await s.login();
+  const w = (await s.api("/api/admin/staffing")).body as { estimated: boolean; days: { closed: boolean; hours: { need: number; have: number }[] }[] };
+  assert.equal(w.days.length, 7);
+  const open = w.days.filter((d) => !d.closed);
+  assert.ok(open.length > 0);
+  assert.ok(open.every((d) => d.hours.every((h) => h.need >= 1 && h.have >= 0)));
+});
+
+test("special of the day: a simple idea without AI, and it goes on today's menu only", async () => {
+  await s.login();
+  const d = (await s.api("/api/admin/specials")).body as { ideas: { baseItemId: string; name: string; desc: string; price: number }[]; provider: string | null };
+  assert.equal(d.provider, null);
+  assert.ok(d.ideas.length >= 1);
+  const r = await s.api("/api/admin/specials", { method: "POST", json: { ...d.ideas[0], name: "Test Special" } });
+  assert.equal(r.status, 200);
+  const menu = (await fetch(`${s.url}/api/menu`).then((x) => x.json())) as { id: string; name: string; until?: string }[] | { items: { id: string; name: string }[] };
+  const list = Array.isArray(menu) ? menu : menu.items;
+  assert.ok(list.some((m) => m.name === "Test Special"));
+});

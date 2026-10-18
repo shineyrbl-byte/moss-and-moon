@@ -36,6 +36,7 @@ import PnlTab from "@/components/admin/PnlTab";
 import CateringTab from "@/components/admin/CateringTab";
 import SupportInbox from "@/components/SupportInbox";
 import WinbackCard from "@/components/admin/WinbackCard";
+import SpecialsCard from "@/components/admin/SpecialsCard";
 import ChecklistsTab from "@/components/admin/ChecklistsTab";
 import { useLive } from "@/components/useLive";
 
@@ -421,7 +422,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {tab === "Menu" && <MenuEditor canEdit={me?.role === "owner"} />}
+      {tab === "Menu" && <>{me?.role === "owner" && <SpecialsCard />}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}

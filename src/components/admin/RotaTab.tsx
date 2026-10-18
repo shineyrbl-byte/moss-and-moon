@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import StaffingPanel from "./StaffingPanel";
 import { SHIFT_PRESETS, fmtTime, shiftHours, type Shift } from "@/lib/rota";
 import { toDateStr } from "@/lib/cafe";
 import { useStore } from "../Store";
@@ -18,6 +19,7 @@ export default function RotaTab({ canEdit }: { canEdit: boolean }) {
   const [adding, setAdding] = useState<{ staffId: number; day: string } | null>(null);
   const [form, setForm] = useState({ start: "07:00", end: "13:00", note: "" });
   const [swaps, setSwaps] = useState<Swap[]>([]);
+  const [version, setVersion] = useState(0);
   const [asking, setAsking] = useState<{ shiftId: number; toId: string; note: string } | null>(null);
   const loadSwaps = useCallback(() => fetch("/api/admin/swaps").then((r) => r.json()).then(setSwaps).catch(() => {}), []);
   useEffect(() => { loadSwaps(); }, [loadSwaps]);
@@ -31,7 +33,7 @@ export default function RotaTab({ canEdit }: { canEdit: boolean }) {
   }
 
   const load = useCallback(() => {
-    fetch(`/api/admin/shifts${week ? `?week=${week}` : ""}`).then((r) => r.json()).then((x) => { setD(x); setWeek(x.week); }).catch(() => {});
+    fetch(`/api/admin/shifts${week ? `?week=${week}` : ""}`).then((r) => r.json()).then((x) => { setD(x); setWeek(x.week); setVersion((v) => v + 1); }).catch(() => {});
   }, [week]);
   useEffect(() => { load(); }, [load]);
 
@@ -102,6 +104,7 @@ export default function RotaTab({ canEdit }: { canEdit: boolean }) {
           </table>
         </div>
       )}
+      {d.team.length > 0 && <StaffingPanel week={d.week} version={version} />}
       {asking && (
         <form className="card shift-form" onSubmit={(e) => { e.preventDefault(); swapAct({ shiftId: asking.shiftId, toId: asking.toId ? Number(asking.toId) : null, note: asking.note }, "Swap request sent ✓"); }}>
           <strong>Ask someone to cover this shift</strong>
