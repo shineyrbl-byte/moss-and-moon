@@ -21,42 +21,46 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 
 ## Features
 
-**For guests**
-- 🌸 Latte-brown & blush-pink day theme + ☾ **night café** espresso mode (remembers your choice)
-- 🌧 Café ambience sounds — rain + vinyl crackle, generated in the browser
-- ☕ Menu with photos, search, category tabs and vegan / gluten-free filters
-- 🎛 Drink customiser — size, hot/iced, milk, sweetness, extra shot (prices update live)
-- 🛍 Order tray with promo codes (`BLOOM10`, `FIRSTSIP`, `PINKMOON`), gift cards and pickup time
-- 💳 **Pay online** with Razorpay (UPI / cards), or pay at the counter. Demo payment screen until keys are added
-- ✉️ **Emails**: order receipt, "your order is ready", booking confirmation, RSVP, newsletter welcome, gift cards
-- 🎁 **Gift cards**: 3 designs, any amount ₹200–10,000, emailed to the recipient, balance carries over
-- ✨ **Golden hour**: 20% off bakes every day 3–5pm, applied automatically
-- ⏱ Live wait-time estimate (homepage, checkout, order page)
-- ♥ Favourites filter, and **My orders** with one-tap "order again"
-- 🤖 **Ask the barista**: AI chat (free Google Gemini, or Claude) that recommends drinks from the live menu, with one-tap "Add". Keyword demo mode until an API key is added
-- 🪑 **Order from your table**: scan the table's QR code, order, and it's brought over (phone optional)
-- 📲 **Installable app** (PWA): add to home screen, works offline for pages you've seen
-- 🔔 **"Your order is ready" notifications**: real push notifications, even with the site closed
-- 📍 Live order tracking page (received → brewing → ready → collected), refreshes itself
-- 🎁 Stamp card — every order = 1 stamp, 10 stamps = a free drink, applied automatically
-- 🔮 "Find your drink" quiz
-- 📅 Table booking with real availability (6 tables per slot, groups of 5+ take two)
-- 🎤 Events with RSVP and spots left
-- ⭐ Reviews with star ratings
-- 💌 Newsletter sign-up, photo gallery with lightbox, open-now indicator
+**Ordering**
+- ☕ Menu with photos, search, categories and vegan / gluten-free filters, edited live from the admin page
+- 🎛 **Drink builder**: size, hot/iced, milk, sweetness, extra shot, with a little cup that fills up as you choose
+- ☕ **"My usual"**: one-tap reorder of the drink you order most, exactly how you like it
+- 👯 **Group orders**: share a link, friends add their own drinks from their phones, the host checks out once, everyone pays their own part
+- 🛍 Tray with promo codes (`BLOOM10`, `FIRSTSIP`, `PINKMOON`), gift cards, tips, pickup times and **delivery**
+- 💳 **Pay online** with Razorpay (UPI / cards) or at the counter; **split the bill** with friends
+- 🪑 **Order from your table** by scanning its QR code, and **call staff** from the table
+- 📍 Live order tracking, "it's ready" **push notifications**, PDF **receipts**
+- ✨ Golden hour (20% off bakes 3–5pm), stamp card (10 stamps = free drink)
 
-**For staff (`/admin`)**
-- Today's orders, revenue, bookings, rating, members, 7-day revenue chart, best sellers
-- Order queue — move orders along with one click
-- Bookings list — seat or cancel
-- Menu stock — mark items sold out (shows instantly on the site and blocks ordering)
-- Remove reviews
-- New-order chime + count in the tab title
-- Payment status on every order, CSV export of all orders
-- Gift card list, and an **Emails** tab to preview every email the site sent
-- **Menu editor**: add, edit, hide, reorder and delete items, upload photos, mark sold out. Live instantly, no code
-- **Tables & QR**: printable QR cards for every table
-- 📺 **Now serving board** at `/board`: put it on the café TV (brewing / ready, with a chime)
+**Guests & community**
+- 👤 **Accounts** with a sign-in code by email: favourites on every device, order history, birthday treat, referrals with credit, a monthly **Coffee Pass**
+- 📅 Table booking with real availability and a **waitlist** that emails you when a table frees up
+- 🎟 **Events**: free RSVPs, and **paid tickets** for classes with a QR code checked at the door
+- 🌿 **"How busy is it?"** meter with today's forecast and the quietest time to visit
+- 🤖 **Ask the barista**: AI chat (free Google Gemini, or Claude) that recommends drinks from the live menu
+- ⭐ Reviews with photos, 🎁 gift cards, 💌 newsletter, 🔮 "find your drink" quiz, café ambience sounds
+- 🎉 **Seasonal themes**: Diwali, monsoon, Christmas and Valentine's, each with a banner, animation and special drink
+- 🌸 Day and ☾ night themes, English / हिन्दी, installable app that works offline
+
+**For staff (`/admin`, `/staff`, `/board`)**
+- Overview, **analytics** (busiest hours, categories, drink options, channels), order queue, bookings, CSV export
+- **Barista screen** (`/staff`) with live orders, table calls, printable **kitchen tickets** and your next shift
+- 📺 **Now serving** TV board (`/board`)
+- **Roles**: the owner sees everything; baristas get the counter tools
+- Menu editor, ingredient **stock** (items sell out by themselves), seasonal and festival items
+- **Rota**: weekly staff shifts
+- **Refunds** through Razorpay, gift cards, emails sent, reviews
+- 📬 **Nightly summary email**, 🗄 **automatic backups** (download and restore), 🚨 **error alerts** and a Health tab
+- 🤖 **Demo barista** moves orders along by itself when nobody is behind the counter
+
+## Tests
+
+```bash
+npm test           # 59 tests: price maths plus the whole API against a real server
+npm run test:e2e   # 7 browser tests that click through ordering, booking, group orders and tickets
+```
+
+Both run on GitHub for every push, and Railway only deploys once they pass.
 
 ## Where things live
 
@@ -72,6 +76,13 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 | Opening hours, events, gallery | `src/lib/cafe.ts` |
 | Colours (day + night themes) | top of `src/app/globals.css` |
 | Database tables | `src/lib/db.ts` (data saved in `data/cafe.db`) |
+| Group orders | `src/lib/groups.ts`, `src/app/g/[code]/page.tsx` |
+| Seasonal themes | `src/lib/seasons.ts`, `src/components/SeasonLayer.tsx` |
+| Event tickets | `src/lib/tickets.ts`, `src/app/ticket/[code]/page.tsx` |
+| Nightly summary, backups, error alerts | `src/lib/summary.ts`, `src/lib/backup.ts`, `src/lib/errors.ts` |
+| Background jobs (demo barista, summary, backups) | `src/lib/jobs.ts` |
+| Receipts | `src/lib/receipt.ts`, `src/app/print/[code]/page.tsx` |
+| Browser tests | `e2e/` |
 | API routes | `src/app/api/…` |
 | Page sections | `src/components/…` |
 

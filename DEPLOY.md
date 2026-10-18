@@ -136,3 +136,25 @@ and stored in the database.
 3. Railway shows a **CNAME** record. Add it in your registrar's DNS settings and wait 5–60 minutes.
 4. Update `SITE_URL` to the new address, so QR codes, emails and link previews use it.
 5. If you use Resend for email, add the same domain under **Resend → Domains** too.
+
+
+## 9. Emails for you, backups and error alerts
+
+Open **/admin → Overview → 📬 Emails for you** and add your email (with Resend's free plan
+and no domain, use the address you signed up to Resend with). Then you get:
+
+- **Nightly summary**: 15 minutes after closing (orders and sales vs last week, best sellers, tips,
+  reviews, low stock, tomorrow's bookings). "Preview" and "Send it now" are right there.
+- **Error alerts**: one email per problem, at most once an hour. Every problem is listed in
+  **/admin → Health**.
+- **Weekly backup**: every Sunday night, a copy of the database as an email attachment.
+
+You can also set the address with an `OWNER_EMAIL` variable in Railway instead.
+
+**Backups** are made every night (after 3am) and the last 14 are kept on the server.
+In **/admin → Overview → 🗄 Backups** you can back up now, download a copy, or **restore** one:
+choose the `.db.gz` file and confirm. The current data is saved first, so a restore can be undone.
+Uploaded photos aren't in the backup; they stay on the Railway volume.
+
+**Health check:** Railway calls `/api/health` before switching to a new deploy (see `railway.toml`),
+so a broken update never replaces a working site.
