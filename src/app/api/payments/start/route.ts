@@ -66,6 +66,12 @@ export async function POST(req: Request) {
     if (!["quoted", "accepted"].includes(t.status) || !t.amount) return Response.json({ error: t.status === "paid" || t.status === "done" ? "This is already paid ✿" : "There's no quote to pay yet." }, { status: 409 });
     amount = t.amount;
     label = "Catering";
+  } else if (kind === "cake") {
+    const t = db.prepare("SELECT price, status FROM cake_orders WHERE code = ?").get(c) as { price: number; status: string } | undefined;
+    if (!t) return Response.json({ error: "Cake order not found." }, { status: 404 });
+    if (t.status !== "unpaid") return Response.json({ error: "This cake is already paid ✿" }, { status: 409 });
+    amount = t.price;
+    label = "Whole cake";
   } else if (kind === "booking") {
     const t = db.prepare("SELECT deposit, deposit_status, status FROM bookings WHERE code = ?").get(c) as { deposit: number; deposit_status: string | null; status: string } | undefined;
     if (!t) return Response.json({ error: "Booking not found." }, { status: 404 });

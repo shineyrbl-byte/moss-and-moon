@@ -5,7 +5,7 @@ import { useStore } from "../Store";
 
 type Expense = { id: number; month: string; category: string; label: string; amount: number; recurring: number };
 type P = {
-  month: string; orders: number; sales: number; tickets: number; catering: number; revenue: number; cogs: number; waste: number; gross: number;
+  month: string; orders: number; sales: number; tickets: number; catering: number; cakes?: number; revenue: number; cogs: number; waste: number; gross: number;
   expenses: number; byCategory: Record<string, number>; expenseList: Expense[]; net: number; margin: number;
   trend: { month: string; revenue: number; net: number }[]; categories: string[];
 };
@@ -61,6 +61,7 @@ export default function PnlTab() {
             {row("Café sales (after discounts & refunds)", p.sales)}
             {p.tickets > 0 && row("Event tickets", p.tickets)}
             {p.catering > 0 && row("Catering", p.catering)}
+            {!!p.cakes && row("Whole cakes", p.cakes)}
             {row("Revenue", p.revenue, true)}
             {row("Cost of what was sold", p.cogs, false, true)}
             {row("Thrown away", p.waste, false, true)}

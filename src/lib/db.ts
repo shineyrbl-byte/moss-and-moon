@@ -489,6 +489,24 @@ function open() {
       sent_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
       PRIMARY KEY (customer_id, year)
     );
+    CREATE TABLE IF NOT EXISTS cake_orders (
+      code TEXT PRIMARY KEY,
+      item_id TEXT NOT NULL,
+      cake_name TEXT NOT NULL,
+      size TEXT NOT NULL,
+      size_label TEXT NOT NULL,
+      message TEXT,
+      pickup_date TEXT NOT NULL,
+      pickup_time TEXT NOT NULL,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      email TEXT NOT NULL,
+      note TEXT,
+      price INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'unpaid',
+      payment_ref TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,

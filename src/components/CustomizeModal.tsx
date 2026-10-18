@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useEscape, useStore } from "./Store";
 import DrinkCup from "./DrinkCup";
 import BackInStock from "./BackInStock";
+import { wholeCake } from "@/lib/cakes";
 import { ALLERGENS, allergensFor, kcalFor } from "@/lib/nutrition";
 import { useRouter } from "next/navigation";
 import { photo } from "@/lib/menu";
@@ -147,6 +148,7 @@ export default function CustomizeModal() {
             </>
           ) : (
             <>
+              {wholeCake(item.id) && <p className="small"><button className="link-btn" onClick={() => { close(); router.push(`/cakes?item=${item.id}`); }}>🎂 Order it as a whole cake, with a message on top →</button></p>}
               {item.cat === "bakes" && (
                 <div className="toggle-row">
                   <span>Warm it up for me ♨</span>

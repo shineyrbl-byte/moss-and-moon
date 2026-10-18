@@ -1237,3 +1237,10 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .menu-card .mc-actions .btn-ghost { color: #3b2720; border-color: #c9ab9c; background: #fffaf6; }
 .combo-strip { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; }
 .combo-pill { background: var(--surface); border: 1px dashed var(--pink); border-radius: 999px; padding: 0.35rem 0.9rem; font-size: 0.86rem; }
+
+/* Whole cakes */
+.cake-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.7rem; margin-top: 1.2rem; }
+.cake-pick { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem 0.5rem 0.8rem; text-align: left; font: inherit; color: inherit; cursor: pointer; border: 2px solid transparent; }
+.cake-pick.on { border-color: var(--pink-fill); }
+.cake-ph { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; }
+.cake-ph img { object-fit: cover; }

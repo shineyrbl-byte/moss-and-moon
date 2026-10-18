@@ -38,6 +38,7 @@ export function buildSummary(date = new Date()) {
   const checks = checklistSummary(day);
   const due = dueEquipment();
   const useBy = batchAlerts();
+  const cakes = db.prepare("SELECT cake_name, size_label, pickup_time FROM cake_orders WHERE pickup_date = ? AND status IN ('paid','ready') ORDER BY pickup_time").all(tomorrow) as { cake_name: string; size_label: string; pickup_time: string }[];
   const refunds = db.prepare("SELECT COALESCE(SUM(refund_amount), 0) AS a FROM orders WHERE date(refunded_at) = ?").get(day) as { a: number };
 
   const change = (now: number, before: number) => {
@@ -62,6 +63,7 @@ export function buildSummary(date = new Date()) {
       ${row("Cash-up", cash ? (difference(cash) === 0 ? "matched ✓" : `<span style="color:${Math.abs(difference(cash)) > 50 ? "#a8455f" : "#3b2621"}">${difference(cash) > 0 ? "over" : "short"} by ${rupees(Math.abs(difference(cash)))}</span>`) : `<span style="color:#a8455f">not done</span>`)}
       ${checks.lists.map((l) => row(`${l.label} checklist`, l.done === l.total ? "all done ✓" : `<span style="color:#a8455f">${l.done} of ${l.total}</span>`)).join("")}
       ${checks.warm.length ? row("⚠️ Fridge too warm", checks.warm.map(esc).join("<br>")) : ""}
+      ${cakes.length ? row("🎂 Cakes to bake for tomorrow", cakes.map((c) => esc(`${c.pickup_time} ${c.cake_name} (${c.size_label})`)).join("<br>")) : ""}
       ${useBy.expired.length ? row("⚠️ Past use-by", useBy.expired.map((b) => esc(b.name)).join(", ")) : ""}
       ${useBy.tomorrow.length ? row("📅 Use by tomorrow", useBy.tomorrow.map((b) => esc(b.name)).join(", ")) : ""}
       ${due.length ? row("🔧 Maintenance due", due.map((e) => esc(`${e.name}: ${e.task}`)).join("<br>")) : ""}

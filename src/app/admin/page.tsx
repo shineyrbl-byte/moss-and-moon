@@ -39,6 +39,7 @@ import SupportInbox from "@/components/SupportInbox";
 import WinbackCard from "@/components/admin/WinbackCard";
 import SpecialsCard from "@/components/admin/SpecialsCard";
 import CombosCard from "@/components/admin/CombosCard";
+import CakesTab from "@/components/admin/CakesTab";
 import PriceWhatIf from "@/components/admin/PriceWhatIf";
 import MenuEngineering from "@/components/admin/MenuEngineering";
 import MissedSales from "@/components/admin/MissedSales";
@@ -64,11 +65,11 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; branch?: string; deposit?: number; deposit_status?: string | null; table_no: number | null; preorder: string | null; preorder_code: string | null };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Catering", "Companies", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health", "Settings"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Cakes", "Events", "Catering", "Companies", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health", "Settings"] as const;
 type Tab = (typeof TABS)[number];
 // The tabs, grouped so there's less to scan
 const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
-  { label: "Today", icon: "☀︎", tabs: ["Overview", "Orders", "Bookings", "Checklists", "Cash-up"] },
+  { label: "Today", icon: "☀︎", tabs: ["Overview", "Orders", "Bookings", "Cakes", "Checklists", "Cash-up"] },
   { label: "Menu & stock", icon: "☕", tabs: ["Menu", "Stock", "Waste", "Tables & QR"] },
   { label: "Guests", icon: "💌", tabs: ["Guests", "Reviews", "Events", "Catering", "Companies", "Promos", "Gift cards", "Newsletter", "Notices", "Journal"] },
   { label: "Team", icon: "👥", tabs: ["Team", "Rota", "Training"] },
@@ -93,7 +94,7 @@ const KEYWORDS: Partial<Record<Tab, string>> = {
   "Tables & QR": "qr codes table cards",
 };
 // What baristas can see (owners see everything)
-const BARISTA_TABS: Tab[] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "Tables & QR", "Rota", "Training", "Notices"];
+const BARISTA_TABS: Tab[] = ["Orders", "Bookings", "Cakes", "Events", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "Tables & QR", "Rota", "Training", "Notices"];
 
 // A soft two-note "ding" when a new order arrives
 function chime() {
@@ -512,6 +513,7 @@ export default function AdminPage() {
       {tab === "Events" && <EventsTab canEdit={me?.role === "owner"} />}
       {tab === "Waste" && <WasteTab />}
       {tab === "Cash-up" && <CashupTab />}
+      {tab === "Cakes" && <CakesTab />}
       {tab === "Checklists" && <ChecklistsTab canEdit={me?.role === "owner"} />}
       {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "Companies" && me?.role === "owner" && <CompaniesTab />}

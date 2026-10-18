@@ -1050,7 +1050,11 @@ test("timesheets: staff clock in and out; tips are split by hours worked", async
   // Owner view: a pretend 4-hour shift for the tip split
   const db = new (await import("node:sqlite")).DatabaseSync((await import("node:path")).join(s.dataDir, "cafe.db"));
   const id = (db.prepare("SELECT id FROM staff WHERE username = 'tara'").get() as { id: number }).id;
-  db.prepare("UPDATE timesheets SET clock_in = datetime('now','localtime','-4 hours'), clock_out = datetime('now','localtime') WHERE staff_id = ?").run(id);
+  // A 4-hour shift that stays inside this week (just after midnight on a Monday, "4 hours ago" is last week)
+  const early = new Date().getDay() === 1 && new Date().getHours() < 5;
+  db.prepare(early
+    ? "UPDATE timesheets SET clock_in = datetime('now','localtime'), clock_out = datetime('now','localtime','+4 hours') WHERE staff_id = ?"
+    : "UPDATE timesheets SET clock_in = datetime('now','localtime','-4 hours'), clock_out = datetime('now','localtime') WHERE staff_id = ?").run(id);
   db.close();
   await s.api("/api/orders", { method: "POST", json: { name: "Tipper", phone: "9000025656", payMethod: "online", tipAmount: 60, lines: [{ itemId: "cookie", qty: 1 }] } }).then(async (r) => {
     await s.api("/api/payments/verify", { method: "POST", json: { kind: "order", code: (r.body as { code: string }).code, demo: true } });
@@ -1701,4 +1705,29 @@ test("combos: the owner sets them, the server applies them to an order", async (
   // Back to the starting combos (they're time-limited, so they're off in tests)
   const { DEFAULT_COMBOS } = await import("../src/lib/pricing.ts");
   assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { combos: DEFAULT_COMBOS } })).status, 200);
+});
+
+test("whole cakes: 2 days' notice, paid online, then on the staff list", async () => {
+  const cakes = (await s.api("/api/cakes")).body as { cakes: { itemId: string; sizes: { id: string; price: number }[] }[] };
+  const pink = cakes.cakes.find((c) => c.itemId === "pink-velvet")!;
+  // Find an open day 3+ days out
+  let date = "";
+  for (let i = 3; i < 12 && !date; i++) {
+    const d = new Date(Date.now() + i * 86_400_000);
+    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (((await s.api(`/api/bookings/availability?date=${ds}`)).body as unknown[]).length) date = ds;
+  }
+  const base = { itemId: "pink-velvet", size: pink.sizes[0].id, message: "Happy birthday Meera!", date, time: "16:00", name: "Cake Fan", phone: "9811177777", email: "cake@example.com" };
+  const t = new Date(); const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+  assert.equal((await s.api("/api/cakes", { method: "POST", json: { ...base, date: today } })).status, 400, "too soon");
+  const o = await s.api("/api/cakes", { method: "POST", json: base });
+  assert.equal(o.status, 200, JSON.stringify(o.body));
+  assert.equal(o.body.price, pink.sizes[0].price);
+  assert.equal((await s.api("/api/payments/start", { method: "POST", json: { kind: "cake", code: o.body.code } })).body.amount, pink.sizes[0].price);
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "cake", code: o.body.code, demo: true } });
+  assert.equal((await s.api(`/api/cakes/${o.body.code}`)).body.status, "paid");
+  await s.login();
+  const list = (await s.api("/api/cakes?orders=1")).body as { code: string; message: string }[];
+  assert.equal(list.find((c) => c.code === o.body.code)?.message, "Happy birthday Meera!");
+  assert.equal((await s.api(`/api/cakes/${o.body.code}`, { method: "PATCH", json: { status: "collected" } })).status, 200);
 });

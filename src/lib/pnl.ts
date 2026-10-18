@@ -28,18 +28,19 @@ export function monthPnl(month: string) {
   const one = (sql: string) => (db.prepare(sql).get(month) as { a: number }).a;
   const tickets = one("SELECT COALESCE(SUM(amount), 0) AS a FROM tickets WHERE paid = 1 AND strftime('%Y-%m', created_at) = ?");
   const catering = tableExists("catering") ? one("SELECT COALESCE(SUM(amount), 0) AS a FROM catering WHERE status IN ('paid','done') AND strftime('%Y-%m', paid_at) = ?") : 0;
+  const cakes = tableExists("cake_orders") ? one("SELECT COALESCE(SUM(price), 0) AS a FROM cake_orders WHERE status IN ('paid','ready','collected') AND substr(pickup_date, 1, 7) = ?") : 0;
   const waste = one("SELECT COALESCE(SUM(cost), 0) AS a FROM waste WHERE substr(day, 1, 7) = ?");
   const expenses = expensesFor(month);
   const byCategory: Record<string, number> = {};
   for (const e of expenses) byCategory[e.category] = (byCategory[e.category] ?? 0) + e.amount;
   const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0);
-  const revenue = sales + tickets + catering;
+  const revenue = sales + tickets + catering + cakes;
   const gross = revenue - cogs - waste;
   const net = gross - expenseTotal;
   const r = Math.round;
   return {
     month, orders: orders.length,
-    sales: r(sales), tickets: r(tickets), catering: r(catering), revenue: r(revenue),
+    sales: r(sales), tickets: r(tickets), catering: r(catering), cakes: r(cakes), revenue: r(revenue),
     cogs: r(cogs), waste: r(waste), gross: r(gross),
     expenses: r(expenseTotal), byCategory, expenseList: expenses,
     net: r(net), margin: revenue ? Math.round((net / revenue) * 100) : 0,
