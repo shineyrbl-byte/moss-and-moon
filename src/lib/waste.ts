@@ -21,7 +21,7 @@ export function bakePlan(forDate: Date) {
   const daysWithData = (db.prepare(`SELECT COUNT(DISTINCT date(created_at)) AS n FROM orders WHERE date(created_at) IN (${placeholders})`).get(...sameDays) as { n: number }).n;
 
   return getMenu({ includeHidden: false })
-    .filter((m) => m.cat === "bakes")
+    .filter((m) => m.cat === "bakes" || m.cat === "food")
     .map((m) => {
       const avgSold = daysWithData ? (sold.get(m.id) ?? 0) / daysWithData : null;
       const avgWaste = daysWithData ? (wasted.get(m.id) ?? 0) / daysWithData : null;

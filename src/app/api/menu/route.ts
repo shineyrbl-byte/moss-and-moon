@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
+import { db, cleanText } from "@/lib/db";
 import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { deleteItem, getMenu, moveItem, saveItem } from "@/lib/menuStore";
-import type { Category, Diet, MenuItem } from "@/lib/menu";
+import type { Addon, Category, Diet, MenuItem } from "@/lib/menu";
 import { publish } from "@/lib/live";
 import { SEASONS } from "@/lib/seasons";
 import { ALLERGENS } from "@/lib/nutrition";
@@ -25,7 +25,7 @@ export async function PATCH(req: Request) {
   return Response.json({ ok: true });
 }
 
-const CATS: Category[] = ["coffee", "tea", "bakes"];
+const CATS: Category[] = ["coffee", "tea", "cold", "food", "bakes"];
 const BADGES = ["bestseller", "new", "pink pick"] as const;
 const level = (v: unknown) => (Math.max(0, Math.min(2, Math.round(Number(v) || 0))) as 0 | 1 | 2);
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30) || "item";
@@ -72,8 +72,27 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(typeof b.season === "string" && b.season in SEASONS ? { season: b.season } : {}),
     ...(Array.isArray(b.allergens) ? { allergens: ALLERGENS.map((a) => a.id).filter((a) => (b.allergens as unknown[]).includes(a)) } : {}),
     ...(b.kcal !== undefined && b.kcal !== "" && Number(b.kcal) >= 0 && Number(b.kcal) <= 3000 ? { kcal: Math.round(Number(b.kcal)) } : {}),
+    ...(b.noMilk && cat !== "food" && cat !== "bakes" ? { noMilk: true } : {}),
+    ...(Array.isArray(b.addons) && (cat === "food" || cat === "bakes") && b.addons.length ? { addons: cleanAddons(b.addons) } : {}),
     ...(b.cost !== undefined && b.cost !== "" && Number(b.cost) >= 0 && Number(b.cost) <= 5000 ? { cost: Math.round(Number(b.cost) * 100) / 100 } : {}),
   };
+}
+
+const ALLERGEN_IDS = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
+/** Up to 8 add-ons with a name and a price; ids are kept so saved orders still match */
+function cleanAddons(list: unknown[]): Addon[] {
+  return list.slice(0, 8).flatMap((raw) => {
+    const a = (raw ?? {}) as Record<string, unknown>;
+    const label = cleanText(a.label, 50);
+    const price = Math.round(Number(a.price));
+    if (!label || !(price >= 0 && price <= 2000)) return [];
+    const id = typeof a.id === "string" && /^[\w-]{1,40}$/.test(a.id) ? a.id : label.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30);
+    const only = (v: unknown) => (Array.isArray(v) ? v.filter((x) => ALLERGEN_IDS.includes(String(x))).map(String).slice(0, 3) : undefined);
+    const adds = only(a.adds);
+    const removes = only(a.removes);
+    const kcal = Number(a.kcal);
+    return [{ id, label, price, ...(adds?.length ? { adds } : {}), ...(removes?.length ? { removes } : {}), ...(kcal >= 0 && kcal <= 2000 ? { kcal: Math.round(kcal) } : {}) }];
+  });
 }
 
 // Owner: create / edit an item, or move it ({ move: "up" | "down", id })

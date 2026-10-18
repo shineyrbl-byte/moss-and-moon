@@ -22,8 +22,8 @@ test("drink options change the price", () => {
 test("unknown option values fall back to defaults", () => {
   const o = cleanOptions(latte, { size: "gigantic", milk: "unicorn", shot: "yes" });
   assert.deepEqual(o, defaultOptions(latte));
-  // Bakes only accept "warm"
-  assert.deepEqual(cleanOptions(cake, { size: "large", warm: true }), { warm: true });
+  // Bakes only accept "warm" (and their own add-ons)
+  assert.deepEqual(cleanOptions(cake, { size: "large", warm: true }), { warm: true, addons: [] });
 });
 
 test("vegan drinks default to no milk", () => {
@@ -236,4 +236,67 @@ test("one-time codes match the standard test vectors", async () => {
   assert.ok(verify(secret, code, now + 30_000) !== null, "one step of clock drift is fine");
   assert.equal(verify(secret, code, now + 120_000), null);
   assert.equal(verify(secret, "abc", now), null);
+});
+
+test("new drink choices and food add-ons are priced and checked on the server", () => {
+  const frappe = { id: "f", cat: "cold" as const, name: "Frappé", desc: "", price: 260, img: "x", traits: { energy: 1 as const, sweet: 2 as const, temp: "iced" as const } };
+  const smoothie = { id: "s", cat: "cold" as const, name: "Smoothie", desc: "", price: 220, img: "x", noMilk: true };
+  const toastie = { id: "t", cat: "food" as const, name: "Toastie", desc: "", price: 220, img: "x", addons: [{ id: "cheese", label: "Extra cheese", price: 40 }, { id: "gf-bread", label: "Gluten-free bread", price: 50 }] };
+  const latte2 = { ...latte, cat: "coffee" as const };
+
+  const o = cleanOptions(latte2, { milk: "soy", syrup: "hazelnut", toppings: ["whipped", "glitter", "cinnamon"], decaf: true, temp: "hot", extraHot: true });
+  assert.equal(o.milk, "soy");
+  assert.deepEqual(o.toppings, ["whipped", "cinnamon"], "unknown toppings are dropped");
+  assert.equal(unitPrice(latte2, o), 200 + 30 + 30 + 30, "soy + syrup + whipped cream");
+  assert.match(describeOptions(latte2, o), /extra hot.*soy milk.*decaf.*hazelnut syrup.*whipped cream/);
+
+  // Cold drinks are always iced; drinks without milk get no milk, syrup or toppings
+  assert.equal(cleanOptions(frappe, { temp: "hot" }).temp, "iced");
+  assert.equal(cleanOptions(frappe, { ice: "light" }).ice, "light");
+  const s = cleanOptions(smoothie, { milk: "oat", syrup: "vanilla", toppings: ["whipped"] });
+  assert.equal(s.milk, undefined);
+  assert.equal(s.syrup, undefined);
+  assert.equal(unitPrice(smoothie, s), 220);
+
+  // Food: only that item's add-ons, and they're added to the price
+  const t = cleanOptions(toastie, { addons: ["gf-bread", "cheese", "caviar"], warm: true });
+  assert.deepEqual(t, { addons: ["cheese", "gf-bread"] });
+  assert.equal(unitPrice(toastie, t), 310);
+  assert.equal(describeOptions(toastie, t), "Extra cheese · Gluten-free bread");
+
+  // Golden hour is for bakes, not savoury food
+  const find = (id: string) => (({ t: toastie, cake } as Record<string, typeof toastie>)[id]);
+  const q = quote([{ itemId: "t", qty: 1 }, { itemId: "cake", qty: 1 }], find as never, null, false, { now: new Date("2026-10-19T15:30:00") });
+  assert.equal(q.happyDiscount, Math.round(cake.price * 0.2));
+});
+
+test("allergens and calories follow syrups, toppings and food add-ons", async () => {
+  const { allergensFor, kcalFor } = await import("../src/lib/nutrition.ts");
+  const latte = { id: "l", cat: "coffee", allergens: [], kcal: 190 };
+  assert.deepEqual(allergensFor(latte, { milk: "soy", syrup: "hazelnut" }), ["nuts", "soy"]);
+  assert.ok(allergensFor(latte, { milk: "none", toppings: ["whipped"] }).includes("milk"), "whipped cream has milk");
+  assert.ok(kcalFor(latte, { milk: "whole", syrup: "vanilla", toppings: ["whipped"] })! > 190 + 100);
+  const toast = { id: "t", cat: "food", allergens: ["gluten", "milk"] as ("gluten" | "milk")[], kcal: 480, addons: [{ id: "egg", kcal: 90, adds: ["egg"] }, { id: "gf-bread", removes: ["gluten"] }] };
+  assert.deepEqual(allergensFor(toast, { addons: ["gf-bread", "egg"] }), ["milk", "egg"]);
+  assert.equal(kcalFor(toast, { addons: ["egg"] }), 570);
+});
+
+test("voice orders understand syrups, toppings, ice and food add-ons", async () => {
+  const { parseVoiceOrder } = await import("../src/lib/voiceParse.ts");
+  const menu = [
+    { id: "iced-mocha", name: "Iced Mocha", cat: "cold" },
+    { id: "honey-oat-latte", name: "Honey Oat Latte", cat: "coffee" },
+    { id: "cheese-toastie", name: "Three Cheese Toastie", cat: "food", addons: [{ id: "egg", label: "Add a fried egg" }, { id: "gf-bread", label: "Gluten-free bread" }, { id: "cheese", label: "Extra cheese" }] },
+  ];
+  const r = parseVoiceOrder("an iced mocha with soy milk, less ice and whipped cream, and a cheese toastie with a fried egg on gluten-free bread", menu);
+  assert.equal(r.lines[0].itemId, "iced-mocha");
+  assert.equal(r.lines[0].opts.milk, "soy");
+  assert.equal(r.lines[0].opts.ice, "light");
+  assert.deepEqual(r.lines[0].opts.toppings, ["whipped"]);
+  assert.equal(r.lines[1].itemId, "cheese-toastie");
+  assert.deepEqual(r.lines[1].opts.addons, ["egg", "gf-bread"]);
+  const h = parseVoiceOrder("decaf honey oat latte with vanilla syrup", menu).lines[0].opts;
+  assert.equal(h.syrup, "vanilla");
+  assert.equal(h.milk, undefined, "saying the name 'Honey Oat Latte' doesn't pick oat milk");
+  assert.equal(parseVoiceOrder("honey oat latte with oat milk", menu).lines[0].opts.milk, "oat");
 });

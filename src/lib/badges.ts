@@ -52,6 +52,8 @@ export function computeBadges(orders: BadgeOrder[], extras: BadgeExtras, today: 
     make("matcha-lover", "🍵", "Matcha lover", "5 matcha drinks", count((l) => /matcha/i.test(l.name)), 5),
     make("iced-out", "🧊", "Iced out", "10 iced drinks", count((l) => l.opts?.temp === "iced"), 10),
     make("sweet-tooth", "🧁", "Sweet tooth", "10 bakes", count((l) => l.cat === "bakes"), 10),
+    make("foodie", "🥪", "Foodie", "5 savoury dishes", count((l) => l.cat === "food"), 5),
+    make("smoothie-era", "🥤", "Cool as ice", "5 cold drinks", count((l) => l.cat === "cold"), 5),
     make("explorer", "🧭", "Explorer", "Tried 10 different things", new Set(lines.map((l) => l.itemId)).size, 10),
     make("generous", "💛", "Generous", "Tipped the team 5 times", orders.filter((o) => o.tip > 0).length, 5),
     make("host", "👯", "The host", "Started a group order", orders.filter((o) => o.hosted).length, 1),

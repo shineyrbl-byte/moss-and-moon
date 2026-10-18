@@ -22,8 +22,9 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 ## Features
 
 **Ordering**
-- ☕ Menu with photos, search, categories and vegan / gluten-free filters, edited live from the admin page
-- 🎛 **Drink builder**: size, hot/iced, milk, sweetness, extra shot, with a little cup that fills up as you choose
+- ☕ 50-item menu in sections (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes) with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
+- 🥤 Cold drinks (cold brew, frappés, smoothies, mocktails, juices) and savoury food (toasties, sandwiches, toast, pancakes, pasta, bowls) with add-ons like an egg, extra cheese, gluten-free bread or a coffee combo
+- 🎛 **Drink builder**: size, hot/iced, ice level, extra hot, whole/oat/almond/soy milk, sweetness, syrups, toppings, extra shot or decaf, with a little cup that fills up as you choose
 - ☕ **"My usual"**: one-tap reorder of the drink you order most, exactly how you like it
 - 🎙 **Voice ordering**: say "two iced oat lattes and a croissant" (or "my usual")
 - 🔁 **Regular orders**: "my oat latte every weekday at 8:30", placed by itself 15 minutes before
@@ -68,7 +69,7 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 ## Tests
 
 ```bash
-npm test           # 77 tests: price maths, the whole API against a real server, and payments against a fake Razorpay
+npm test           # 82 tests: price maths, the whole API against a real server, and payments against a fake Razorpay
 npm run test:e2e   # 9 browser tests: ordering, booking, group orders, tickets, gifting a drink, phone layout, security headers
 ```
 

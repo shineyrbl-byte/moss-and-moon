@@ -942,3 +942,7 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .backup-codes { font-family: ui-monospace, Menlo, monospace; font-size: 1rem; letter-spacing: 0.06em; background: var(--surface); border-radius: 10px; padding: 0.7rem 1rem; margin: 0.6rem 0; columns: 2; }
 .sec-list { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.6rem; font-size: 0.92rem; }
 .sec-list li { display: grid; grid-template-columns: 1.6rem 1fr; align-items: start; }
+.addon-list { display: flex; flex-direction: column; gap: 0.35rem; }
+.addon { display: grid; grid-template-columns: auto 1fr auto; gap: 0.6rem; align-items: center; padding: 0.55rem 0.8rem; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+.addon.on { border-color: var(--pink-fill); background: var(--pink-soft); }
+.addon input { accent-color: var(--pink-fill); width: 1.05rem; height: 1.05rem; }

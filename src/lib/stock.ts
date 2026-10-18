@@ -3,7 +3,7 @@
 import "server-only";
 import { db } from "./db";
 import type { MenuItem } from "./menu";
-import type { Options, QuoteLine } from "./pricing";
+import { isDrink, type Options, type QuoteLine } from "./pricing";
 
 export type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number; cost: number | null };
 
@@ -13,6 +13,7 @@ export const DEFAULT_INGREDIENTS: Ingredient[] = [
   { id: "milk-whole", name: "Whole milk", unit: "ml", qty: 20000, low_at: 2000, cost: 0.07 },
   { id: "milk-oat", name: "Oat milk", unit: "ml", qty: 10000, low_at: 1500, cost: 0.28 },
   { id: "milk-almond", name: "Almond milk", unit: "ml", qty: 6000, low_at: 1000, cost: 0.32 },
+  { id: "milk-soy", name: "Soy milk", unit: "ml", qty: 6000, low_at: 1000, cost: 0.22 },
   { id: "matcha", name: "Matcha powder", unit: "g", qty: 1000, low_at: 120, cost: 6 },
   { id: "tea-leaves", name: "Loose-leaf tea", unit: "g", qty: 2000, low_at: 200, cost: 1.2 },
   { id: "tapioca", name: "Tapioca pearls", unit: "g", qty: 3000, low_at: 400, cost: 0.45 },
@@ -24,9 +25,13 @@ export function seedIngredients() {
     const add = db.prepare("INSERT INTO ingredients (id, name, unit, qty, low_at, cost) VALUES (?, ?, ?, ?, ?, ?)");
     for (const i of DEFAULT_INGREDIENTS) add.run(i.id, i.name, i.unit, i.qty, i.low_at, i.cost);
   }
-  // Older databases: fill in starting costs once
+  // Older databases: add ingredients that came later (like soy milk) and fill in starting costs
+  const addMissing = db.prepare("INSERT OR IGNORE INTO ingredients (id, name, unit, qty, low_at, cost) VALUES (?, ?, ?, ?, ?, ?)");
   const fill = db.prepare("UPDATE ingredients SET cost = ? WHERE id = ? AND cost IS NULL");
-  for (const i of DEFAULT_INGREDIENTS) fill.run(i.cost, i.id);
+  for (const i of DEFAULT_INGREDIENTS) {
+    addMissing.run(i.id, i.name, i.unit, i.qty, i.low_at, i.cost);
+    fill.run(i.cost, i.id);
+  }
 }
 
 export function getIngredients(): Ingredient[] {
@@ -36,8 +41,13 @@ export function getIngredients(): Ingredient[] {
 
 /** Sensible defaults so stock works without setting up every item by hand */
 export function defaultUses(item: MenuItem): { ingredient: string; amount: number }[] {
-  if (item.cat === "bakes") return [];
+  if (!isDrink(item.cat)) return [];
   const text = `${item.name} ${item.desc}`.toLowerCase();
+  if (item.cat === "cold") {
+    // Iced coffees and frappés use beans (and milk); smoothies, juices and mocktails aren't tracked
+    if (!/brew|mocha|frapp|coffee|latte|espresso/.test(text)) return [];
+    return [{ ingredient: "espresso-beans", amount: 18 }, ...(item.noMilk ? [] : [{ ingredient: "milk", amount: 200 }])];
+  }
   if (item.cat === "coffee") {
     const milky = !item.diet?.includes("vegan") && !/pour-over|long black|americano/.test(text);
     return [{ ingredient: "espresso-beans", amount: 18 }, ...(milky ? [{ ingredient: "milk", amount: 200 }] : [])];
@@ -49,7 +59,7 @@ export function defaultUses(item: MenuItem): { ingredient: string; amount: numbe
 }
 
 const SIZE = { small: 0.8, regular: 1, large: 1.3 } as const;
-const MILK = { whole: "milk-whole", oat: "milk-oat", almond: "milk-almond" } as const;
+const MILK = { whole: "milk-whole", oat: "milk-oat", almond: "milk-almond", soy: "milk-soy" } as const;
 
 /** Ingredient amounts needed for one cup/piece with these options */
 export function needsFor(item: MenuItem, o: Options): Map<string, number> {
@@ -59,10 +69,10 @@ export function needsFor(item: MenuItem, o: Options): Map<string, number> {
   for (const u of uses) {
     let id = u.ingredient;
     if (id === "milk") {
-      if (o.milk === "none") continue;
+      if (o.milk === "none" || item.noMilk) continue;
       id = MILK[(o.milk as keyof typeof MILK) ?? "whole"] ?? "milk-whole";
     }
-    out.set(id, (out.get(id) ?? 0) + u.amount * (item.cat === "bakes" ? 1 : mult));
+    out.set(id, (out.get(id) ?? 0) + u.amount * (isDrink(item.cat) ? mult : 1));
   }
   if (o.shot) out.set("espresso-beans", (out.get("espresso-beans") ?? 0) + 9);
   return out;
@@ -106,7 +116,7 @@ export function consumeStock(lines: QuoteLine[]) {
 
 /** Can we make one standard version of this item right now? */
 export function canMake(item: MenuItem, have = stockMap()) {
-  const defaults: Options = item.cat === "bakes" ? {} : { size: "regular", milk: item.diet?.includes("vegan") ? "none" : "whole" };
+  const defaults: Options = !isDrink(item.cat) ? {} : { size: "regular", milk: item.diet?.includes("vegan") || item.noMilk ? "none" : "whole" };
   for (const [id, amt] of needsFor(item, defaults)) {
     const ing = have.get(id);
     if (ing && ing.qty < amt) return false;

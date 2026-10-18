@@ -11,8 +11,10 @@ export const ALLERGENS: { id: Allergen; label: string; icon: string }[] = [
   { id: "sesame", label: "Sesame", icon: "⚪" },
 ];
 
-type Item = { id: string; cat: string; diet?: string[]; allergens?: Allergen[]; kcal?: number };
-type Opts = { size?: string; milk?: string; sweet?: string; shot?: boolean; temp?: string };
+type Addon = { id: string; kcal?: number; adds?: string[]; removes?: string[] };
+type Item = { id: string; cat: string; diet?: string[]; allergens?: Allergen[]; kcal?: number; noMilk?: boolean; addons?: Addon[] };
+type Opts = { size?: string; milk?: string; sweet?: string; shot?: boolean; temp?: string; syrup?: string; toppings?: string[]; addons?: string[] };
+const ALL = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
 
 /** Starting values for the menu (owners can change them in the menu editor). kcal = regular size, as it usually comes. */
 export const NUTRITION: Record<string, { allergens: Allergen[]; kcal: number }> = {
@@ -27,7 +29,7 @@ export const NUTRITION: Record<string, { allergens: Allergen[]; kcal: number }> 
   "saffron-pista-latte": { allergens: ["nuts"], kcal: 270 }, "monsoon-ginger-chai": { allergens: [], kcal: 150 }, "gingerbread-latte": { allergens: ["gluten"], kcal: 280 }, "strawberry-rose-cloud": { allergens: ["milk"], kcal: 240 },
 };
 
-const isDrink = (cat: string) => cat !== "bakes";
+const isDrink = (cat: string) => cat === "coffee" || cat === "tea" || cat === "cold";
 
 /** Allergens for this item as customised. A drink's milk adds milk (dairy), nuts (almond) or a gluten note (oat). */
 export function allergensFor(item: Item, o: Opts = {}): Allergen[] {
@@ -35,7 +37,16 @@ export function allergensFor(item: Item, o: Opts = {}): Allergen[] {
   if (isDrink(item.cat)) {
     if (o.milk === "whole") set.add("milk");
     if (o.milk === "almond") set.add("nuts");
+    if (o.milk === "soy") set.add("soy");
     if (o.milk === "oat") set.add("gluten"); // oat milk can carry traces of gluten
+    if (o.syrup === "hazelnut") set.add("nuts");
+    if (o.toppings?.includes("whipped") || o.toppings?.includes("caramel-drizzle")) set.add("milk");
+  }
+  // Food add-ons: an egg adds egg, gluten-free bread takes gluten away…
+  for (const id of o.addons ?? []) {
+    const a = item.addons?.find((x) => x.id === id);
+    for (const r of a?.removes ?? []) set.delete(r as Allergen);
+    for (const x of a?.adds ?? []) if (ALL.includes(x)) set.add(x as Allergen);
   }
   return ALLERGENS.map((a) => a.id).filter((a) => set.has(a));
 }
@@ -43,13 +54,16 @@ export function allergensFor(item: Item, o: Opts = {}): Allergen[] {
 /** Rough calories for this item as customised (null if unknown) */
 export function kcalFor(item: Item, o: Opts = {}): number | null {
   if (item.kcal === undefined) return null;
-  if (!isDrink(item.cat)) return item.kcal;
+  const addons = (o.addons ?? []).reduce((s, id) => s + (item.addons?.find((a) => a.id === id)?.kcal ?? 0), 0);
+  if (!isDrink(item.cat)) return item.kcal + addons;
   const size = o.size === "small" ? 0.8 : o.size === "large" ? 1.3 : 1;
-  const milky = item.kcal > 60 && !item.diet?.includes("vegan");
+  const milky = item.kcal > 60 && !item.diet?.includes("vegan") && !item.noMilk;
   // Change from whole milk (what the starting values assume) for a regular cup
-  const milk = !milky ? 0 : o.milk === "none" ? -90 : o.milk === "oat" ? -15 : o.milk === "almond" ? -55 : 0;
+  const milk = !milky ? 0 : o.milk === "none" ? -90 : o.milk === "oat" ? -15 : o.milk === "almond" ? -55 : o.milk === "soy" ? -30 : 0;
   const sweet = o.sweet === "none" ? -40 : o.sweet === "less" ? -20 : o.sweet === "extra" ? 30 : 0;
-  return Math.max(0, Math.round(((item.kcal + milk + sweet) * size + (o.shot ? 5 : 0)) / 5) * 5);
+  const syrup = o.syrup && o.syrup !== "none" ? 60 : 0;
+  const tops = (o.toppings ?? []).reduce((s, t) => s + (t === "whipped" ? 80 : t === "caramel-drizzle" ? 40 : 5), 0);
+  return Math.max(0, Math.round(((item.kcal + milk + sweet + syrup) * size + tops + (o.shot ? 5 : 0)) / 5) * 5);
 }
 
 /** For menu filters: can it be had without this allergen? (Drinks can swap their milk.) */

@@ -38,20 +38,26 @@ export async function POST(req: Request) {
             qty: { type: "integer" },
             size: { type: "string", enum: ["small", "regular", "large", "unspecified"] },
             temp: { type: "string", enum: ["hot", "iced", "unspecified"] },
-            milk: { type: "string", enum: ["whole", "oat", "almond", "none", "unspecified"] },
+            milk: { type: "string", enum: ["whole", "oat", "almond", "soy", "none", "unspecified"] },
+            syrup: { type: "string", enum: ["none", "vanilla", "caramel", "hazelnut", "rose", "unspecified"] },
+            toppings: { type: "array", items: { type: "string", enum: ["whipped", "caramel-drizzle", "cinnamon", "cocoa"] } },
+            ice: { type: "string", enum: ["light", "normal", "extra", "unspecified"] },
+            decaf: { type: "boolean" },
+            extraHot: { type: "boolean" },
+            addons: { type: "array", description: "Food add-on ids from the menu, if they asked for any", items: { type: "string" } },
             sweet: { type: "string", enum: ["none", "less", "normal", "extra", "unspecified"] },
             shot: { type: "boolean" },
           },
-          required: ["itemId", "qty", "size", "temp", "milk", "sweet", "shot"],
+          required: ["itemId", "qty", "size", "temp", "milk", "sweet", "shot", "syrup", "toppings", "ice", "decaf", "extraHot", "addons"],
         },
       },
     },
     required: ["usual", "lines"],
   };
-  type AiLine = { itemId: string; qty: number; size: string; temp: string; milk: string; sweet: string; shot: boolean };
+  type AiLine = { itemId: string; qty: number; size: string; temp: string; milk: string; sweet: string; shot: boolean; syrup: string; toppings: string[]; ice: string; decaf: boolean; extraHot: boolean; addons: string[] };
   const ai = await askJSON<{ usual: boolean; lines: AiLine[] }>(
     "You take café orders spoken aloud (often Indian English or Hinglish) and map them to menu item ids. Only include items they clearly asked for. Use 'unspecified' for options they didn't mention. Menu:\n" +
-      menu.map((m) => `${m.id}: ${m.name} (${m.cat})`).join("\n"),
+      menu.map((m) => `${m.id}: ${m.name} (${m.cat})${m.addons?.length ? ` · add-ons: ${m.addons.map((a) => `${a.id} = ${a.label}`).join(", ")}` : ""}`).join("\n"),
     `They said: "${text}"`,
     schema
   );
@@ -65,8 +71,10 @@ export async function POST(req: Request) {
       .filter((l) => ids.has(l.itemId))
       .map((l) => {
         const o: Record<string, unknown> = {};
-        for (const k of ["size", "temp", "milk", "sweet"] as const) if (l[k] && l[k] !== "unspecified") o[k] = l[k];
-        if (l.shot) o.shot = true;
+        for (const k of ["size", "temp", "milk", "sweet", "syrup", "ice"] as const) if (l[k] && l[k] !== "unspecified") o[k] = l[k];
+        for (const k of ["shot", "decaf", "extraHot"] as const) if (l[k]) o[k] = true;
+        if (l.toppings?.length) o.toppings = l.toppings;
+        if (l.addons?.length) o.addons = l.addons;
         return { itemId: l.itemId, qty: Math.min(10, Math.max(1, Math.round(l.qty) || 1)), opts: o };
       });
   } else {

@@ -19,8 +19,8 @@ export async function GET(req: Request) {
 
   // Busiest hours: weekday (0 = Sunday) × hour
   const heat = Array.from({ length: 7 }, () => Array<number>(24).fill(0));
-  const byCat = { coffee: 0, tea: 0, bakes: 0 } as Record<string, number>;
-  const milk: Record<string, number> = { whole: 0, oat: 0, almond: 0, none: 0 };
+  const byCat = { coffee: 0, tea: 0, cold: 0, food: 0, bakes: 0 } as Record<string, number>;
+  const milk: Record<string, number> = { whole: 0, oat: 0, almond: 0, soy: 0, none: 0 };
   const size: Record<string, number> = { small: 0, regular: 0, large: 0 };
   const temp: Record<string, number> = { hot: 0, iced: 0 };
   let shots = 0, drinks = 0, items = 0, revenue = 0, tips = 0;
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
       const cat = l.cat ?? catOf.get(l.itemId) ?? "bakes";
       byCat[cat] = (byCat[cat] ?? 0) + l.total;
       items += l.qty;
-      if (cat === "bakes") continue;
+      if (cat === "bakes" || cat === "food") continue;
       drinks += l.qty;
       if (l.opts.milk) milk[l.opts.milk] = (milk[l.opts.milk] ?? 0) + l.qty;
       if (l.opts.size) size[l.opts.size] = (size[l.opts.size] ?? 0) + l.qty;

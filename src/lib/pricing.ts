@@ -8,10 +8,17 @@ export type FindItem = (id: string) => MenuItem | undefined;
 export type Options = {
   size?: "small" | "regular" | "large";
   temp?: "hot" | "iced";
-  milk?: "whole" | "oat" | "almond" | "none";
+  milk?: "whole" | "oat" | "almond" | "soy" | "none";
   sweet?: "none" | "less" | "normal" | "extra";
   shot?: boolean;
+  decaf?: boolean;
+  syrup?: "none" | "vanilla" | "caramel" | "hazelnut" | "rose";
+  toppings?: ("whipped" | "cinnamon" | "cocoa" | "caramel-drizzle")[];
+  ice?: "light" | "normal" | "extra";
+  extraHot?: boolean;
   warm?: boolean;
+  /** Food add-ons: ids from the item's own add-on list */
+  addons?: string[];
 };
 
 export type CartLine = { key: string; itemId: string; opts: Options; qty: number };
@@ -31,6 +38,7 @@ export const MILKS: Choice<NonNullable<Options["milk"]>>[] = [
   { value: "whole", label: "Whole", extra: 0 },
   { value: "oat", label: "Oat", extra: 30 },
   { value: "almond", label: "Almond", extra: 30 },
+  { value: "soy", label: "Soy", extra: 30 },
   { value: "none", label: "No milk", extra: 0 },
 ];
 export const SWEETS: Choice<NonNullable<Options["sweet"]>>[] = [
@@ -39,18 +47,54 @@ export const SWEETS: Choice<NonNullable<Options["sweet"]>>[] = [
   { value: "normal", label: "Normal", extra: 0 },
   { value: "extra", label: "Extra", extra: 0 },
 ];
+export const SYRUPS: Choice<NonNullable<Options["syrup"]>>[] = [
+  { value: "none", label: "No syrup", extra: 0 },
+  { value: "vanilla", label: "Vanilla", extra: 30 },
+  { value: "caramel", label: "Caramel", extra: 30 },
+  { value: "hazelnut", label: "Hazelnut", extra: 30 },
+  { value: "rose", label: "Rose", extra: 30 },
+];
+export const TOPPINGS: Choice<NonNullable<Options["toppings"]>[number]>[] = [
+  { value: "whipped", label: "Whipped cream", extra: 30 },
+  { value: "caramel-drizzle", label: "Caramel drizzle", extra: 20 },
+  { value: "cinnamon", label: "Cinnamon dust", extra: 0 },
+  { value: "cocoa", label: "Cocoa dust", extra: 0 },
+];
+export const ICE: Choice<NonNullable<Options["ice"]>>[] = [
+  { value: "light", label: "Light ice", extra: 0 },
+  { value: "normal", label: "Normal ice", extra: 0 },
+  { value: "extra", label: "Extra ice", extra: 0 },
+];
 export const SHOT_PRICE = 40;
 
-export const isDrink = (cat: Category) => cat !== "bakes";
+export const isDrink = (cat: Category) => cat === "coffee" || cat === "tea" || cat === "cold";
+
+/** Which choices a drink offers */
+export function drinkChoices(item: Pick<MenuItem, "cat" | "noMilk">) {
+  const coffee = item.cat === "coffee";
+  return {
+    temp: item.cat !== "cold", // cold drinks are always iced
+    milk: !item.noMilk,
+    sweet: true,
+    shot: coffee,
+    decaf: coffee,
+    syrup: !item.noMilk,
+    toppings: !item.noMilk,
+  };
+}
 
 export function defaultOptions(item: MenuItem): Options {
-  if (!isDrink(item.cat)) return { warm: false };
+  if (!isDrink(item.cat)) return item.cat === "bakes" ? { warm: false, addons: [] } : { addons: [] };
+  const c = drinkChoices(item);
+  const temp = item.cat === "cold" ? "iced" : (item.traits?.temp ?? "hot");
   return {
     size: "regular",
-    temp: item.traits?.temp ?? "hot",
-    milk: item.diet?.includes("vegan") ? "none" : "whole",
+    temp,
+    ...(c.milk ? { milk: item.diet?.includes("vegan") ? "none" : "whole" } : {}),
     sweet: "normal",
-    ...(item.cat === "coffee" ? { shot: false } : {}),
+    ...(c.shot ? { shot: false, decaf: false } : {}),
+    ...(c.syrup ? { syrup: "none", toppings: [] } : {}),
+    ...(temp === "iced" ? { ice: "normal" } : { extraHot: false }),
   };
 }
 
@@ -60,13 +104,20 @@ export function cleanOptions(item: MenuItem, raw: unknown): Options {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const pick = <V extends string>(list: Choice<V>[], v: unknown, fallback?: V) =>
     list.some((c) => c.value === v) ? (v as V) : fallback;
-  if (!isDrink(item.cat)) return { warm: r.warm === true };
+  const addons = (item.addons ?? []).map((a) => a.id).filter((id) => Array.isArray(r.addons) && r.addons.includes(id)); // in the menu's order
+  if (!isDrink(item.cat)) return item.cat === "bakes" ? { warm: r.warm === true, addons } : { addons };
+  const c = drinkChoices(item);
+  const temp = c.temp ? pick(TEMPS, r.temp, d.temp) : "iced";
   return {
     size: pick(SIZES, r.size, d.size),
-    temp: pick(TEMPS, r.temp, d.temp),
-    milk: pick(MILKS, r.milk, d.milk),
+    temp,
+    ...(c.milk ? { milk: pick(MILKS, r.milk, d.milk) } : {}),
     sweet: pick(SWEETS, r.sweet, d.sweet),
-    ...(item.cat === "coffee" ? { shot: r.shot === true } : {}),
+    ...(c.shot ? { shot: r.shot === true, decaf: r.decaf === true } : {}),
+    ...(c.syrup
+      ? { syrup: pick(SYRUPS, r.syrup, "none"), toppings: TOPPINGS.map((t) => t.value).filter((t) => Array.isArray(r.toppings) && r.toppings.includes(t)) }
+      : {}),
+    ...(temp === "iced" ? { ice: pick(ICE, r.ice, "normal") } : { extraHot: r.extraHot === true }),
   };
 }
 
@@ -75,18 +126,27 @@ export function unitPrice(item: MenuItem, o: Options) {
   p += SIZES.find((s) => s.value === o.size)?.extra ?? 0;
   p += MILKS.find((m) => m.value === o.milk)?.extra ?? 0;
   if (o.shot) p += SHOT_PRICE;
+  p += SYRUPS.find((s) => s.value === o.syrup)?.extra ?? 0;
+  for (const t of o.toppings ?? []) p += TOPPINGS.find((x) => x.value === t)?.extra ?? 0;
+  for (const id of o.addons ?? []) p += item.addons?.find((a) => a.id === id)?.price ?? 0;
   return p;
 }
 
 export function describeOptions(item: MenuItem, o: Options) {
-  if (!isDrink(item.cat)) return o.warm ? "warmed" : "";
+  const addons = (o.addons ?? []).map((id) => item.addons?.find((a) => a.id === id)?.label).filter(Boolean) as string[];
+  if (!isDrink(item.cat)) return [o.warm ? "warmed" : "", ...addons.map((a) => a.replace(/^Make it a combo: /, ""))].filter(Boolean).join(" · ");
   const d = defaultOptions(item);
   const parts: string[] = [];
   if (o.size && o.size !== "regular") parts.push(o.size);
   if (o.temp && o.temp !== d.temp) parts.push(o.temp);
+  if (o.extraHot) parts.push("extra hot");
+  if (o.ice && o.ice !== "normal") parts.push(`${o.ice} ice`);
   if (o.milk && o.milk !== d.milk) parts.push(o.milk === "none" ? "no milk" : `${o.milk} milk`);
   if (o.sweet && o.sweet !== "normal") parts.push(`${o.sweet} sweet`);
+  if (o.decaf) parts.push("decaf");
   if (o.shot) parts.push("extra shot");
+  if (o.syrup && o.syrup !== "none") parts.push(`${o.syrup} syrup`);
+  for (const t of o.toppings ?? []) parts.push(TOPPINGS.find((x) => x.value === t)?.label.toLowerCase() ?? t);
   return parts.join(" · ");
 }
 
@@ -178,7 +238,7 @@ export function quote(
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
 
   const happyHour = isHappyHour(extra.now);
-  const bakes = lines.filter((l) => !isDrink(l.cat!));
+  const bakes = lines.filter((l) => l.cat === "bakes"); // golden hour and birthday treats are for bakes (not savoury food)
   const happyDiscount = happyHour ? Math.round(bakes.reduce((s, l) => s + l.total, 0) * HAPPY_HOUR.off) : 0;
 
   // A code on its own (e.g. in tests) is looked up in the starting codes

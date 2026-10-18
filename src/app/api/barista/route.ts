@@ -68,7 +68,9 @@ function systemPrompt(menu: MenuItem[]) {
 Your job: chat warmly and briefly (2–4 short sentences, a little playful, the odd ✿ or ☕ is fine), understand what the guest is in the mood for, and suggest up to 3 items from the menu below. Explain each pick in one short, specific line in "reason". Only recommend items from this menu, using their exact id. If nothing fits, say so kindly and suggest the closest option.
 
 Good to know:
-- Drinks can be customised in the app: size, hot or iced, whole/oat/almond milk, sweetness, extra espresso shot (coffee only).
+- Drinks can be customised in the app: size, hot or iced (cold drinks are always iced, with light/normal/extra ice), whole/oat/almond/soy milk, sweetness, syrups (vanilla, caramel, hazelnut, rose), toppings (whipped cream, caramel drizzle, cinnamon, cocoa), and for coffee an extra shot or decaf.
+- Food has add-ons like extra cheese, an egg, gluten-free bread or pasta, and combos with a coffee or chai.
+- The menu has sections: coffee, tea & matcha, cold drinks (iced coffees, frappés, smoothies, mocktails, juices), food (toasties, sandwiches, toast, pancakes, pasta, bowls) and bakes.
 - Opening hours: ${HOURS_LABEL.map((h) => `${h.days} ${h.time}`).join("; ")}.
 - ${HAPPY_HOUR.label}.${isHappyHour(now) ? " It's golden hour right now!" : ""}
 - Right now: ${now.toLocaleString("en-IN", { weekday: "long", hour: "numeric", minute: "2-digit" })} (${openStatus(now).text}).
@@ -200,7 +202,10 @@ const WORDS: [RegExp, (m: MenuItem) => number][] = [
   [/matcha|green/i, (m) => (/matcha/i.test(m.name) ? 5 : 0)],
   [/tea|chai/i, (m) => (m.cat === "tea" ? 3 : 0)],
   [/coffee|latte|espresso/i, (m) => (m.cat === "coffee" ? 3 : 0)],
-  [/eat|food|hungry|snack|bake|pastry|cake|breakfast/i, (m) => (m.cat === "bakes" ? 4 : 0)],
+  [/eat|food|hungry|snack|bake|pastry|cake|breakfast/i, (m) => (m.cat === "bakes" || m.cat === "food" ? 4 : 0)],
+  [/lunch|meal|savoury|savory|sandwich|toast|pasta|bowl|filling|starving/i, (m) => (m.cat === "food" ? 6 : 0)],
+  [/smoothie|juice|mocktail|fresh|fruit|healthy|refreshing/i, (m) => (m.cat === "cold" && m.noMilk ? 5 : 0)],
+  [/frapp|milkshake|blended|cold coffee/i, (m) => (/frapp|mocha|brew/i.test(m.name) ? 5 : 0)],
   [/pink|pretty|aesthetic|rose|instagram/i, (m) => (m.badge === "pink pick" || /rose|pink|strawberry/i.test(m.name + m.desc) ? 5 : 0)],
   [/cheap|budget|broke|student/i, (m) => (m.price <= 160 ? 3 : 0)],
   [/popular|best|recommend|favourite|favorite|surprise/i, (m) => (m.badge === "bestseller" ? 4 : 0)],

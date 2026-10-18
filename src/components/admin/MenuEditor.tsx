@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { CATEGORIES, photo, type Category, type Diet, type MenuItem } from "@/lib/menu";
+import { CATEGORIES, inTab, photo, type Addon, type Category, type Diet, type MenuItem, type MenuTab } from "@/lib/menu";
 import { rupees } from "@/lib/pricing";
 import { SEASONS } from "@/lib/seasons";
 import { ALLERGENS, type Allergen } from "@/lib/nutrition";
@@ -16,7 +16,7 @@ const LEVELS = ["Low", "Medium", "High"];
 export default function MenuEditor({ canEdit = true }: { canEdit?: boolean }) {
   const { toast, refreshSoldOut } = useStore();
   const [items, setItems] = useState<MenuItem[]>([]);
-  const [filter, setFilter] = useState<Category | "all">("all");
+  const [filter, setFilter] = useState<MenuTab>("all");
   const [editing, setEditing] = useState<MenuItem | null>(null);
 
   const load = useCallback(async () => {
@@ -41,7 +41,7 @@ export default function MenuEditor({ canEdit = true }: { canEdit?: boolean }) {
     load();
   }
 
-  const shown = items.filter((m) => filter === "all" || m.cat === filter);
+  const shown = items.filter((m) => inTab(m, filter));
 
   return (
     <>
@@ -51,7 +51,7 @@ export default function MenuEditor({ canEdit = true }: { canEdit?: boolean }) {
             <button key={c.id} className={`chip ${filter === c.id ? "on" : ""}`} onClick={() => setFilter(c.id)}>{c.label}</button>
           ))}
         </div>
-        {canEdit && <button className="btn btn-pink btn-sm" onClick={() => setEditing({ ...BLANK, cat: filter === "all" ? "coffee" : filter })}>＋ New item</button>}
+        {canEdit && <button className="btn btn-pink btn-sm" onClick={() => setEditing({ ...BLANK, cat: filter === "all" || filter === "specials" ? "coffee" : filter })}>＋ New item</button>}
       </div>
       <p className="muted small" style={{ marginBottom: "1rem" }}>{canEdit ? <>Changes show on the site straight away. &quot;Hidden&quot; keeps an item for later; seasonal items appear and disappear on their dates.</> : "Flip the switch when something runs out. It shows as sold out straight away."}</p>
 
@@ -124,7 +124,7 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
   }
 
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const drink = f.cat !== "bakes";
+  const drink = f.cat === "coffee" || f.cat === "tea" || f.cat === "cold";
 
   return (
     <>
@@ -144,7 +144,7 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
           <div className="row">
             <label className="field">Category
               <select className="input" value={f.cat} onChange={(e) => set("cat", e.target.value as Category)}>
-                <option value="coffee">Coffee</option><option value="tea">Tea & matcha</option><option value="bakes">Bakes & sweets</option>
+                <option value="coffee">Coffee</option><option value="tea">Tea & matcha</option><option value="cold">Cold drinks</option><option value="food">Food</option><option value="bakes">Bakes & sweets</option>
               </select>
             </label>
             <label className="field">Badge
@@ -214,6 +214,14 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
               {Object.values(SEASONS).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </label>
+          {drink ? (
+            <div className="toggle-row">
+              <span>Made without milk <span className="small muted">· smoothies, juices, mocktails: hides the milk, syrup and topping choices</span></span>
+              <button type="button" className={`switch ${f.noMilk ? "" : "off"}`} onClick={() => set("noMilk", f.noMilk ? undefined : true)} aria-pressed={!!f.noMilk} aria-label="Made without milk" />
+            </div>
+          ) : (
+            <AddonsEditor addons={f.addons ?? []} onChange={(a) => set("addons", a.length ? a : undefined)} />
+          )}
           <UsesEditor uses={f.uses ?? []} onChange={(u) => set("uses", u)} />
           {error && <p className="error">{error}</p>}
           <div className="row" style={{ justifyContent: "space-between" }}>
@@ -258,3 +266,29 @@ function UsesEditor({ uses, onChange }: { uses: { ingredient: string; amount: nu
   );
 }
 
+
+/** Food add-ons: label, price, and allergens it adds (e.g. an egg) or takes away (gluten-free bread) */
+function AddonsEditor({ addons, onChange }: { addons: Addon[]; onChange: (a: Addon[]) => void }) {
+  const upd = (i: number, patch: Partial<Addon>) => onChange(addons.map((a, j) => (j === i ? { ...a, ...patch } : a)));
+  const ALLERGEN_IDS = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
+  return (
+    <div className="field">Add-ons <span className="small">(extra cheese, add an egg, make it a combo…)</span>
+      {addons.map((a, i) => (
+        <div className="row" key={a.id} style={{ alignItems: "center" }}>
+          <input className="input" style={{ flex: 2, minWidth: 140 }} value={a.label} maxLength={50} onChange={(e) => upd(i, { label: e.target.value })} aria-label="Add-on name" />
+          <input className="input" style={{ maxWidth: "5.5rem" }} type="number" min={0} max={2000} value={a.price} onChange={(e) => upd(i, { price: Math.max(0, Number(e.target.value) || 0) })} aria-label="Add-on price" />
+          <select className="input" style={{ maxWidth: "9rem" }} value={a.removes?.[0] ? `-${a.removes[0]}` : a.adds?.[0] ? `+${a.adds[0]}` : ""} onChange={(e) => {
+            const v = e.target.value;
+            upd(i, { adds: v.startsWith("+") ? [v.slice(1)] : undefined, removes: v.startsWith("-") ? [v.slice(1)] : undefined });
+          }} aria-label="Allergen change">
+            <option value="">No allergen change</option>
+            {ALLERGEN_IDS.map((x) => <option key={`+${x}`} value={`+${x}`}>Adds {x}</option>)}
+            {ALLERGEN_IDS.map((x) => <option key={`-${x}`} value={`-${x}`}>Removes {x}</option>)}
+          </select>
+          <button type="button" className="chip" onClick={() => onChange(addons.filter((_, j) => j !== i))} aria-label={`Remove ${a.label}`}>✕</button>
+        </div>
+      ))}
+      <button type="button" className="chip" style={{ alignSelf: "flex-start" }} onClick={() => onChange([...addons, { id: `addon-${Math.random().toString(36).slice(2, 7)}`, label: "New add-on", price: 30 }])}>＋ Add an add-on</button>
+    </div>
+  );
+}

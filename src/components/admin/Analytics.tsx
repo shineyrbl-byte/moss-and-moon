@@ -97,13 +97,15 @@ export default function Analytics() {
   const cat = [
     { label: "Coffee", value: data.byCategory.coffee ?? 0 },
     { label: "Tea & matcha", value: data.byCategory.tea ?? 0 },
+    { label: "Cold drinks", value: data.byCategory.cold ?? 0 },
+    { label: "Food", value: data.byCategory.food ?? 0 },
     { label: "Bakes & sweets", value: data.byCategory.bakes ?? 0 },
   ];
   const catTotal = cat.reduce((s, c) => s + c.value, 0);
   const o = data.options;
   const milk = [
     { label: "Whole", value: o.milk.whole ?? 0 }, { label: "Oat", value: o.milk.oat ?? 0 },
-    { label: "Almond", value: o.milk.almond ?? 0 }, { label: "No milk", value: o.milk.none ?? 0 },
+    { label: "Almond", value: o.milk.almond ?? 0 }, { label: "Soy", value: o.milk.soy ?? 0 }, { label: "No milk", value: o.milk.none ?? 0 },
   ];
   const size = [{ label: "Small", value: o.size.small ?? 0 }, { label: "Regular", value: o.size.regular ?? 0 }, { label: "Large", value: o.size.large ?? 0 }];
   const temp = [{ label: "Hot", value: o.temp.hot ?? 0 }, { label: "Iced", value: o.temp.iced ?? 0 }];

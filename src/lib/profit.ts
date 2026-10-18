@@ -19,6 +19,8 @@ export function unitCost(item: MenuItem, opts: Options, costs = costTable()) {
   let c = item.cost ?? 0;
   for (const [id, amt] of needsFor(item, opts)) c += amt * (costs.get(id) ?? 0);
   if (isDrink(item.cat)) c += CUP_COST;
+  // Syrups, toppings and food add-ons: roughly a third of what they're sold for
+  c += ((opts.syrup && opts.syrup !== "none" ? 30 : 0) + (opts.toppings ?? []).length * 10 + (opts.addons ?? []).reduce((s, id) => s + (item.addons?.find((a) => a.id === id)?.price ?? 0), 0)) * 0.35;
   const guessed = !isDrink(item.cat) && item.cost === undefined && !item.uses?.length;
   if (guessed) c = item.price * BAKE_SHARE;
   return { cost: Math.round(c * 100) / 100, guessed };

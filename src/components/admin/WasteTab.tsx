@@ -20,7 +20,7 @@ export default function WasteTab() {
 
   const load = useCallback(() => fetch("/api/admin/waste").then((r) => r.json()).then(setD).catch(() => {}), []);
   useEffect(() => { load(); }, [load]);
-  const bakes = useMemo(() => menu.filter((m) => m.cat === "bakes"), [menu]);
+  const bakes = useMemo(() => menu.filter((m) => m.cat === "bakes" || m.cat === "food"), [menu]);
 
   async function save() {
     const entries = Object.entries(counts).filter(([, q]) => q > 0).map(([itemId, qty]) => ({ itemId, qty, reason }));
@@ -76,7 +76,7 @@ export default function WasteTab() {
       </section>
 
       <section className="card" style={{ padding: "1.1rem 1.2rem" }}>
-        <h3 style={{ fontSize: "1.3rem" }}>🥐 Bake plan for {planDay}</h3>
+        <h3 style={{ fontSize: "1.3rem" }}>🥐 Bake & prep plan for {planDay}</h3>
         <p className="small muted">{hasHistory ? `Based on the last 4 ${planDay}s: what sold, plus a small buffer (less if a lot got thrown away).` : "Not enough history yet. After a few weeks of orders and waste logs, suggestions appear here."}</p>
         {hasHistory && (
           <div className="rota-wrap" style={{ marginTop: "0.6rem" }}>

@@ -1,7 +1,10 @@
 // The starting menu. On first run it is copied into the database; after that,
 // staff edit the menu from /admin → Menu (no code changes needed).
 
-export type Category = "coffee" | "tea" | "bakes";
+export type Category = "coffee" | "tea" | "cold" | "food" | "bakes";
+
+/** Something extra on a food item, e.g. "Add an egg +₹40". adds/removes change its allergens. */
+export type Addon = { id: string; label: string; price: number; kcal?: number; adds?: string[]; removes?: string[] };
 export type Diet = "vegan" | "gf";
 
 export type MenuItem = {
@@ -19,6 +22,10 @@ export type MenuItem = {
   /** Seasonal: only on the menu between these dates (YYYY-MM-DD, either can be left empty) */
   from?: string;
   until?: string;
+  /** Food add-ons guests can pick (extra cheese, gluten-free bread, make it a combo…) */
+  addons?: Addon[];
+  /** Drinks made without milk (smoothies, juices, mocktails): no milk choice */
+  noMilk?: boolean;
   /** Allergens in the item itself (a drink's milk is added on top, see lib/nutrition.ts) */
   allergens?: ("milk" | "nuts" | "gluten" | "egg" | "soy" | "sesame")[];
   /** Rough calories, regular size as it usually comes */
@@ -35,14 +42,23 @@ export type MenuItem = {
 export const photo = (img: string, w = 900) =>
   img.startsWith("/") || img.startsWith("http") ? img : `https://images.unsplash.com/photo-${img}?auto=format&fit=crop&q=75&w=${w}`;
 
-export const CATEGORIES: { id: Category | "all"; label: string }[] = [
+/** Menu tabs: every category, plus "all" and "specials" (new, pink picks and festival drinks) */
+export type MenuTab = Category | "all" | "specials";
+export const CATEGORY_ORDER: Category[] = ["coffee", "tea", "cold", "food", "bakes"];
+export const inTab = (m: Pick<MenuItem, "cat" | "badge" | "season">, tab: MenuTab) =>
+  tab === "all" || (tab === "specials" ? m.badge === "new" || m.badge === "pink pick" || !!m.season : m.cat === tab);
+
+export const CATEGORIES: { id: MenuTab; label: string }[] = [
   { id: "all", label: "Everything" },
+  { id: "specials", label: "Specials" },
   { id: "coffee", label: "Coffee" },
   { id: "tea", label: "Tea & matcha" },
+  { id: "cold", label: "Cold drinks" },
+  { id: "food", label: "Food" },
   { id: "bakes", label: "Bakes & sweets" },
 ];
 
-export const SEED_MENU: MenuItem[] = [
+const BASE_MENU: MenuItem[] = [
   // ----- coffee -----
   { id: "honey-oat-latte", cat: "coffee", name: "Honey Oat Latte", desc: "Double espresso, silky oat milk and wildflower honey.", price: 220, img: "1541167760496-1628856ab772", badge: "bestseller", traits: { energy: 1, sweet: 2, temp: "hot" } },
   { id: "rose-latte", cat: "coffee", name: "Rose Pistachio Latte", desc: "Our pink signature — rose syrup, pistachio cream, espresso.", price: 250, img: "1517487881594-2787fef5ebf7", badge: "pink pick", traits: { energy: 1, sweet: 2, temp: "hot" } },
@@ -75,3 +91,40 @@ export const SEED_MENU: MenuItem[] = [
   { id: "sourdough", cat: "bakes", name: "Seeded Sourdough & Butter", desc: "A thick slice of our daily loaf, toasted.", price: 120, img: "1509440159596-0249088772ff", diet: ["vegan"] },
 ];
 
+// Added in the October 2026 menu update: cold drinks and savoury food.
+// (Older databases get these once; see lib/db.ts.)
+const combo = (id: string, label: string, price: number): Addon => ({ id, label, price });
+const GF_BREAD: Addon = { id: "gf-bread", label: "Gluten-free bread", price: 50, removes: ["gluten"] };
+const CHEESE: Addon = { id: "cheese", label: "Extra cheese", price: 40, kcal: 110, adds: ["milk"] };
+const EGG: Addon = { id: "egg", label: "Add a fried egg", price: 40, kcal: 90, adds: ["egg"] };
+const COMBO_COFFEE = combo("combo-coffee", "Make it a combo: + cappuccino", 120);
+const COMBO_CHAI = combo("combo-chai", "Make it a combo: + masala chai", 90);
+
+export const MENU_V2: MenuItem[] = [
+  // Cold drinks
+  { id: "cold-brew", cat: "cold", name: "Slow Cold Brew", desc: "Steeped for 18 hours. Smooth, chocolatey, served over ice.", price: 210, img: "1517701604599-bb29b565090c", diet: ["vegan", "gf"], traits: { energy: 2, sweet: 0, temp: "iced" }, allergens: [], kcal: 15, uses: [{ ingredient: "espresso-beans", amount: 22 }] },
+  { id: "iced-mocha", cat: "cold", name: "Iced Mocha", desc: "Espresso, dark chocolate and cold milk over ice.", price: 240, img: "1592663527359-cf6642f54cff", traits: { energy: 1, sweet: 2, temp: "iced" }, allergens: ["soy"], kcal: 260, cost: 12 },
+  { id: "oreo-frappe", cat: "cold", name: "Cookies & Cream Frappé", desc: "Blended espresso, milk, ice and crushed chocolate cookies.", price: 260, img: "1572490122747-3968b75cc699", badge: "new", traits: { energy: 1, sweet: 2, temp: "iced" }, allergens: ["gluten", "soy"], kcal: 420, cost: 25 },
+  { id: "berry-smoothie", cat: "cold", name: "Very Berry Smoothie", desc: "Strawberry, blueberry and banana blended with thick curd.", price: 230, img: "1553530666-ba11a7da3888", diet: ["gf"], noMilk: true, traits: { energy: 0, sweet: 1, temp: "iced" }, allergens: ["milk"], kcal: 210, cost: 70 },
+  { id: "mango-smoothie", cat: "cold", name: "Mango Lassi Smoothie", desc: "Alphonso mango, curd and a pinch of cardamom.", price: 220, img: "1623065422902-30a2d299bbe4", diet: ["gf"], noMilk: true, badge: "bestseller", traits: { energy: 0, sweet: 2, temp: "iced" }, allergens: ["milk"], kcal: 240, cost: 60 },
+  { id: "strawberry-banana", cat: "cold", name: "Strawberry Banana Smoothie", desc: "Blended with oat yogurt, so it's fully plant-based.", price: 220, img: "1579954115545-a95591f28bfc", diet: ["vegan", "gf"], noMilk: true, traits: { energy: 0, sweet: 1, temp: "iced" }, allergens: [], kcal: 190, cost: 65 },
+  { id: "blackberry-fizz", cat: "cold", name: "Blackberry Ginger Fizz", desc: "Mocktail: blackberry, fresh ginger, lime and soda.", price: 200, img: "1536935338788-846bb9981813", diet: ["vegan", "gf"], noMilk: true, traits: { energy: 0, sweet: 1, temp: "iced" }, allergens: [], kcal: 110, cost: 45 },
+  { id: "strawberry-mojito", cat: "cold", name: "Strawberry Mint Mojito", desc: "Mocktail: muddled strawberry, mint and lime with soda.", price: 190, img: "1497534446932-c925b458314e", diet: ["vegan", "gf"], noMilk: true, badge: "pink pick", traits: { energy: 0, sweet: 1, temp: "iced" }, allergens: [], kcal: 100, cost: 40 },
+  { id: "passionfruit-lemonade", cat: "cold", name: "Passionfruit Lemonade", desc: "Fresh lemons, passionfruit and a little honey.", price: 180, img: "1546173159-315724a31696", diet: ["gf"], noMilk: true, traits: { energy: 0, sweet: 2, temp: "iced" }, allergens: [], kcal: 120, cost: 35 },
+  { id: "fresh-orange", cat: "cold", name: "Fresh Orange Juice", desc: "Squeezed to order. Nothing else.", price: 160, img: "1600271886742-f049cd451bba", diet: ["vegan", "gf"], noMilk: true, traits: { energy: 0, sweet: 1, temp: "iced" }, allergens: [], kcal: 110, cost: 45 },
+  // Food
+  { id: "cheese-toastie", cat: "food", name: "Three Cheese Toastie", desc: "Cheddar, mozzarella and a little blue, pressed on sourdough.", price: 220, img: "1528736235302-52922df5c122", badge: "bestseller", allergens: ["gluten", "milk"], kcal: 480, cost: 70, addons: [CHEESE, EGG, GF_BREAD, COMBO_COFFEE] },
+  { id: "club-sandwich", cat: "food", name: "Garden Club Sandwich", desc: "Egg, cheese, tomato, lettuce and herb mayo, triple-stacked.", price: 260, img: "1553909489-cd47e0907980", allergens: ["gluten", "milk", "egg"], kcal: 520, cost: 80, addons: [CHEESE, GF_BREAD, COMBO_COFFEE] },
+  { id: "bombay-grill", cat: "food", name: "Bombay Masala Grill", desc: "Spiced potato, beetroot, cheese and green chutney, grilled.", price: 200, img: "1528735602780-2552fd46c7af", allergens: ["gluten", "milk"], kcal: 450, cost: 55, addons: [CHEESE, GF_BREAD, COMBO_CHAI] },
+  { id: "avocado-toast", cat: "food", name: "Smashed Avocado Toast", desc: "Lime, chilli flakes and seeds on toasted sourdough.", price: 280, img: "1588137378633-dea1336ce1e2", diet: ["vegan"], allergens: ["gluten", "sesame"], kcal: 360, cost: 95, addons: [{ id: "poached-egg", label: "Add a poached egg", price: 40, kcal: 80, adds: ["egg"] }, { id: "feta", label: "Crumbled feta", price: 50, kcal: 80, adds: ["milk"] }, { id: "chilli-crunch", label: "Chilli crunch oil", price: 20, kcal: 45 }, GF_BREAD, COMBO_COFFEE] },
+  { id: "egg-toast", cat: "food", name: "Sunny Egg & Chilli Toast", desc: "Two fried eggs, chilli butter and spring onion on sourdough.", price: 240, img: "1525351484163-7529414344d8", allergens: ["gluten", "egg", "milk"], kcal: 410, cost: 50, addons: [EGG, CHEESE, GF_BREAD, COMBO_CHAI] },
+  { id: "pancakes", cat: "food", name: "Buttermilk Pancake Stack", desc: "Three fluffy pancakes, maple syrup and butter.", price: 290, img: "1567620905732-2d1ec7ab7445", allergens: ["gluten", "milk", "egg"], kcal: 620, cost: 60, addons: [{ id: "berries", label: "Fresh berries", price: 50, kcal: 40 }, { id: "nutella", label: "Nutella drizzle", price: 40, kcal: 110, adds: ["nuts", "soy"] }, { id: "cream", label: "Whipped cream", price: 30, kcal: 90 }, COMBO_COFFEE] },
+  { id: "penne-arrabbiata", cat: "food", name: "Penne Arrabbiata", desc: "Slow tomato, garlic and chilli sauce, basil.", price: 320, img: "1621996346565-e3dbc646d9a9", diet: ["vegan"], allergens: ["gluten"], kcal: 540, cost: 70, addons: [{ id: "parmesan", label: "Parmesan", price: 40, kcal: 80, adds: ["milk"] }, { id: "garlic-bread", label: "Garlic bread on the side", price: 60, kcal: 180, adds: ["milk"] }, { id: "gf-pasta", label: "Gluten-free pasta", price: 60, removes: ["gluten"] }] },
+  { id: "pesto-pasta", cat: "food", name: "Basil Pesto Farfalle", desc: "Fresh basil, pine nut pesto, cherry tomatoes and greens.", price: 340, img: "1473093295043-cdd812d0e601", diet: ["vegan"], allergens: ["gluten", "nuts"], kcal: 580, cost: 90, addons: [{ id: "parmesan", label: "Parmesan", price: 40, kcal: 80, adds: ["milk"] }, { id: "gf-pasta", label: "Gluten-free pasta", price: 60, removes: ["gluten"] }] },
+  { id: "buddha-bowl", cat: "food", name: "Rainbow Buddha Bowl", desc: "Quinoa, roast veg, chickpeas, avocado and tahini.", price: 330, img: "1512621776951-a57141f2eefd", diet: ["vegan", "gf"], badge: "new", allergens: ["sesame"], kcal: 520, cost: 110, addons: [{ id: "paneer", label: "Grilled paneer", price: 60, kcal: 160, adds: ["milk"] }, { id: "boiled-egg", label: "Soft-boiled egg", price: 40, kcal: 70, adds: ["egg"] }, { id: "extra-avo", label: "Extra avocado", price: 50, kcal: 80 }] },
+  { id: "granola-bowl", cat: "food", name: "Fruit & Granola Bowl", desc: "Thick curd, house granola, seasonal fruit and honey.", price: 250, img: "1490474418585-ba9bad8fd0ea", allergens: ["milk", "nuts", "gluten"], kcal: 430, cost: 75, addons: [{ id: "vegan-yogurt", label: "Oat yogurt instead", price: 30, removes: ["milk"] }, { id: "extra-fruit", label: "Extra fruit", price: 40, kcal: 40 }, { id: "peanut-butter", label: "Peanut butter", price: 30, kcal: 95, adds: ["nuts"] }] },
+  { id: "margherita-flatbread", cat: "food", name: "Margherita Flatbread", desc: "Wood-fired, tomato, mozzarella and basil. Good for sharing.", price: 350, img: "1565299624946-b28f40a0ae38", allergens: ["gluten", "milk"], kcal: 780, cost: 85, addons: [{ id: "chilli", label: "Chilli oil & jalapeños", price: 30, kcal: 40 }, CHEESE] },
+];
+
+/** The full starting menu for a brand-new café */
+export const SEED_MENU: MenuItem[] = [...BASE_MENU, ...MENU_V2];

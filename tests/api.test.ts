@@ -847,3 +847,25 @@ test("security: cross-site changes are blocked, headers are set, codes are long"
   const sec = (await s.api("/api/admin/security")).body as { checks: { label: string; ok: boolean }[] };
   assert.ok(sec.checks.some((c) => c.label.includes("Two-step") && !c.ok));
 });
+
+test("new menu: cold drinks and food with add-ons, priced on the server", async () => {
+  const items = ((await s.api("/api/menu")).body as { items: { id: string; cat: string; addons?: { id: string }[] }[] }).items;
+  assert.ok(items.filter((i) => i.cat === "cold").length >= 10);
+  assert.ok(items.filter((i) => i.cat === "food").length >= 11);
+  assert.ok(items.find((i) => i.id === "cheese-toastie")!.addons!.some((a) => a.id === "gf-bread"));
+
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Menu", phone: "9000017171", lines: [
+    { itemId: "cheese-toastie", qty: 1, opts: { addons: ["egg", "gf-bread", "gold-leaf"] }, price: 1 },
+    { itemId: "oreo-frappe", qty: 1, opts: { temp: "hot", milk: "soy", toppings: ["whipped"], ice: "light" } },
+    { itemId: "mango-smoothie", qty: 1, opts: { milk: "oat", syrup: "vanilla" } },
+  ] } });
+  assert.equal(placed.status, 200);
+  const o = (await s.api(`/api/orders/${(placed.body as { code: string }).code}`)).body as { lines: { itemId: string; total: number; note: string; opts: { temp?: string; milk?: string } }[] };
+  const [toastie, frappe, smoothie] = o.lines;
+  assert.equal(toastie.total, 220 + 40 + 50, "egg + gluten-free bread; unknown add-ons ignored, browser price ignored");
+  assert.match(toastie.note, /fried egg.*Gluten-free bread/);
+  assert.equal(frappe.opts.temp, "iced", "cold drinks stay iced");
+  assert.equal(frappe.total, 260 + 30 + 30, "soy milk + whipped cream");
+  assert.equal(smoothie.opts.milk, undefined, "smoothies have no milk choice");
+  assert.equal(smoothie.total, 220);
+});

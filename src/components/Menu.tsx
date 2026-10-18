@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { CATEGORIES, photo, type Category, type Diet } from "@/lib/menu";
+import { CATEGORIES, CATEGORY_ORDER, inTab, photo, type Diet, type MenuTab } from "@/lib/menu";
 import { HAPPY_HOUR, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
@@ -14,21 +14,22 @@ export default function Menu() {
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [happy, setHappy] = useState(false);
   useEffect(() => setHappy(isHappyHour()), []);
-  const [cat, setCat] = useState<Category | "all">("all");
+  const [cat, setCat] = useState<MenuTab>("all");
   const [diet, setDiet] = useState<Diet[]>([]);
   const [avoid, setAvoid] = useState<("nuts" | "egg")[]>([]);
   const [q, setQ] = useState("");
 
   const items = useMemo(() => {
     const s = q.trim().toLowerCase();
+    // Grouped by section; within a section, the order the owner set
     return menu.filter(
       (m) =>
-        (cat === "all" || m.cat === cat) &&
+        inTab(m, cat) &&
         (!onlyFavs || favs.has(m.id)) &&
         diet.every((d) => m.diet?.includes(d)) &&
         avoid.every((a) => canAvoid(m, a)) &&
         (!s || `${m.name} ${m.desc} ${m.badge ?? ""}`.toLowerCase().includes(s))
-    );
+    ).sort((a, b) => CATEGORY_ORDER.indexOf(a.cat) - CATEGORY_ORDER.indexOf(b.cat));
   }, [menu, cat, diet, avoid, q, onlyFavs, favs]);
 
   const toggleDiet = (d: Diet) => setDiet((ds) => (ds.includes(d) ? ds.filter((x) => x !== d) : [...ds, d]));

@@ -6,7 +6,7 @@ import DrinkCup from "./DrinkCup";
 import { ALLERGENS, allergensFor, kcalFor } from "@/lib/nutrition";
 import { useRouter } from "next/navigation";
 import { photo } from "@/lib/menu";
-import { MILKS, SHOT_PRICE, SIZES, SWEETS, TEMPS, defaultOptions, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
+import { ICE, MILKS, SHOT_PRICE, SIZES, SWEETS, SYRUPS, TEMPS, TOPPINGS, cleanOptions, defaultOptions, drinkChoices, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
 
 // Pop-up for choosing size, milk, sweetness etc. before adding to the tray.
 export default function CustomizeModal() {
@@ -26,7 +26,11 @@ export default function CustomizeModal() {
   useEscape(!!item, close);
   if (!item) return null;
 
-  const set = <K extends keyof Options>(k: K, v: Options[K]) => setOpts((o) => ({ ...o, [k]: v }));
+  // Always run choices through the same rules the server uses (e.g. switching to iced swaps "extra hot" for an ice level)
+  const set = <K extends keyof Options>(k: K, v: Options[K]) => setOpts((o) => cleanOptions(item, { ...o, [k]: v }));
+  const toggleIn = (k: "toppings" | "addons", v: string) =>
+    setOpts((o) => cleanOptions(item, { ...o, [k]: ((o[k] as string[] | undefined) ?? []).includes(v) ? (o[k] as string[]).filter((x) => x !== v) : [...((o[k] as string[] | undefined) ?? []), v] }));
+  const can = drinkChoices(item);
   const drink = isDrink(item.cat);
   const unit = unitPrice(item, opts);
   const out = soldOut.has(item.id);
@@ -75,21 +79,71 @@ export default function CustomizeModal() {
           {drink ? (
             <>
               {group("Size", "size", SIZES)}
-              {group("Hot or iced", "temp", TEMPS)}
-              {group("Milk", "milk", MILKS)}
+              {can.temp && group("Hot or iced", "temp", TEMPS)}
+              {opts.temp === "iced" && group("Ice", "ice", ICE)}
+              {can.milk && group("Milk", "milk", MILKS)}
               {group("Sweetness", "sweet", SWEETS)}
-              {item.cat === "coffee" && (
+              {can.syrup && group("Syrup", "syrup", SYRUPS)}
+              {can.toppings && (
+                <div className="opt-group">
+                  <h4>Toppings <span className="muted small" style={{ textTransform: "none", letterSpacing: 0 }}>· pick any</span></h4>
+                  <div className="chips">
+                    {TOPPINGS.map((t) => {
+                      const on = !!opts.toppings?.includes(t.value);
+                      return (
+                        <button key={t.value} className={`chip ${on ? "on" : ""}`} aria-pressed={on} onClick={() => toggleIn("toppings", t.value)}>
+                          {t.label}{t.extra > 0 && <span className="extra"> +₹{t.extra}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {can.shot && (
                 <div className="toggle-row">
                   <span>Extra espresso shot <span className="muted small">+₹{SHOT_PRICE}</span></span>
                   <button className={`switch ${opts.shot ? "" : "off"}`} onClick={() => set("shot", !opts.shot)} aria-pressed={!!opts.shot} aria-label="Extra shot" />
                 </div>
               )}
+              {can.decaf && (
+                <div className="toggle-row">
+                  <span>Decaf <span className="muted small">· same taste, no buzz</span></span>
+                  <button className={`switch ${opts.decaf ? "" : "off"}`} onClick={() => set("decaf", !opts.decaf)} aria-pressed={!!opts.decaf} aria-label="Decaf" />
+                </div>
+              )}
+              {opts.temp === "hot" && (
+                <div className="toggle-row">
+                  <span>Extra hot 🔥</span>
+                  <button className={`switch ${opts.extraHot ? "" : "off"}`} onClick={() => set("extraHot", !opts.extraHot)} aria-pressed={!!opts.extraHot} aria-label="Extra hot" />
+                </div>
+              )}
             </>
           ) : (
-            <div className="toggle-row">
-              <span>Warm it up for me ♨</span>
-              <button className={`switch ${opts.warm ? "" : "off"}`} onClick={() => set("warm", !opts.warm)} aria-pressed={!!opts.warm} aria-label="Warm it up" />
-            </div>
+            <>
+              {item.cat === "bakes" && (
+                <div className="toggle-row">
+                  <span>Warm it up for me ♨</span>
+                  <button className={`switch ${opts.warm ? "" : "off"}`} onClick={() => set("warm", !opts.warm)} aria-pressed={!!opts.warm} aria-label="Warm it up" />
+                </div>
+              )}
+              {!!item.addons?.length && (
+                <div className="opt-group">
+                  <h4>Add-ons</h4>
+                  <div className="addon-list">
+                    {item.addons.map((a) => {
+                      const on = !!opts.addons?.includes(a.id);
+                      return (
+                        <label key={a.id} className={`addon ${on ? "on" : ""}`}>
+                          <input type="checkbox" checked={on} onChange={() => toggleIn("addons", a.id)} />
+                          <span>{a.label}</span>
+                          <span className="muted small">{a.price ? `+${rupees(a.price)}` : "free"}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so please tell us about severe allergies.</p>

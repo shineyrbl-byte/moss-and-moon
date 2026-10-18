@@ -1,8 +1,12 @@
 // Turns "two iced oat lattes and a croissant" into tray lines.
 // (No imports, so the tests can load it directly. The AI is used first when set up.)
 
-export type VoiceMenuItem = { id: string; name: string; cat: string };
-export type VoiceOpts = { size?: "small" | "regular" | "large"; temp?: "hot" | "iced"; milk?: "whole" | "oat" | "almond" | "none"; sweet?: "none" | "less" | "normal" | "extra"; shot?: boolean };
+export type VoiceMenuItem = { id: string; name: string; cat: string; addons?: { id: string; label: string }[] };
+export type VoiceOpts = {
+  size?: "small" | "regular" | "large"; temp?: "hot" | "iced"; milk?: "whole" | "oat" | "almond" | "soy" | "none"; sweet?: "none" | "less" | "normal" | "extra"; shot?: boolean;
+  decaf?: boolean; syrup?: "vanilla" | "caramel" | "hazelnut" | "rose"; toppings?: string[]; ice?: "light" | "normal" | "extra"; extraHot?: boolean; addons?: string[];
+};
+const DRINKS = new Set(["coffee", "tea", "cold"]);
 export type VoiceLine = { itemId: string; qty: number; opts: VoiceOpts };
 
 const NUMBERS: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, couple: 2, ek: 1, do: 2, teen: 3, char: 4 };
@@ -14,7 +18,7 @@ const ALIASES: Record<string, string[]> = {
 };
 
 // Words that usually describe options, so they count for less when matching names ("oat" milk vs Honey Oat Latte)
-const OPTION_WORDS = new Set(["oat", "almond", "whole", "iced", "ice", "cold", "hot", "warm", "large", "big", "small", "little", "black", "double", "strong", "sweet", "sugar", "milk", "extra", "shot"]);
+const OPTION_WORDS = new Set(["oat", "almond", "soy", "whole", "iced", "ice", "cold", "hot", "warm", "large", "big", "small", "little", "black", "double", "strong", "sweet", "sugar", "milk", "extra", "shot", "vanilla", "caramel", "hazelnut", "cream", "whipped", "decaf", "cheese", "egg"]);
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 const singular = (w: string) => (w.endsWith("ies") ? w.slice(0, -3) + "y" : w.endsWith("es") && w.length > 4 ? w.slice(0, -2) : w.endsWith("s") && w.length > 3 ? w.slice(0, -1) : w);
@@ -25,6 +29,7 @@ function optionsFrom(t: string): VoiceOpts {
   else if (/\b(hot|warm)\b/.test(t)) o.temp = "hot";
   if (/\boat\b/.test(t)) o.milk = "oat";
   else if (/\balmond\b/.test(t)) o.milk = "almond";
+  else if (/\bsoy\b/.test(t)) o.milk = "soy";
   else if (/\b(no milk|without milk|black)\b/.test(t)) o.milk = "none";
   else if (/\b(whole|regular milk|full fat)\b/.test(t)) o.milk = "whole";
   if (/\b(large|big|grande)\b/.test(t)) o.size = "large";
@@ -33,6 +38,14 @@ function optionsFrom(t: string): VoiceOpts {
   else if (/\b(less sweet|less sugar|half sweet)\b/.test(t)) o.sweet = "less";
   else if (/\b(extra sweet|more sugar|extra sugar)\b/.test(t)) o.sweet = "extra";
   if (/\b(extra shot|double shot|double|strong)\b/.test(t)) o.shot = true;
+  if (/\b(decaf|decaffeinated|no caffeine)\b/.test(t)) o.decaf = true;
+  const syrup = t.match(/\b(vanilla|caramel|hazelnut|rose) syrup\b/) ?? t.match(/\bwith (vanilla|caramel|hazelnut)\b/);
+  if (syrup) o.syrup = syrup[1] as VoiceOpts["syrup"];
+  const tops = [/whipped cream|whip\b/.test(t) && "whipped", /caramel drizzle/.test(t) && "caramel-drizzle", /cinnamon/.test(t) && "cinnamon", /cocoa|chocolate dust/.test(t) && "cocoa"].filter(Boolean) as string[];
+  if (tops.length) o.toppings = tops;
+  if (/\b(less ice|light ice|not much ice|little ice)\b/.test(t)) o.ice = "light";
+  else if (/\b(extra ice|lots of ice|more ice)\b/.test(t)) o.ice = "extra";
+  if (/\b(extra hot|very hot|piping hot)\b/.test(t)) o.extraHot = true;
   return o;
 }
 
@@ -61,12 +74,39 @@ export function parseVoiceOrder(text: string, menu: VoiceMenuItem[]): { lines: V
     if (/^(my |the )?usual$/.test(part)) continue;
     const item = bestItem(part, menu);
     if (!item) {
+      // "…, less ice and whipped cream": options said after the drink belong to it
+      const prev = lines[lines.length - 1];
+      const extra = optionsFrom(part);
+      if (prev && Object.keys(extra).length && DRINKS.has(menu.find((m) => m.id === prev.itemId)?.cat ?? "")) {
+        prev.opts = { ...prev.opts, ...extra, ...(extra.toppings ? { toppings: [...new Set([...(prev.opts.toppings ?? []), ...extra.toppings])] } : {}) };
+        continue;
+      }
       if (part.split(" ").some((w) => !STOP.has(w) && w.length > 2)) missed.push(part);
       continue;
     }
     const n = part.match(/\b(\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|couple|ek|do|teen|char)\b/);
     const qty = n ? (Number(n[1]) || NUMBERS[n[1]] || 1) : 1;
-    lines.push({ itemId: item.id, qty: Math.min(10, Math.max(1, qty)), opts: item.cat === "bakes" ? {} : optionsFrom(part) });
+    // Words from the item's own name don't count as options ("Oat" in Honey Oat Latte isn't oat milk,
+    // "cheese" in Three Cheese Toastie isn't extra cheese)
+    // (each word of the name is taken out once, so "honey oat latte with oat milk" still means oat milk)
+    const nameLeft = norm(item.name).split(" ").map(singular);
+    const rest = part
+      .split(" ")
+      .filter((w) => {
+        const i = nameLeft.indexOf(singular(w));
+        if (i === -1) return true;
+        nameLeft.splice(i, 1);
+        return false;
+      })
+      .join(" ");
+    const opts: VoiceOpts = DRINKS.has(item.cat) ? optionsFrom(rest) : {};
+    // Food add-ons: "with extra cheese", "add an egg", "gluten free bread"
+    const addons = (item.addons ?? []).filter((a) => {
+      const key = norm(a.label).replace(/^(add an?|add|make it a combo|extra)\s*/, "").replace(/ on the side$/, "");
+      return rest.includes(key) || key.split(" ").filter((w) => w.length > 3 && !["bread", "pasta", "make", "combo", "with"].includes(w)).some((w) => rest.split(" ").includes(w));
+    });
+    if (addons.length) opts.addons = addons.map((a) => a.id);
+    lines.push({ itemId: item.id, qty: Math.min(10, Math.max(1, qty)), opts });
   }
   return { lines, usual, missed };
 }
