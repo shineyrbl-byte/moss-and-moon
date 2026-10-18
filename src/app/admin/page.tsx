@@ -33,6 +33,7 @@ import RetentionPanel from "@/components/admin/RetentionPanel";
 import CashupTab from "@/components/admin/CashupTab";
 import PnlTab from "@/components/admin/PnlTab";
 import CateringTab from "@/components/admin/CateringTab";
+import SupportInbox from "@/components/SupportInbox";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -225,6 +226,7 @@ export default function AdminPage() {
           <p className="small muted">Signed in as {me?.name} · {me?.role}</p>
         </div>
         <div className="row">
+          <SupportInbox onNew={chime} />
           <a className="btn btn-pink btn-sm" href="/staff">☕ Barista screen</a>
           <button className="btn btn-ghost btn-sm" onClick={logout}>Log out</button>
         </div>

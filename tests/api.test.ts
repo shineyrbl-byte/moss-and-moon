@@ -1236,3 +1236,29 @@ test("catering: request, quote, accept and pay", async () => {
   assert.ok(p.catering >= 7500);
   assert.equal((await s.api(`/api/catering/${code}`, { method: "PATCH", json: { status: "done" } })).body.status, "done");
 });
+
+test("talk to a person: guest and staff chat, guests only see their own", async () => {
+  const anon = { "Content-Type": "application/json", Origin: s.url };
+  const start = await fetch(`${s.url}/api/support`, { method: "POST", headers: anon, body: JSON.stringify({ name: "Ira", email: "ira@example.com", text: "Is the brownie gluten-free?", context: [{ role: "user", content: "gluten free?" }, { role: "assistant", content: "Try the brownie" }] }) });
+  assert.equal(start.status, 200);
+  const { code, token } = await start.json();
+  // Wrong token: nothing
+  assert.equal((await fetch(`${s.url}/api/support/${code}?token=nope`)).status, 404);
+  assert.equal((await fetch(`${s.url}/api/support/${code}`, { method: "POST", headers: anon, body: JSON.stringify({ token: "x".repeat(token.length), text: "hi" }) })).status, 404);
+  assert.equal((await fetch(`${s.url}/api/live?topic=support&code=${code}&token=bad`)).status, 404);
+  await s.login();
+  const inbox = (await s.api("/api/support")).body as { code: string; unread: number }[];
+  assert.equal(inbox.find((c) => c.code === code)?.unread, 1);
+  const staffView = (await s.api(`/api/support/${code}`)).body as { context: string; messages: unknown[] };
+  assert.match(staffView.context, /Guest: gluten free\?/);
+  assert.equal((await s.api(`/api/support/${code}`, { method: "POST", json: { text: "Yes! It's made with almond flour." } })).status, 200);
+  assert.equal(((await s.api("/api/support")).body as { code: string; unread: number }[]).find((c) => c.code === code)?.unread, 0);
+  const guest = await (await fetch(`${s.url}/api/support/${code}?token=${encodeURIComponent(token)}`)).json();
+  assert.deepEqual(guest.messages.map((m: { sender: string }) => m.sender), ["guest", "staff"]);
+  assert.equal(guest.context, undefined, "guests don't get staff-only fields");
+  assert.equal((await fetch(`${s.url}/api/support/${code}`, { method: "POST", headers: anon, body: JSON.stringify({ token, text: "Thank you!" }) })).status, 200);
+  assert.equal((await s.api(`/api/support/${code}`, { method: "PATCH", json: { status: "closed" } })).status, 200);
+  const after = await (await fetch(`${s.url}/api/support/${code}?token=${encodeURIComponent(token)}`)).json();
+  assert.equal(after.status, "closed");
+  assert.equal(after.messages.at(-1).sender, "system");
+});

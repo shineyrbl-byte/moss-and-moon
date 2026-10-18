@@ -1043,3 +1043,12 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .floor-table.small ellipse, .floor-table.small rect { fill: var(--surface); stroke: var(--line); }
 .floor-table.small text, .floor-table.taken text { fill: var(--muted); }
 .floor-table.taken ellipse, .floor-table.taken rect { fill: url(#floor-taken); stroke: var(--line); }
+
+/* Chat with the team */
+.bubble.system { background: transparent; color: var(--muted); font-size: 0.8rem; font-style: italic; padding: 0.2rem 0.4rem; }
+.support-drawer { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.support-row { display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 0.5rem; text-align: left; padding: 0.7rem 0.8rem; border-radius: 12px; background: var(--surface-2); border: 1px solid transparent; color: inherit; font: inherit; cursor: pointer; }
+.support-row > small { grid-column: 1; }
+.support-row:hover, .support-row:focus-visible { border-color: var(--pink); }
+.support-row.unread { background: var(--pink-soft); }
+.support-badge { grid-column: 2; grid-row: 1 / span 2; align-self: center; min-width: 1.5rem; height: 1.5rem; border-radius: 999px; background: var(--pink-fill); color: var(--on-pink); display: grid; place-items: center; font-size: 0.75rem; font-weight: 700; }

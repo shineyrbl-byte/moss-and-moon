@@ -314,6 +314,28 @@ function open() {
       paid_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS support_chats (
+      code TEXT PRIMARY KEY,
+      token TEXT NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT,
+      status TEXT NOT NULL DEFAULT 'open',
+      context TEXT,
+      guest_seen_at TEXT,
+      staff_seen_id INTEGER NOT NULL DEFAULT 0,
+      emailed_id INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      last_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS support_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chat_code TEXT NOT NULL,
+      sender TEXT NOT NULL,
+      staff_name TEXT,
+      text TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE INDEX IF NOT EXISTS support_messages_chat ON support_messages (chat_code, id);
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,

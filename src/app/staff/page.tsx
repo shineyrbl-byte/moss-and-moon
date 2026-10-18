@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ORDER_STEPS, type OrderStatus } from "@/lib/cafe";
 import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useLive } from "@/components/useLive";
+import SupportInbox from "@/components/SupportInbox";
 
 type Order = {
   vip?: boolean;
@@ -128,6 +129,7 @@ export default function StaffScreen() {
         <NextShift />
         <ClockButton />
         <div className="row" style={{ marginLeft: "auto" }}>
+          <SupportInbox onNew={() => sound && beep("order")} />
           <button className={`chip ${sound ? "on" : ""}`} onClick={() => { setSound(!sound); if (!sound) beep("order"); }}>{sound ? "🔔 Sound on" : "🔕 Sound off"}</button>
           <button className={`chip ${awake ? "on" : ""}`} onClick={toggleAwake}>{awake ? "☀︎ Screen stays on" : "Keep screen on"}</button>
           <Link href="/admin" className="chip">Dashboard</Link>

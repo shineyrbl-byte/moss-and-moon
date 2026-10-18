@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { photo } from "@/lib/menu";
 import { rupees } from "@/lib/pricing";
 import { useStore } from "./Store";
+import HumanChat, { savedSession } from "./HumanChat";
+import { useSearchParams } from "next/navigation";
 
 type Rec = { itemId: string; reason: string };
 type Msg = { role: "user" | "assistant"; content: string; recs?: Rec[] };
@@ -23,6 +25,14 @@ export default function BaristaChat() {
   const [error, setError] = useState("");
   const [demo, setDemo] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const [human, setHuman] = useState(false);
+  const params = useSearchParams();
+  // Coming back to an ongoing chat with the team (or from the reply email link)
+  useEffect(() => {
+    const s = savedSession();
+    if (s) setHuman(true);
+    if (s && params.get("chat") === s.code) setOpen(true);
+  }, [params]);
 
   useEffect(() => {
     try {
@@ -75,11 +85,14 @@ export default function BaristaChat() {
           <header className="chat-head">
             <span className="chat-avatar" aria-hidden>☕</span>
             <div>
-              <strong>Mo the barista</strong>
-              <small className="muted">{demo ? "demo mode · keyword matching" : "usually replies in seconds"}</small>
+              <strong>{human ? "The Moss & Moon team" : "Mo the barista"}</strong>
+              <small className="muted">{human ? "real people, on shift now" : demo ? "demo mode · keyword matching" : "usually replies in seconds"}</small>
             </div>
-            <button className="link-btn" style={{ marginLeft: "auto" }} onClick={() => { setMsgs([HELLO]); setError(""); }}>New chat</button>
+            {human
+              ? <button className="link-btn" style={{ marginLeft: "auto" }} onClick={() => setHuman(false)}>Back to Mo</button>
+              : <button className="link-btn" style={{ marginLeft: "auto" }} onClick={() => { setMsgs([HELLO]); setError(""); }}>New chat</button>}
           </header>
+          {human ? <HumanChat context={msgs.slice(1).map(({ role, content }) => ({ role, content }))} onBack={() => setHuman(false)} /> : <>
 
           <div className="chat-list" ref={listRef}>
             {msgs.map((m, i) => (
@@ -116,6 +129,8 @@ export default function BaristaChat() {
             <input className="input" placeholder="What are you in the mood for?" value={text} maxLength={500} onChange={(e) => setText(e.target.value)} aria-label="Message the barista" />
             <button className="btn btn-sm" disabled={busy || !text.trim()} aria-label="Send">➤</button>
           </form>
+          <p className="tiny muted" style={{ textAlign: "center", margin: "-0.3rem 0 0.6rem" }}><button className="link-btn tiny" onClick={() => setHuman(true)}>👋 Talk to a person instead</button></p>
+          </>}
         </section>
       )}
     </>

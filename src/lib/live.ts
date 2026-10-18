@@ -8,7 +8,8 @@ export type LiveEvent =
   | { type: "menu" }
   | { type: "call"; table: number; action: "new" | "done" }
   | { type: "group"; code: string }
-  | { type: "notice" };
+  | { type: "notice" }
+  | { type: "support"; code: string };
 
 const g = globalThis as unknown as { __mmLive?: EventEmitter };
 const bus = g.__mmLive ?? (g.__mmLive = new EventEmitter().setMaxListeners(1000));

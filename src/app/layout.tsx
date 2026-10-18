@@ -8,6 +8,7 @@ import CartDrawer from "@/components/CartDrawer";
 import CustomizeModal from "@/components/CustomizeModal";
 import { PaymentProvider } from "@/components/Payment";
 import BaristaChat from "@/components/BaristaChat";
+import { Suspense } from "react";
 import TableBanner from "@/components/TableBanner";
 import PwaSetup from "@/components/PwaSetup";
 import { getMenu } from "@/lib/menuStore";
@@ -64,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Footer />
             <CartDrawer />
             <CustomizeModal />
-            <BaristaChat />
+            <Suspense fallback={null}><BaristaChat /></Suspense>
             <PwaSetup />
             <ErrorReporter />
             <StatsBeacon />
