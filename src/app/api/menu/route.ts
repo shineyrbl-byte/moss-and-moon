@@ -3,6 +3,7 @@ import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { deleteItem, getMenu, moveItem, saveItem } from "@/lib/menuStore";
 import type { Category, Diet, MenuItem } from "@/lib/menu";
 import { publish } from "@/lib/live";
+import { SEASONS } from "@/lib/seasons";
 
 // The menu (with sold-out flags). Staff can add ?all=1 to include hidden items.
 export async function GET(req: Request) {
@@ -67,6 +68,7 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(from ? { from } : {}),
     ...(until ? { until } : {}),
     ...(uses.length ? { uses } : {}),
+    ...(typeof b.season === "string" && b.season in SEASONS ? { season: b.season } : {}),
   };
 }
 

@@ -8,6 +8,7 @@ import StockTab from "@/components/admin/StockTab";
 import { ORDER_STEPS, type OrderStatus } from "@/lib/cafe";
 import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useStore } from "@/components/Store";
+import { SEASONS } from "@/lib/seasons";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -65,6 +66,7 @@ export default function AdminPage() {
   const [mail, setMail] = useState<{ emails: Email[]; emailMode: string; paymentMode: string } | null>(null);
   const [preview, setPreview] = useState<Email | null>(null);
   const [demoBarista, setDemoBarista] = useState<boolean | null>(null);
+  const [season, setSeason] = useState<{ season: string; seasonNow: string | null } | null>(null);
   const lastMaxId = useRef<number | null>(null);
 
   const load = useCallback(async () => {
@@ -74,7 +76,7 @@ export default function AdminPage() {
     setMe(staff);
     setAuthed(true);
     const owner = staff.role === "owner";
-    fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : null)).then((d) => d && setDemoBarista(d.demoBarista)).catch(() => {});
+    fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setDemoBarista(d.demoBarista); setSeason({ season: d.season, seasonNow: d.seasonNow }); } }).catch(() => {});
     const ownerOnly = (url: string, fallback: unknown) => (owner ? fetch(url).then((r) => r.json()) : Promise.resolve(fallback));
     const [o, b, rv, gc, em, st] = await Promise.all([
       fetch(`/api/orders${showDone ? "" : "?active=1"}`).then((r) => r.json()),
@@ -122,6 +124,15 @@ export default function AdminPage() {
   async function toggleDemoBarista() {
     const r = await fetch("/api/admin/settings", json("PATCH", { demoBarista: !demoBarista }));
     if (r.ok) setDemoBarista((await r.json()).demoBarista);
+  }
+
+  async function changeSeason(v: string) {
+    const r = await fetch("/api/admin/settings", json("PATCH", { season: v }));
+    if (r.ok) {
+      const d = await r.json();
+      setSeason({ season: d.season, seasonNow: d.seasonNow });
+      window.location.reload(); // repaint the whole site in the new theme
+    }
   }
 
   async function logout() {
@@ -197,6 +208,24 @@ export default function AdminPage() {
               <span>💳 Payments: <b>{mail.paymentMode === "razorpay" ? "Razorpay (live)" : "demo mode"}</b></span>
               <span>✉️ Emails: <b>{mail.emailMode === "live" ? "sending via Resend" : "preview only (see Emails tab)"}</b></span>
               <span>🔔 A chime plays when a new order comes in, so keep this tab open.</span>
+            </div>
+          )}
+          {season && (
+            <div className="mode-banner">
+              <span>
+                🎉 Seasonal theme: <b>{season.seasonNow ? SEASONS[season.seasonNow as keyof typeof SEASONS].name : "none right now"}</b>
+                {season.season === "auto" ? " (follows the calendar: Diwali, monsoon, Christmas, Valentine's)" : ""}
+              </span>
+              {me?.role === "owner" && (
+                <label className="row" style={{ alignItems: "center", gap: "0.4rem" }}>
+                  <span className="small">Theme</span>
+                  <select className="input" style={{ width: "auto" }} value={season.season} onChange={(e) => changeSeason(e.target.value)}>
+                    <option value="auto">Automatic</option>
+                    <option value="off">Off</option>
+                    {Object.values(SEASONS).map((s) => <option key={s.id} value={s.id}>Always {s.name} (preview)</option>)}
+                  </select>
+                </label>
+              )}
             </div>
           )}
           {demoBarista !== null && (

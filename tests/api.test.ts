@@ -444,3 +444,16 @@ test("my usual: the drink you order most, how you like it", async () => {
   assert.equal(u.orders, 2);
   assert.equal(((await s.api("/api/usual")).body as { usual: null }).usual, null, "no history, no usual");
 });
+
+test("seasonal drinks appear only in their season", async () => {
+  await s.login();
+  const ids = async () => ((await s.api("/api/menu")).body as { items: { id: string }[] }).items.map((m) => m.id);
+  assert.equal((await s.api("/api/admin/settings", { method: "PATCH", json: { season: "off" } })).status, 200);
+  assert.ok(!(await ids()).includes("gingerbread-latte"));
+  await s.api("/api/admin/settings", { method: "PATCH", json: { season: "christmas" } });
+  const xmas = await ids();
+  assert.ok(xmas.includes("gingerbread-latte"));
+  assert.ok(!xmas.includes("saffron-pista-latte"), "other festivals stay hidden");
+  assert.equal((await s.api("/api/admin/settings", { method: "PATCH", json: { season: "summer" } })).status, 400);
+  await s.api("/api/admin/settings", { method: "PATCH", json: { season: "auto" } });
+});

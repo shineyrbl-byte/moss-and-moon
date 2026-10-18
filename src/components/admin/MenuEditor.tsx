@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { CATEGORIES, photo, type Category, type Diet, type MenuItem } from "@/lib/menu";
 import { rupees } from "@/lib/pricing";
+import { SEASONS } from "@/lib/seasons";
 import { useStore } from "../Store";
 
 const send = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -188,6 +189,12 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
               <input className="input" type="date" value={f.until ?? ""} onChange={(e) => set("until", e.target.value || undefined)} aria-label="Season ends" />
             </div>
           </div>
+          <label className="field">Festival special (optional): only on the menu during
+            <select className="input" value={f.season ?? ""} onChange={(e) => set("season", e.target.value || undefined)}>
+              <option value="">Every season</option>
+              {Object.values(SEASONS).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </label>
           <UsesEditor uses={f.uses ?? []} onChange={(u) => set("uses", u)} />
           {error && <p className="error">{error}</p>}
           <div className="row" style={{ justifyContent: "space-between" }}>

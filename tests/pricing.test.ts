@@ -140,3 +140,17 @@ test("busy forecast covers opening hours and finds the quiet time", () => {
   const booked = forecastDay(1, null, { 15: 24 });
   assert.ok(booked.find((f) => f.hour === 15)!.score > monday.find((f) => f.hour === 15)!.score);
 });
+
+test("seasonal themes follow the calendar", async () => {
+  const { seasonFor, activeSeason } = await import("../src/lib/seasons.ts");
+  assert.equal(seasonFor(new Date("2026-11-08T10:00")), "diwali");
+  assert.equal(seasonFor(new Date("2026-11-04T10:00")), "diwali", "festival week");
+  assert.equal(seasonFor(new Date("2026-11-20T10:00")), null);
+  assert.equal(seasonFor(new Date("2026-12-25T10:00")), "christmas");
+  assert.equal(seasonFor(new Date("2027-01-01T10:00")), "christmas");
+  assert.equal(seasonFor(new Date("2027-02-14T10:00")), "valentines");
+  assert.equal(seasonFor(new Date("2027-07-20T10:00")), "monsoon");
+  assert.equal(seasonFor(new Date("2027-10-29T10:00")), "diwali", "Diwali moves each year");
+  assert.equal(activeSeason("off", new Date("2026-12-25T10:00")), null);
+  assert.equal(activeSeason("monsoon", new Date("2026-12-25T10:00")), "monsoon");
+});

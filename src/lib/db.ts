@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
 import { SEED_MENU } from "./menu";
+import { SEASONAL_ITEMS } from "./seasons";
 
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
 
@@ -284,6 +285,14 @@ function open() {
   if (items.n === 0) {
     const add = db.prepare("INSERT INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
     SEED_MENU.forEach((m, i) => add.run(m.id, JSON.stringify(m), i * 10));
+  }
+
+  // Seasonal specials: added once, so an owner who deletes one doesn't get it back
+  const seeded = db.prepare("SELECT value FROM settings WHERE key = 'seeded_seasonal'").get();
+  if (!seeded) {
+    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
+    SEASONAL_ITEMS.forEach((m, i) => add.run(m.id, JSON.stringify(m), -40 + i)); // shown first while in season
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_seasonal', '1')").run();
   }
 
   const count = db.prepare("SELECT COUNT(*) AS n FROM reviews").get() as { n: number };

@@ -4,6 +4,7 @@ import { db } from "./db";
 import type { MenuItem } from "./menu";
 import { canMake, stockMap } from "./stock";
 import { toDateStr } from "./cafe";
+import { currentSeason } from "./seasonStore";
 
 type Row = { id: string; data: string; sort: number };
 
@@ -12,7 +13,8 @@ function soldOutIds() {
 }
 
 /** Seasonal items only show between their dates */
-export const inSeason = (m: MenuItem, today = toDateStr(new Date())) => (!m.from || m.from <= today) && (!m.until || m.until >= today);
+export const inSeason = (m: MenuItem, today = toDateStr(new Date()), season: string | null = currentSeason()) =>
+  (!m.from || m.from <= today) && (!m.until || m.until >= today) && (!m.season || m.season === season);
 
 /**
  * The menu in display order. Hidden and out-of-season items are left out unless asked for.
@@ -20,13 +22,15 @@ export const inSeason = (m: MenuItem, today = toDateStr(new Date())) => (!m.from
  */
 export function getMenu({ includeHidden = false } = {}): MenuItem[] {
   const out = soldOutIds();
+  const today = toDateStr(new Date());
+  const season = currentSeason();
   const have = stockMap();
   return (db.prepare("SELECT id, data, sort FROM menu_items ORDER BY sort, rowid").all() as Row[])
     .map((r) => {
       const m = { ...(JSON.parse(r.data) as MenuItem), id: r.id };
       return { ...m, soldOut: out.has(r.id) || !canMake(m, have) };
     })
-    .filter((m) => includeHidden || (!m.hidden && inSeason(m)));
+    .filter((m) => includeHidden || (!m.hidden && inSeason(m, today, season)));
 }
 
 /** One item that guests can order right now (visible), or undefined */

@@ -11,6 +11,8 @@ import BaristaChat from "@/components/BaristaChat";
 import TableBanner from "@/components/TableBanner";
 import PwaSetup from "@/components/PwaSetup";
 import { getMenu } from "@/lib/menuStore";
+import SeasonLayer from "@/components/SeasonLayer";
+import { currentSeason } from "@/lib/seasonStore";
 
 // Pages read the live menu from the database, so render them on each request
 export const dynamic = "force-dynamic";
@@ -42,14 +44,16 @@ export const viewport: Viewport = {
 const themeScript = `try{var t=localStorage.getItem('mm-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const season = currentSeason();
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${serif.variable} ${sans.variable}`} data-season={season ?? undefined} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
         <StoreProvider initialMenu={getMenu()}>
           <PaymentProvider>
+            <SeasonLayer season={season} />
             <TableBanner />
             <Nav />
             <main>{children}</main>

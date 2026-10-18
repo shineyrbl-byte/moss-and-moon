@@ -18,6 +18,24 @@ export default function Nav() {
   const { count, setDrawerOpen, bumpKey, me, t, lang, setLang } = useStore();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // On phones the language and music buttons move into the ☰ menu so the bar fits
+  const [small, setSmall] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px)");
+    const f = () => setSmall(mq.matches);
+    f();
+    mq.addEventListener("change", f);
+    return () => mq.removeEventListener("change", f);
+  }, []);
+
+  const extras = (
+    <>
+      <button className="icon-btn lang-btn" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label={t("lang.label")} title={t("lang.label")}>
+        {t("lang.switch")}
+      </button>
+      <AmbientSound />
+    </>
+  );
 
   useEffect(() => {
     const f = () => setScrolled(window.scrollY > 20);
@@ -37,15 +55,13 @@ export default function Nav() {
             {t(l.key)}
           </Link>
         ))}
+        {small && <div className="nav-extras"><span className="small muted">Language & music</span>{extras}</div>}
       </nav>
       <div className="nav-tools">
         <Link href="/account" className={`icon-btn ${me ? "on" : ""}`} aria-label={me ? "Your account" : "Sign in"} title={me ? `Signed in as ${me.name || me.email}` : "Sign in"}>
           {me ? (me.name || me.email)[0].toUpperCase() : "👤"}
         </Link>
-        <button className="icon-btn lang-btn" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label={t("lang.label")} title={t("lang.label")}>
-          {t("lang.switch")}
-        </button>
-        <AmbientSound />
+        {!small && extras}
         <ThemeToggle />
         <button className="cart-btn" onClick={() => setDrawerOpen(true)}>
           <span aria-hidden>🛍</span>

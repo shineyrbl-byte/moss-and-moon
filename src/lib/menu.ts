@@ -19,6 +19,8 @@ export type MenuItem = {
   /** Seasonal: only on the menu between these dates (YYYY-MM-DD, either can be left empty) */
   from?: string;
   until?: string;
+  /** Festival special: only on the menu during this season (see lib/seasons.ts) */
+  season?: string;
   /** Ingredients used per item (leave empty to use sensible defaults for drinks) */
   uses?: { ingredient: string; amount: number }[];
   soldOut?: boolean; // filled in from the database
