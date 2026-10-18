@@ -1,0 +1,54 @@
+# Checks the live site every 10 minutes. If it's down, it opens a GitHub issue
+# (GitHub emails you about it); when the site is back, the issue closes itself.
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      URL: ${{ vars.SITE_URL || 'https://moss-and-moon.up.railway.app' }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Is the site up?
+        id: ping
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o body.json -w "%{http_code}" --max-time 20 "$URL/api/health" || echo 000)
+            if [ "$code" = "200" ] && grep -q '"ok":true' body.json; then echo "up=true" >> "$GITHUB_OUTPUT"; echo "✅ $URL is up"; exit 0; fi
+            echo "Try $i: got $code"; sleep 20
+          done
+          echo "up=false" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+      - name: Open an issue when it's down
+        if: steps.ping.outputs.up == 'false'
+        run: |
+          open=$(gh issue list --label downtime --state open --json number -q '.[0].number')
+          if [ -z "$open" ]; then
+            gh label create downtime --color B60205 --description "The live site isn't answering" 2>/dev/null || true
+            gh issue create --label downtime --title "🚨 Moss & Moon is down" --body "The health check at $URL/api/health didn't answer (last status: ${{ steps.ping.outputs.code }}) at $(date -u '+%Y-%m-%d %H:%M UTC').
+
+          Check Railway: https://railway.com/dashboard. This issue closes by itself when the site is back."
+          else
+            gh issue comment "$open" --body "Still down at $(date -u '+%H:%M UTC') (status ${{ steps.ping.outputs.code }})."
+          fi
+          exit 1
+      - name: Close the issue when it's back
+        if: steps.ping.outputs.up == 'true'
+        run: |
+          for n in $(gh issue list --label downtime --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "✅ Back up at $(date -u '+%Y-%m-%d %H:%M UTC')."
+          done

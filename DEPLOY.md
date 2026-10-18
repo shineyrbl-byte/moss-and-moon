@@ -180,3 +180,20 @@ Uploaded photos aren't in the backup; they stay on the Railway volume.
 
 **Health check:** Railway calls `/api/health` before switching to a new deploy (see `railway.toml`),
 so a broken update never replaces a working site.
+
+
+## 10. Running the café from Admin
+
+Everything that used to need a code change is now in **/admin**:
+
+- **Overview → 🕰 Hours, holidays & golden hour**: each day's hours, closures (guests can't order or book that day), and golden hour's time, discount and sections.
+- **Overview → 🧾 GST invoices**: turn on with your GSTIN, legal name and address; receipts become tax invoices. Download a monthly GST report for your accountant.
+- **Events**: add or edit events and ticket prices. **Journal**: write blog posts. **Newsletter**: write and send the Pink Post.
+- **Guests**: your regulars, with VIP stars and notes. **Stock → Reorders**: supplier emails for low stock.
+- **Rota**: shifts, plus timesheets and the week's tip split.
+
+## 11. Uptime monitor
+
+`.github/workflows/uptime.yml` checks `/api/health` every 10 minutes for free on GitHub. If the site is down it opens a
+GitHub issue labelled `downtime`, and GitHub emails you; the issue closes itself when the site is back.
+(GitHub pauses scheduled checks in repos with no activity for 60 days; any push turns them back on.)

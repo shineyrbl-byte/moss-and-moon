@@ -22,8 +22,10 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 ## Features
 
 **Ordering**
-- ☕ 50-item menu in sections (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes) with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
+- ☕ Menu in sections (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes, **Shop**) with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
 - 🥤 Cold drinks (cold brew, frappés, smoothies, mocktails, juices) and savoury food (toasties, sandwiches, toast, pancakes, pasta, bowls) with add-ons like an egg, extra cheese, gluten-free bread or a coffee combo
+- 🛍 **Café shop**: beans (choose the grind), mugs (choose the colour), a reusable cup, tote, home brew kit and gift box, with stock that sells out by itself
+- 🎡 **"Surprise me" wheel**: spin for a random drink, sometimes with a 10% code for today
 - 🎛 **Drink builder**: size, hot/iced, ice level, extra hot, whole/oat/almond/soy milk, sweetness, syrups, toppings, extra shot or decaf, with a little cup that fills up as you choose
 - ☕ **"My usual"**: one-tap reorder of the drink you order most, exactly how you like it
 - 🎙 **Voice ordering**: say "two iced oat lattes and a croissant" (or "my usual")
@@ -41,6 +43,7 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 👤 **Accounts** with a sign-in code by email: favourites on every device, order history, birthday treat, referrals with credit, a monthly **Coffee Pass**
 - 🏅 **Streaks and badges**: 16 badges like Early bird, Matcha lover and Kind soul
 - 📌 **Community noticeboard**: lost & found, study buddies and book swaps, approved by staff
+- 📰 **Journal**: blog posts with their own pages, in the sitemap for Google
 - ✉️ **Emails from "Moss & Moon"** to any guest: order confirmed (with the ready time), it's ready, pickup reminder, PDF receipt, "How was it?" review request, booking confirmation with a calendar invite, and a reminder before the booking. Sent through the café Gmail via Gmail's API (works on Railway's Hobby plan), or Resend with your own domain
 - ⭐ Verified-visit reviews from those emails
 - 📅 Table booking with real availability and a **waitlist** that emails you when a table frees up
@@ -60,17 +63,25 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - **Rota**: weekly staff shifts
 - **Refunds** through Razorpay, gift cards, emails sent, reviews
 - 🏷 **Promo code manager**: % or ₹ off, dates, usage limits, once per guest
+- 🕰 **Hours, holidays & golden hour editor**: everything (ordering, bookings, the busy meter) follows
+- 🎤 **Events editor**: add events, ticket prices or free RSVPs, with photos
+- 🧾 **GST tax invoices**: GSTIN, running invoice numbers, CGST/SGST on receipts, and a monthly GST report
+- 💌 **Newsletter composer**: AI first draft, preview, test send, then send to subscribers with one-click unsubscribe
+- 👥 **Guest list**: visits, spend, favourites, birthdays, VIP stars (shown on the barista screen) and notes
+- ⏱ **Clock-in & timesheets**: hours worked vs the rota, and tips split by hours worked
+- 📦 **Supplier reorders**: low stock makes a draft order; approve it to email the supplier, then mark it received
 - 💰 **Profit tracking** from ingredient costs, per day and per item; 🧺 **waste log** with tomorrow's bake plan
 - ✨ **AI weekly insights**: review summary and practical ideas from your numbers (Claude or free Gemini)
 - 👀 **Visitor stats** without cookies or trackers
 - 🔐 **Two-step login** for owners, and a security check-up in the Health tab (see [SECURITY.md](SECURITY.md))
 - 📬 **Nightly summary email**, 🗄 **automatic backups** (download and restore), 🚨 **error alerts** and a Health tab
+- 🟢 **Uptime monitor**: GitHub checks the site every 10 minutes and opens an issue (and emails you) if it's down
 - 🤖 **Demo barista** moves orders along by itself when nobody is behind the counter
 
 ## Tests
 
 ```bash
-npm test           # 83 tests: price maths, the whole API against a real server, payments against a fake Razorpay, and Gmail against a fake Google
+npm test           # 95 tests: price maths, the whole API against a real server, payments against a fake Razorpay, and Gmail against a fake Google
 npm run test:e2e   # 9 browser tests: ordering, booking, group orders, tickets, gifting a drink, phone layout, security headers
 ```
 
