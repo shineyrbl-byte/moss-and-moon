@@ -25,6 +25,10 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - ☕ Menu with photos, search, categories and vegan / gluten-free filters, edited live from the admin page
 - 🎛 **Drink builder**: size, hot/iced, milk, sweetness, extra shot, with a little cup that fills up as you choose
 - ☕ **"My usual"**: one-tap reorder of the drink you order most, exactly how you like it
+- 🎙 **Voice ordering**: say "two iced oat lattes and a croissant" (or "my usual")
+- 🔁 **Regular orders**: "my oat latte every weekday at 8:30", placed by itself 15 minutes before
+- 🎁 **Buy a friend a coffee**: gift a drink as customised, send the link, they claim it from their phone
+- 🥜 **Allergens and calories** on every item, updating as you customise, with nut-free and egg-free filters
 - 👯 **Group orders**: share a link, friends add their own drinks from their phones, the host checks out once, everyone pays their own part
 - 🛍 Tray with promo codes (`BLOOM10`, `FIRSTSIP`, `PINKMOON`), gift cards, tips, pickup times and **delivery**
 - 💳 **Pay online** with Razorpay (UPI / cards) or at the counter; **split the bill** with friends
@@ -34,6 +38,9 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 
 **Guests & community**
 - 👤 **Accounts** with a sign-in code by email: favourites on every device, order history, birthday treat, referrals with credit, a monthly **Coffee Pass**
+- 🏅 **Streaks and badges**: 16 badges like Early bird, Matcha lover and Kind soul
+- 📌 **Community noticeboard**: lost & found, study buddies and book swaps, approved by staff
+- ⭐ **"How was it?" emails** after pickup, with verified-visit reviews
 - 📅 Table booking with real availability and a **waitlist** that emails you when a table frees up
 - 🎟 **Events**: free RSVPs, and **paid tickets** for classes with a QR code checked at the door
 - 🌿 **"How busy is it?"** meter with today's forecast and the quietest time to visit
@@ -50,14 +57,19 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - Menu editor, ingredient **stock** (items sell out by themselves), seasonal and festival items
 - **Rota**: weekly staff shifts
 - **Refunds** through Razorpay, gift cards, emails sent, reviews
+- 🏷 **Promo code manager**: % or ₹ off, dates, usage limits, once per guest
+- 💰 **Profit tracking** from ingredient costs, per day and per item; 🧺 **waste log** with tomorrow's bake plan
+- ✨ **AI weekly insights**: review summary and practical ideas from your numbers (Claude or free Gemini)
+- 👀 **Visitor stats** without cookies or trackers
+- 🔐 **Two-step login** for owners, and a security check-up in the Health tab (see [SECURITY.md](SECURITY.md))
 - 📬 **Nightly summary email**, 🗄 **automatic backups** (download and restore), 🚨 **error alerts** and a Health tab
 - 🤖 **Demo barista** moves orders along by itself when nobody is behind the counter
 
 ## Tests
 
 ```bash
-npm test           # 59 tests: price maths plus the whole API against a real server
-npm run test:e2e   # 7 browser tests that click through ordering, booking, group orders and tickets
+npm test           # 77 tests: price maths, the whole API against a real server, and payments against a fake Razorpay
+npm run test:e2e   # 9 browser tests: ordering, booking, group orders, tickets, gifting a drink, phone layout, security headers
 ```
 
 Both run on GitHub for every push, and Railway only deploys once they pass.
