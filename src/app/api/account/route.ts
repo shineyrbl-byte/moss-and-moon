@@ -2,6 +2,7 @@ import { db, cleanPhone, cleanText } from "@/lib/db";
 import { currentCustomer } from "@/lib/account";
 import { STAMPS_FOR_REWARD } from "@/lib/cafe";
 import { perksFor } from "@/lib/perks";
+import { companyFor, spentThisMonth } from "@/lib/companies";
 import { PASS } from "@/lib/pricing";
 import { ALLERGENS } from "@/lib/nutrition";
 
@@ -25,6 +26,7 @@ export async function GET() {
     pass: { active: !!perks.pass, until: perks.pass?.ends ?? null, usedToday: !!perks.pass && !perks.passDrink, price: PASS.price },
     perks: { birthdayTreat: perks.birthdayTreat, passDrink: perks.passDrink, credit: perks.credit, canUseInvite: !c.referred_by && orderCount === 0, tier: perks.tier, student: perks.student, studentUntil: perks.studentUntil },
     tier: perks.tierInfo,
+    company: (() => { const co = companyFor(c.id); return co ? { name: co.name, limit: co.monthly_limit, spent: Math.round(spentThisMonth(co.id, c.id)) } : null; })(),
     customer: { name: c.name, email: c.email, phone: c.phone, birthday: c.birthday, favs: c.favs, referralCode: c.referral_code, credit: c.credit, memberSince: c.created_at, diet: parseDiet(c.diet) },
     stamps: { count: card?.stamps ?? 0, rewardsUsed: card?.rewards_used ?? 0, needed: STAMPS_FOR_REWARD },
     orders: orders.map((o) => ({ ...o, lines: JSON.parse(String(o.lines)) })),

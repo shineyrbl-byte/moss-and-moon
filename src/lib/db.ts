@@ -449,6 +449,32 @@ function open() {
       out_of INTEGER NOT NULL,
       at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS companies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      billing_email TEXT NOT NULL,
+      gstin TEXT,
+      join_code TEXT UNIQUE NOT NULL,
+      monthly_limit INTEGER,
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS company_members (
+      company_id INTEGER NOT NULL,
+      customer_id INTEGER NOT NULL,
+      joined_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      PRIMARY KEY (company_id, customer_id)
+    );
+    CREATE TABLE IF NOT EXISTS company_invoices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER NOT NULL,
+      month TEXT NOT NULL,
+      amount REAL NOT NULL,
+      orders INTEGER NOT NULL,
+      sent_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      paid_at TEXT,
+      UNIQUE (company_id, month)
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,
@@ -597,6 +623,7 @@ function open() {
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
   addColumn(db, "customers", "student_email", "TEXT");
   addColumn(db, "customers", "student_code", "TEXT"); // sha256 of a pending code, with its expiry
+  addColumn(db, "orders", "company_id", "INTEGER");
   addColumn(db, "orders", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "bookings", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "waitlist", "branch", "TEXT NOT NULL DEFAULT 'main'");

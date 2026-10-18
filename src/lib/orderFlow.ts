@@ -28,7 +28,7 @@ export function setOrderStatus(code: string, status: OrderStatus, staffId?: numb
   }
   // Collected + paying at the counter = paid
   if (status === "collected") {
-    db.prepare("UPDATE orders SET pay_status = 'paid', collected_at = COALESCE(collected_at, datetime('now','localtime')) WHERE code = ? AND pay_status = 'unpaid'").run(code);
+    db.prepare("UPDATE orders SET pay_status = 'paid', collected_at = COALESCE(collected_at, datetime('now','localtime')) WHERE code = ? AND pay_status = 'unpaid' AND pay_method != 'company'").run(code);
     db.prepare("UPDATE orders SET collected_at = COALESCE(collected_at, datetime('now','localtime')) WHERE code = ?").run(code);
     void emailReceipt(code);
   }

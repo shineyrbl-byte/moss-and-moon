@@ -5,6 +5,7 @@ import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "./db";
 import { DELIVERY, REFERRAL_CREDIT, quote, rupees } from "./pricing";
 import { isLastHour, lastHour } from "./cafe";
 import { recordMissed } from "./missed";
+import { companyFor, spentThisMonth } from "./companies";
 import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, findBranch, hoursOn, toDateStr } from "./cafe";
 import { perksFor } from "./perks";
 import { checkStock, consumeStock } from "./stock";
@@ -38,7 +39,10 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   const table = tableNo >= 1 && tableNo <= TABLE_COUNT ? tableNo : null;
   const delivery = !table && body.delivery ? cleanText(body.delivery.address, 200) : "";
   const pickup = table ? "table" : delivery ? "delivery" : String(body.pickup ?? "asap");
-  const payMethod = body.payMethod === "online" ? "online" : "counter";
+  // On a company's tab: only for signed-in members of an active company
+  const company = body.payMethod === "company" && me && !opts.kiosk ? companyFor(me.id) : null;
+  if (body.payMethod === "company" && !company) return Response.json({ error: "You're not on a company tab. Pay another way?" }, { status: 400 });
+  const payMethod = company ? "company" : body.payMethod === "online" ? "online" : "counter";
   if (!name) return Response.json({ error: "Please tell us your name." }, { status: 400 });
   // Phone is optional when ordering from a table (it's only needed for the stamp card)
   if (phone.length !== 10 && !(table && !phone) && !(opts.prepaid && !phone) && !(opts.kiosk && !phone)) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
@@ -122,6 +126,9 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   if (stock) recordMissed(q.lines, "low stock");
   if (stock) return Response.json({ error: `Sorry, we've just run out of ${stock} for that. Please pick something else.` }, { status: 409 });
 
+  if (company?.monthly_limit && spentThisMonth(company.id, me!.id) + q.due > company.monthly_limit)
+    return Response.json({ error: `That's over your ${rupees(company.monthly_limit)} a month on the ${company.name} tab. Pay the rest another way?` }, { status: 400 });
+
   // Fully covered by credit / gift card = already paid
   const payStatus = q.due === 0 || opts.prepaid ? "paid" : payMethod === "online" ? "pending" : "unpaid";
   const usedPerks = [q.passDiscount && "pass", q.birthdayDiscount && "birthday", q.loyaltyDiscount && "stamps", q.creditUsed && "credit", q.tierDiscount && `${perks.tier} upgrade`, q.lastHourDiscount && "last hour", q.studentDiscount && "student"].filter(Boolean).join(",");
@@ -137,6 +144,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     opts.prepaid ? opts.prepaid.method : q.due === 0 && q.giftUsed + q.creditUsed > 0 ? "giftcard" : payMethod, payStatus, gift?.code ?? null, q.giftUsed, q.happyHour ? 1 : 0, table, me?.id ?? null,
     q.tip, q.creditUsed, q.deliveryFee, delivery || null, usedPerks || null, branch.id
   );
+  if (company) db.prepare("UPDATE orders SET company_id = ? WHERE code = ?").run(company.id, code);
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
   consumeStock(q.lines);
   takeShopStock(q.lines);

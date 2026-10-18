@@ -1562,3 +1562,29 @@ test("story image: a tall PNG for a menu item, staff only", async () => {
   assert.equal(buf.readUInt32BE(20), 1920);
   assert.equal((await fetch(`${s.url}/api/admin/story?item=nope`, { headers: { cookie: s.cookie() } })).status, 404);
 });
+
+test("company tab: join with a code, order on the tab, monthly invoice, mark paid", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/companies", { method: "POST", json: { name: "Acme", billingEmail: "nope" } })).status, 400);
+  assert.equal((await s.api("/api/admin/companies", { method: "POST", json: { name: "Acme Labs", billingEmail: "accounts@acme.example", monthlyLimit: 300 } })).status, 200);
+  const co = ((await s.api("/api/admin/companies")).body as { companies: { id: number; name: string; join_code: string }[] }).companies.find((c) => c.name === "Acme Labs")!;
+  await signIn("dev@acme.example");
+  await s.api("/api/account", { method: "PATCH", json: { phone: "9811100001" } });
+  assert.equal((await s.api("/api/orders", { method: "POST", json: { name: "Dev", phone: "9811100001", payMethod: "company", lines: [{ itemId: "cookie", qty: 1 }] } })).status, 400, "not a member yet");
+  assert.equal((await s.api("/api/account/company", { method: "POST", json: { code: "CO-WRONG" } })).status, 404);
+  assert.equal((await s.api("/api/account/company", { method: "POST", json: { code: co.join_code } })).body.company.name, "Acme Labs");
+  const o = await s.api("/api/orders", { method: "POST", json: { name: "Dev", phone: "9811100001", payMethod: "company", lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal(o.status, 200, JSON.stringify(o.body));
+  assert.equal(o.body.needsPayment, false);
+  assert.equal((await s.api("/api/orders", { method: "POST", json: { name: "Dev", phone: "9811100001", payMethod: "company", lines: [{ itemId: "cookie", qty: 5 }] } })).status, 400, "over the monthly limit");
+  await s.login();
+  // Collecting it doesn't mark it paid: the company pays the invoice
+  for (const st of ["brewing", "ready", "collected"]) await s.api(`/api/orders/${o.body.code}`, { method: "PATCH", json: { status: st } });
+  const view = await s.api(`/api/orders/${o.body.code}`);
+  assert.equal(view.body.pay_status, "unpaid");
+  const inv = await s.api("/api/admin/companies", { method: "PATCH", json: { id: co.id, action: "invoice" } });
+  assert.equal(inv.status, 200, JSON.stringify(inv.body));
+  assert.equal(inv.body.orders, 1);
+  await s.api("/api/admin/companies", { method: "PATCH", json: { id: co.id, action: "paid" } });
+  assert.equal((await s.api(`/api/orders/${o.body.code}`)).body.pay_status, "paid");
+});

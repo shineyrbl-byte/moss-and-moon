@@ -39,7 +39,7 @@ export default function CartDrawer() {
   const [gift, setGift] = useState<Gift | null>(null);
   const [codeErr, setCodeErr] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", pickup: "asap", note: "" });
-  const [payMethod, setPayMethod] = useState<"online" | "counter">("online");
+  const [payMethod, setPayMethod] = useState<"online" | "counter" | "company">("online");
   const [tipPercent, setTipPercent] = useState(0);
   const [mode, setMode] = useState<"pickup" | "delivery">("pickup");
   const [address, setAddress] = useState("");
@@ -217,7 +217,7 @@ export default function CartDrawer() {
       {q.giftUsed > 0 && <div className="sum-row discount"><span>Gift card</span><span>−{rupees(q.giftUsed)}</span></div>}
       {q.deliveryFee > 0 && <div className="sum-row"><span>Delivery</span><span>{rupees(q.deliveryFee)}</span></div>}
       {q.tip > 0 && <div className="sum-row"><span>Tip for the team 💛</span><span>{rupees(q.tip)}</span></div>}
-      <div className="sum-row total"><span>{step === "checkout" && q.due > 0 ? (payMethod === "online" ? "To pay now" : delivery ? "Pay on delivery" : "Pay at pickup") : t("tray.total")}</span><span>{rupees(q.due)}</span></div>
+      <div className="sum-row total"><span>{step === "checkout" && q.due > 0 ? (payMethod === "online" ? "To pay now" : payMethod === "company" ? "On the company tab" : delivery ? "Pay on delivery" : "Pay at pickup") : t("tray.total")}</span><span>{rupees(q.due)}</span></div>
     </>
   );
 
@@ -380,6 +380,11 @@ export default function CartDrawer() {
                     <button type="button" className={`pay-opt ${payMethod === "counter" ? "on" : ""}`} onClick={() => setPayMethod("counter")}>
                       <span>🪙</span><b>{delivery ? "On delivery" : t("checkout.payCounter")}</b><small>cash · UPI</small>
                     </button>
+                    {me?.company && !table && (
+                      <button type="button" className={`pay-opt ${payMethod === "company" ? "on" : ""}`} onClick={() => setPayMethod("company")}>
+                        <span>🏢</span><b>{me.company.name} tab</b><small>{me.company.limit ? `${rupees(Math.max(0, me.company.limit - me.company.spent))} left this month` : "invoiced monthly"}</small>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

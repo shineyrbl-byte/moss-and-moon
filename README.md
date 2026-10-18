@@ -45,6 +45,9 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 🌙 **Last-hour deals**: leftover bakes get cheaper just before closing
 - 👛 **Coffee wallet**: top up ₹500 / ₹1000 / ₹2000 with a bonus; checkout uses it automatically
 - 🎓 **Student discount**: verify a college email for 10% off drinks on weekdays
+- 🏢 **Company tabs**: office staff join with a code, order on the company's account, one monthly invoice (PDF, with GST)
+- 🔔 **"Tell me when it's back"** emails for sold-out items
+- 💬 **WhatsApp button** in the chat and footer
 
 **Guests & community**
 - 👤 **Accounts** with a sign-in code by email: favourites on every device, order history, birthday treat, referrals with credit, a monthly **Coffee Pass**
@@ -58,6 +61,9 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - ⭐ Verified-visit reviews from those emails
 - 📅 Table booking with real availability and a **waitlist** that emails you when a table frees up
 - 🗺 **Pick your table** on a floor plan, and **pre-order** your tray to be ready when you arrive
+- 💳 **Deposits for groups of 6+**: paid online, taken off the bill as a gift card, kept on a no-show
+- 🔁 **Repeating events** (every week, 2 weeks or month)
+- ⭐ **Google review nudge** after a happy review
 - 🎟 **Events**: free RSVPs, and **paid tickets** for classes with a QR code checked at the door
 - 🌿 **"How busy is it?"** meter with today's forecast and the quietest time to visit
 - 🤖 **Ask the barista**: AI chat (free Google Gemini, or Claude) that recommends drinks from the live menu
@@ -95,6 +101,11 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 👥 **Staffing suggestions**: people needed each hour vs who's on the rota
 - ✨ **Special of the day**: AI ideas that use up overstocked ingredients or often-wasted bakes
 - 🧮 **Price "what if"**: try a new price and see the effect on profit
+- 🧭 **Menu engineering** chart (stars, plowhorses, puzzles, dogs) and 😢 **missed sales** from sold-out items
+- 📅 **Use-by dates** for milk, cream and bakes, oldest first
+- 💹 **Supplier price tracking**: rises are flagged with what they cost a month
+- 🎓 **Training tracker** with a recipe quiz
+- 📸 **Instagram story images** for menu items, specials and events
 - 🖨 **Printable menu** and counter poster (`/print/menu`) made from the live menu, with an order-ahead QR
 - ✨ **AI weekly insights**: review summary and practical ideas from your numbers (Claude or free Gemini)
 - 👀 **Visitor stats** without cookies or trackers

@@ -10,6 +10,7 @@ import { DICT, type Lang, type TKey } from "@/lib/i18n";
 export type Me = {
   name: string | null; email: string; phone: string | null; birthday: string | null; favs: string[]; referralCode: string; credit: number;
   diet?: { vegan: boolean; gf: boolean; avoid: string[] };
+  company?: { name: string; limit: number | null; spent: number } | null;
   perks?: { birthdayTreat: boolean; passDrink: boolean; credit: number; canUseInvite: boolean; tier?: "bronze" | "silver" | "gold"; student?: boolean; studentUntil?: string | null };
 };
 
@@ -192,7 +193,7 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
         favsSynced.current = false;
         return;
       }
-      setMe({ ...d.customer, perks: d.perks });
+      setMe({ ...d.customer, perks: d.perks, company: d.company ?? null });
       setFavs((local) => {
         const merged = new Set([...local, ...(d.customer.favs as string[])]);
         try { localStorage.setItem("mm-favs", JSON.stringify([...merged])); } catch {}
