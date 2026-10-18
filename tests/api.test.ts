@@ -643,3 +643,23 @@ test("buy a friend a coffee: pay once, claim once, straight into the queue", asy
   const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string }[] };
   assert.ok(mail.emails.some((e) => e.to_email === "ravi@example.com"), "friend got an email");
 });
+
+test("reviews from a visit are verified, once per order; insights work without AI", async () => {
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Rev", phone: "9000099999", email: "rev@example.com", lines: [{ itemId: "cookie", qty: 1 }] } });
+  const code = (placed.body as { code: string }).code;
+  const review = (rating: number) => s.api("/api/reviews", { method: "POST", json: { name: "Rev", rating, text: "Lovely cookie, warm and gooey", orderCode: code } });
+  assert.equal((await review(5)).status, 200);
+  assert.equal((await review(4)).status, 409, "once per visit");
+  const list = (await s.api("/api/reviews")).body as { reviews: { name: string; verified: number }[] };
+  assert.ok(list.reviews.some((r) => r.name === "Rev" && r.verified));
+
+  await s.login();
+  const rv = await s.api("/api/admin/insights?kind=reviews", { method: "POST" });
+  assert.equal(rv.status, 200);
+  assert.equal((rv.body as { provider: string }).provider, "simple", "no AI key in tests");
+  assert.ok((rv.body as { data: { count: number } }).data.count >= 1);
+  const biz = await s.api("/api/admin/insights?kind=business", { method: "POST" });
+  assert.equal(biz.status, 200);
+  assert.ok((biz.body as { data: { suggestions: unknown[] } }).data.suggestions.length >= 1);
+  assert.equal((await s.api("/api/admin/insights?kind=business", { method: "POST" })).status, 429, "not too often");
+});

@@ -277,6 +277,17 @@ function open() {
       expires TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS waste (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      day TEXT NOT NULL,
+      item_id TEXT NOT NULL,
+      item_name TEXT NOT NULL,
+      qty INTEGER NOT NULL,
+      reason TEXT NOT NULL DEFAULT 'leftover',
+      cost REAL NOT NULL DEFAULT 0,
+      staff_id INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -313,6 +324,8 @@ function open() {
   addColumn(db, "orders", "refunded_at", "TEXT");
   addColumn(db, "orders", "group_code", "TEXT");
   addColumn(db, "order_payments", "person", "TEXT");
+  addColumn(db, "orders", "review_asked", "INTEGER NOT NULL DEFAULT 0"); // 1 = asked, 2 = skipped
+  addColumn(db, "reviews", "order_code", "TEXT"); // set when the review came from a real order
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };

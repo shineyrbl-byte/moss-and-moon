@@ -881,3 +881,16 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .drink-gift-qr { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 1rem; border-top: 2px dashed var(--line); background: var(--surface-2); }
 .drink-gift-qr img { background: #fff; border-radius: 10px; padding: 5px; }
 .modal-actions { display: flex; gap: 0.5rem; align-items: center; }
+.star-pick { display: flex; gap: 0.3rem; }
+.star-pick button { font-size: 2.2rem; background: none; border: none; color: var(--line); line-height: 1; padding: 0 0.1rem; transition: transform 0.15s, color 0.15s; }
+.star-pick button.on { color: #e0a43a; }
+.star-pick button:hover { transform: scale(1.15); }
+.verified { font-size: 0.75rem; color: var(--moss); }
+
+/* ============ Insights ============ */
+.insights { padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem; }
+.insight-list { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+.insight-list li { display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.5rem; align-items: start; }
+.insight-list p { margin: 0.1rem 0 0; }
+.insight-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+.insight-cols ul { padding-left: 1.1rem; margin-top: 0.3rem; }

@@ -16,6 +16,7 @@ import RotaTab from "@/components/admin/RotaTab";
 import Backups from "@/components/admin/Backups";
 import HealthTab from "@/components/admin/HealthTab";
 import PromosTab from "@/components/admin/PromosTab";
+import InsightsCard from "@/components/admin/InsightsCard";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -380,7 +381,7 @@ export default function AdminPage() {
       )}
 
       {tab === "Menu" && <MenuEditor canEdit={me?.role === "owner"} />}
-      {tab === "Analytics" && me?.role === "owner" && <Analytics />}
+      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}
@@ -434,6 +435,7 @@ export default function AdminPage() {
         </>
       )}
 
+      {tab === "Reviews" && <InsightsCard kind="reviews" />}
       {tab === "Reviews" && (
         <div className="reviews" style={{ marginTop: 0 }}>
           {reviews.map((r) => (

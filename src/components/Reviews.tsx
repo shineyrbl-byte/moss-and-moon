@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
 
-type Review = { id: number; name: string; rating: number; text: string; photo: string | null; created_at: string };
+type Review = { id: number; name: string; rating: number; text: string; photo: string | null; created_at: string; verified?: number };
 
 const stars = (n: number) => "★".repeat(n) + "☆".repeat(5 - n);
 
@@ -81,7 +81,7 @@ export default function Reviews() {
             <p>“{r.text}”</p>
             <footer>
               <span className="avatar">{r.name[0]?.toUpperCase()}</span>
-              <span>{r.name}</span>
+              <span>{r.name}{r.verified ? <span className="verified"> · ✓ verified visit</span> : null}</span>
             </footer>
           </article>
         ))}
