@@ -61,7 +61,7 @@ export default function MenuEngineering() {
             <text x={W / 2} y={H - 8} textAnchor="middle" className="me-label">sold →</text>
             <text x={10} y={H / 2} transform={`rotate(-90 10 ${H / 2})`} textAnchor="middle" className="me-label">profit per sale →</text>
             {data.rows.map((r) => (
-              <g key={r.name} onMouseEnter={() => setHover(r.name)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(r.name)} onBlur={() => setHover(null)} tabIndex={0} aria-label={`${r.name}: ${r.qty} sold, ${rupees(Math.round(r.margin))} profit each, ${GROUPS[r.group].label}`}>
+              <g key={r.name} role="img" onMouseEnter={() => setHover(r.name)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(r.name)} onBlur={() => setHover(null)} tabIndex={0} aria-label={`${r.name}: ${r.qty} sold, ${rupees(Math.round(r.margin))} profit each, ${GROUPS[r.group].label}`}>
                 <circle cx={x(r.qty)} cy={y(r.margin)} r={12} fill="transparent" />
                 <circle cx={x(r.qty)} cy={y(r.margin)} r={hover === r.name ? 6 : 4.5} className={`me-dot ${r.group}`} />
               </g>

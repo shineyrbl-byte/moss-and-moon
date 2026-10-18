@@ -4,11 +4,7 @@ import "./globals.css";
 import { StoreProvider } from "@/components/Store";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import CartDrawer from "@/components/CartDrawer";
-import CustomizeModal from "@/components/CustomizeModal";
 import { PaymentProvider } from "@/components/Payment";
-import BaristaChat from "@/components/BaristaChat";
-import { Suspense } from "react";
 import TableBanner from "@/components/TableBanner";
 import PwaSetup from "@/components/PwaSetup";
 import { getMenu } from "@/lib/menuStore";
@@ -17,6 +13,7 @@ import ErrorReporter from "@/components/ErrorReporter";
 import StatsBeacon from "@/components/StatsBeacon";
 import { currentSeason } from "@/lib/seasonStore";
 import { fullConfig } from "@/lib/cafeConfig";
+import Overlays from "@/components/Overlays";
 
 // Pages read the live menu from the database, so render them on each request
 export const dynamic = "force-dynamic";
@@ -63,9 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Nav />
             <main>{children}</main>
             <Footer />
-            <CartDrawer />
-            <CustomizeModal />
-            <Suspense fallback={null}><BaristaChat /></Suspense>
+            <Overlays />
             <PwaSetup />
             <ErrorReporter />
             <StatsBeacon />

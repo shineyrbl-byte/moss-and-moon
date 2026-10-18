@@ -52,7 +52,7 @@ export default function ProfitPanel() {
       ) : (
         <div className="profit-bars" onMouseLeave={() => setTip(null)}>
           {r.daily.map((d, i) => (
-            <div key={d.day} className="profit-col" tabIndex={0} onMouseEnter={() => setTip(i)} onFocus={() => setTip(i)} aria-label={`${dayLabel(d.day)}: ${rupees(d.profit)} profit on ${rupees(d.revenue)} sales`}>
+            <div key={d.day} className="profit-col" tabIndex={0} role="img" onMouseEnter={() => setTip(i)} onFocus={() => setTip(i)} aria-label={`${dayLabel(d.day)}: ${rupees(d.profit)} profit on ${rupees(d.revenue)} sales`}>
               <span className={`profit-bar ${d.profit < 0 ? "neg" : ""}`} style={{ height: `${Math.max(d.profit ? 3 : 0, (Math.abs(d.profit) / max) * 100)}%` }} />
             </div>
           ))}

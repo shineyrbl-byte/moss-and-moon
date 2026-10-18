@@ -48,6 +48,10 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 🏢 **Company tabs**: office staff join with a code, order on the company's account, one monthly invoice (PDF, with GST)
 - 🔔 **"Tell me when it's back"** emails for sold-out items
 - 💬 **WhatsApp button** in the chat and footer
+- 👋 **"I'm here"** button for pickups (counter, door or car)
+- 👍 **Rate each item**; well-loved items show "Loved by N%" on the menu
+- 🌸 **"A year with us"** anniversary emails with the guest's year in coffee
+- 🔒 **Your data**: guests download everything or delete their account themselves (DPDP Act)
 
 **Guests & community**
 - 👤 **Accounts** with a sign-in code by email: favourites on every device, order history, birthday treat, referrals with credit, a monthly **Coffee Pass**
@@ -106,6 +110,11 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 💹 **Supplier price tracking**: rises are flagged with what they cost a month
 - 🎓 **Training tracker** with a recipe quiz
 - 📸 **Instagram story images** for menu items, specials and events
+- 🧭 **Grouped dashboard** with a "Jump to" search, and a **setup checklist** of what's left to connect
+- 🚦 **Rush mode**: longer ready times when busy (automatic at 12+ orders), or pause online orders for 15/30 min
+- 📡 **Offline-proof barista screen**: taps are saved without Wi-Fi and sent when it's back
+- 📺 **TV menu board** (`/board/menu`) and 🥜 **allergen chart** (`/print/allergens`)
+- ✨ **AI menu writer**: description, allergens, calories and Hindi text for new items
 - 🖨 **Printable menu** and counter poster (`/print/menu`) made from the live menu, with an order-ahead QR
 - ✨ **AI weekly insights**: review summary and practical ideas from your numbers (Claude or free Gemini)
 - 👀 **Visitor stats** without cookies or trackers
@@ -122,6 +131,9 @@ npm run test:e2e   # 9 browser tests: ordering, booking, group orders, tickets, 
 ```
 
 Both run on GitHub for every push, and Railway only deploys once they pass.
+
+
+The browser tests include an automatic accessibility check (axe) of the main guest pages, so a change that hurts screen-reader or contrast support fails the build.
 
 ## Where things live
 

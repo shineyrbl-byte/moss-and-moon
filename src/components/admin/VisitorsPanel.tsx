@@ -49,7 +49,7 @@ export default function VisitorsPanel() {
       ) : (
         <div className="profit-bars" onMouseLeave={() => setTip(null)}>
           {r.daily.map((d, i) => (
-            <div key={d.day} className="profit-col" tabIndex={0} onMouseEnter={() => setTip(i)} onFocus={() => setTip(i)} aria-label={`${label(d.day)}: ${d.visitors} visitors, ${d.orders} orders`}>
+            <div key={d.day} className="profit-col" tabIndex={0} role="img" onMouseEnter={() => setTip(i)} onFocus={() => setTip(i)} aria-label={`${label(d.day)}: ${d.visitors} visitors, ${d.orders} orders`}>
               <span className="profit-bar" style={{ height: `${Math.max(d.visitors ? 3 : 0, (d.visitors / max) * 100)}%` }} />
             </div>
           ))}
