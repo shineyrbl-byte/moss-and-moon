@@ -1,6 +1,6 @@
 import { db, cleanText } from "@/lib/db";
 import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
-import { deleteItem, getMenu, moveItem, saveItem } from "@/lib/menuStore";
+import { deleteItem, getMenu, moveItem, saveItem, setShopStock } from "@/lib/menuStore";
 import type { Addon, Category, Diet, MenuItem } from "@/lib/menu";
 import { publish } from "@/lib/live";
 import { SEASONS } from "@/lib/seasons";
@@ -17,15 +17,22 @@ export async function GET(req: Request) {
 // Staff: mark an item sold out / back in stock
 export async function PATCH(req: Request) {
   if (!(await isAdmin())) return unauthorized();
-  const { itemId, soldOut } = await req.json().catch(() => ({}));
+  const { itemId, soldOut, stock } = await req.json().catch(() => ({}));
   if (!getMenu({ includeHidden: true }).some((m) => m.id === itemId)) return Response.json({ error: "Unknown item." }, { status: 400 });
+  // Shop items: set how many are in stock
+  if (stock !== undefined) {
+    if (!(Number(stock) >= 0)) return Response.json({ error: "Stock should be 0 or more." }, { status: 400 });
+    setShopStock(itemId, Number(stock));
+    publish({ type: "menu" });
+    return Response.json({ ok: true });
+  }
   if (soldOut) db.prepare("INSERT OR IGNORE INTO sold_out (item_id) VALUES (?)").run(itemId);
   else db.prepare("DELETE FROM sold_out WHERE item_id = ?").run(itemId);
   publish({ type: "menu" });
   return Response.json({ ok: true });
 }
 
-const CATS: Category[] = ["coffee", "tea", "cold", "food", "bakes"];
+const CATS: Category[] = ["coffee", "tea", "cold", "food", "bakes", "shop"];
 const BADGES = ["bestseller", "new", "pink pick"] as const;
 const level = (v: unknown) => (Math.max(0, Math.min(2, Math.round(Number(v) || 0))) as 0 | 1 | 2);
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30) || "item";
@@ -64,7 +71,7 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     id, cat, name, desc, price, img,
     ...(diet.length ? { diet } : {}),
     ...(badge ? { badge } : {}),
-    ...(cat !== "bakes" ? { traits: { energy: level(t.energy), sweet: level(t.sweet), temp: t.temp === "iced" ? "iced" : "hot" } } : {}),
+    ...(cat === "coffee" || cat === "tea" || cat === "cold" ? { traits: { energy: level(t.energy), sweet: level(t.sweet), temp: t.temp === "iced" ? "iced" : "hot" } } : {}),
     ...(b.hidden ? { hidden: true } : {}),
     ...(from ? { from } : {}),
     ...(until ? { until } : {}),
@@ -72,13 +79,26 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(typeof b.season === "string" && b.season in SEASONS ? { season: b.season } : {}),
     ...(Array.isArray(b.allergens) ? { allergens: ALLERGENS.map((a) => a.id).filter((a) => (b.allergens as unknown[]).includes(a)) } : {}),
     ...(b.kcal !== undefined && b.kcal !== "" && Number(b.kcal) >= 0 && Number(b.kcal) <= 3000 ? { kcal: Math.round(Number(b.kcal)) } : {}),
-    ...(b.noMilk && cat !== "food" && cat !== "bakes" ? { noMilk: true } : {}),
+    ...(b.noMilk && cat !== "food" && cat !== "bakes" && cat !== "shop" ? { noMilk: true } : {}),
+    ...(cat === "shop" && Array.isArray(b.variants) && b.variants.length ? { variants: cleanVariants(b.variants) } : {}),
+    ...(cat === "shop" && b.stock !== undefined && b.stock !== "" && b.stock !== null && Number(b.stock) >= 0 ? { stock: Math.min(9999, Math.round(Number(b.stock))) } : {}),
     ...(Array.isArray(b.addons) && (cat === "food" || cat === "bakes") && b.addons.length ? { addons: cleanAddons(b.addons) } : {}),
     ...(b.cost !== undefined && b.cost !== "" && Number(b.cost) >= 0 && Number(b.cost) <= 5000 ? { cost: Math.round(Number(b.cost) * 100) / 100 } : {}),
   };
 }
 
 const ALLERGEN_IDS = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
+/** Up to 8 choices for a shop item (grind, colour…), each with an optional extra price */
+function cleanVariants(list: unknown[]) {
+  return list.slice(0, 8).flatMap((raw) => {
+    const v = (raw ?? {}) as Record<string, unknown>;
+    const label = cleanText(v.label, 50);
+    const price = Math.round(Number(v.price) || 0);
+    if (!label || !(price >= 0 && price <= 5000)) return [];
+    const id = typeof v.id === "string" && /^[\w-]{1,40}$/.test(v.id) ? v.id : label.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30);
+    return [{ id, label, price }];
+  });
+}
 /** Up to 8 add-ons with a name and a price; ids are kept so saved orders still match */
 function cleanAddons(list: unknown[]): Addon[] {
   return list.slice(0, 8).flatMap((raw) => {

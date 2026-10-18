@@ -6,7 +6,7 @@ import { DELIVERY, REFERRAL_CREDIT, quote, rupees } from "./pricing";
 import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, hoursOn, toDateStr } from "./cafe";
 import { perksFor } from "./perks";
 import { checkStock, consumeStock } from "./stock";
-import { menuLookup } from "./menuStore";
+import { menuLookup, shopShortfall, takeShopStock } from "./menuStore";
 import type { currentCustomer } from "./account";
 import { publish } from "./live";
 import { orderPlacedEmail, referralRewardEmail, sendLater } from "./email";
@@ -100,6 +100,8 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   if (!q.lines.length) return Response.json({ error: "Your tray is empty." }, { status: 400 });
   if (delivery && q.total < DELIVERY.minOrder) return Response.json({ error: `Delivery needs an order of at least ${rupees(DELIVERY.minOrder)}.` }, { status: 400 });
 
+  const short = shopShortfall(q.lines);
+  if (short) return Response.json({ error: short.left ? `Only ${short.left} × ${short.name} left. Please change the quantity.` : `Sorry, ${short.name} just sold out.` }, { status: 409 });
   const stock = checkStock(q.lines);
   if (stock) return Response.json({ error: `Sorry, we've just run out of ${stock} for that. Please pick something else.` }, { status: 409 });
 
@@ -120,6 +122,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   );
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
   consumeStock(q.lines);
+  takeShopStock(q.lines);
   if (opts.prepaid) db.prepare("UPDATE orders SET payment_ref = ? WHERE code = ?").run(opts.prepaid.ref, code);
   if (q.promoCode && q.promoDiscount > 0) usePromo(q.promoCode);
   if (group) {

@@ -144,7 +144,7 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
           <div className="row">
             <label className="field">Category
               <select className="input" value={f.cat} onChange={(e) => set("cat", e.target.value as Category)}>
-                <option value="coffee">Coffee</option><option value="tea">Tea & matcha</option><option value="cold">Cold drinks</option><option value="food">Food</option><option value="bakes">Bakes & sweets</option>
+                <option value="coffee">Coffee</option><option value="tea">Tea & matcha</option><option value="cold">Cold drinks</option><option value="food">Food</option><option value="shop">Shop (beans, merch)</option><option value="bakes">Bakes & sweets</option>
               </select>
             </label>
             <label className="field">Badge
@@ -214,7 +214,14 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
               {Object.values(SEASONS).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </label>
-          {drink ? (
+          {f.cat === "shop" ? (
+            <>
+              <label className="field">How many in stock (leave empty to not count)
+                <input className="input" type="number" min={0} max={9999} value={f.stock ?? ""} onChange={(e) => set("stock", e.target.value === "" ? undefined : Number(e.target.value))} placeholder="e.g. 30" />
+              </label>
+              <VariantsEditor variants={f.variants ?? []} onChange={(v) => set("variants", v.length ? v : undefined)} />
+            </>
+          ) : drink ? (
             <div className="toggle-row">
               <span>Made without milk <span className="small muted">· smoothies, juices, mocktails: hides the milk, syrup and topping choices</span></span>
               <button type="button" className={`switch ${f.noMilk ? "" : "off"}`} onClick={() => set("noMilk", f.noMilk ? undefined : true)} aria-pressed={!!f.noMilk} aria-label="Made without milk" />
@@ -289,6 +296,23 @@ function AddonsEditor({ addons, onChange }: { addons: Addon[]; onChange: (a: Add
         </div>
       ))}
       <button type="button" className="chip" style={{ alignSelf: "flex-start" }} onClick={() => onChange([...addons, { id: `addon-${Math.random().toString(36).slice(2, 7)}`, label: "New add-on", price: 30 }])}>＋ Add an add-on</button>
+    </div>
+  );
+}
+
+/** Shop items: one choice from a list, e.g. grind or colour, each with an optional extra price */
+function VariantsEditor({ variants, onChange }: { variants: { id: string; label: string; price: number }[]; onChange: (v: { id: string; label: string; price: number }[]) => void }) {
+  const upd = (i: number, patch: Partial<{ label: string; price: number }>) => onChange(variants.map((v, j) => (j === i ? { ...v, ...patch } : v)));
+  return (
+    <div className="field">Choices <span className="small">(e.g. grind or colour; the first is the default)</span>
+      {variants.map((v, i) => (
+        <div className="row" key={v.id} style={{ alignItems: "center" }}>
+          <input className="input" style={{ flex: 2, minWidth: 140 }} value={v.label} maxLength={50} onChange={(e) => upd(i, { label: e.target.value })} aria-label="Choice name" />
+          <input className="input" style={{ maxWidth: "6rem" }} type="number" min={0} value={v.price} onChange={(e) => upd(i, { price: Math.max(0, Number(e.target.value) || 0) })} aria-label="Extra price" />
+          <button type="button" className="chip" onClick={() => onChange(variants.filter((_, j) => j !== i))} aria-label={`Remove ${v.label}`}>✕</button>
+        </div>
+      ))}
+      <button type="button" className="chip" style={{ alignSelf: "flex-start" }} onClick={() => onChange([...variants, { id: `opt-${Math.random().toString(36).slice(2, 7)}`, label: "New choice", price: 0 }])}>＋ Add a choice</button>
     </div>
   );
 }

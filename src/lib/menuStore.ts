@@ -28,7 +28,7 @@ export function getMenu({ includeHidden = false } = {}): MenuItem[] {
   return (db.prepare("SELECT id, data, sort FROM menu_items ORDER BY sort, rowid").all() as Row[])
     .map((r) => {
       const m = { ...(JSON.parse(r.data) as MenuItem), id: r.id };
-      return { ...m, soldOut: out.has(r.id) || !canMake(m, have) };
+      return { ...m, soldOut: out.has(r.id) || !canMake(m, have) || (m.stock !== undefined && m.stock <= 0) };
     })
     .filter((m) => includeHidden || (!m.hidden && inSeason(m, today, season)));
 }
@@ -45,6 +45,37 @@ export function findOrderable(id: string): MenuItem | undefined {
 export function menuLookup() {
   const map = new Map(getMenu().map((m) => [m.id, m]));
   return (id: string) => map.get(id);
+}
+
+/** Shop items with a stock count: the first one there aren't enough of, or null */
+export function shopShortfall(lines: { itemId: string; qty: number }[]) {
+  const need = new Map<string, number>();
+  for (const l of lines) need.set(l.itemId, (need.get(l.itemId) ?? 0) + l.qty);
+  for (const [id, qty] of need) {
+    const r = db.prepare("SELECT data FROM menu_items WHERE id = ?").get(id) as { data: string } | undefined;
+    const m = r && (JSON.parse(r.data) as MenuItem);
+    if (m && m.stock !== undefined && m.stock < qty) return { name: m.name, left: m.stock };
+  }
+  return null;
+}
+
+/** Take sold shop items off their stock count */
+export function takeShopStock(lines: { itemId: string; qty: number }[]) {
+  for (const l of lines) {
+    const r = db.prepare("SELECT data FROM menu_items WHERE id = ?").get(l.itemId) as { data: string } | undefined;
+    if (!r) continue;
+    const m = JSON.parse(r.data) as MenuItem;
+    if (m.stock === undefined) continue;
+    db.prepare("UPDATE menu_items SET data = ? WHERE id = ?").run(JSON.stringify({ ...m, stock: Math.max(0, m.stock - l.qty) }), l.itemId);
+  }
+}
+
+/** Staff: set how many of a shop item are in stock */
+export function setShopStock(id: string, stock: number) {
+  const r = db.prepare("SELECT data FROM menu_items WHERE id = ?").get(id) as { data: string } | undefined;
+  if (!r) return false;
+  db.prepare("UPDATE menu_items SET data = ? WHERE id = ?").run(JSON.stringify({ ...JSON.parse(r.data), stock: Math.max(0, Math.min(9999, Math.round(stock))) }), id);
+  return true;
 }
 
 export function saveItem(item: MenuItem) {

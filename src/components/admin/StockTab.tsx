@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import ShopStock from "./ShopStock";
 import { useStore } from "../Store";
 
 type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number; cost: number | null };
@@ -43,6 +44,7 @@ export default function StockTab({ canEdit }: { canEdit: boolean }) {
   const low = items.filter((i) => i.qty <= i.low_at);
   return (
     <>
+      <ShopStock />
       {low.length > 0 && <div className="reward-banner" style={{ marginBottom: "1rem" }}>⚠️ Running low: {low.map((i) => `${i.name} (${fmt(i.qty, i.unit)})`).join(", ")}</div>}
       <p className="muted small" style={{ marginBottom: "1rem" }}>
         Every order uses these up (size, milk choice and extra shots included). When something runs out, the drinks that need it show as sold out automatically.

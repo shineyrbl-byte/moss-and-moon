@@ -984,3 +984,22 @@ test("guest list: visits and spend grouped by person, VIP stars show on the bari
   const csv = await (await fetch(`${s.url}/api/admin/guests?format=csv`, { headers: { cookie: s.cookie() } })).text();
   assert.match(csv, /Regular Rhea/);
 });
+
+test("café shop: grind choices are priced, stock counts down and sells out", async () => {
+  await s.login();
+  await s.api("/api/menu", { method: "PATCH", json: { itemId: "moss-mug", stock: 2 } });
+  const buy = (qty: number, variant = "blush") => s.api("/api/orders", { method: "POST", json: { name: "Shopper", phone: "9000024545", lines: [{ itemId: "moss-mug", qty, opts: { variant } }] } });
+  assert.equal((await buy(3)).status, 409, "only 2 left");
+  const ok = await buy(2);
+  assert.equal(ok.status, 200);
+  const o = (await s.api(`/api/orders/${(ok.body as { code: string }).code}`)).body as { lines: { note: string; total: number }[] };
+  assert.equal(o.lines[0].note, "Blush pink");
+  const menu = ((await s.api("/api/menu")).body as { items: { id: string; soldOut: boolean; stock?: number }[] }).items;
+  const mug = menu.find((m) => m.id === "moss-mug")!;
+  assert.equal(mug.stock, 0);
+  assert.equal(mug.soldOut, true);
+  // South Indian filter grind costs a little more
+  const beans = await s.api("/api/orders", { method: "POST", json: { name: "Shopper", phone: "9000024545", lines: [{ itemId: "house-blend-beans", qty: 1, opts: { variant: "south-indian" } }] } });
+  assert.equal((beans.body as { total: number }).total, 680);
+  await s.api("/api/menu", { method: "PATCH", json: { itemId: "moss-mug", stock: 30 } });
+});

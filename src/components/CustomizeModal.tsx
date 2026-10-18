@@ -62,7 +62,7 @@ export default function CustomizeModal() {
             <div>
               <h3 style={{ fontSize: "2rem" }}>{item.name}</h3>
               <p className="muted">{item.desc}</p>
-              {(() => {
+              {item.cat !== "shop" && (() => {
                 const al = allergensFor(item, opts);
                 const kc = kcalFor(item, opts);
                 return (
@@ -118,6 +118,23 @@ export default function CustomizeModal() {
                 </div>
               )}
             </>
+          ) : item.cat === "shop" ? (
+            <>
+              {!!item.variants?.length && item.variants.length > 1 && (
+                <div className="opt-group">
+                  <h4>Choose</h4>
+                  <div className="chips">
+                    {item.variants.map((v) => (
+                      <button key={v.id} className={`chip ${opts.variant === v.id ? "on" : ""}`} onClick={() => set("variant", v.id)}>
+                        {v.label}{v.price > 0 && <span className="extra"> +₹{v.price}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {item.stock !== undefined && item.stock <= 5 && item.stock > 0 && <p className="small" style={{ color: "var(--pink-ink)" }}>Only {item.stock} left</p>}
+              <p className="small muted">Pick up at the counter, or choose delivery at checkout.</p>
+            </>
           ) : (
             <>
               {item.cat === "bakes" && (
@@ -146,7 +163,7 @@ export default function CustomizeModal() {
             </>
           )}
 
-          <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so please tell us about severe allergies.</p>
+          {item.cat !== "shop" && <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so please tell us about severe allergies.</p>}
           <div className="toggle-row">
             <div className="stepper">
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="One less">−</button>

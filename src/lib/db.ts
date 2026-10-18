@@ -4,7 +4,7 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import { MENU_V2, SEED_MENU } from "./menu";
+import { MENU_SHOP, MENU_V2, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
@@ -446,6 +446,14 @@ function open() {
     const add = db.prepare("INSERT OR IGNORE INTO events (id, data) VALUES (?, ?)");
     for (const e of SEED_EVENTS) add.run(e.id, JSON.stringify(e));
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_events', '1')").run();
+  }
+
+  // The café shop, added once to existing cafés
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_shop'").get()) {
+    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
+    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
+    MENU_SHOP.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_shop', '1')").run();
   }
 
   // Allergens & calories for the starting menu (once; items an owner already set are left alone)

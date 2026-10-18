@@ -19,6 +19,8 @@ export type Options = {
   warm?: boolean;
   /** Food add-ons: ids from the item's own add-on list */
   addons?: string[];
+  /** Shop items: which version (grind, colour…) */
+  variant?: string;
 };
 
 export type CartLine = { key: string; itemId: string; opts: Options; qty: number };
@@ -84,6 +86,7 @@ export function drinkChoices(item: Pick<MenuItem, "cat" | "noMilk">) {
 }
 
 export function defaultOptions(item: MenuItem): Options {
+  if (item.cat === "shop") return item.variants?.length ? { variant: item.variants[0].id } : {};
   if (!isDrink(item.cat)) return item.cat === "bakes" ? { warm: false, addons: [] } : { addons: [] };
   const c = drinkChoices(item);
   const temp = item.cat === "cold" ? "iced" : (item.traits?.temp ?? "hot");
@@ -104,6 +107,7 @@ export function cleanOptions(item: MenuItem, raw: unknown): Options {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const pick = <V extends string>(list: Choice<V>[], v: unknown, fallback?: V) =>
     list.some((c) => c.value === v) ? (v as V) : fallback;
+  if (item.cat === "shop") return item.variants?.length ? { variant: item.variants.some((v) => v.id === r.variant) ? String(r.variant) : item.variants[0].id } : {};
   const addons = (item.addons ?? []).map((a) => a.id).filter((id) => Array.isArray(r.addons) && r.addons.includes(id)); // in the menu's order
   if (!isDrink(item.cat)) return item.cat === "bakes" ? { warm: r.warm === true, addons } : { addons };
   const c = drinkChoices(item);
@@ -129,10 +133,12 @@ export function unitPrice(item: MenuItem, o: Options) {
   p += SYRUPS.find((s) => s.value === o.syrup)?.extra ?? 0;
   for (const t of o.toppings ?? []) p += TOPPINGS.find((x) => x.value === t)?.extra ?? 0;
   for (const id of o.addons ?? []) p += item.addons?.find((a) => a.id === id)?.price ?? 0;
+  if (o.variant) p += item.variants?.find((v) => v.id === o.variant)?.price ?? 0;
   return p;
 }
 
 export function describeOptions(item: MenuItem, o: Options) {
+  if (item.cat === "shop") return o.variant && item.variants && item.variants.length > 1 ? (item.variants.find((v) => v.id === o.variant)?.label ?? "") : "";
   const addons = (o.addons ?? []).map((id) => item.addons?.find((a) => a.id === id)?.label).filter(Boolean) as string[];
   if (!isDrink(item.cat)) return [o.warm ? "warmed" : "", ...addons.map((a) => a.replace(/^Make it a combo: /, ""))].filter(Boolean).join(" · ");
   const d = defaultOptions(item);

@@ -22,6 +22,10 @@ export type MenuItem = {
   /** Seasonal: only on the menu between these dates (YYYY-MM-DD, either can be left empty) */
   from?: string;
   until?: string;
+  /** Pick one of these (e.g. grind for beans, colour for a mug); the first is the default */
+  variants?: { id: string; label: string; price: number }[];
+  /** Shop items: how many are in stock (sells out at 0). Leave empty to not count. */
+  stock?: number;
   /** Food add-ons guests can pick (extra cheese, gluten-free bread, make it a combo…) */
   addons?: Addon[];
   /** Drinks made without milk (smoothies, juices, mocktails): no milk choice */
@@ -127,5 +131,23 @@ export const MENU_V2: MenuItem[] = [
   { id: "margherita-flatbread", cat: "food", name: "Margherita Flatbread", desc: "Wood-fired, tomato, mozzarella and basil. Good for sharing.", price: 350, img: "1565299624946-b28f40a0ae38", allergens: ["gluten", "milk"], kcal: 780, cost: 85, addons: [{ id: "chilli", label: "Chilli oil & jalapeños", price: 30, kcal: 40 }, CHEESE] },
 ];
 
+// Added with the café shop: beans, mugs and merch
+const GRINDS = [
+  { id: "whole", label: "Whole beans", price: 0 },
+  { id: "espresso", label: "Ground for espresso", price: 0 },
+  { id: "filter", label: "Ground for pour-over / filter", price: 0 },
+  { id: "french-press", label: "Ground for French press", price: 0 },
+  { id: "south-indian", label: "South Indian filter (with chicory)", price: 30 },
+];
+export const MENU_SHOP: MenuItem[] = [
+  { id: "house-blend-beans", cat: "shop", name: "House Blend Beans · 250 g", desc: "Our everyday espresso: chocolate, caramel and a little cherry. Roasted this week.", price: 650, img: "1559056199-641a0ac8b55e", badge: "bestseller", variants: GRINDS, stock: 40, cost: 260 },
+  { id: "single-origin-beans", cat: "shop", name: "Chikmagalur Single Origin · 250 g", desc: "Bright, fruity and floral. Lovely as a pour-over.", price: 780, img: "1587734195503-904fca47e0e9", variants: GRINDS, stock: 25, cost: 330 },
+  { id: "moss-mug", cat: "shop", name: "Moss & Moon Ceramic Mug", desc: "Hand-glazed, 300 ml, dishwasher safe.", price: 450, img: "1514228742587-6b1558fcca3d", variants: [{ id: "cream", label: "Cream", price: 0 }, { id: "blush", label: "Blush pink", price: 0 }, { id: "moss", label: "Moss green", price: 0 }], stock: 30, cost: 180 },
+  { id: "keep-cup", cat: "shop", name: "Reusable Coffee Cup", desc: "Bring it back and get ₹10 off every drink.", price: 550, img: "1577937927133-66ef06acdf18", stock: 30, cost: 220 },
+  { id: "tote", cat: "shop", name: "Canvas Tote Bag", desc: "Heavy cotton with our little moon on the front.", price: 350, img: "1544816155-12df9643f363", stock: 50, cost: 120 },
+  { id: "home-brew-kit", cat: "shop", name: "Home Brew Kit", desc: "Hand grinder, enamel mug and a bag of House Blend. Everything to start.", price: 2400, img: "1611854779393-1b2da9d400fe", badge: "new", stock: 10, cost: 1300 },
+  { id: "gift-box", cat: "shop", name: "Moss & Moon Gift Box", desc: "Beans, a mug and four brown butter cookies, wrapped in pink.", price: 1200, img: "1549465220-1a8b9238cd48", badge: "pink pick", variants: [{ id: "house", label: "With House Blend", price: 0 }, { id: "single", label: "With Single Origin", price: 130 }], stock: 15, cost: 560 },
+];
+
 /** The full starting menu for a brand-new café */
-export const SEED_MENU: MenuItem[] = [...BASE_MENU, ...MENU_V2];
+export const SEED_MENU: MenuItem[] = [...BASE_MENU, ...MENU_V2, ...MENU_SHOP];
