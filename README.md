@@ -22,8 +22,14 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 ## Features
 
 **Ordering**
-- ☕ Menu in sections (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes, **Shop**) with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
+- ☕ **92 items** in sections (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes, Kids, **Shop**), with Goan favourites like Bebinca, Kokum Soda, Sol Kadhi and Chorizo Pão, with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
 - 🥤 Cold drinks (cold brew, frappés, smoothies, mocktails, juices) and savoury food (toasties, sandwiches, toast, pancakes, pasta, bowls) with add-ons like an egg, extra cheese, gluten-free bread or a coffee combo
+- 🍱 **Combo deals** (e.g. any coffee + a bake for ₹299), applied in the tray automatically
+- 🎂 **Whole-cake orders** 2 days ahead with a message on top (`/cakes`)
+- 🥗 **Build your own** bowl or sandwich, and **tasting flights** (pick 3 coffees, matchas or mocktails)
+- 🧸 **Kids** section, **half portions** of pastas and bowls, and high chairs when booking
+- 🥐 **"Goes well with"**: the drink pop-up suggests the bake most often ordered with it
+- 🛵 **Delivery areas** by pincode, each with its own fee, minimum and time
 - 🛍 **Café shop**: beans (choose the grind), mugs (choose the colour), a reusable cup, tote, home brew kit and gift box, with stock that sells out by itself
 - 🎡 **"Surprise me" wheel**: spin for a random drink, sometimes with a 10% code for today
 - 🎛 **Drink builder**: size, hot/iced, ice level, extra hot, whole/oat/almond/soy milk, sweetness, syrups, toppings, extra shot or decaf, with a little cup that fills up as you choose

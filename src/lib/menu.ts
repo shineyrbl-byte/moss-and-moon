@@ -211,7 +211,7 @@ export const MENU_V3: MenuItem[] = [
 // Build your own, tasting flights and the kids' menu
 export const MENU_V4: MenuItem[] = [
   {
-    id: "build-bowl", cat: "food", name: "Build Your Own Bowl", desc: "Pick a base, a protein, up to three toppings and a sauce.", price: 240, img: "1540189549336-e6e99c3679fe", badge: "new", allergens: [], kcal: 380, cost: 85,
+    id: "build-bowl", cat: "food", name: "Build Your Own Bowl", desc: "Pick a base, a protein, up to three toppings and a sauce.", price: 240, img: "1540189549336-e6e99c3679fe", badge: "new", allergens: [], kcal: 0, cost: 85,
     groups: [
       { id: "base", label: "Base", min: 1, max: 1, choices: [{ id: "quinoa", label: "Herby quinoa", price: 0, kcal: 180 }, { id: "brown-rice", label: "Brown rice", price: 0, kcal: 200 }, { id: "greens", label: "Big leafy greens", price: 0, kcal: 30 }] },
       { id: "protein", label: "Protein", min: 1, max: 1, choices: [{ id: "chickpeas", label: "Spiced chickpeas", price: 0, kcal: 150 }, { id: "paneer", label: "Grilled paneer", price: 40, kcal: 220, adds: ["milk"] }, { id: "tofu", label: "Sesame tofu", price: 40, kcal: 160, adds: ["soy", "sesame"] }, { id: "egg", label: "Two soft eggs", price: 30, kcal: 140, adds: ["egg"] }] },

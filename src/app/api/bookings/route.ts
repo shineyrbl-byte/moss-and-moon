@@ -26,6 +26,7 @@ export async function POST(req: Request) {
   const time = String(b.time ?? "");
   const guests = Math.floor(Number(b.guests));
   const note = cleanText(b.note, 200);
+  const highChairs = Math.min(3, Math.max(0, Math.floor(Number(b.highChairs) || 0)));
   const email = cleanEmail(b.email);
   const branch = findBranch(b.branch);
   if (b.branch && branch.id !== b.branch) return Response.json({ error: "That branch isn't taking bookings right now." }, { status: 400 });
@@ -56,9 +57,9 @@ export async function POST(req: Request) {
   // Big groups hold the table with a deposit, paid next
   const deposit = depositFor(guests);
   if (deposit && !email) return Response.json({ error: "For groups this size we need an email for the deposit receipt." }, { status: 400 });
-  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder, branch, status, deposit, deposit_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder, branch, status, deposit, deposit_status, high_chairs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
     code, name, phone, email || null, date, time, guests, note, table, pre.lines.length ? JSON.stringify(pre.lines) : null, branch.id,
-    deposit ? "pending" : "confirmed", deposit, deposit ? "due" : null,
+    deposit ? "pending" : "confirmed", deposit, deposit ? "due" : null, highChairs,
   );
   if (deposit) return Response.json({ code, name, date, time, guests, table, needsDeposit: true, deposit });
   const extra = { table, preorder: pre.items, preorderTotal: pre.total, ...(activeBranches().length > 1 ? { branch: branch.name, address: branch.address } : {}) };

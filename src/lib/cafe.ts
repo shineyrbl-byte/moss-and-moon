@@ -5,7 +5,7 @@ export type DayHours = [number, number] | null;
 export type Closure = { date: string; note: string };
 /** Opening hours and holidays. Owners edit these in Admin → Settings; the server keeps
  * the current settings on globalThis and sends them to the browser with every page. */
-export type CafeConfig = { hours: Record<number, DayHours>; closures: Closure[]; happyHour?: unknown; branches?: Branch[]; lastHour?: unknown; links?: CafeLinks; combos?: import("./pricing").Combo[] };
+export type CafeConfig = { hours: Record<number, DayHours>; closures: Closure[]; happyHour?: unknown; branches?: Branch[]; lastHour?: unknown; links?: CafeLinks; combos?: import("./pricing").Combo[]; zones?: import("./pricing").DeliveryZone[] };
 /** Where to send guests: the Google review page, and a WhatsApp number (10 digits, India) */
 export type CafeLinks = { googleReview: string; whatsapp: string };
 export const cafeLinks = (): CafeLinks => cafeConfig().links ?? { googleReview: "", whatsapp: "" };

@@ -13,13 +13,13 @@ import { depositPaid } from "@/lib/deposits";
 import { cakePaid } from "@/lib/cakeOrders";
 import { cateringConfirmedEmail } from "@/lib/email";
 
-type OrderRow = { code: string; name: string; email: string | null; lines: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pickup: string; table_no: number | null; delivery_address: string | null };
+type OrderRow = { code: string; name: string; email: string | null; lines: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pickup: string; table_no: number | null; delivery_address: string | null; delivery_eta?: number | null };
 
 function orderPaid(code: string, ref: string | null) {
   const r = db.prepare("UPDATE orders SET pay_status = 'paid', payment_ref = COALESCE(?, payment_ref) WHERE code = ? AND pay_status != 'paid'").run(ref, code);
   if (!r.changes) return;
   publish({ type: "order", code, action: "paid" });
-  const o = db.prepare("SELECT code, name, email, lines, total, giftcard_used, credit_used, tip, delivery_fee, pickup, table_no, delivery_address FROM orders WHERE code = ?").get(code) as OrderRow;
+  const o = db.prepare("SELECT code, name, email, lines, total, giftcard_used, credit_used, tip, delivery_fee, pickup, table_no, delivery_address, delivery_eta FROM orders WHERE code = ?").get(code) as OrderRow;
   if (o.email)
     sendLater(o.email, ...orderPlacedEmail({ code, name: o.name, lines: JSON.parse(o.lines) as QuoteLine[], total: orderDue(o), pickup: o.pickup, paid: true, ready: readyEstimate(o).label, table: o.table_no, delivery: o.delivery_address }));
 }

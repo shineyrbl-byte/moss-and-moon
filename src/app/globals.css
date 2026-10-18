@@ -1244,3 +1244,6 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .cake-pick.on { border-color: var(--pink-fill); }
 .cake-ph { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; }
 .cake-ph img { object-fit: cover; }
+.pair-row { display: grid; grid-template-columns: 48px 1fr auto; gap: 0.7rem; align-items: center; background: var(--surface-2); border-radius: 14px; padding: 0.5rem 0.7rem; margin: 0.6rem 0; }
+.pair-ph { position: relative; width: 48px; height: 48px; border-radius: 10px; overflow: hidden; }
+.pair-ph img { object-fit: cover; }

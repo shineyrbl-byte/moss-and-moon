@@ -10,17 +10,26 @@ import { useRouter } from "next/navigation";
 import { photo } from "@/lib/menu";
 import { ICE, MILKS, SHOT_PRICE, SIZES, SWEETS, SYRUPS, TEMPS, TOPPINGS, cleanOptions, defaultOptions, drinkChoices, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
 
+let pairCache: Record<string, string> | null = null;
+
 // Pop-up for choosing size, milk, sweetness etc. before adding to the tray.
 export default function CustomizeModal() {
-  const { customizing: item, setCustomizing, add, toast, soldOut, me } = useStore();
+  const { customizing: item, setCustomizing, add, toast, soldOut, me, find } = useStore();
   const [opts, setOpts] = useState<Options>({});
   const [qty, setQty] = useState(1);
+  const [pairs, setPairs] = useState<Record<string, string>>(pairCache ?? {});
+  const [paired, setPaired] = useState(false);
+  useEffect(() => {
+    if (pairCache) return;
+    fetch("/api/pairings").then((r) => r.json()).then((d) => { pairCache = d; setPairs(d); }).catch(() => {});
+  }, []);
   const router = useRouter();
 
   useEffect(() => {
     if (item) {
       setOpts(defaultOptions(item));
       setQty(1);
+      setPaired(false);
     }
   }, [item]);
 
@@ -208,6 +217,17 @@ export default function CustomizeModal() {
           )}
 
           {out && <BackInStock itemId={item.id} name={item.name} email={me?.email ?? ""} />}
+          {(() => {
+            const p = pairs[item.id] ? find(pairs[item.id]) : undefined;
+            if (!p || soldOut.has(p.id)) return null;
+            return (
+              <div className="pair-row">
+                <span className="pair-ph"><Image src={photo(p.img, 160)} alt="" fill sizes="48px" /></span>
+                <span><small className="muted">Goes well with</small><br /><b>{p.name}</b> <span className="muted small">{rupees(p.price)}</span></span>
+                <button className="btn btn-ghost btn-sm" disabled={paired} onClick={() => { add(p.id, defaultOptions(p), 1); setPaired(true); toast(`${p.name} added too ✿`); }}>{paired ? "Added ✓" : "+ Add"}</button>
+              </div>
+            );
+          })()}
           {item.cat !== "shop" && <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so please tell us about severe allergies.</p>}
           <div className="toggle-row">
             <div className="stepper">

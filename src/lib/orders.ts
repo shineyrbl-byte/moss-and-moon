@@ -2,7 +2,7 @@
 // Prices, stock, perks and promo codes are always worked out here on the server.
 import "server-only";
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "./db";
-import { DELIVERY, REFERRAL_CREDIT, combosAt, combosConfig, quote, rupees } from "./pricing";
+import { REFERRAL_CREDIT, combosAt, combosConfig, deliveryTerms, findPincode, quote, rupees } from "./pricing";
 import { isLastHour, lastHour } from "./cafe";
 import { recordMissed } from "./missed";
 import { companyFor, spentThisMonth } from "./companies";
@@ -49,6 +49,11 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   if (phone.length !== 10 && !(table && !phone) && !(opts.prepaid && !phone) && !(opts.kiosk && !phone)) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
   if (body.email && !email) return Response.json({ error: "That email doesn't look right." }, { status: 400 });
   if (body.delivery && !table && delivery.length < 10) return Response.json({ error: "Please add your full delivery address." }, { status: 400 });
+  // Delivery areas: the pincode decides the fee, minimum and time
+  const pincode = delivery ? findPincode(body.delivery?.pincode) ?? findPincode(delivery) : null;
+  const terms = delivery ? deliveryTerms(pincode) : null;
+  if (delivery && !terms) return Response.json({ error: pincode ? `Sorry, we don't deliver to ${pincode} yet. Pick it up instead?` : "Please add your 6-digit pincode." }, { status: 400 });
+  const deliveryAddress = delivery && pincode && !delivery.includes(pincode) ? `${delivery} · ${pincode}` : delivery;
 
   // Rush mode: online orders paused for a bit (guests already in the café can still order)
   const rush = rushNow();
@@ -123,10 +128,10 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     student: perks.student,
     combos: combosAt(combosConfig()),
     tipAmount: Number.isFinite(tipAmount) ? tipAmount : undefined,
-    delivery: !!delivery,
+    delivery: terms ? { fee: terms.fee, freeOver: terms.freeOver } : false,
   });
   if (!q.lines.length) return Response.json({ error: "Your tray is empty." }, { status: 400 });
-  if (delivery && q.total < DELIVERY.minOrder) return Response.json({ error: `Delivery needs an order of at least ${rupees(DELIVERY.minOrder)}.` }, { status: 400 });
+  if (terms && q.total < terms.minOrder) return Response.json({ error: `Delivery${terms.zone ? ` to ${terms.zone}` : ""} needs an order of at least ${rupees(terms.minOrder)}.` }, { status: 400 });
 
   const short = shopShortfall(q.lines);
   if (short) recordMissed(q.lines.filter((l) => l.name === short.name), "low stock");
@@ -151,8 +156,9 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     code, name, phone, email || null, pickup, note, JSON.stringify(withCosts(q.lines, find)), q.subtotal,
     q.subtotal - q.total, q.total, q.promoCode,
     opts.prepaid ? opts.prepaid.method : q.due === 0 && q.giftUsed + q.creditUsed > 0 ? "giftcard" : payMethod, payStatus, gift?.code ?? null, q.giftUsed, q.happyHour ? 1 : 0, table, me?.id ?? null,
-    q.tip, q.creditUsed, q.deliveryFee, delivery || null, usedPerks || null, branch.id
+    q.tip, q.creditUsed, q.deliveryFee, deliveryAddress || null, usedPerks || null, branch.id
   );
+  if (terms) db.prepare("UPDATE orders SET delivery_eta = ? WHERE code = ?").run(terms.minutes, code);
   if (company) db.prepare("UPDATE orders SET company_id = ? WHERE code = ?").run(company.id, code);
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
   consumeStock(q.lines);
@@ -183,7 +189,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
 
   // Online orders get their email after payment goes through
   if (email && payStatus !== "pending")
-    sendLater(email, ...orderPlacedEmail({ code, name, lines: q.lines, total: q.due, pickup, paid: payStatus === "paid", ready: readyEstimate({ code, pickup, table_no: table, delivery_address: delivery || null }).label, table, delivery: delivery || null }));
+    sendLater(email, ...orderPlacedEmail({ code, name, lines: q.lines, total: q.due, pickup, paid: payStatus === "paid", ready: readyEstimate({ code, pickup, table_no: table, delivery_address: deliveryAddress || null, delivery_eta: terms?.minutes ?? null }).label, table, delivery: deliveryAddress || null }));
 
   publish({ type: "order", code, action: "new" });
   const badges = me ? newBadges(me) : [];

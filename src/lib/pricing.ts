@@ -314,6 +314,19 @@ export const REFERRAL_CREDIT = 100;
 /** Coffee wallet top-ups and the bonus each one adds */
 export const WALLET_TOPUPS = [{ amount: 500, bonus: 25 }, { amount: 1000, bonus: 75 }, { amount: 2000, bonus: 200 }];
 export const DELIVERY = { fee: 40, freeOver: 600, minOrder: 200 };
+/** Delivery areas by pincode, each with its own fee, minimum and time. None set = deliver nearby on the standard terms. */
+export type DeliveryZone = { id: string; name: string; pincodes: string[]; fee: number; freeOver: number; minOrder: number; minutes: number };
+export type DeliveryTerms = { zone: string | null; fee: number; freeOver: number; minOrder: number; minutes: number };
+export const deliveryZones = (): DeliveryZone[] => ((globalThis as { __mmConfig?: { zones?: DeliveryZone[] } }).__mmConfig?.zones ?? []);
+/** A 6-digit pincode from what was typed (or from inside an address) */
+export const findPincode = (s: unknown) => /\b(\d{6})\b/.exec(String(s ?? "").replace(/\s+(?=\d)/g, (m) => m))?.[1] ?? null;
+/** The terms for a pincode: null when there are areas and this isn't one of them */
+export function deliveryTerms(pincode: string | null): DeliveryTerms | null {
+  const zones = deliveryZones();
+  if (!zones.length) return { zone: null, ...DELIVERY, minutes: 20 };
+  const z = pincode ? zones.find((x) => x.pincodes.includes(pincode)) : undefined;
+  return z ? { zone: z.name, fee: z.fee, freeOver: z.freeOver, minOrder: z.minOrder, minutes: z.minutes } : null;
+}
 
 /** What a stored order still needs paid (shared by server and browser) */
 export const orderDue = (o: { total: number; giftcard_used?: number | null; credit_used?: number | null; tip?: number | null; delivery_fee?: number | null }) =>
@@ -336,7 +349,7 @@ export function quote(
   freeDrink = false,
   extra: {
     now?: Date; giftBalance?: number; credit?: number; birthdayTreat?: boolean; passDrink?: boolean;
-    tipPercent?: number; tipAmount?: number; delivery?: boolean; tier?: "bronze" | "silver" | "gold";
+    tipPercent?: number; tipAmount?: number; delivery?: boolean | Pick<DeliveryTerms, "fee" | "freeOver">; tier?: "bronze" | "silver" | "gold";
     /** The last-hour deal, when it's on right now (the caller checks the branch's hours) */
     lastHour?: Pick<LastHour, "off" | "cats"> | null;
     /** A verified student */
@@ -397,7 +410,8 @@ export function quote(
   const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount - tierDiscount - lastHourDiscount - studentDiscount - combo.discount);
   const creditUsed = Math.min(total, Math.max(0, Math.floor(extra.credit ?? 0)));
   const giftUsed = Math.min(total - creditUsed, Math.max(0, Math.floor(extra.giftBalance ?? 0)));
-  const deliveryFee = extra.delivery && lines.length ? (total >= DELIVERY.freeOver ? 0 : DELIVERY.fee) : 0;
+  const terms = typeof extra.delivery === "object" ? extra.delivery : DELIVERY;
+  const deliveryFee = extra.delivery && lines.length ? (total >= terms.freeOver ? 0 : terms.fee) : 0;
   const tip =
     extra.tipAmount !== undefined
       ? Math.max(0, Math.min(2000, Math.round(extra.tipAmount)))

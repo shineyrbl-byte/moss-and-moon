@@ -40,6 +40,7 @@ import WinbackCard from "@/components/admin/WinbackCard";
 import SpecialsCard from "@/components/admin/SpecialsCard";
 import CombosCard from "@/components/admin/CombosCard";
 import CakesTab from "@/components/admin/CakesTab";
+import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
 import PriceWhatIf from "@/components/admin/PriceWhatIf";
 import MenuEngineering from "@/components/admin/MenuEngineering";
 import MissedSales from "@/components/admin/MissedSales";
@@ -62,7 +63,7 @@ type Stats = {
 type Order = { branch?: string; id: number; code: string; name: string; phone: string; table_no: number | null; email: string | null; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; delivery_address: string | null; pay_method: string; pay_status: string; status: OrderStatus; created_at: string; refund_amount: number; paid_shares?: number };
 type Gift = { code: string; amount: number; balance: number; from_name: string; to_name: string; to_email: string; paid: number; created_at: string };
 type Email = { id: number; to_email: string; subject: string; html: string; status: string; error: string | null; created_at: string };
-type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; branch?: string; deposit?: number; deposit_status?: string | null; table_no: number | null; preorder: string | null; preorder_code: string | null };
+type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; branch?: string; high_chairs?: number; deposit?: number; deposit_status?: string | null; table_no: number | null; preorder: string | null; preorder_code: string | null };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
 const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Cakes", "Events", "Catering", "Companies", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health", "Settings"] as const;
@@ -78,17 +79,18 @@ const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
 ];
 /** Words that find a tab in "Jump to…" */
 const KEYWORDS: Partial<Record<Tab, string>> = {
-  Settings: "hours holidays golden hour last-hour branches google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
+  Settings: "hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
   Analytics: "profit menu engineering missed sales price what if retention coming back visitors insights",
   Stock: "ingredients use-by expiry supplier prices reorder shop stock",
   Checklists: "opening closing fridge temperature equipment repairs maintenance",
   "Cash-up": "till cash float upi card",
   "P&L": "expenses rent wages profit loss",
-  Menu: "special of the day printable menu poster recipes story instagram",
+  Menu: "special of the day printable menu poster recipes story instagram combos combo deals allergen chart tv",
   Rota: "shifts swaps staffing",
   Training: "quiz stations",
   Guests: "we miss you vip regulars birthdays",
-  Bookings: "deposits no-show waitlist tables",
+  Bookings: "deposits no-show waitlist tables high chair",
+  Cakes: "whole cake birthday",
   Health: "errors security uptime",
   Emails: "sent emails preview",
   "Tables & QR": "qr codes table cards",
@@ -461,7 +463,7 @@ export default function AdminPage() {
               <tbody>
                 {bookings.map((b) => (
                   <tr key={b.code} style={{ opacity: b.status === "cancelled" ? 0.45 : 1 }}>
-                    <td>{b.date}</td><td>{b.time}</td><td>{b.name}<br /><small className="muted">{b.code}</small>{activeBranches().length > 1 && <span className="branch-tag">{findBranch(b.branch).name}</span>}</td><td>{b.guests}</td><td>{b.table_no ?? <span className="muted">any</span>}</td><td>{b.phone}</td><td>{b.note}{b.preorder && <><br /><small>🍽 {b.preorder}{b.preorder_code && b.preorder_code !== "placing" ? <span className="muted"> · {["failed", "missed"].includes(b.preorder_code) ? b.preorder_code : `sent as ${b.preorder_code}`}</span> : <span className="muted"> · goes to the kitchen 15 min before</span>}</small></>}</td>
+                    <td>{b.date}</td><td>{b.time}</td><td>{b.name}<br /><small className="muted">{b.code}</small>{activeBranches().length > 1 && <span className="branch-tag">{findBranch(b.branch).name}</span>}</td><td>{b.guests}{b.high_chairs ? <><br /><small>🧸 {b.high_chairs} high chair{b.high_chairs > 1 ? "s" : ""}</small></> : null}</td><td>{b.table_no ?? <span className="muted">any</span>}</td><td>{b.phone}</td><td>{b.note}{b.preorder && <><br /><small>🍽 {b.preorder}{b.preorder_code && b.preorder_code !== "placing" ? <span className="muted"> · {["failed", "missed"].includes(b.preorder_code) ? b.preorder_code : `sent as ${b.preorder_code}`}</span> : <span className="muted"> · goes to the kitchen 15 min before</span>}</small></>}</td>
                     <td><span className="status-tag">{b.status === "pending" ? "awaiting deposit" : b.status}</span>{b.deposit ? <><br /><small className={b.deposit_status === "paid" ? "success" : "muted"}>{rupees(b.deposit)} deposit {b.deposit_status === "paid" ? "paid" : b.deposit_status === "kept" ? "kept" : "due"}</small></> : null}</td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       {b.status === "confirmed" && <>
@@ -496,6 +498,7 @@ export default function AdminPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           <HoursEditor />
           <BranchesCard />
+          <DeliveryZonesCard />
           <LinksCard />
           <GmailConnect />
           <GstCard />

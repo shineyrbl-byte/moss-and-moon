@@ -657,11 +657,13 @@ function open() {
   addColumn(db, "customers", "student_code", "TEXT"); // sha256 of a pending code, with its expiry
   addColumn(db, "orders", "company_id", "INTEGER");
   addColumn(db, "orders", "arrived_at", "TEXT");
+  addColumn(db, "orders", "delivery_eta", "INTEGER");
   addColumn(db, "orders", "arrived_note", "TEXT");
   addColumn(db, "orders", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "bookings", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "waitlist", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "bookings", "deposit", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "bookings", "high_chairs", "INTEGER NOT NULL DEFAULT 0");
   addColumn(db, "bookings", "deposit_status", "TEXT"); // due | paid | kept
   addColumn(db, "bookings", "deposit_card", "TEXT"); // gift card that carries the deposit to the bill
   addColumn(db, "bookings", "table_no", "INTEGER");

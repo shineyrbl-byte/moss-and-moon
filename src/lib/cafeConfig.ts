@@ -2,11 +2,11 @@
 import "server-only";
 import { getSetting, setSetting } from "./db";
 import { DEFAULT_CONFIG, MAIN_BRANCH, applyConfig, cafeConfig, parseDate, toDateStr, type Branch, type CafeConfig, type Closure, type DayHours } from "./cafe";
-import { DEFAULT_COMBOS, DEFAULT_HAPPY_HOUR, type Combo, type HappyHour } from "./pricing";
+import { DEFAULT_COMBOS, DEFAULT_HAPPY_HOUR, type Combo, type DeliveryZone, type HappyHour } from "./pricing";
 import { DEFAULT_LAST_HOUR, type CafeLinks, type LastHour } from "./cafe";
 import type { Category } from "./menu";
 
-export type FullConfig = CafeConfig & { happyHour: HappyHour; branches: Branch[]; lastHour: LastHour; links: CafeLinks; combos: Combo[] };
+export type FullConfig = CafeConfig & { happyHour: HappyHour; branches: Branch[]; lastHour: LastHour; links: CafeLinks; combos: Combo[]; zones: DeliveryZone[] };
 export const MAX_BRANCHES = 4;
 const CATS: Category[] = ["coffee", "tea", "cold", "food", "bakes", "shop"];
 const hour = (v: unknown, lo: number, hi: number) => {
@@ -101,6 +101,26 @@ export function cleanConfig(raw: unknown, current: FullConfig = fullConfig()): F
     }
     combos = out;
   }
+  let zones = current.zones;
+  if (Array.isArray(r.zones)) {
+    const out: DeliveryZone[] = [];
+    const seen = new Set<string>();
+    for (const raw of r.zones.slice(0, 12) as Record<string, unknown>[]) {
+      const name = String(raw?.name ?? "").trim().slice(0, 40);
+      const pins = [...new Set(String(Array.isArray(raw?.pincodes) ? raw.pincodes.join(",") : raw?.pincodes ?? "").split(/[\s,]+/).filter((p) => /^\d{6}$/.test(p)))].slice(0, 60);
+      const n = (v: unknown, lo: number, hi: number) => { const x = Math.round(Number(v)); return Number.isFinite(x) && x >= lo && x <= hi ? x : null; };
+      const fee = n(raw?.fee, 0, 1000), freeOver = n(raw?.freeOver, 0, 100000), minOrder = n(raw?.minOrder, 0, 100000), minutes = n(raw?.minutes, 5, 180);
+      if (!name) return { error: "Every delivery area needs a name." };
+      if (!pins.length) return { error: `${name}: add at least one 6-digit pincode.` };
+      if (fee === null || freeOver === null || minOrder === null || minutes === null) return { error: `${name}: check the fee, minimum and delivery time.` };
+      const dup = pins.find((p) => seen.has(p));
+      if (dup) return { error: `Pincode ${dup} is in two areas.` };
+      pins.forEach((p) => seen.add(p));
+      const id = typeof raw?.id === "string" && /^[a-z0-9-]{1,30}$/.test(raw.id) ? raw.id : name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24) || "area";
+      out.push({ id, name, pincodes: pins, fee, freeOver, minOrder, minutes });
+    }
+    zones = out;
+  }
   let branches = current.branches;
   if (Array.isArray(r.branches)) {
     const out: Branch[] = [];
@@ -127,19 +147,19 @@ export function cleanConfig(raw: unknown, current: FullConfig = fullConfig()): F
     if (!out.some((b) => b.id === "main")) out.unshift(current.branches.find((b) => b.id === "main") ?? MAIN_BRANCH);
     branches = out;
   }
-  return { hours, closures, happyHour, branches, lastHour, links, combos };
+  return { hours, closures, happyHour, branches, lastHour, links, combos, zones };
 }
 
 export function fullConfig(): FullConfig {
   const c = cafeConfig() as CafeConfig & { happyHour?: HappyHour };
-  return { hours: c.hours, closures: c.closures, happyHour: c.happyHour ?? DEFAULT_HAPPY_HOUR, branches: c.branches?.length ? c.branches : [MAIN_BRANCH], lastHour: (c as { lastHour?: LastHour }).lastHour ?? DEFAULT_LAST_HOUR, links: c.links ?? { googleReview: "", whatsapp: "" }, combos: c.combos ?? DEFAULT_COMBOS };
+  return { hours: c.hours, closures: c.closures, happyHour: c.happyHour ?? DEFAULT_HAPPY_HOUR, branches: c.branches?.length ? c.branches : [MAIN_BRANCH], lastHour: (c as { lastHour?: LastHour }).lastHour ?? DEFAULT_LAST_HOUR, links: c.links ?? { googleReview: "", whatsapp: "" }, combos: c.combos ?? DEFAULT_COMBOS, zones: c.zones ?? [] };
 }
 
 /** Read the saved settings into memory (at start-up) */
 export function loadConfig() {
   let saved: Partial<FullConfig> = {};
   try { saved = JSON.parse(getSetting("cafe_config") ?? "{}"); } catch {}
-  applyConfig({ hours: { ...DEFAULT_CONFIG.hours, ...(saved.hours ?? {}) }, closures: saved.closures ?? [], happyHour: { ...DEFAULT_HAPPY_HOUR, ...(saved.happyHour ?? {}) }, branches: saved.branches?.length ? saved.branches : [MAIN_BRANCH], lastHour: { ...DEFAULT_LAST_HOUR, ...(saved.lastHour ?? {}) }, links: { googleReview: "", whatsapp: "", ...(saved.links ?? {}) }, combos: saved.combos ?? DEFAULT_COMBOS } as CafeConfig);
+  applyConfig({ hours: { ...DEFAULT_CONFIG.hours, ...(saved.hours ?? {}) }, closures: saved.closures ?? [], happyHour: { ...DEFAULT_HAPPY_HOUR, ...(saved.happyHour ?? {}) }, branches: saved.branches?.length ? saved.branches : [MAIN_BRANCH], lastHour: { ...DEFAULT_LAST_HOUR, ...(saved.lastHour ?? {}) }, links: { googleReview: "", whatsapp: "", ...(saved.links ?? {}) }, combos: saved.combos ?? DEFAULT_COMBOS, zones: saved.zones ?? [] } as CafeConfig);
   return fullConfig();
 }
 

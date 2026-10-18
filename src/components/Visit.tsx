@@ -22,7 +22,7 @@ export default function Visit() {
   const [preorder, setPreorder] = useState(false);
   const [today, setToday] = useState("");
   const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "", highChairs: 0 });
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -180,7 +180,11 @@ export default function Visit() {
             {!full && form.guests >= DEPOSIT.minGuests && <p className="small muted">For {DEPOSIT.minGuests} or more we take a {rupees(form.guests * DEPOSIT.perGuest)} deposit online. It comes off your bill.</p>}
             {full && <p className="reward-banner small">⏳ {form.time} is fully booked. Join the waitlist and we&apos;ll email you if a table opens up.</p>}
             <label className="field">{full ? "Email (so we can tell you)" : "Email (optional — we'll send a confirmation)"}<input className="input" type="email" required={full || form.guests >= DEPOSIT.minGuests} placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
-            <label className="field">A little note (optional)<textarea className="input" rows={2} maxLength={200} placeholder="Window seat, birthday, a high chair…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
+            <label className="row small" style={{ alignItems: "center", gap: "0.5rem" }}>
+              <input type="checkbox" checked={form.highChairs > 0} onChange={(e) => setForm({ ...form, highChairs: e.target.checked ? 1 : 0 })} /> 🧸 We&apos;ll need a high chair
+              {form.highChairs > 0 && <select className="input" style={{ width: "auto" }} value={form.highChairs} onChange={(e) => setForm({ ...form, highChairs: Number(e.target.value) })} aria-label="How many high chairs">{[1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}</select>}
+            </label>
+            <label className="field">A little note (optional)<textarea className="input" rows={2} maxLength={200} placeholder="Window seat, a birthday, a wheelchair…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
             {error && <p className="error">{error}</p>}
             <button className="btn btn-pink full" disabled={busy}>{busy ? "One moment…" : full ? "Join the waitlist" : "Reserve"}</button>
           </form>

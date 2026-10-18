@@ -8,7 +8,7 @@ import BranchPicker from "./BranchPicker";
 import { isLastHour, lastHour } from "@/lib/cafe";
 import { usePay } from "./Payment";
 import { photo } from "@/lib/menu";
-import { DELIVERY, HAPPY_HOUR, TIP_CHOICES, describeOptions, happyHour, combosAt, combosConfig, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
+import { HAPPY_HOUR, TIP_CHOICES, deliveryTerms, deliveryZones, describeOptions, happyHour, combosAt, combosConfig, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
 import { STAMPS_FOR_REWARD, hoursOn } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
 
@@ -43,6 +43,8 @@ export default function CartDrawer() {
   const [tipPercent, setTipPercent] = useState(0);
   const [mode, setMode] = useState<"pickup" | "delivery">("pickup");
   const [address, setAddress] = useState("");
+  const [pincode, setPincode] = useState("");
+  const hasZones = deliveryZones().length > 0;
   const [usePass, setUsePass] = useState(true);
   const [useBirthday, setUseBirthday] = useState(true);
   const [loyalty, setLoyalty] = useState<Loyalty | null>(null);
@@ -97,6 +99,7 @@ export default function CartDrawer() {
   }, [digits]);
 
   const delivery = !table && mode === "delivery";
+  const terms = delivery ? deliveryTerms(hasZones ? (pincode.length === 6 ? pincode : null) : null) : null;
   const q = useMemo(
     () =>
       quote(lines, find, promo?.rule, !!loyalty?.hasReward, {
@@ -109,9 +112,9 @@ export default function CartDrawer() {
         student: !!me?.perks?.student,
         combos: combosAt(combosConfig()),
         tipPercent: step === "checkout" ? tipPercent : 0,
-        delivery,
+        delivery: terms ? { fee: terms.fee, freeOver: terms.freeOver } : delivery,
       }),
-    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step, branch]
+    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step, branch, terms]
   );
   const times = useMemo(() => (step === "checkout" ? pickupTimes(branch) : []), [step, branch]);
   const hasSoldOut = lines.some((l) => soldOut.has(l.itemId) || !find(l.itemId));
@@ -172,7 +175,7 @@ export default function CartDrawer() {
         tipPercent,
         usePass,
         useBirthday,
-        ...(delivery ? { delivery: { address } } : {}),
+        ...(delivery ? { delivery: { address, pincode } } : {}),
         ...(group?.checkout ? { groupCode: group.code, hostToken: group.hostToken } : {}),
         lines: lines.map(({ itemId, opts, qty }) => ({ itemId, opts, qty })),
       });
@@ -349,8 +352,10 @@ export default function CartDrawer() {
                       <label className="field">Delivery address
                         <textarea className="input" rows={2} required minLength={10} maxLength={200} placeholder="Flat, building, street, landmark" value={address} onChange={(e) => setAddress(e.target.value)} />
                       </label>
-                      <p className="small muted">🛵 {rupees(DELIVERY.fee)} delivery, free over {rupees(DELIVERY.freeOver)} · minimum {rupees(DELIVERY.minOrder)} · nearby areas only</p>
-                      {q.total < DELIVERY.minOrder && <p className="error small">Add {rupees(DELIVERY.minOrder - q.total)} more for delivery.</p>}
+                      {hasZones && <label className="field">Pincode<input className="input" required inputMode="numeric" maxLength={6} placeholder="6 digits" value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))} /></label>}
+                      {hasZones && pincode.length === 6 && !terms && <p className="error small">Sorry, we don&apos;t deliver to {pincode} yet. Pick it up instead?</p>}
+                      {terms && <p className="small muted">🛵 {terms.zone ? `${terms.zone}: ` : ""}{rupees(terms.fee)} delivery, free over {rupees(terms.freeOver)} · minimum {rupees(terms.minOrder)} · about {terms.minutes} min{terms.zone ? "" : " · nearby areas only"}</p>}
+                      {terms && q.total < terms.minOrder && <p className="error small">Add {rupees(terms.minOrder - q.total)} more for delivery.</p>}
                     </>
                   )}
                 </>
@@ -398,7 +403,7 @@ export default function CartDrawer() {
             <div className="drawer-foot">
               {summary}
               {error && <p className="error">{error}</p>}
-              <button className="btn btn-pink full" disabled={busy || (delivery && q.total < DELIVERY.minOrder) || (rush === "paused" && !table)}>
+              <button className="btn btn-pink full" disabled={busy || (delivery && (!terms || q.total < terms.minOrder)) || (rush === "paused" && !table)}>
                 {busy ? "Placing order…" : q.due === 0 ? "Place order (covered ✿)" : payMethod === "online" ? `${t("checkout.payNow")} · ${rupees(q.due)}` : t("checkout.place")}
               </button>
             </div>

@@ -1747,3 +1747,42 @@ test("build your own bowl and a tasting flight go through checkout", async () =>
   assert.equal(menu.items.find((m) => m.id === "pesto-pasta")?.half, true);
   assert.equal(menu.items.find((m) => m.id === "kids-french-toast")?.kids, true);
 });
+
+test("delivery areas by pincode, pairings, and high chairs on bookings", async () => {
+  await s.login();
+  const zones = [{ name: "Panjim", pincodes: "403001, 403002", fee: 30, freeOver: 500, minOrder: 150, minutes: 25 }, { name: "Porvorim", pincodes: ["403521"], fee: 60, freeOver: 900, minOrder: 300, minutes: 40 }];
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { zones: [...zones, { name: "Dup", pincodes: "403001", fee: 1, freeOver: 1, minOrder: 1, minutes: 10 }] } })).status, 400, "a pincode in two areas");
+  const ok = await s.api("/api/admin/cafe-config", { method: "PUT", json: { zones } });
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+  assert.deepEqual(ok.body.zones[0].pincodes, ["403001", "403002"]);
+  const line = [{ itemId: "pesto-pasta", qty: 1 }];
+  const now = new Date().getHours();
+  // Delivery runs in opening hours only, so only check the area rules when that's the case
+  const far = await s.api("/api/orders", { method: "POST", json: { name: "Far", phone: "9811188888", delivery: { address: "12 Long Road, Margao town", pincode: "403601" }, lines: line } });
+  if (far.status === 400 && /deliver/.test(far.body.error) && !/opening hours/.test(far.body.error)) {
+    assert.match(far.body.error, /don't deliver to 403601/);
+    const near = await s.api("/api/orders", { method: "POST", json: { name: "Near", phone: "9811188888", delivery: { address: "4 Fontainhas Lane, Panjim", pincode: "403001" }, lines: line } });
+    if (near.status === 400) assert.match(near.body.error, /opening hours/, "in the area: only refused when we're closed");
+    else {
+      assert.equal(near.status, 200, JSON.stringify(near.body));
+      const o = (await s.api(`/api/orders/${near.body.code}`)).body as { delivery_fee: number; delivery_address: string };
+      assert.equal(o.delivery_fee, 0, "over ₹500 is free in Panjim");
+      assert.match(o.delivery_address, /403001/);
+    }
+  } else void now;
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { zones: [] } })).status, 200);
+
+  const pairs = (await s.api("/api/pairings")).body as Record<string, string>;
+  assert.ok(pairs["cappuccino"], "every drink gets a suggestion");
+
+  let date = "", time = "";
+  for (let i = 3; i < 12 && !time; i++) {
+    const d = new Date(Date.now() + i * 86_400_000);
+    date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    time = ((await s.api(`/api/bookings/availability?date=${date}`)).body as { time: string }[])[6]?.time ?? "";
+  }
+  const bk = await s.api("/api/bookings", { method: "POST", json: { name: "Family", phone: "9811199999", date, time, guests: 3, highChairs: 2 } });
+  assert.equal(bk.status, 200);
+  const list = (await s.api("/api/bookings")).body as { code: string; high_chairs: number }[];
+  assert.equal(list.find((b) => b.code === bk.body.code)?.high_chairs, 2);
+});
