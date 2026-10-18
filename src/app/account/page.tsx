@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import BadgesCard from "@/components/BadgesCard";
+import RegularOrders from "@/components/RegularOrders";
 import { useCallback, useEffect, useState } from "react";
 import { PASS, REFERRAL_CREDIT, orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { usePay } from "@/components/Payment";
@@ -178,6 +179,7 @@ function Profile({ acc, reload }: { acc: Account; reload: () => Promise<void> })
       )}
 
       <BadgesCard />
+      <RegularOrders />
 
       <div className="account-grid">
         <PassCard acc={acc} reload={reload} />

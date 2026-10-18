@@ -288,6 +288,20 @@ function open() {
       staff_id INTEGER,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS schedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      lines TEXT NOT NULL,
+      days TEXT NOT NULL,
+      time TEXT NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1,
+      skip_date TEXT,
+      last_date TEXT,
+      last_order TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,

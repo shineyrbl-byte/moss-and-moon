@@ -705,3 +705,44 @@ test("badges: a signed-in guest earns them as they order", async () => {
   assert.ok(b.badges.find((x) => x.id === "first-sip")!.earned);
   await s.api("/api/account/logout", { method: "POST" });
 });
+
+test("regular orders: set up, skip, pause, and they place themselves", async () => {
+  const email = "regular@example.com";
+  const sent = await s.api("/api/account/code", { method: "POST", json: { email } });
+  await s.api("/api/account/verify", { method: "POST", json: { email, code: (sent.body as { demoCode: string }).demoCode } });
+  await s.api("/api/account", { method: "PATCH", json: { name: "Reg", phone: "9000014141" } });
+  const lines = [{ itemId: "rose-latte", qty: 1, opts: { milk: "oat" } }];
+  assert.equal((await s.api("/api/account/schedules", { method: "POST", json: { lines, days: [0], time: "21:00" } })).status, 400, "closed on Sunday evening");
+  assert.equal((await s.api("/api/account/schedules", { method: "POST", json: { lines, days: [], time: "08:30" } })).status, 400);
+
+  // Pickup at the next quarter hour today, so the job places it straight away (only while the café is open)
+  const now = new Date();
+  const t = new Date(Math.ceil((now.getTime() + 60_000) / (15 * 60_000)) * 15 * 60_000);
+  const time = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`;
+  const made = await s.api("/api/account/schedules", { method: "POST", json: { lines, days: [now.getDay()], time } });
+  if (made.status === 200 && t.getDate() === now.getDate() && (t.getTime() - now.getTime()) / 60_000 <= 15) {
+    let list: { id: number; lastOrder: string | null; summary: string }[] = [];
+    for (let i = 0; i < 30 && !list[0]?.lastOrder; i++) {
+      await new Promise((r) => setTimeout(r, 1000));
+      list = (await s.api("/api/account/schedules")).body;
+    }
+    assert.match(String(list[0].lastOrder), /^MM-/, "placed by itself");
+    assert.match(list[0].summary, /Rose Pistachio Latte/);
+    const o = (await s.api(`/api/orders/${list[0].lastOrder}`)).body as { pickup: string; note: string };
+    assert.equal(o.pickup, time);
+  }
+
+  const weekday = await s.api("/api/account/schedules", { method: "POST", json: { lines, days: [1, 2, 3, 4, 5], time: "08:30" } });
+  assert.equal(weekday.status, 200);
+  const id = (weekday.body as { id: number }).id;
+  const get = async () => ((await s.api("/api/account/schedules")).body as { id: number; next: string | null; active: boolean; skipDate: string | null }[]).find((x) => x.id === id)!;
+  const before = await get();
+  assert.ok(before.next);
+  await s.api("/api/account/schedules", { method: "PATCH", json: { id, skip: before.next } });
+  const skipped = await get();
+  assert.notEqual(skipped.next, before.next, "skipping moves to the next day");
+  await s.api("/api/account/schedules", { method: "PATCH", json: { id, active: false } });
+  assert.equal((await get()).next, null, "paused");
+  assert.equal((await s.api("/api/account/schedules", { method: "DELETE", json: { id } })).status, 200);
+  await s.api("/api/account/logout", { method: "POST" });
+});
