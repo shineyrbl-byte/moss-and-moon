@@ -9,7 +9,7 @@ const day = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test
 export async function GET() {
   const gate = await ownerGate();
   if (gate) return gate;
-  const rows = db.prepare("SELECT * FROM promos WHERE code NOT LIKE 'MISS-%' ORDER BY active DESC, created_at DESC").all() as PromoRow[];
+  const rows = db.prepare("SELECT * FROM promos WHERE code NOT LIKE 'MISS-%' AND code NOT LIKE 'YEAR-%' ORDER BY active DESC, created_at DESC").all() as PromoRow[];
   const saved = db.prepare("SELECT promo, COALESCE(SUM(discount), 0) AS d FROM orders WHERE promo IS NOT NULL GROUP BY promo").all() as { promo: string; d: number }[];
   const map = new Map(saved.map((s) => [s.promo, s.d]));
   return Response.json(rows.map((p) => ({ ...p, label: promoLabel(toRule(p)), discountGiven: map.get(p.code) ?? 0 })));

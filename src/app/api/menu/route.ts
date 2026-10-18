@@ -71,6 +71,8 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
   return {
     id, cat, name, desc, price, img,
     ...(diet.length ? { diet } : {}),
+    ...(cleanText(b.nameHi, 60) ? { nameHi: cleanText(b.nameHi, 60) } : {}),
+    ...(cleanText(b.descHi, 200) ? { descHi: cleanText(b.descHi, 200) } : {}),
     ...(badge ? { badge } : {}),
     ...(cat === "coffee" || cat === "tea" || cat === "cold" ? { traits: { energy: level(t.energy), sweet: level(t.sweet), temp: t.temp === "iced" ? "iced" : "hot" } } : {}),
     ...(b.hidden ? { hidden: true } : {}),

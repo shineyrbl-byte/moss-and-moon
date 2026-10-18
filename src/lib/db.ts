@@ -482,6 +482,13 @@ function open() {
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
       PRIMARY KEY (order_code, item_id)
     );
+    CREATE TABLE IF NOT EXISTS anniversaries (
+      customer_id INTEGER NOT NULL,
+      year INTEGER NOT NULL,
+      code TEXT,
+      sent_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      PRIMARY KEY (customer_id, year)
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,

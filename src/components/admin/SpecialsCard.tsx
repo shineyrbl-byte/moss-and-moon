@@ -36,6 +36,8 @@ export default function SpecialsCard() {
         <h3 style={{ fontSize: "1.15rem" }}>✨ Special of the day</h3>
         <span className="row" style={{ gap: "0.4rem" }}>
         <a className="btn btn-ghost btn-sm" href="/print/menu" target="_blank">🖨 Printable menu</a>
+        <a className="btn btn-ghost btn-sm" href="/print/allergens" target="_blank">🥜 Allergen chart</a>
+        <a className="btn btn-ghost btn-sm" href="/board/menu" target="_blank" title="Open on the café TV and go full screen">📺 TV menu</a>
         <button className="btn btn-ghost btn-sm" disabled={busy} onClick={think}>{busy ? "Thinking…" : ideas ? "More ideas" : "Suggest a special"}</button>
         </span>
       </div>

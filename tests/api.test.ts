@@ -1658,3 +1658,33 @@ test("data rights: download everything, then delete the account", async () => {
   const kept = (await s.api(`/api/orders/${o.body.code}`)).body as { name: string };
   assert.equal(kept.name, "Deleted guest", "the order stays, without their name");
 });
+
+test("a year with us: accounts made on this day last year with 3+ orders are due", async () => {
+  await s.login();
+  const { DatabaseSync } = await import("node:sqlite");
+  const path = await import("node:path");
+  const db = new DatabaseSync(path.join(s.dataDir, "cafe.db"));
+  const r = db.prepare("INSERT INTO customers (email, name, referral_code, created_at) VALUES ('yearly@example.com', 'Yara', 'YARA01', datetime('now','localtime','-1 year')) ").run();
+  for (let i = 0; i < 3; i++) db.prepare(`INSERT INTO orders (code, name, phone, pickup, note, lines, subtotal, discount, total, customer_id, created_at) VALUES (?, 'Yara', '', 'asap', '', '[{"itemId":"cookie","name":"Brown Butter Cookie","cat":"bakes","qty":1,"total":110}]', 110, 0, 110, ?, datetime('now','localtime','-${i + 2} days'))`).run(`MM-YEAR${i}`, Number(r.lastInsertRowid));
+  db.close();
+  const st = (await s.api("/api/admin/winback")).body as { anniversary: { on: boolean; due: number } };
+  assert.equal(st.anniversary.on, true);
+  assert.equal(st.anniversary.due, 1);
+});
+
+test("menu board, allergen chart and the menu writer", async () => {
+  assert.equal((await fetch(`${s.url}/board/menu`)).status, 200);
+  const html = await (await fetch(`${s.url}/print/allergens`)).text();
+  assert.match(html, /Allergen chart/);
+  assert.match(html, /Honey Oat Latte/);
+  await s.login();
+  const w = await s.api("/api/admin/menu-writer", { method: "POST", json: { name: "Coconut Cold Brew", cat: "cold" } });
+  assert.equal(w.status, 400, "needs an AI key, which tests don't have");
+  assert.match(w.body.error, /Gemini/);
+  // Hindi text is saved with the item
+  const items = ((await fetch(`${s.url}/api/menu`).then((r) => r.json())) as { items: Record<string, unknown>[] }).items;
+  const latte = items.find((m) => m.id === "honey-oat-latte")!;
+  assert.equal((await s.api("/api/menu", { method: "POST", json: { ...latte, nameHi: "हनी ओट लाटे" } })).status, 200);
+  const after = ((await fetch(`${s.url}/api/menu`).then((r) => r.json())) as { items: { id: string; nameHi?: string }[] }).items.find((m) => m.id === "honey-oat-latte")!;
+  assert.equal(after.nameHi, "हनी ओट लाटे");
+});

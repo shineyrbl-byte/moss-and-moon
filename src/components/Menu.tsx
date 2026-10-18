@@ -11,7 +11,7 @@ import VoiceOrder from "./VoiceOrder";
 import { ALLERGENS, allergensFor, canAvoid, kcalFor, type Allergen } from "@/lib/nutrition";
 
 export default function Menu() {
-  const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t, branch } = useStore();
+  const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t, branch, lang } = useStore();
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [happy, setHappy] = useState(false);
   useEffect(() => setHappy(isHappyHour()), []);
@@ -105,9 +105,9 @@ export default function Menu() {
                 {favs.has(m.id) ? "♥" : "♡"}
               </button>
               <div className="item-body">
-                <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)}>{m.name}</h3>
+                <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)} lang={lang === "hi" && m.nameHi ? "hi" : undefined}>{lang === "hi" && m.nameHi ? m.nameHi : m.name}</h3>
                 {happy && m.cat === "bakes" && <span className="small" style={{ color: "var(--pink-deep)" }}>golden hour −20%</span>}
-                <p>{m.desc}</p>
+                <p lang={lang === "hi" && m.descHi ? "hi" : undefined}>{lang === "hi" && m.descHi ? m.descHi : m.desc}</p>
                 {m.loved !== undefined && m.loved >= 80 && <span className="loved">❤ Loved by {m.loved}%</span>}
                 {m.cat === "shop" && m.stock !== undefined && m.stock > 0 && m.stock <= 5 && <span className="item-facts" style={{ color: "var(--pink-ink)" }}>Only {m.stock} left</span>}
                 {(() => {

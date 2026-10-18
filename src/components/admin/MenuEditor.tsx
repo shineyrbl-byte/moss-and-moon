@@ -92,6 +92,18 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
   const [uploading, setUploading] = useState(false);
   const isNew = !item.id;
   const set = <K extends keyof MenuItem>(k: K, v: MenuItem[K]) => setF((x) => ({ ...x, [k]: v }));
+  const [writing, setWriting] = useState(false);
+  const [notes, setNotes] = useState("");
+  // AI first draft: description, allergens, calories, vegan/GF and the Hindi text. The owner checks it before saving.
+  async function write() {
+    setWriting(true);
+    const r = await fetch("/api/admin/menu-writer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: f.name, cat: f.cat, notes }) });
+    const d = await r.json();
+    setWriting(false);
+    if (!r.ok) return toast(d.error);
+    setF((x) => ({ ...x, desc: d.desc || x.desc, allergens: d.allergens, kcal: d.kcal || x.kcal, diet: d.diet, nameHi: d.nameHi, descHi: d.descHi }));
+    toast("Drafted ✿ Check the allergens and calories before saving");
+  }
   const toggleDiet = (d: Diet) => set("diet", f.diet?.includes(d) ? f.diet.filter((x) => x !== d) : [...(f.diet ?? []), d]);
 
   async function upload(file: File) {
@@ -143,6 +155,14 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
             <label className="field" style={{ maxWidth: "8rem" }}>Price (₹)<input className="input" required inputMode="numeric" value={f.price} onChange={(e) => set("price", Number(e.target.value.replace(/\D/g, "")) || 0)} /></label>
           </div>
           <label className="field">Description<textarea className="input" rows={2} maxLength={200} value={f.desc} onChange={(e) => set("desc", e.target.value)} /></label>
+          <div className="ai-writer">
+            <input className="input" placeholder="What's in it? (optional, helps the AI: e.g. oat milk, cardamom, honey)" aria-label="Notes for the AI" maxLength={300} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <button type="button" className="btn btn-ghost btn-sm" disabled={writing || !f.name.trim()} onClick={write}>{writing ? "Writing…" : "✨ Write it for me"}</button>
+          </div>
+          <div className="row">
+            <label className="field" lang="hi">Name in Hindi <span className="muted small">· optional</span><input className="input" maxLength={60} value={f.nameHi ?? ""} onChange={(e) => set("nameHi", e.target.value || undefined)} /></label>
+            <label className="field" lang="hi">Description in Hindi<input className="input" maxLength={200} value={f.descHi ?? ""} onChange={(e) => set("descHi", e.target.value || undefined)} /></label>
+          </div>
           <div className="row">
             <label className="field">Category
               <select className="input" value={f.cat} onChange={(e) => set("cat", e.target.value as Category)}>
