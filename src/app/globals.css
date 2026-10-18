@@ -1102,3 +1102,33 @@ body:has(.kiosk) .nav, body:has(.kiosk) .footer, body:has(.kiosk) .chat-fab, bod
 .rota.staffing td { text-align: center; font-size: 0.78rem; min-width: 2.6rem; padding: 0.3rem 0.2rem; }
 .rota.staffing td.short { background: var(--pink-soft); color: var(--pink-ink); font-weight: 700; }
 .rota.staffing td.over { color: var(--muted); }
+
+/* Printable menu */
+body:has(.menu-card) .nav, body:has(.menu-card) .footer, body:has(.menu-card) .chat-fab, body:has(.menu-card) .season-banner, body:has(.menu-card) .table-banner { display: none !important; }
+.menu-card { max-width: 210mm; margin: 0 auto; padding: 14mm 14mm 10mm; background: #fffaf6; color: #3b2720; font-size: 10.5pt; }
+.menu-card.poster { font-size: 13pt; }
+.mc-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem; }
+.mc-head { text-align: center; border-bottom: 1px solid #e8d6c9; padding-bottom: 6mm; margin-bottom: 6mm; }
+.mc-head h1 { font-family: var(--serif, Georgia, serif); font-weight: 400; font-size: 30pt; margin: 0; }
+.mc-head h1 em { color: #c25b78; }
+.mc-head p { margin: 2mm 0 0; color: #765749; font-size: 9pt; }
+.mc-cols { columns: 2; column-gap: 10mm; }
+.mc-section { break-inside: avoid; margin-bottom: 6mm; }
+.mc-section h2 { font-family: var(--serif, Georgia, serif); font-weight: 400; font-size: 15pt; color: #b8506e; margin: 0 0 2mm; }
+.mc-section ul { list-style: none; margin: 0; padding: 0; }
+.mc-section li { margin-bottom: 2.2mm; break-inside: avoid; }
+.mc-line { display: flex; align-items: baseline; gap: 2mm; }
+.mc-dots { flex: 1; border-bottom: 1px dotted #c9ab9c; transform: translateY(-2px); }
+.mc-section li p { margin: 0.5mm 0 0; color: #765749; font-size: 8.5pt; line-height: 1.35; }
+.mc-foot { display: flex; justify-content: space-between; align-items: center; gap: 8mm; border-top: 1px solid #e8d6c9; padding-top: 5mm; margin-top: 4mm; font-size: 9pt; color: #765749; }
+.mc-foot p { margin: 0 0 1.5mm; }
+.mc-qr { display: flex; flex-direction: column; align-items: center; gap: 1mm; flex-shrink: 0; }
+.mc-qr svg { width: 26mm; height: 26mm; display: block; }
+@media (max-width: 640px) { .menu-card { padding: 16px; } .mc-cols { columns: 1; } }
+@media print {
+  @page { size: A4; margin: 0; }
+  body:has(.menu-card) { background: #fffaf6 !important; }
+  body:has(.menu-card)::before { display: none; }
+  .mc-actions { display: none; }
+  .menu-card { max-width: none; min-height: 297mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

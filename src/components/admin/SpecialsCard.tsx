@@ -32,7 +32,10 @@ export default function SpecialsCard() {
     <section className="card" style={{ padding: "1rem 1.2rem", marginBottom: "1rem" }}>
       <div className="sum-row" style={{ alignItems: "center" }}>
         <h3 style={{ fontSize: "1.15rem" }}>✨ Special of the day</h3>
+        <span className="row" style={{ gap: "0.4rem" }}>
+        <a className="btn btn-ghost btn-sm" href="/print/menu" target="_blank">🖨 Printable menu</a>
         <button className="btn btn-ghost btn-sm" disabled={busy} onClick={think}>{busy ? "Thinking…" : ideas ? "More ideas" : "Suggest a special"}</button>
+        </span>
       </div>
       <p className="small muted">Ideas that use up overstocked ingredients and bakes that keep getting thrown away. Adding one puts it on the menu for today only.</p>
       {ideas && !ideas.length && <p className="small muted">No ideas right now.</p>}

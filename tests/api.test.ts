@@ -1430,3 +1430,10 @@ test("special of the day: a simple idea without AI, and it goes on today's menu 
   const list = Array.isArray(menu) ? menu : menu.items;
   assert.ok(list.some((m) => m.name === "Test Special"));
 });
+
+test("printable menu shows the live menu with prices", async () => {
+  const html = await (await fetch(`${s.url}/print/menu`)).text();
+  assert.match(html, /Honey Oat Latte/);
+  assert.match(html, /₹220/);
+  assert.match(html, /Scan to order ahead/);
+});

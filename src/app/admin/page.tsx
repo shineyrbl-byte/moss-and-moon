@@ -37,6 +37,7 @@ import CateringTab from "@/components/admin/CateringTab";
 import SupportInbox from "@/components/SupportInbox";
 import WinbackCard from "@/components/admin/WinbackCard";
 import SpecialsCard from "@/components/admin/SpecialsCard";
+import PriceWhatIf from "@/components/admin/PriceWhatIf";
 import ChecklistsTab from "@/components/admin/ChecklistsTab";
 import { useLive } from "@/components/useLive";
 
@@ -423,7 +424,7 @@ export default function AdminPage() {
       )}
 
       {tab === "Menu" && <>{me?.role === "owner" && <SpecialsCard />}<MenuEditor canEdit={me?.role === "owner"} /></>}
-      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><Analytics /></>}
+      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}

@@ -42,12 +42,16 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 🖥 **Self-order kiosk** (`/kiosk`): a counter tablet signed in as staff, with big tiles and an automatic reset
 - 🧺 **Catering** (`/catering`): requests for 10+ guests, a quote from the owner, then accept and pay online or on the day
 - 🏠 **More than one café**: guests pick a branch when ordering or booking
+- 🌙 **Last-hour deals**: leftover bakes get cheaper just before closing
+- 👛 **Coffee wallet**: top up ₹500 / ₹1000 / ₹2000 with a bonus; checkout uses it automatically
+- 🎓 **Student discount**: verify a college email for 10% off drinks on weekdays
 
 **Guests & community**
 - 👤 **Accounts** with a sign-in code by email: favourites on every device, order history, birthday treat, referrals with credit, a monthly **Coffee Pass**
 - 🏅 **Streaks and badges**: 16 badges like Early bird, Matcha lover and Kind soul
 - 🥇 **Loyalty tiers**: Silver (10 visits a year) gets a free size upgrade each order; Gold (30) gets free upgrades on every drink and jumps the queue
 - 🥗 **Dietary profile**: save vegan, gluten-free and allergens to avoid; the menu filters itself and warns about clashes
+- 💌 **"We miss you" emails**: regulars who stop coming get a one-off 15% code (with unsubscribe)
 - 📌 **Community noticeboard**: lost & found, study buddies and book swaps, approved by staff
 - 📰 **Journal**: blog posts with their own pages, in the sitemap for Google
 - ✉️ **Emails from "Moss & Moon"** to any guest: order confirmed (with the ready time), it's ready, pickup reminder, PDF receipt, "How was it?" review request, booking confirmation with a calendar invite, and a reminder before the booking. Sent through the café Gmail via Gmail's API (works on Railway's Hobby plan), or Resend with your own domain
@@ -84,6 +88,14 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 🔁 **Repeat-customer chart**: how many of each month's new guests come back within 30 days
 - 📶 **Wi-Fi QR** on receipts and table cards
 - 💬 **Guest chats inbox** on the barista screen and dashboard
+- 📖 **Recipe cards**: tap any drink on a barista-screen ticket to see how to make it
+- ✅ **Opening & closing checklists** with fridge temperatures, signed by whoever ticked them
+- ⇄ **Shift swaps**: ask a teammate to cover, they accept, the owner approves
+- 🔧 **Equipment log**: service reminders and repairs (costs go into P&L)
+- 👥 **Staffing suggestions**: people needed each hour vs who's on the rota
+- ✨ **Special of the day**: AI ideas that use up overstocked ingredients or often-wasted bakes
+- 🧮 **Price "what if"**: try a new price and see the effect on profit
+- 🖨 **Printable menu** and counter poster (`/print/menu`) made from the live menu, with an order-ahead QR
 - ✨ **AI weekly insights**: review summary and practical ideas from your numbers (Claude or free Gemini)
 - 👀 **Visitor stats** without cookies or trackers
 - 🔐 **Two-step login** for owners, and a security check-up in the Health tab (see [SECURITY.md](SECURITY.md))
