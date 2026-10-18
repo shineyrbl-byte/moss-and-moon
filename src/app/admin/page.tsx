@@ -78,7 +78,7 @@ export default function AdminPage() {
   const [waitlist, setWaitlist] = useState<{ id: number; name: string; phone: string; email: string; date: string; time: string; guests: number }[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
-  const [mail, setMail] = useState<{ emails: Email[]; emailMode: string; paymentMode: string } | null>(null);
+  const [mail, setMail] = useState<{ emails: Email[]; emailMode: string; emailProvider: string | null; emailFrom: string | null; paymentMode: string } | null>(null);
   const [preview, setPreview] = useState<Email | null>(null);
   const [demoBarista, setDemoBarista] = useState<boolean | null>(null);
   const [season, setSeason] = useState<{ season: string; seasonNow: string | null } | null>(null);
@@ -232,7 +232,7 @@ export default function AdminPage() {
           {mail && (
             <div className="mode-banner">
               <span>💳 Payments: <b>{mail.paymentMode === "razorpay" ? "Razorpay (live)" : "demo mode"}</b></span>
-              <span>✉️ Emails: <b>{mail.emailMode === "live" ? "sending via Resend" : "preview only (see Emails tab)"}</b></span>
+              <span>✉️ Emails: <b>{mail.emailProvider === "gmail" ? `sending as Moss & Moon via Gmail` : mail.emailMode === "live" ? "sending via Resend" : "preview only (see Emails tab)"}</b></span>
               <span>🔔 A chime plays when a new order comes in, so keep this tab open.</span>
             </div>
           )}
@@ -434,8 +434,10 @@ export default function AdminPage() {
       {tab === "Emails" && mail && (
         <>
           <p className="muted" style={{ marginBottom: "1rem" }}>
-            {mail.emailMode === "live"
-              ? "Emails are being sent through Resend."
+            {mail.emailProvider === "gmail"
+              ? `Emails are being sent as “Moss & Moon” from ${mail.emailFrom}, to any address guests type in.`
+              : mail.emailMode === "live"
+              ? "Emails are being sent through Resend. Without your own domain, Resend only delivers to the address you signed up with (see DEPLOY.md to send to everyone)."
               : "Emails are saved here but not sent yet. Add a RESEND_API_KEY to start sending them (see DEPLOY.md)."}
           </p>
           <div className="email-layout">

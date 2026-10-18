@@ -72,15 +72,27 @@ Until you do this the site shows a **test payment screen**, so nothing is charge
    or UPI ID `success@razorpay`.
 5. When you're ready for real money, finish KYC and swap in the **Live** keys.
 
-## 4. Turn on real emails (Resend)
+## 4. Turn on real emails
 
-Until you do this, emails are saved and shown in **/admin → Emails** but not sent.
+Guests get order, booking, ticket and gift emails from **Moss & Moon**. Pick one:
 
-1. Sign up at **https://resend.com** (free: 3,000 emails/month).
-2. **API Keys → Create** and add `RESEND_API_KEY=re_...` to your variables.
-3. Without your own domain, Resend only delivers to **your own sign-up email**,
-   which is fine for testing. To email anyone: **Domains → Add domain**,
-   follow the DNS steps, then set `EMAIL_FROM=Moss & Moon <hello@yourdomain.com>`.
+**A. A café Gmail (free, sends to anyone, about 500 emails a day)**
+1. Create a Google account just for the café, e.g. `mossandmooncafe@gmail.com`.
+2. In that account: **Manage your Google Account → Security → 2-Step Verification** → turn it on.
+3. Then open **https://myaccount.google.com/apppasswords**, type a name like "Moss & Moon site" and click **Create**.
+   Google shows a 16-letter password. Copy it (spaces don't matter).
+4. In Railway → **web** → **Variables**, add:
+   - `GMAIL_USER` = the café Gmail address
+   - `GMAIL_APP_PASSWORD` = the 16-letter app password
+5. Guests now get emails from **Moss & Moon** `<mossandmooncafe@gmail.com>`. (Optional: `EMAIL_NAME` changes the name.)
+
+**B. Resend with your own domain (most professional)**
+1. Get a domain, add it in **Resend → Domains** and add the DNS records it shows at your registrar.
+2. Set `RESEND_API_KEY` and `EMAIL_FROM` = `Moss & Moon <hello@yourdomain.com>`.
+   Once `EMAIL_FROM` uses your own domain, Resend is used instead of Gmail.
+
+(Resend without a domain only delivers to the address you signed up with, which is fine for testing.)
+Every email also appears in **/admin → Emails**, sent or not.
 
 ## Running it on your computer
 

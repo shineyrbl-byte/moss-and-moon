@@ -193,7 +193,9 @@ export type Quote = {
 
 // ----- happy hour: 20% off bakes, every day 3pm–5pm -----
 export const HAPPY_HOUR = { from: 15, to: 17, off: 0.2, label: "Golden hour · 20% off bakes, 3–5pm" };
-export const isHappyHour = (now = new Date()) => now.getHours() >= HAPPY_HOUR.from && now.getHours() < HAPPY_HOUR.to;
+export const isHappyHour = (now = new Date()) =>
+  // (The automated tests switch it off so prices don't change with the time of day)
+  !(typeof process !== "undefined" && process.env?.HAPPY_HOUR === "off") && now.getHours() >= HAPPY_HOUR.from && now.getHours() < HAPPY_HOUR.to;
 
 // ----- perks & extras -----
 export const TIP_CHOICES = [0, 5, 10, 15];

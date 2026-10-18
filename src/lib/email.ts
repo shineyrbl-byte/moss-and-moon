@@ -1,15 +1,42 @@
-// Sends emails through Resend (https://resend.com) when RESEND_API_KEY is set.
-// Without a key, emails are only saved to the "outbox" table so you can
-// preview them in the staff dashboard (Emails tab). Nothing breaks either way.
+// Sends emails to guests, from "Moss & Moon":
+//  - through Gmail when GMAIL_USER + GMAIL_APP_PASSWORD are set (free, reaches any address)
+//  - through Resend when RESEND_API_KEY is set (with your own domain it reaches anyone;
+//    without one, Resend only delivers to the address you signed up with)
+// Without either, emails are only saved to the "outbox" table so you can preview
+// them in the staff dashboard (Emails tab). Nothing breaks either way.
 import "server-only";
+import nodemailer, { type Transporter } from "nodemailer";
 import { db } from "./db";
 import { rupees, type QuoteLine } from "./pricing";
 import { reportError } from "./errors";
 
 const SITE = () => process.env.SITE_URL || "http://localhost:3000";
 const FROM = () => process.env.EMAIL_FROM || "Moss & Moon <onboarding@resend.dev>";
+const NAME = () => process.env.EMAIL_NAME || "Moss & Moon";
 
-export const emailMode = () => (process.env.RESEND_API_KEY ? "live" : "preview");
+/** Which service sends: Resend with your own domain first, then Gmail, then Resend's test sender */
+export function emailProvider(): "resend" | "gmail" | null {
+  const resend = !!process.env.RESEND_API_KEY;
+  const gmail = !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+  if (resend && !FROM().includes("resend.dev")) return "resend"; // a verified domain reaches everyone
+  if (gmail) return "gmail";
+  return resend ? "resend" : null;
+}
+export const emailMode = () => (emailProvider() ? "live" : "preview");
+
+let mailer: Transporter | null = null;
+function gmail() {
+  // (The automated tests swap in a pretend mail server that just records the message)
+  mailer ??= process.env.SMTP_TEST_JSON === "1"
+    ? nodemailer.createTransport({ jsonTransport: true })
+    : nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "") },
+      });
+  return mailer;
+}
 
 export type Attachment = { filename: string; content: Uint8Array };
 
@@ -18,6 +45,24 @@ export async function sendEmail(to: string, subject: string, body: string, attac
   const html = layout(subject, body);
   const row = db.prepare("INSERT INTO outbox (to_email, subject, html, status) VALUES (?, ?, ?, ?)").run(to, subject, html, emailMode() === "live" ? "sending" : "preview only");
   if (emailMode() !== "live") return;
+  const outbox = Number(row.lastInsertRowid);
+  if (emailProvider() === "gmail") {
+    try {
+      await gmail().sendMail({
+        from: { name: NAME(), address: process.env.GMAIL_USER! },
+        to,
+        subject,
+        html,
+        attachments: attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content) })),
+      });
+      db.prepare("UPDATE outbox SET status = 'sent', error = NULL WHERE id = ?").run(outbox);
+    } catch (e) {
+      const err = String(e instanceof Error ? e.message : e).slice(0, 300);
+      db.prepare("UPDATE outbox SET status = 'failed', error = ? WHERE id = ?").run(err, outbox);
+      if (!opts.skipErrorReport) reportError("email", `Email didn't send (Gmail): ${err}`, `to: ${to}\nsubject: ${subject}`);
+    }
+    return;
+  }
   try {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
