@@ -31,6 +31,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}/api/health`,
     reuseExistingServer: false,
     timeout: 60_000,
-    env: { DATA_DIR: dataDir, ADMIN_PASSCODE: "e2e-passcode", DEMO_BARISTA: "off", NODE_ENV: "production", ANTHROPIC_API_KEY: "", GEMINI_API_KEY: "", RESEND_API_KEY: "", RAZORPAY_KEY_ID: "", RAZORPAY_KEY_SECRET: "" },
+    env: { DATA_DIR: dataDir, ADMIN_PASSCODE: "e2e-passcode", DEMO_BARISTA: "off", RATE_LIMIT_SCALE: "50", NODE_ENV: "production", ANTHROPIC_API_KEY: "", GEMINI_API_KEY: "", RESEND_API_KEY: "", RAZORPAY_KEY_ID: "", RAZORPAY_KEY_SECRET: "" },
   },
 });

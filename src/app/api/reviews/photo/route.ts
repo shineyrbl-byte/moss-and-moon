@@ -1,10 +1,11 @@
 import { savePhoto } from "@/lib/uploads";
+import { clientIp } from "@/lib/site";
 
 // Guests: attach a photo to a review. 5 uploads per hour per visitor, 3 MB max.
 const hits = new Map<string, number[]>();
 
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const ip = clientIp(req);
   const now = Date.now();
   const recent = (hits.get(ip) ?? []).filter((t) => now - t < 3600_000);
   if (recent.length >= 5) return Response.json({ error: "That's a lot of photos! Try again later." }, { status: 429 });

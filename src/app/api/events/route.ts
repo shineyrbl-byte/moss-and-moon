@@ -2,6 +2,7 @@ import { db, cleanText } from "@/lib/db";
 import { EVENTS, toDateStr } from "@/lib/cafe";
 import { rsvpEmail, sendLater } from "@/lib/email";
 import { seatsTaken } from "@/lib/tickets";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 const going = seatsTaken;
 
@@ -14,6 +15,7 @@ export async function GET() {
 
 // RSVP to an event
 export async function POST(req: Request) {
+  if (limited(req, "rsvp", 30, 600000)) return tooMany();
   const b = await req.json().catch(() => null);
   const ev = EVENTS.find((e) => e.id === b?.eventId);
   const name = cleanText(b?.name, 40);

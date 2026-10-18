@@ -3,6 +3,7 @@ import { getMenu } from "@/lib/menuStore";
 import { HOURS_LABEL, openStatus } from "@/lib/cafe";
 import { HAPPY_HOUR, isHappyHour, rupees } from "@/lib/pricing";
 import type { MenuItem } from "@/lib/menu";
+import { clientIp } from "@/lib/site";
 
 // "Ask the barista": chat that recommends drinks & bakes from the live menu.
 // Uses Claude when ANTHROPIC_API_KEY is set, else Google Gemini (free tier) when
@@ -26,7 +27,7 @@ function limited(ip: string) {
 }
 
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const ip = clientIp(req);
   if (limited(ip)) return Response.json({ error: "The barista needs a quick breather ☕ — try again in a few minutes." }, { status: 429 });
 
   const body = await req.json().catch(() => null);

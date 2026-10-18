@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { saveSubscription, vapidKeys } from "@/lib/push";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 // The public key browsers need to subscribe
 export async function GET() {
@@ -8,6 +9,7 @@ export async function GET() {
 
 // "Notify me when my order is ready"
 export async function POST(req: Request) {
+  if (limited(req, "push", 30, 600000)) return tooMany();
   const { code, subscription } = await req.json().catch(() => ({}));
   const c = String(code ?? "").toUpperCase();
   const ok = subscription && typeof subscription.endpoint === "string" && /^https:\/\//.test(subscription.endpoint) && subscription.keys?.p256dh && subscription.keys?.auth;

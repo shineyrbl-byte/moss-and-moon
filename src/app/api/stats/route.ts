@@ -1,4 +1,5 @@
 import { recordHit } from "@/lib/visitors";
+import { clientIp } from "@/lib/site";
 
 // A page was viewed (sent by components/StatsBeacon.tsx). No cookies, no personal data kept.
 export async function POST(req: Request) {
@@ -7,7 +8,7 @@ export async function POST(req: Request) {
     recordHit({
       path: b.path,
       ref: typeof b.ref === "string" ? b.ref : "",
-      ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local",
+      ip: clientIp(req),
       ua: req.headers.get("user-agent") ?? "",
       host: req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "",
     });

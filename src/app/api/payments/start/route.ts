@@ -6,6 +6,7 @@ import { paidShares } from "@/lib/orderMoney";
 import { personShare } from "@/lib/groups";
 import { cleanText } from "@/lib/db";
 import { reportError } from "@/lib/errors";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 type OrderRow = { name: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pay_status: string; split_count: number | null };
 
@@ -13,6 +14,7 @@ type OrderRow = { name: string; total: number; giftcard_used: number; credit_use
 // Begin paying for an order, one share of a split bill, a gift card or a coffee pass.
 // The amount always comes from the database, never from the browser.
 export async function POST(req: Request) {
+  if (limited(req, "pay-start", 60, 600000)) return tooMany();
   const body = await req.json().catch(() => ({}));
   const { kind, code } = body;
   const c = String(code ?? "").toUpperCase();
@@ -80,6 +82,9 @@ export async function POST(req: Request) {
   try {
     const p = await startPayment(amount, shareId ? `${c}-S${shareId}` : c);
     if (shareId && p.mode === "razorpay") db.prepare("UPDATE order_payments SET ref = ? WHERE id = ?").run(p.orderId, shareId);
+    // Remember exactly what this Razorpay payment is for, so it can't be used to mark something else paid
+    if (p.mode === "razorpay")
+      db.prepare("INSERT INTO payment_intents (rzp_order_id, kind, code, share_id, amount) VALUES (?, ?, ?, ?, ?)").run(p.orderId, kind, c, shareId ?? null, amount);
     return Response.json({ ...p, label, code: c, kind, shareId });
   } catch (e) {
     console.error(e);

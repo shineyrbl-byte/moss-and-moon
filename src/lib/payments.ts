@@ -5,6 +5,9 @@
 import "server-only";
 import crypto from "node:crypto";
 
+// (Tests point this at a fake Razorpay)
+const API = () => process.env.RAZORPAY_API_BASE || "https://api.razorpay.com";
+
 export const paymentMode = () => (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET ? "razorpay" : "demo");
 
 export type PaymentStart =
@@ -15,7 +18,7 @@ export type PaymentStart =
 export async function startPayment(amount: number, receipt: string): Promise<PaymentStart> {
   if (paymentMode() === "demo") return { mode: "demo", amount };
   const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString("base64");
-  const r = await fetch("https://api.razorpay.com/v1/orders", {
+  const r = await fetch(`${API()}/v1/orders`, {
     method: "POST",
     headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
     body: JSON.stringify({ amount: amount * 100, currency: "INR", receipt }),
@@ -32,7 +35,7 @@ export async function startPayment(amount: number, receipt: string): Promise<Pay
 export async function refundPayment(paymentRef: string, amount: number): Promise<{ ok: boolean; ref: string; error?: string }> {
   if (paymentMode() === "demo" || !paymentRef.startsWith("pay_")) return { ok: true, ref: `demo_refund_${Date.now()}` };
   const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString("base64");
-  const r = await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentRef)}/refund`, {
+  const r = await fetch(`${API()}/v1/payments/${encodeURIComponent(paymentRef)}/refund`, {
     method: "POST",
     headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
     body: JSON.stringify({ amount: Math.round(amount * 100), speed: "normal" }),

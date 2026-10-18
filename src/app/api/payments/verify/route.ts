@@ -1,11 +1,12 @@
 import { db } from "@/lib/db";
-import { verifyPayment } from "@/lib/payments";
+import { paymentMode, verifyPayment } from "@/lib/payments";
 import { drinkGiftEmail, drinkGiftSentEmail, giftCardEmail, orderPlacedEmail, passEmail, sendLater, ticketEmail } from "@/lib/email";
 import { EVENTS } from "@/lib/cafe";
 import { orderDue, PASS, type QuoteLine } from "@/lib/pricing";
 import { paidShares } from "@/lib/orderMoney";
 import { publish } from "@/lib/live";
 import { toDateStr } from "@/lib/cafe";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 type OrderRow = { code: string; name: string; email: string | null; lines: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pickup: string };
 
@@ -19,10 +20,22 @@ function orderPaid(code: string, ref: string | null) {
 
 // Confirm a payment went through, then mark the order / share / gift card / pass as paid.
 export async function POST(req: Request) {
+  if (limited(req, "pay-verify", 60, 600000)) return tooMany();
   const body = await req.json().catch(() => ({}));
   const code = String(body.code ?? "").toUpperCase();
   const v = verifyPayment(body);
   if (!v.ok) return Response.json({ error: "We couldn't confirm that payment." }, { status: 400 });
+
+  // Real payments: the Razorpay order must be the one we started for this exact thing, and used only once
+  if (paymentMode() === "razorpay") {
+    const intent = db.prepare("SELECT kind, code, share_id, used FROM payment_intents WHERE rzp_order_id = ?").get(String(body.razorpay_order_id)) as
+      | { kind: string; code: string; share_id: number | null; used: number }
+      | undefined;
+    if (!intent || intent.kind !== body.kind || intent.code !== code || (intent.share_id !== null && intent.share_id !== Number(body.shareId ?? intent.share_id)))
+      return Response.json({ error: "That payment doesn't match this order." }, { status: 400 });
+    if (intent.used) return Response.json({ ok: true }); // already counted (e.g. a double tap)
+    db.prepare("UPDATE payment_intents SET used = 1 WHERE rzp_order_id = ?").run(String(body.razorpay_order_id));
+  }
 
   if (body.kind === "order") {
     orderPaid(code, v.ref);

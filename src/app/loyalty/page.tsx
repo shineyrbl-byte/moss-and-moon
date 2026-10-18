@@ -46,7 +46,7 @@ export default function LoyaltyPage() {
         <div className="stamp-card card">
           <div className="row" style={{ justifyContent: "space-between" }}>
             <div>
-              <h3 style={{ fontSize: "2rem" }}>{card.found ? `${card.name}'s card` : "A fresh card"}</h3>
+              <h3 style={{ fontSize: "2rem" }}>{card.found ? "Your card" : "A fresh card"}</h3>
               <p className="muted small">
                 {card.found ? `${card.rewardsUsed} free drink${card.rewardsUsed === 1 ? "" : "s"} enjoyed so far` : "No stamps yet — your first order starts it!"}
               </p>

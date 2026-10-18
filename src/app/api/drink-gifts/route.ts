@@ -2,11 +2,13 @@ import { db, cleanEmail, cleanText, makeCode } from "@/lib/db";
 import { findOrderable } from "@/lib/menuStore";
 import { cleanOptions, describeOptions, isDrink, unitPrice } from "@/lib/pricing";
 import { toDateStr } from "@/lib/cafe";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 const VALID_DAYS = 90;
 
 // "Buy a friend a coffee": price one drink, exactly as customised, to pay for now and claim later
 export async function POST(req: Request) {
+  if (limited(req, "drink-gifts", 30, 600000)) return tooMany();
   const b = await req.json().catch(() => null);
   const item = findOrderable(String(b?.itemId ?? ""));
   if (!item || !isDrink(item.cat)) return Response.json({ error: "Pick a drink to gift." }, { status: 400 });
@@ -17,7 +19,7 @@ export async function POST(req: Request) {
   if (b?.fromEmail && !cleanEmail(b.fromEmail)) return Response.json({ error: "Your email doesn't look right." }, { status: 400 });
   const opts = cleanOptions(item, b?.opts ?? {});
   const amount = unitPrice(item, opts);
-  const code = makeCode("GD", 5);
+  const code = makeCode("GD", 6);
   const expires = toDateStr(new Date(Date.now() + VALID_DAYS * 86_400_000));
   db.prepare(
     "INSERT INTO drink_gifts (code, item_id, item_name, opts, note, amount, from_name, from_email, to_name, to_email, message, expires) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"

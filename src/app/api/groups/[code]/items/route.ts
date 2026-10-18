@@ -3,11 +3,13 @@ import { GROUP_MAX_ITEMS, GROUP_MAX_PEOPLE, getGroup, groupSummary, isHost } fro
 import { menuLookup } from "@/lib/menuStore";
 import { cleanOptions, type Options } from "@/lib/pricing";
 import { publish } from "@/lib/live";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 type Ctx = { params: Promise<{ code: string }> };
 
 // Add your drinks to the group tray
 export async function POST(req: Request, { params }: Ctx) {
+  if (limited(req, "group-items", 120, 600000)) return tooMany();
   const g = getGroup((await params).code);
   if (!g) return Response.json({ error: "We couldn't find that group order." }, { status: 404 });
   if (g.status !== "open") return Response.json({ error: "This group order has already been placed." }, { status: 409 });
@@ -39,6 +41,7 @@ export async function POST(req: Request, { params }: Ctx) {
 
 // Take something out again (your own items, or anything if you're the host)
 export async function DELETE(req: Request, { params }: Ctx) {
+  if (limited(req, "group-items", 120, 600000)) return tooMany();
   const g = getGroup((await params).code);
   if (!g) return Response.json({ error: "We couldn't find that group order." }, { status: 404 });
   if (g.status !== "open") return Response.json({ error: "This group order has already been placed." }, { status: 409 });

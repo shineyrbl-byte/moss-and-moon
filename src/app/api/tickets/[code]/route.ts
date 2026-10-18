@@ -2,11 +2,13 @@ import { db } from "@/lib/db";
 import { EVENTS } from "@/lib/cafe";
 import { getTicket } from "@/lib/tickets";
 import { isAdmin, unauthorized } from "@/lib/auth";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 type Ctx = { params: Promise<{ code: string }> };
 
 // The ticket page (anyone with the code; the email is hidden)
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(req: Request, { params }: Ctx) {
+  if (limited(req, "ticket-lookup", 300, 600000)) return tooMany();
   const t = getTicket((await params).code);
   if (!t) return Response.json({ error: "We couldn't find that ticket." }, { status: 404 });
   const ev = EVENTS.find((e) => e.id === t.event_id);

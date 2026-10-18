@@ -2,9 +2,11 @@ import { db, cleanEmail, cleanText, makeCode } from "@/lib/db";
 import { EVENTS, toDateStr } from "@/lib/cafe";
 import { TICKET_MAX, spotsLeft } from "@/lib/tickets";
 import { isAdmin, unauthorized } from "@/lib/auth";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 // Reserve tickets for a paid event. They're held for 15 minutes while you pay.
 export async function POST(req: Request) {
+  if (limited(req, "tickets", 30, 600000)) return tooMany();
   const b = await req.json().catch(() => null);
   const ev = EVENTS.find((e) => e.id === b?.eventId);
   if (!ev || ev.date < toDateStr(new Date())) return Response.json({ error: "Event not found." }, { status: 404 });
@@ -15,7 +17,7 @@ export async function POST(req: Request) {
   if (!name || !email) return Response.json({ error: "Please add your name and email (your ticket goes there)." }, { status: 400 });
   if (!(qty >= 1 && qty <= TICKET_MAX)) return Response.json({ error: `You can buy 1 to ${TICKET_MAX} tickets at a time.` }, { status: 400 });
   if (spotsLeft(ev.id) < qty) return Response.json({ error: spotsLeft(ev.id) ? `Only ${spotsLeft(ev.id)} spot(s) left.` : "Sorry, this one is sold out!" }, { status: 409 });
-  const code = makeCode("TK", 5);
+  const code = makeCode("TK", 6);
   db.prepare("INSERT INTO tickets (code, event_id, name, email, qty, amount) VALUES (?, ?, ?, ?, ?, ?)").run(code, ev.id, name, email, qty, ev.price * qty);
   return Response.json({ code, amount: ev.price * qty });
 }

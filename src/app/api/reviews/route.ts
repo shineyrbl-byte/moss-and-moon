@@ -2,6 +2,7 @@ import { db, cleanText } from "@/lib/db";
 import { isOurPhoto } from "@/lib/uploads";
 import { ownerEmail } from "@/lib/owner";
 import { sendLater } from "@/lib/email";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 export async function GET() {
   const rows = db.prepare("SELECT id, name, rating, text, photo, created_at, order_code IS NOT NULL AS verified FROM reviews ORDER BY id DESC LIMIT 30").all();
@@ -12,6 +13,7 @@ export async function GET() {
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 export async function POST(req: Request) {
+  if (limited(req, "reviews", 15, 600000)) return tooMany();
   const b = await req.json().catch(() => null);
   const name = cleanText(b?.name, 40);
   const text = cleanText(b?.text, 400);

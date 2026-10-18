@@ -3,6 +3,7 @@ import { parseVoiceOrder, type VoiceLine } from "@/lib/voiceParse";
 import { askJSON, type JsonSchema } from "@/lib/ai";
 import { cleanText } from "@/lib/db";
 import { cleanOptions } from "@/lib/pricing";
+import { clientIp } from "@/lib/site";
 
 const hits = new Map<string, number[]>();
 function limited(ip: string) {
@@ -16,7 +17,7 @@ function limited(ip: string) {
 
 // Voice ordering: what someone said → tray lines (AI first, simple matching as a backup)
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const ip = clientIp(req);
   if (limited(ip)) return Response.json({ error: "That's a lot of talking! Try again in a few minutes." }, { status: 429 });
   const b = await req.json().catch(() => null);
   const text = cleanText(b?.text, 300);

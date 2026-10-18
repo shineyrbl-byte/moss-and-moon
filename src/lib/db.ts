@@ -327,6 +327,15 @@ function open() {
       n INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (day, path, ref)
     );
+    CREATE TABLE IF NOT EXISTS payment_intents (
+      rzp_order_id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      code TEXT NOT NULL,
+      share_id INTEGER,
+      amount INTEGER NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,

@@ -99,7 +99,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   // Fully covered by credit / gift card = already paid
   const payStatus = q.due === 0 || opts.prepaid ? "paid" : payMethod === "online" ? "pending" : "unpaid";
   const usedPerks = [q.passDiscount && "pass", q.birthdayDiscount && "birthday", q.loyaltyDiscount && "stamps", q.creditUsed && "credit"].filter(Boolean).join(",");
-  const code = makeCode("MM");
+  const code = makeCode("MM", 6); // 1 billion possibilities, so order pages can't be guessed
   db.prepare(
     `INSERT INTO orders (code, name, phone, email, pickup, note, lines, subtotal, discount, total, promo,
        pay_method, pay_status, giftcard_code, giftcard_used, happy_hour, table_no, customer_id,

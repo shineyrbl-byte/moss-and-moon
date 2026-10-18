@@ -827,3 +827,23 @@ test("two-step login: set up, codes required, no reuse, backup codes work once",
   assert.equal((await s.api("/api/admin/2fa", { method: "POST", json: { action: "off", code: backup[1] } })).status, 200);
   assert.equal((await login({})).status, 200, "off again");
 });
+
+test("security: cross-site changes are blocked, headers are set, codes are long", async () => {
+  const evil = await fetch(`${s.url}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json", Origin: "https://evil.example" }, body: JSON.stringify({ name: "X", phone: "9000016161", lines: [{ itemId: "cookie", qty: 1 }] }) });
+  assert.equal(evil.status, 403, "another site can't post here");
+  const same = await fetch(`${s.url}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json", Origin: s.url }, body: JSON.stringify({ name: "Ok", phone: "9000016161", lines: [{ itemId: "cookie", qty: 1 }] }) });
+  assert.equal(same.status, 200);
+  assert.match(((await same.json()) as { code: string }).code, /^MM-[A-Z0-9]{6}$/);
+
+  const home = await fetch(`${s.url}/`);
+  assert.match(home.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
+  assert.equal(home.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(home.headers.get("x-powered-by"), null);
+
+  const card = (await s.api("/api/loyalty?phone=9000016161")).body as { name: string };
+  assert.equal(card.name, "O.", "only an initial");
+
+  await s.login();
+  const sec = (await s.api("/api/admin/security")).body as { checks: { label: string; ok: boolean }[] };
+  assert.ok(sec.checks.some((c) => c.label.includes("Two-step") && !c.ok));
+});

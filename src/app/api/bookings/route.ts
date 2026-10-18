@@ -2,6 +2,7 @@ import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "@/lib/db";
 import { bookingEmail, sendLater, waitlistEmail } from "@/lib/email";
 import { slotsFor, parseDate, toDateStr, TABLES_PER_SLOT } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 /** Tables used in a slot. Groups of 5+ take two tables. */
 function tablesUsed(date: string, time: string) {
@@ -12,6 +13,7 @@ function tablesUsed(date: string, time: string) {
 }
 
 export async function POST(req: Request) {
+  if (limited(req, "bookings", 30, 600000)) return tooMany();
   const b = await req.json().catch(() => null);
   if (!b) return Response.json({ error: "Invalid request." }, { status: 400 });
 
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
   if (tablesUsed(date, time) + need > TABLES_PER_SLOT)
     return Response.json({ error: "That slot just filled up. Try another time?" }, { status: 409 });
 
-  const code = makeCode("TB");
+  const code = makeCode("TB", 6);
   db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(code, name, phone, email || null, date, time, guests, note);
   if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests }));
   return Response.json({ code, name, date, time, guests });

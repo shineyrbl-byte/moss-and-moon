@@ -3,11 +3,13 @@ import { ORDER_STEPS } from "@/lib/cafe";
 import { currentStaff } from "@/lib/auth";
 import { setOrderStatus } from "@/lib/orderFlow";
 import { paidShares } from "@/lib/orderMoney";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 type Ctx = { params: Promise<{ code: string }> };
 
 // Anyone with the code can see the order status (phone and email are hidden)
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(req: Request, { params }: Ctx) {
+  if (limited(req, "order-lookup", 600, 600000)) return tooMany();
   const { code } = await params;
   const row = db
     .prepare(

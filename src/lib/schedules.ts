@@ -17,6 +17,7 @@ export type ScheduleRow = {
   active: number; skip_date: string | null; last_date: string | null; last_order: string | null; created_at: string;
 };
 
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 
 /** Is this pickup time inside opening hours on every chosen day? Returns the first problem day, or null */
@@ -75,7 +76,7 @@ export async function scheduleTick(now = new Date()) {
       await sendEmail(
         c.email,
         "We couldn't place your regular order today",
-        `<p>Hi ${s.name}, your regular order (${describe(s)}) for ${s.time} didn't go through: <b>${String(d.error ?? "something went wrong")}</b></p><p>Pop in and we'll sort you out, or order on the site ✿</p>`
+        `<p>Hi ${esc(s.name)}, your regular order (${esc(describe(s))}) for ${esc(s.time)} didn't go through: <b>${esc(String(d.error ?? "something went wrong"))}</b></p><p>Pop in and we'll sort you out, or order on the site ✿</p>`
       );
   }
 }

@@ -2,11 +2,13 @@ import { db } from "@/lib/db";
 import { TABLE_COUNT } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { publish } from "@/lib/live";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 const REASONS = ["help", "water", "bill", "order"];
 
 // A guest at a table taps "Call staff"
 export async function POST(req: Request) {
+  if (limited(req, "table-call", 30, 600000)) return tooMany();
   const { table, reason } = await req.json().catch(() => ({}));
   const n = Math.floor(Number(table));
   if (!(n >= 1 && n <= TABLE_COUNT)) return Response.json({ error: "Unknown table." }, { status: 400 });

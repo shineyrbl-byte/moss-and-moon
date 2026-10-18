@@ -1,12 +1,13 @@
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, checkLogin, startStaffSession } from "@/lib/auth";
 import { checkCode, twoStepOn } from "@/lib/twoStep";
+import { clientIp } from "@/lib/site";
 
 // Small brute-force guard: 10 tries per 15 minutes per address
 const tries = new Map<string, number[]>();
 
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const ip = clientIp(req);
   const now = Date.now();
   const recent = (tries.get(ip) ?? []).filter((t) => now - t < 15 * 60_000);
   if (recent.length >= 10) return Response.json({ error: "Too many tries. Please wait 15 minutes." }, { status: 429 });

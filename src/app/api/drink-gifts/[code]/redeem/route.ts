@@ -2,11 +2,13 @@ import { db, cleanText } from "@/lib/db";
 import { placeOrder } from "@/lib/orders";
 import { toDateStr } from "@/lib/cafe";
 import { currentCustomer } from "@/lib/account";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 type Row = { code: string; item_id: string; opts: string; to_name: string; paid: number; order_code: string | null; expires: string };
 
 // Claim a gifted drink: it goes straight into the barista's queue, already paid
 export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
+  if (limited(req, "gift-redeem", 30, 600000)) return tooMany();
   const code = (await params).code.toUpperCase();
   const g = db.prepare("SELECT code, item_id, opts, to_name, paid, order_code, expires FROM drink_gifts WHERE code = ?").get(code) as Row | undefined;
   if (!g || !g.paid) return Response.json({ error: "We couldn't find that gift." }, { status: 404 });

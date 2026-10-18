@@ -1,6 +1,7 @@
 import { reportError, recentErrors, clearErrors } from "@/lib/errors";
 import { ownerGate } from "@/lib/auth";
 import { cleanText } from "@/lib/db";
+import { clientIp } from "@/lib/site";
 
 // A few reports per visitor is plenty
 const hits = new Map<string, number[]>();
@@ -15,7 +16,7 @@ function limited(ip: string) {
 
 // Browsers report errors here (see components/ErrorReporter.tsx)
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const ip = clientIp(req);
   if (limited(ip)) return new Response(null, { status: 204 });
   const b = await req.json().catch(() => null);
   const message = cleanText(b?.message, 300);

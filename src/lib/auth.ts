@@ -60,7 +60,8 @@ export function checkLogin(username: string, password: string): Staff | null {
 
 export async function startStaffSession(s: Staff) {
   const jar = await cookies();
-  jar.set(ADMIN_COOKIE, makeToken(s), { httpOnly: true, sameSite: "lax", path: "/", maxAge: SESSION_HOURS * 3600 });
+  // Strict: the staff cookie is never sent when another site links or posts here
+  jar.set(ADMIN_COOKIE, makeToken(s), { httpOnly: true, sameSite: "strict", path: "/", maxAge: SESSION_HOURS * 3600, secure: process.env.NODE_ENV === "production" && !!process.env.SITE_URL?.startsWith("https") });
 }
 
 /** The signed-in staff member, or null */

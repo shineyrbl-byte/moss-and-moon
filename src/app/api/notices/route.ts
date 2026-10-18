@@ -3,6 +3,7 @@ import { db, cleanText } from "@/lib/db";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { toDateStr } from "@/lib/cafe";
 import { publish } from "@/lib/live";
+import { clientIp } from "@/lib/site";
 
 const NOTICE_KINDS = ["lost", "study", "swap", "event", "other"] as const;
 const DAYS = 14;
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
 
 // Guests: pin a note (staff approve it before it shows)
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const ip = clientIp(req);
   const b = await req.json().catch(() => null);
   const kind = (NOTICE_KINDS as readonly string[]).includes(b?.kind) ? b.kind : "other";
   const name = cleanText(b?.name, 30);

@@ -1,9 +1,11 @@
 import { db } from "@/lib/db";
 import { paidShares } from "@/lib/orderMoney";
 import { publish } from "@/lib/live";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 // Split an unpaid order between 2–8 people (anyone with the order link can do this)
 export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
+  if (limited(req, "split", 30, 600000)) return tooMany();
   const code = (await params).code.toUpperCase();
   const { count } = await req.json().catch(() => ({}));
   const n = Math.floor(Number(count));

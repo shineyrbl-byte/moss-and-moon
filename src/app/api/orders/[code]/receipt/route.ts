@@ -1,8 +1,10 @@
 import { db } from "@/lib/db";
 import { receiptPdf, type ReceiptOrder } from "@/lib/receipt";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 // PDF receipt for an order (anyone with the order code, like the order page)
-export async function GET(_req: Request, { params }: { params: Promise<{ code: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ code: string }> }) {
+  if (limited(req, "receipt", 60, 600000)) return tooMany();
   const code = (await params).code.toUpperCase();
   const row = db
     .prepare(

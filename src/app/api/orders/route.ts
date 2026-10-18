@@ -3,9 +3,11 @@ import { currentCustomer } from "@/lib/account";
 import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { paidShares } from "@/lib/orderMoney";
 import { placeOrder } from "@/lib/orders";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 // Place an order (pickup, table or delivery)
 export async function POST(req: Request) {
+  if (limited(req, "orders", 60, 600000)) return tooMany();
   const body = await req.json().catch(() => null);
   if (!body) return Response.json({ error: "Invalid request." }, { status: 400 });
   return placeOrder(body, await currentCustomer());
@@ -24,7 +26,8 @@ export async function GET(req: Request) {
   }
     const rows = db.prepare("SELECT * FROM orders ORDER BY id DESC").all() as Record<string, unknown>[];
     const cols = ["code", "created_at", "name", "phone", "email", "pickup", "table_no", "delivery_address", "status", "pay_method", "pay_status", "subtotal", "discount", "total", "credit_used", "giftcard_used", "delivery_fee", "tip", "promo", "perks"];
-    const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    // A leading = + - @ would make Excel/Sheets run it as a formula, so prefix those with '
+    const cell = (v: unknown) => `"${String(v ?? "").replace(/^[=+\-@\t\r]/, "'$&").replace(/"/g, '""')}"`;
     const items = (r: Record<string, unknown>) => (JSON.parse(String(r.lines)) as { qty: number; name: string }[]).map((l) => `${l.qty}x ${l.name}`).join("; ");
     const csv = [[...cols, "items"].join(","), ...rows.map((r) => [...cols.map((c) => cell(r[c])), cell(items(r))].join(","))].join("\n");
     return new Response(csv, { headers: { "Content-Type": "text/csv", "Content-Disposition": `attachment; filename="moss-and-moon-orders.csv"` } });

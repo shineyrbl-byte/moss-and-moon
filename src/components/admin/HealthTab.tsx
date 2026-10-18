@@ -10,10 +10,12 @@ export default function HealthTab() {
   const [errors, setErrors] = useState<E[] | null>(null);
   const [health, setHealth] = useState<{ ok: boolean; uptime: number } | null>(null);
   const [open, setOpen] = useState<number | null>(null);
+  const [sec, setSec] = useState<{ checks: { ok: boolean; label: string; fix?: string }[]; score: number; total: number } | null>(null);
 
   const load = useCallback(() => {
     fetch("/api/errors").then((r) => r.json()).then((d) => setErrors(d.errors)).catch(() => {});
     fetch("/api/health").then((r) => r.json()).then(setHealth).catch(() => setHealth({ ok: false, uptime: 0 }));
+    fetch("/api/admin/security").then((r) => r.json()).then(setSec).catch(() => {});
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -31,6 +33,23 @@ export default function HealthTab() {
         <span>🚨 Problems logged: <b>{errors?.length ?? "…"}</b></span>
         {!!errors?.length && <button className="btn btn-ghost btn-sm" onClick={clear}>Clear the list</button>}
       </div>
+      {sec && (
+        <section className="card" style={{ padding: "1rem 1.2rem" }}>
+          <div className="sum-row" style={{ alignItems: "center" }}>
+            <h3 style={{ fontSize: "1.25rem" }}>🛡 Security check-up</h3>
+            <b>{sec.score} / {sec.total}</b>
+          </div>
+          <ul className="sec-list">
+            {sec.checks.map((c) => (
+              <li key={c.label} className={c.ok ? "ok" : "todo"}>
+                <span aria-hidden>{c.ok ? "✅" : "⚠️"}</span>
+                <span>{c.label}{!c.ok && c.fix ? <span className="small muted"> · {c.fix}</span> : null}</span>
+                <span className="sr-only">{c.ok ? "done" : "to do"}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <p className="small muted">Errors from the server, visitors&apos; browsers, emails, payments and background jobs show up here. Turn on email alerts in Overview → Emails for you.</p>
       {errors && !errors.length && <p className="muted center" style={{ padding: "2rem 0" }}>All quiet. Nothing has gone wrong ✿</p>}
       {errors?.map((e) => (

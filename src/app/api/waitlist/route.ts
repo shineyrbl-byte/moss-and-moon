@@ -1,9 +1,11 @@
 import { db, cleanEmail, cleanPhone, cleanText } from "@/lib/db";
 import { parseDate, slotsFor, toDateStr } from "@/lib/cafe";
 import { isAdmin, unauthorized } from "@/lib/auth";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 // Join the waitlist for a full time slot
 export async function POST(req: Request) {
+  if (limited(req, "waitlist", 30, 600000)) return tooMany();
   const b = await req.json().catch(() => null);
   const name = cleanText(b?.name, 40);
   const phone = cleanPhone(b?.phone);

@@ -2,15 +2,17 @@ import { db } from "@/lib/db";
 import { currentCustomer } from "@/lib/account";
 import { menuLookup } from "@/lib/menuStore";
 import { cleanOptions, describeOptions, isDrink, lineKey, unitPrice, type QuoteLine } from "@/lib/pricing";
+import { limited, tooMany } from "@/lib/rateLimit";
 
 // "My usual": the drink someone orders most, exactly how they like it.
 // Signed-in guests: from their account. Everyone else: from the order codes saved in their browser.
 export async function GET(req: Request) {
+  if (limited(req, "usual", 120, 600000)) return tooMany();
   const me = await currentCustomer();
   const codes = (new URL(req.url).searchParams.get("codes") ?? "")
     .split(",")
     .map((c) => c.trim().toUpperCase())
-    .filter((c) => /^MM-[A-Z0-9]{4}$/.test(c))
+    .filter((c) => /^MM-[A-Z0-9]{4,8}$/.test(c))
     .slice(0, 30);
 
   const rows = (
