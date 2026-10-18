@@ -1108,3 +1108,39 @@ test("dietary profile is saved; silver members get a free size upgrade", async (
   assert.equal((r.body as { total: number }).total, 250 + 40 + 30 - 40, "large for free");
   await s.api("/api/account/logout", { method: "POST" });
 });
+
+test("retention: new guests per month and how many came back", async () => {
+  await s.login();
+  const r = (await s.api("/api/admin/retention")).body as { months: { month: string; newGuests: number; returned: number; rate: number }[] };
+  assert.ok(r.months.length >= 1);
+  const m = r.months.at(-1)!;
+  assert.ok(m.newGuests >= 1 && m.rate >= 0 && m.rate <= 100);
+});
+
+test("cash-up: expected counter takings vs what was counted", async () => {
+  await s.login();
+  const before = (await s.api("/api/admin/cashup")).body as { expected: number };
+  const r = await s.api("/api/admin/cashup", { method: "POST", json: { float: 2000, cash: 2000 + before.expected - 30, upi: 0, card: 0, note: "short 30" } });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.cashup.difference, -30);
+  const bad = await s.api("/api/admin/cashup", { method: "POST", json: { cash: -5 } });
+  assert.equal(bad.status, 400);
+  const again = (await s.api("/api/admin/cashup")).body as { cashup: { difference: number }; history: unknown[] };
+  assert.equal(again.cashup.difference, -30);
+  assert.equal(again.history.length, 1);
+});
+
+test("P&L: expenses (one-off and every month) come off the profit", async () => {
+  await s.login();
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const base = (await s.api(`/api/admin/pnl?month=${month}`)).body as { net: number; gross: number };
+  assert.equal((await s.api("/api/admin/pnl", { method: "POST", json: { month, category: "rent", amount: 30000, recurring: true } })).status, 200);
+  assert.equal((await s.api("/api/admin/pnl", { method: "POST", json: { month, category: "repairs", label: "Grinder", amount: 1500 } })).status, 200);
+  assert.equal((await s.api("/api/admin/pnl", { method: "POST", json: { month, amount: 0 } })).status, 400);
+  const p = (await s.api(`/api/admin/pnl?month=${month}`)).body as { net: number; expenses: number; byCategory: Record<string, number>; trend: unknown[] };
+  assert.equal(p.expenses, 31500);
+  assert.equal(p.net, base.gross - 31500);
+  assert.equal(p.byCategory.rent, 30000);
+  assert.equal(p.trend.length, 6);
+});

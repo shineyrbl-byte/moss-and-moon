@@ -995,3 +995,29 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .qr-wifi { display: flex; gap: 0.5rem; align-items: center; border-top: 1px dashed var(--line); padding-top: 0.5rem; margin-top: 0.3rem; text-align: left; }
 .diet-warn { background: color-mix(in srgb, #e0a43a 20%, var(--surface)); border-radius: 10px; padding: 0.4rem 0.7rem; font-size: 0.85rem; margin-top: 0.4rem; }
 .tier-card .tier-badge { font-size: 2rem; }
+
+/* Cash-up */
+.cashup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.6rem 0.9rem; margin: 0.8rem 0 0.4rem; }
+.cashup-diff { font-weight: 700; padding: 0.3rem 0.7rem; border-radius: 999px; background: var(--surface-2); }
+.cashup-diff.ok { color: var(--moss); }
+.cashup-diff.near { color: var(--text); }
+.cashup-diff.off, .cashup-bad { color: var(--pink-ink); }
+
+/* Profit & loss */
+.pnl-hero { display: flex; gap: 1.4rem; flex-wrap: wrap; margin: 0.8rem 0; }
+.pnl-hero div { display: flex; flex-direction: column; }
+.pnl-hero b { font-size: 1.6rem; font-family: var(--serif, Georgia, serif); }
+.pnl-hero b.neg { color: var(--pink-ink); }
+.pnl-table td { text-align: right; }
+.pnl-table th { font-weight: 400; text-align: left; }
+.pnl-total th, .pnl-total td { font-weight: 700; border-top: 1px solid var(--line, rgba(0,0,0,0.12)); }
+.pnl-add { display: grid; grid-template-columns: 1fr 1.4fr 1fr auto auto; gap: 0.5rem; align-items: center; margin-top: 0.8rem; }
+@media (max-width: 640px) { .pnl-add { grid-template-columns: 1fr 1fr; } }
+.pnl-chart { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; height: 180px; margin-top: 0.6rem; }
+.pnl-col { display: grid; grid-template-rows: 1fr 0.5fr auto; text-align: center; outline-offset: 2px; }
+.pnl-pos, .pnl-neg { display: flex; justify-content: center; }
+.pnl-pos { align-items: flex-end; border-bottom: 1px solid var(--line, rgba(0,0,0,0.2)); }
+.pnl-neg { align-items: flex-start; }
+.pnl-pos span, .pnl-neg span { width: 60%; max-width: 38px; display: block; }
+.pnl-pos span { background: var(--moss); border-radius: 4px 4px 0 0; }
+.pnl-neg span { background: var(--pink-deep); border-radius: 0 0 4px 4px; }

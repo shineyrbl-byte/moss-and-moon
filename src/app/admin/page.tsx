@@ -29,6 +29,9 @@ import NewsletterTab from "@/components/admin/NewsletterTab";
 import GuestsTab from "@/components/admin/GuestsTab";
 import JournalTab from "@/components/admin/JournalTab";
 import WifiCard from "@/components/admin/WifiCard";
+import RetentionPanel from "@/components/admin/RetentionPanel";
+import CashupTab from "@/components/admin/CashupTab";
+import PnlTab from "@/components/admin/PnlTab";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -43,9 +46,9 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Tables & QR", "Team", "Rota", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health"] as const;
 // What baristas can see (owners see everything)
-const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Tables & QR", "Rota", "Notices"];
+const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Cash-up", "Tables & QR", "Rota", "Notices"];
 
 // A soft two-note "ding" when a new order arrives
 function chime() {
@@ -411,12 +414,14 @@ export default function AdminPage() {
       )}
 
       {tab === "Menu" && <MenuEditor canEdit={me?.role === "owner"} />}
-      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><ProfitPanel /><Analytics /></>}
+      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}
       {tab === "Events" && <EventsTab canEdit={me?.role === "owner"} />}
       {tab === "Waste" && <WasteTab />}
+      {tab === "Cash-up" && <CashupTab />}
+      {tab === "P&L" && me?.role === "owner" && <PnlTab />}
       {tab === "Notices" && <NoticesTab />}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
       {tab === "Guests" && me?.role === "owner" && <GuestsTab />}

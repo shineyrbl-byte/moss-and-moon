@@ -5,6 +5,7 @@ import { hoursOn, toDateStr } from "./cafe";
 import { orderDue, rupees, type QuoteLine } from "./pricing";
 import { ownerEmail, ownerPref } from "./owner";
 import { sendEmail } from "./email";
+import { difference, getCashup } from "./cashup";
 
 type Day = { orders: number; revenue: number; tips: number };
 
@@ -30,6 +31,7 @@ export function buildSummary(date = new Date()) {
   const book = db.prepare("SELECT COUNT(*) AS n, COALESCE(SUM(guests), 0) AS g FROM bookings WHERE date = ? AND status != 'cancelled'").get(tomorrow) as { n: number; g: number };
   const tickets = db.prepare("SELECT COALESCE(SUM(qty), 0) AS n, COALESCE(SUM(amount), 0) AS a FROM tickets WHERE paid = 1 AND date(created_at) = ?").get(day) as { n: number; a: number };
   const waste = db.prepare("SELECT COALESCE(SUM(qty), 0) AS n, COALESCE(SUM(cost), 0) AS c FROM waste WHERE day = ?").get(day) as { n: number; c: number };
+  const cash = getCashup(day);
   const refunds = db.prepare("SELECT COALESCE(SUM(refund_amount), 0) AS a FROM orders WHERE date(refunded_at) = ?").get(day) as { a: number };
 
   const change = (now: number, before: number) => {
@@ -51,6 +53,7 @@ export function buildSummary(date = new Date()) {
       ${tickets.n ? row("Event tickets", `${tickets.n} · ${rupees(tickets.a)}`) : ""}
       ${refunds.a ? row("Refunds", `−${rupees(refunds.a)}`) : ""}
       ${waste.n ? row("Thrown away", `${waste.n} items · ${rupees(Math.round(waste.c))}`) : ""}
+      ${row("Cash-up", cash ? (difference(cash) === 0 ? "matched ✓" : `<span style="color:${Math.abs(difference(cash)) > 50 ? "#a8455f" : "#3b2621"}">${difference(cash) > 0 ? "over" : "short"} by ${rupees(Math.abs(difference(cash)))}</span>`) : `<span style="color:#a8455f">not done</span>`)}
       ${row("Tomorrow's bookings", `${book.n} tables · ${book.g} guests`)}
     </table>
     <h3 style="font-family:Georgia,serif;font-weight:normal;margin:22px 0 6px">Best sellers</h3>
@@ -61,7 +64,7 @@ export function buildSummary(date = new Date()) {
   return {
     subject: `Today at Moss & Moon: ${t.orders} orders, ${rupees(t.revenue)}`,
     html,
-    data: { day, ...t, lastWeek: prev, best, reviews: reviews.length, low: low.map((l) => l.name), tomorrowBookings: book.n },
+    data: { day, ...t, lastWeek: prev, best, reviews: reviews.length, low: low.map((l) => l.name), tomorrowBookings: book.n, cashup: cash ? difference(cash) : null },
   };
 }
 

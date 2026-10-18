@@ -95,3 +95,16 @@ export function profitReport(days = 30) {
       .sort((a, b) => b.profit - a.profit),
   };
 }
+
+/** What an order cost to make (uses the cost saved on each line when there is one) */
+export function orderCost(lines: QuoteLine[], find = menuLookup(), costs = costTable()) {
+  let c = 0;
+  for (const l of lines) {
+    if (l.cost !== undefined) c += l.cost;
+    else {
+      const item = find(l.itemId);
+      if (item) c += unitCost(item, l.opts, costs).cost * l.qty;
+    }
+  }
+  return c;
+}

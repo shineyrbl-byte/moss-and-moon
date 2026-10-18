@@ -279,6 +279,27 @@ function open() {
       expires TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS cashups (
+      day TEXT PRIMARY KEY,
+      float_start REAL NOT NULL DEFAULT 0,
+      cash REAL NOT NULL DEFAULT 0,
+      upi REAL NOT NULL DEFAULT 0,
+      card REAL NOT NULL DEFAULT 0,
+      expected REAL NOT NULL DEFAULT 0,
+      note TEXT,
+      staff_id INTEGER,
+      staff_name TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+    CREATE TABLE IF NOT EXISTS expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      month TEXT NOT NULL,
+      category TEXT NOT NULL,
+      label TEXT NOT NULL,
+      amount REAL NOT NULL,
+      recurring INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS waste (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       day TEXT NOT NULL,
