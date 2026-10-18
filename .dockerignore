@@ -5,3 +5,7 @@ legacy-static
 .git
 .env*
 *.md
+e2e
+tests
+test-results
+playwright-report
