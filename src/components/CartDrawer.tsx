@@ -177,7 +177,7 @@ export default function CartDrawer() {
   return (
     <>
       <div className={`overlay ${drawerOpen ? "show" : ""}`} onClick={close} />
-      <aside className={`drawer ${drawerOpen ? "open" : ""}`} aria-hidden={!drawerOpen} aria-label="Your tray">
+      <aside className={`drawer ${drawerOpen ? "open" : ""}`} inert={!drawerOpen} aria-label="Your tray">
         <div className="drawer-head">
           {step === "checkout" ? (
             <button className="btn btn-ghost btn-sm" onClick={() => setStep("tray")}>{t("tray.back")}</button>

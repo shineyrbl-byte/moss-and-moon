@@ -34,7 +34,7 @@ export default function Gallery() {
       <div className="gallery">
         {GALLERY.map((g, i) => (
           <button key={g.img} onClick={() => setOpen(i)} aria-label={`View photo: ${g.caption}`}>
-            <Image src={photo(g.img, 600)} alt={g.caption} width={600} height={HEIGHTS[i % HEIGHTS.length] * 1.5} sizes="(max-width: 600px) 50vw, 300px" style={{ objectFit: "cover", height: HEIGHTS[i % HEIGHTS.length] }} />
+            <Image src={photo(g.img, 600)} alt="" width={600} height={HEIGHTS[i % HEIGHTS.length] * 1.5} sizes="(max-width: 600px) 50vw, 300px" style={{ objectFit: "cover", height: HEIGHTS[i % HEIGHTS.length] }} />
             <figcaption>{g.caption}</figcaption>
           </button>
         ))}

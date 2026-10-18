@@ -81,14 +81,14 @@ export default function GiftCards() {
         {sent ? (
           <div className="card confirm" style={{ padding: "2rem" }}>
             <span className="big">🎁</span>
-            <h3>On its way to {sent.toName}!</h3>
+            <h2 className="h3">On its way to {sent.toName}!</h2>
             <p className="muted">We emailed a {rupees(sent.amount)} card to {sent.toEmail}. Here&apos;s the code too, just in case:</p>
             <span className="code">{sent.code}</span>
             <button className="btn btn-ghost btn-sm" onClick={() => { setSent(null); setForm({ ...form, toName: "", toEmail: "", message: "" }); }}>Send another</button>
           </div>
         ) : (
           <form className="card booking" onSubmit={buy}>
-            <h3>Make it yours</h3>
+            <h2 className="h3">Make it yours</h2>
             <div className="field">Design
               <div className="chips" style={{ justifyContent: "flex-start" }}>
                 {DESIGNS.map((d) => (

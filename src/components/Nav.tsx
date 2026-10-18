@@ -47,10 +47,11 @@ export default function Nav() {
         </button>
         <AmbientSound />
         <ThemeToggle />
-        <button className="cart-btn" onClick={() => setDrawerOpen(true)} aria-label={`Open your tray, ${count} items`}>
+        <button className="cart-btn" onClick={() => setDrawerOpen(true)}>
           <span aria-hidden>🛍</span>
           <span className="cart-label">{t("nav.tray")}</span>
           <span key={bumpKey} className={`badge ${bumpKey ? "bump" : ""}`}>{count}</span>
+          <span className="sr-only">items, open tray</span>
         </button>
         <button className="icon-btn burger" onClick={() => setOpen((o) => !o)} aria-label="Toggle menu" aria-expanded={open}>
           {open ? "✕" : "☰"}

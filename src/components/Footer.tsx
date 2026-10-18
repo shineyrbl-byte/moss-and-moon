@@ -16,7 +16,7 @@ export default function Footer() {
           </p>
         </div>
         <div>
-          <h4>{t("footer.explore")}</h4>
+          <h2>{t("footer.explore")}</h2>
           <ul>
             <li><Link href="/#menu">{t("nav.menu")}</Link></li>
             <li><Link href="/#events">{t("nav.events")}</Link></li>
@@ -27,7 +27,7 @@ export default function Footer() {
           </ul>
         </div>
         <div>
-          <h4>{t("footer.hours")}</h4>
+          <h2>{t("footer.hours")}</h2>
           <ul>
             {HOURS_LABEL.map((h) => (
               <li key={h.days}>{h.days} · {h.time}</li>
@@ -35,7 +35,7 @@ export default function Footer() {
           </ul>
         </div>
         <div>
-          <h4>{t("footer.hi")}</h4>
+          <h2>{t("footer.hi")}</h2>
           <ul>
             <li>14 Willow Lane</li>
             <li>hello@mossandmoon.cafe</li>

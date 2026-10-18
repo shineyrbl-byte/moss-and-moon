@@ -80,7 +80,8 @@ export default function BoardPage() {
         </div>
       </header>
 
-      <main className="board-cols">
+      <h1 className="sr-only">Now serving</h1>
+      <div className="board-cols">
         <section>
           <h2>☕ Brewing</h2>
           <ul>
@@ -99,7 +100,7 @@ export default function BoardPage() {
             {!board.ready.length && <li className="board-empty">Nothing waiting at the counter</li>}
           </ul>
         </section>
-      </main>
+      </div>
 
       <footer className="board-foot">
         <span>{happy ? `✨ It's golden hour! ${HAPPY_HOUR.label}` : `☀︎ ${HAPPY_HOUR.label}`}</span>

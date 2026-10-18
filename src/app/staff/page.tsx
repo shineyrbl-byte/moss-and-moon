@@ -110,7 +110,7 @@ export default function StaffScreen() {
   if (!authed)
     return (
       <div className="page center">
-        <h2>Staff only ☕</h2>
+        <h1 className="h2">Staff only ☕</h1>
         <p className="lead">Log in on the dashboard first, then come back here.</p>
         <Link href="/admin" className="btn" style={{ marginTop: "1rem" }}>Go to staff login</Link>
       </div>
@@ -119,7 +119,7 @@ export default function StaffScreen() {
   return (
     <div className="kds">
       <header className="kds-head">
-        <strong className="logo" style={{ fontSize: "1.6rem" }}>Barista <span>screen</span></strong>
+        <h1 className="logo" style={{ fontSize: "1.6rem" }}>Barista <span>screen</span></h1>
         <span className="muted small">{orders.length} open · updates instantly</span>
         <div className="row" style={{ marginLeft: "auto" }}>
           <button className={`chip ${sound ? "on" : ""}`} onClick={() => { setSound(!sound); if (!sound) beep("order"); }}>{sound ? "🔔 Sound on" : "🔕 Sound off"}</button>

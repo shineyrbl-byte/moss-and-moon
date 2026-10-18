@@ -60,8 +60,8 @@ export default function Menu() {
           const out = soldOut.has(m.id);
           return (
             <article key={m.id} className="item card" style={{ animationDelay: `${Math.min(i, 10) * 50}ms` }}>
-              <button className="item-photo" style={{ border: "none", padding: 0 }} onClick={() => setCustomizing(m)} aria-label={`Customise ${m.name}`}>
-                <Image src={photo(m.img, 700)} alt={m.name} fill sizes="(max-width: 600px) 90vw, 300px" />
+              <button className="item-photo" style={{ border: "none", padding: 0 }} onClick={() => setCustomizing(m)}>
+                <Image src={photo(m.img, 700)} alt={`Customise ${m.name}`} fill sizes="(max-width: 600px) 90vw, 300px" />
                 {m.badge && <span className={`item-badge ${m.badge === "pink pick" ? "pink" : ""}`}>{m.badge}</span>}
                 {out && <span className="soldout">{t("menu.soldout")}</span>}
               </button>
