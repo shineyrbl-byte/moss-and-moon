@@ -12,6 +12,7 @@ import TableBanner from "@/components/TableBanner";
 import PwaSetup from "@/components/PwaSetup";
 import { getMenu } from "@/lib/menuStore";
 import SeasonLayer from "@/components/SeasonLayer";
+import ErrorReporter from "@/components/ErrorReporter";
 import { currentSeason } from "@/lib/seasonStore";
 
 // Pages read the live menu from the database, so render them on each request
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <CustomizeModal />
             <BaristaChat />
             <PwaSetup />
+            <ErrorReporter />
           </PaymentProvider>
         </StoreProvider>
       </body>

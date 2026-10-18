@@ -574,3 +574,22 @@ test("backups: back up, download, restore (and reject junk)", async () => {
   const again = (await s.api("/api/admin/backup")).body as { backups: { name: string }[] };
   assert.ok(again.backups.some((b) => b.name.includes("before-restore")), "a safety copy was made first");
 });
+
+test("error alerts: browser errors are logged, grouped and emailed to the owner once", async () => {
+  await s.login();
+  await s.api("/api/admin/settings", { method: "PATCH", json: { ownerEmail: "owner@example.com", errorAlerts: true } });
+  assert.equal((await s.api("/api/health")).status, 200);
+  const report = (message: string) => s.api("/api/errors", { method: "POST", json: { message, stack: "at Menu (menu.js:1)", url: "/" } });
+  await report("Cannot read properties of undefined (reading 'price') 123");
+  await report("Cannot read properties of undefined (reading 'price') 456");
+  await report("ResizeObserver loop limit exceeded"); // browser noise, ignored
+  await new Promise((r) => setTimeout(r, 300));
+  const list = (await s.api("/api/errors")).body as { errors: { source: string; message: string; count: number }[] };
+  const ours = list.errors.filter((e) => e.source === "browser");
+  assert.equal(ours.length, 1, "same problem is grouped");
+  assert.equal(ours[0].count, 2);
+  const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string; subject: string }[] };
+  assert.equal(mail.emails.filter((e) => e.subject.includes("Something went wrong")).length, 1, "only one alert email");
+  assert.equal((await s.api("/api/errors", { method: "DELETE" })).status, 200);
+  assert.equal(((await s.api("/api/errors")).body as { errors: unknown[] }).errors.length, 0);
+});

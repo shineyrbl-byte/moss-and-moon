@@ -5,6 +5,7 @@ import { currentCustomer } from "@/lib/account";
 import { paidShares } from "@/lib/orderMoney";
 import { personShare } from "@/lib/groups";
 import { cleanText } from "@/lib/db";
+import { reportError } from "@/lib/errors";
 
 type OrderRow = { name: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pay_status: string; split_count: number | null };
 
@@ -76,6 +77,7 @@ export async function POST(req: Request) {
     return Response.json({ ...p, label, code: c, kind, shareId });
   } catch (e) {
     console.error(e);
+    reportError("payments", `Couldn't start a payment: ${e instanceof Error ? e.message : String(e)}`, `kind: ${kind}, code: ${c}`);
     return Response.json({ error: "Payments are having a moment. Please try again, or pay at the counter." }, { status: 502 });
   }
 }

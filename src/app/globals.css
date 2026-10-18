@@ -856,3 +856,10 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .next-shift { font-size: 0.85rem; }
 .backup-list { list-style: none; display: flex; flex-direction: column; font-size: 0.88rem; }
 .backup-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; padding: 0.4rem 0; border-top: 1px solid var(--line); }
+
+/* ============ Health ============ */
+.error-row { padding: 0; overflow: hidden; }
+.error-head { display: grid; grid-template-columns: auto 1fr auto; gap: 0.8rem; align-items: center; width: 100%; padding: 0.8rem 1rem; background: none; border: none; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+.error-msg { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.error-detail { margin: 0; padding: 0.8rem 1rem; background: var(--surface-2); font-size: 0.75rem; white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; }
+@media (max-width: 600px) { .error-head { grid-template-columns: auto 1fr; } .error-head .small { grid-column: 1 / -1; } }

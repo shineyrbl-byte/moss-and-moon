@@ -3,12 +3,18 @@ import "server-only";
 import { demoTick } from "./orderFlow";
 import { summaryTick } from "./summary";
 import { backupTick } from "./backup";
+import { reportError } from "./errors";
 
 const g = globalThis as { __mmJobs?: NodeJS.Timeout[] };
 
 function every(ms: number, name: string, fn: () => unknown) {
   const t = setInterval(async () => {
-    try { await fn(); } catch (e) { console.error(`Background job "${name}" failed`, e); }
+    try {
+      await fn();
+    } catch (e) {
+      console.error(`Background job "${name}" failed`, e);
+      reportError("job", `${name}: ${e instanceof Error ? e.message : String(e)}`, e instanceof Error ? e.stack ?? "" : "");
+    }
   }, ms);
   t.unref?.();
   return t;

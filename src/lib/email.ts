@@ -4,6 +4,7 @@
 import "server-only";
 import { db } from "./db";
 import { rupees, type QuoteLine } from "./pricing";
+import { reportError } from "./errors";
 
 const SITE = () => process.env.SITE_URL || "http://localhost:3000";
 const FROM = () => process.env.EMAIL_FROM || "Moss & Moon <onboarding@resend.dev>";
@@ -12,7 +13,7 @@ export const emailMode = () => (process.env.RESEND_API_KEY ? "live" : "preview")
 
 export type Attachment = { filename: string; content: Uint8Array };
 
-export async function sendEmail(to: string, subject: string, body: string, attachments: Attachment[] = []) {
+export async function sendEmail(to: string, subject: string, body: string, attachments: Attachment[] = [], opts: { skipErrorReport?: boolean } = {}) {
   if (!to) return;
   const html = layout(subject, body);
   const row = db.prepare("INSERT INTO outbox (to_email, subject, html, status) VALUES (?, ?, ?, ?)").run(to, subject, html, emailMode() === "live" ? "sending" : "preview only");
@@ -29,8 +30,10 @@ export async function sendEmail(to: string, subject: string, body: string, attac
     const ok = r.ok;
     const err = ok ? null : (await r.text()).slice(0, 300);
     db.prepare("UPDATE outbox SET status = ?, error = ? WHERE id = ?").run(ok ? "sent" : "failed", err, Number(row.lastInsertRowid));
+    if (!ok && !opts.skipErrorReport) reportError("email", `Email didn't send: ${err}`, `to: ${to}\nsubject: ${subject}`);
   } catch (e) {
     db.prepare("UPDATE outbox SET status = 'failed', error = ? WHERE id = ?").run(String(e).slice(0, 300), Number(row.lastInsertRowid));
+    if (!opts.skipErrorReport) reportError("email", `Email didn't send: ${String(e)}`, `subject: ${subject}`);
   }
 }
 
