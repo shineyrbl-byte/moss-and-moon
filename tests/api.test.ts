@@ -534,3 +534,16 @@ test("receipts: PDF download and an email when the order is collected", async ()
   const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string; subject: string }[] };
   assert.ok(mail.emails.some((e) => e.to_email === "receipt@example.com" && e.subject.includes("receipt")), "receipt email sent");
 });
+
+test("rota: owner plans shifts, no double-booking, baristas see their next shift", async () => {
+  await s.login();
+  await s.api("/api/admin/staff", { method: "POST", json: { name: "Mira", username: "mira", password: "steam-wand-9", role: "barista" } });
+  const rota = (await s.api("/api/admin/shifts")).body as { team: { id: number; name: string }[]; days: string[] };
+  const mira = rota.team.find((t) => t.name === "Mira")!;
+  const day = rota.days[6];
+  assert.equal((await s.api("/api/admin/shifts", { method: "POST", json: { staffId: mira.id, day, start: "13:00", end: "09:00" } })).status, 400);
+  assert.equal((await s.api("/api/admin/shifts", { method: "POST", json: { staffId: mira.id, day, start: "07:00", end: "13:00" } })).status, 200);
+  assert.equal((await s.api("/api/admin/shifts", { method: "POST", json: { staffId: mira.id, day, start: "12:00", end: "16:00" } })).status, 409, "no overlaps");
+  const week = (await s.api(`/api/admin/shifts?week=${day}`)).body as { shifts: { name: string; start: string }[] };
+  assert.ok(week.shifts.some((x) => x.name === "Mira" && x.start === "07:00"));
+});

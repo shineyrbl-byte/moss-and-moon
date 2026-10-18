@@ -841,3 +841,16 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .kt hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
 .kt-btn { font: inherit; padding: 6px 12px; border: 1px solid #000; background: #fff; border-radius: 6px; }
 @media print { @page { size: 80mm auto; margin: 0; } .kt { margin: 0; } .kt-btn { display: none; } }
+
+/* ============ Staff rota ============ */
+.rota-wrap { overflow-x: auto; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); }
+.rota { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.85rem; }
+.rota th, .rota td { padding: 0.55rem 0.5rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.rota thead th { font-weight: 500; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.rota th.today, .rota td.today { background: var(--pink-soft); }
+.rota tr.me th[scope="row"] { color: var(--pink-ink); }
+.shift { display: flex; align-items: center; gap: 0.2rem; background: var(--surface-2); border-radius: 8px; padding: 0.15rem 0.4rem; margin-bottom: 0.25rem; white-space: nowrap; }
+.shift-add { background: none; border: 1px dashed var(--line); border-radius: 8px; width: 100%; color: var(--muted); padding: 0.1rem; }
+.shift-add:hover { border-color: var(--pink-fill); color: var(--text); }
+.shift-form { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
+.next-shift { font-size: 0.85rem; }

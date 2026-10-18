@@ -154,3 +154,14 @@ test("seasonal themes follow the calendar", async () => {
   assert.equal(activeSeason("off", new Date("2026-12-25T10:00")), null);
   assert.equal(activeSeason("monsoon", new Date("2026-12-25T10:00")), "monsoon");
 });
+
+test("rota helpers: weeks, hours and overlaps", async () => {
+  const { weekStart, weekDays, shiftHours, overlaps, fmtTime } = await import("../src/lib/rota.ts");
+  assert.equal(weekStart(new Date("2026-10-18T10:00")), "2026-10-12", "Sunday belongs to the week starting Monday");
+  assert.equal(weekStart(new Date("2026-10-19T10:00")), "2026-10-19");
+  assert.deepEqual(weekDays("2026-10-26").slice(-1), ["2026-11-01"]);
+  assert.equal(shiftHours("07:00", "13:30"), 6.5);
+  assert.equal(overlaps({ start: "07:00", end: "13:00" }, { start: "12:00", end: "18:00" }), true);
+  assert.equal(overlaps({ start: "07:00", end: "13:00" }, { start: "13:00", end: "18:00" }), false, "back-to-back is fine");
+  assert.equal(fmtTime("13:30"), "1:30pm");
+});

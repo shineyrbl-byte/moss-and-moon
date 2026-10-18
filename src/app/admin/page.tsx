@@ -12,6 +12,7 @@ import { SEASONS } from "@/lib/seasons";
 import EventsTab from "@/components/admin/EventsTab";
 import OwnerEmails from "@/components/admin/OwnerEmails";
 import RefundButton from "@/components/admin/RefundButton";
+import RotaTab from "@/components/admin/RotaTab";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -26,9 +27,9 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR", "Team", "Gift cards", "Emails", "Reviews"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR", "Team", "Rota", "Gift cards", "Emails", "Reviews"] as const;
 // What baristas can see (owners see everything)
-const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR"];
+const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR", "Rota"];
 
 // A soft two-note "ding" when a new order arrives
 function chime() {
@@ -380,6 +381,7 @@ export default function AdminPage() {
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}
       {tab === "Events" && <EventsTab />}
+      {tab === "Rota" && <RotaTab canEdit={me?.role === "owner"} />}
 
       {tab === "Gift cards" && (
         <div className="card table-wrap" style={{ padding: "1rem" }}>

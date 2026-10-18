@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import NextShift from "@/components/NextShift";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ORDER_STEPS, type OrderStatus } from "@/lib/cafe";
 import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
@@ -121,6 +122,7 @@ export default function StaffScreen() {
       <header className="kds-head">
         <h1 className="logo" style={{ fontSize: "1.6rem" }}>Barista <span>screen</span></h1>
         <span className="muted small">{orders.length} open · updates instantly</span>
+        <NextShift />
         <div className="row" style={{ marginLeft: "auto" }}>
           <button className={`chip ${sound ? "on" : ""}`} onClick={() => { setSound(!sound); if (!sound) beep("order"); }}>{sound ? "🔔 Sound on" : "🔕 Sound off"}</button>
           <button className={`chip ${awake ? "on" : ""}`} onClick={toggleAwake}>{awake ? "☀︎ Screen stays on" : "Keep screen on"}</button>
