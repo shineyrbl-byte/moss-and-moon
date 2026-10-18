@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { useEscape, useStore } from "./Store";
+import DrinkCup from "./DrinkCup";
 import { photo } from "@/lib/menu";
 import { MILKS, SHOT_PRICE, SIZES, SWEETS, TEMPS, defaultOptions, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
 
@@ -50,9 +51,12 @@ export default function CustomizeModal() {
           <button className="icon-btn close-x" onClick={close} aria-label="Close">✕</button>
         </div>
         <div className="modal-body">
-          <div>
-            <h3 style={{ fontSize: "2rem" }}>{item.name}</h3>
-            <p className="muted">{item.desc}</p>
+          <div className="modal-title-row">
+            <div>
+              <h3 style={{ fontSize: "2rem" }}>{item.name}</h3>
+              <p className="muted">{item.desc}</p>
+            </div>
+            {drink && <DrinkCup item={item} opts={opts} />}
           </div>
 
           {drink ? (

@@ -808,3 +808,17 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .ticket.used .ticket-stub img { opacity: 0.35; }
 @media (max-width: 600px) { .ticket { grid-template-columns: 1fr; } .ticket-stub { border-left: none; border-top: 2px dashed var(--line); } }
 @media print { .nav, .footer, .chat-fab, .season-banner, .season-sky, .table-banner, .toasts { display: none !important; } .ticket { box-shadow: none; border: 1px solid #ccc; } }
+
+/* ============ Drink builder cup ============ */
+.modal-title-row { display: flex; gap: 1rem; align-items: center; justify-content: space-between; }
+.drink-cup { width: 110px; height: 138px; flex-shrink: 0; display: grid; place-items: center; }
+.drink-cup svg { width: 100%; height: 100%; transition: transform 0.4s cubic-bezier(0.3, 1.4, 0.5, 1); transform-origin: 50% 90%; overflow: visible; }
+.cup-layer { transition: y 0.45s ease, height 0.45s ease, fill 0.45s ease; }
+.cup-swirl, .cup-ice { animation: cupIn 0.4s ease both; }
+@keyframes cupIn { from { opacity: 0; } }
+.steam path { animation: steam 2.4s ease-in-out infinite; }
+.steam path:nth-child(2) { animation-delay: 0.6s; }
+.steam path:nth-child(3) { animation-delay: 1.2s; }
+@keyframes steam { 0%, 100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(-4px); opacity: 0.7; } }
+@media (prefers-reduced-motion: reduce) { .cup-layer, .drink-cup svg { transition: none; } .steam path { animation: none; } }
+@media (max-width: 480px) { .drink-cup { width: 84px; height: 106px; } }
