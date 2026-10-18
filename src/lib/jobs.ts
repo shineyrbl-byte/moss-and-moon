@@ -17,6 +17,7 @@ import { winbackTick } from "./winback";
 import { stockAlertTick } from "./missed";
 import { depositTick } from "./deposits";
 import { anniversaryTick } from "./anniversary";
+import { laterTick } from "./laterOrders";
 
 const g = globalThis as { __mmJobs?: NodeJS.Timeout[] };
 
@@ -52,5 +53,6 @@ export function startJobs() {
     every(3 * 60_000, "back in stock emails", () => stockAlertTick()),
     every(60_000, "unpaid deposits", () => depositTick()),
     every(60 * 60_000, "anniversary emails", () => anniversaryTick()),
+    every(20_000, "orders for tomorrow", () => laterTick()),
   ];
 }

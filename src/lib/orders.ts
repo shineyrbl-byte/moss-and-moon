@@ -2,7 +2,7 @@
 // Prices, stock, perks and promo codes are always worked out here on the server.
 import "server-only";
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "./db";
-import { REFERRAL_CREDIT, combosAt, combosConfig, deliveryTerms, findPincode, quote, rupees } from "./pricing";
+import { REFERRAL_CREDIT, REWARDS, combosAt, combosConfig, deliveryTerms, findPincode, findReward, quote, rupees } from "./pricing";
 import { isLastHour, lastHour } from "./cafe";
 import { recordMissed } from "./missed";
 import { companyFor, spentThisMonth } from "./companies";
@@ -35,7 +35,8 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   const name = cleanText(body.name, 40);
   const phone = cleanPhone(body.phone);
   const email = cleanEmail(body.email);
-  const note = opts.kiosk ? ["🖥 Kiosk", cleanText(body.note, 180)].filter(Boolean).join(" · ") : cleanText(body.note, 200);
+  const tags = [opts.kiosk && "🖥 Kiosk", body.ownCup && !body.table && "♻️ Own cup"].filter(Boolean);
+  const note = [...tags, cleanText(body.note, 180)].filter(Boolean).join(" · ");
   const tableNo = Math.floor(Number(body.table));
   const table = tableNo >= 1 && tableNo <= TABLE_COUNT ? tableNo : null;
   const delivery = !table && body.delivery ? cleanText(body.delivery.address, 200) : "";
@@ -107,7 +108,12 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   }
 
   const card = phone ? (db.prepare("SELECT stamps FROM loyalty WHERE phone = ?").get(phone) as { stamps: number } | undefined) : undefined;
-  const hasReward = (card?.stamps ?? 0) >= STAMPS_FOR_REWARD;
+  const stamps = card?.stamps ?? 0;
+  // "none" = keep my stamps for later (no automatic free drink)
+  const hasReward = stamps >= STAMPS_FOR_REWARD && body.reward !== "none";
+  // A reward from the rewards shop (needs enough stamps)
+  const reward = body.reward && body.reward !== "none" ? findReward(body.reward) : null;
+  if (body.reward && body.reward !== "none" && (!reward || stamps < reward.stamps)) return Response.json({ error: reward ? `That needs ${reward.stamps} stamps; you have ${stamps}.` : "Unknown reward." }, { status: 400 });
   const perks = perksFor(me);
   const tipAmount = body.tipAmount !== undefined && body.tipAmount !== null && body.tipAmount !== "" ? Number(body.tipAmount) : undefined;
   // Promo code: checked again here (dates, limits, once per guest)
@@ -127,6 +133,8 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     lastHour: isLastHour(new Date(), branch.id) ? lastHour() : null,
     student: perks.student,
     combos: combosAt(combosConfig()),
+    ownCup: !!body.ownCup && !table,
+    reward,
     tipAmount: Number.isFinite(tipAmount) ? tipAmount : undefined,
     delivery: terms ? { fee: terms.fee, freeOver: terms.freeOver } : false,
   });
@@ -145,7 +153,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
 
   // Fully covered by credit / gift card = already paid
   const payStatus = q.due === 0 || opts.prepaid ? "paid" : payMethod === "online" ? "pending" : "unpaid";
-  const usedPerks = [q.passDiscount && "pass", q.birthdayDiscount && "birthday", q.loyaltyDiscount && "stamps", q.creditUsed && "credit", q.tierDiscount && `${perks.tier} upgrade`, q.lastHourDiscount && "last hour", q.studentDiscount && "student", q.comboDiscount && "combo"].filter(Boolean).join(",");
+  const usedPerks = [q.passDiscount && "pass", q.birthdayDiscount && "birthday", q.loyaltyDiscount && "stamps", q.creditUsed && "credit", q.tierDiscount && `${perks.tier} upgrade`, q.lastHourDiscount && "last hour", q.studentDiscount && "student", q.comboDiscount && "combo", q.ownCupDiscount && "own cup"].filter(Boolean).join(",");
   const code = makeCode("MM", 6); // 1 billion possibilities, so order pages can't be guessed
   db.prepare(
     `INSERT INTO orders (code, name, phone, email, pickup, note, lines, subtotal, discount, total, promo,
@@ -181,11 +189,12 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
 
   // Loyalty: one stamp per order. Using a reward spends 10 stamps.
   const usedReward = q.loyaltyDiscount > 0;
+  const spent = usedReward ? (REWARDS.find((r) => r.id === q.rewardId)?.stamps ?? STAMPS_FOR_REWARD) : 0;
   if (phone) db.prepare(
     `INSERT INTO loyalty (phone, name, stamps, rewards_used) VALUES (?, ?, 1, 0)
      ON CONFLICT(phone) DO UPDATE SET name = excluded.name,
        stamps = stamps + 1 - ?, rewards_used = rewards_used + ?`
-  ).run(phone, name, usedReward ? STAMPS_FOR_REWARD : 0, usedReward ? 1 : 0);
+  ).run(phone, name, spent, usedReward ? 1 : 0);
 
   // Online orders get their email after payment goes through
   if (email && payStatus !== "pending")

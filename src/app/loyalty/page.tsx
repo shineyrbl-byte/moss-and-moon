@@ -1,4 +1,5 @@
 "use client";
+import { REWARDS } from "@/lib/pricing";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -34,7 +35,7 @@ export default function LoyaltyPage() {
     <div className="page">
       <p className="eyebrow">the stamp card</p>
       <h1 style={{ fontSize: "clamp(2.4rem, 6vw, 4rem)" }}>Ten cups, <em>one on us</em></h1>
-      <p className="lead">Every order earns a stamp. Collect {card?.needed ?? 10} and your next drink is free — it comes off automatically at checkout.</p>
+      <p className="lead">Every order earns a stamp. Collect {card?.needed ?? 10} and your next drink is free, or spend them in the rewards shop below.</p>
 
       <form className="row" style={{ marginTop: "2rem", maxWidth: "30rem" }} onSubmit={(e) => { e.preventDefault(); lookup(); }}>
         <input className="input" style={{ flex: 1 }} inputMode="numeric" placeholder="Your phone number" value={phone} onChange={(e) => setPhone(e.target.value)} />
@@ -63,12 +64,25 @@ export default function LoyaltyPage() {
           <p className="serif" style={{ fontSize: "1.4rem" }}>
             {card.hasReward ? "🎉 Your free drink is waiting — just place an order!" : `${card.needed - filled} more to go ✿`}
           </p>
+          <p className="small muted">You have <b>{card.stamps}</b> stamp{card.stamps === 1 ? "" : "s"}.</p>
         </div>
       )}
 
       <div style={{ marginTop: "2rem" }}>
         <Link href="/#menu" className="btn btn-ghost">Go to the menu</Link>
       </div>
+      <section className="card" style={{ padding: "1.4rem", marginTop: "1.5rem" }}>
+        <h2 className="h3" style={{ marginTop: 0 }}>🎁 Rewards shop</h2>
+        <p className="small muted">Pick a reward at checkout (with that thing in your tray) and we&apos;ll take it off.</p>
+        <ul className="check-list">
+          {REWARDS.map((r) => (
+            <li key={r.id}>
+              <span style={{ flex: 1 }}><b>{r.label}</b></span>
+              <span className={card && card.stamps >= r.stamps ? "success" : "muted"}>{r.stamps} ★{card && card.stamps >= r.stamps ? " · yours!" : ""}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

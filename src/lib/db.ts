@@ -4,7 +4,7 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, SEED_MENU } from "./menu";
+import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
@@ -507,6 +507,20 @@ function open() {
       payment_ref TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS later_orders (
+      code TEXT PRIMARY KEY,
+      body TEXT NOT NULL,
+      customer_id INTEGER,
+      name TEXT NOT NULL,
+      email TEXT,
+      pickup_date TEXT NOT NULL,
+      pickup_time TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      estimate INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'saved',
+      order_code TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,
@@ -757,6 +771,14 @@ function open() {
       if (KIDS_ITEMS.includes(r.id) && d.kids === undefined) upd.run(JSON.stringify({ ...d, kids: true }), r.id);
     }
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v4', '1')").run();
+  }
+
+  // Breakfast, wellness, Goan specials and desserts
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v5'").get()) {
+    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
+    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
+    MENU_V5.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v5', '1')").run();
   }
 
   // Events: the starting ones, once (then owners manage them in Admin → Events)

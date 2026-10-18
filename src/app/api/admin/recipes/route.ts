@@ -7,7 +7,7 @@ import { SIZE_GUIDE, allRecipes, saveRecipe, seedRecipes } from "@/lib/recipes";
 export async function GET() {
   if (!(await currentStaff())) return unauthorized();
   // Starting recipes, plus ones for drinks added later (never over an owner's edit)
-  if (getSetting("seeded_recipes_v2") !== "1") { seedRecipes(); setSetting("seeded_recipes", "1"); setSetting("seeded_recipes_v2", "1"); }
+  if (getSetting("seeded_recipes_v3") !== "1") { seedRecipes(); setSetting("seeded_recipes", "1"); setSetting("seeded_recipes_v3", "1"); }
   return Response.json({ recipes: allRecipes(), sizeGuide: SIZE_GUIDE });
 }
 

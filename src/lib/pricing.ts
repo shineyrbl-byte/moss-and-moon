@@ -221,6 +221,8 @@ export type Quote = {
   tierDiscount: number; // silver/gold members: free size upgrades
   lastHourDiscount: number; // bakes cheaper just before closing
   comboDiscount: number; // combo deals
+  ownCupDiscount: number; // brought their own cup
+  rewardId: string | null; // which stamp reward was used
   combos: { id: string; name: string; count: number; saving: number }[];
   studentDiscount: number; // verified students, weekdays
   total: number; // goods after discounts
@@ -311,6 +313,18 @@ export const TIP_CHOICES = [0, 5, 10, 15];
 export const PASS = { price: 1499, days: 30, cap: 300, label: "Coffee Pass · one drink a day for 30 days" };
 export const BIRTHDAY_CAP = 250;
 export const REFERRAL_CREDIT = 100;
+/** Bring your own cup: this much off each drink (the Reusable Cup in the shop promises it) */
+export const OWN_CUP_OFF = 10;
+/** Rewards shop: spend stamps on things (the free drink at 10 stamps is one of them) */
+export type Reward = { id: string; label: string; stamps: number; items?: string[]; cats?: Category[]; cap: number };
+export const REWARDS: Reward[] = [
+  { id: "cookie", label: "A brown butter cookie", stamps: 4, items: ["cookie"], cap: 150 },
+  { id: "bake", label: "Any bake", stamps: 6, cats: ["bakes"], cap: 250 },
+  { id: "drink", label: "Any drink", stamps: 10, cats: ["coffee", "tea", "cold"], cap: 300 },
+  { id: "tote", label: "Canvas tote bag", stamps: 15, items: ["tote"], cap: 400 },
+  { id: "mug", label: "Ceramic mug", stamps: 20, items: ["moss-mug"], cap: 500 },
+];
+export const findReward = (id: unknown) => REWARDS.find((r) => r.id === id);
 /** Coffee wallet top-ups and the bonus each one adds */
 export const WALLET_TOPUPS = [{ amount: 500, bonus: 25 }, { amount: 1000, bonus: 75 }, { amount: 2000, bonus: 200 }];
 export const DELIVERY = { fee: 40, freeOver: 600, minOrder: 200 };
@@ -356,6 +370,10 @@ export function quote(
     student?: boolean;
     /** Combo deals on offer right now (see combosAt) */
     combos?: Combo[];
+    /** Bringing their own cup (takeaway only) */
+    ownCup?: boolean;
+    /** A stamp reward they're spending (the cheapest matching thing in the tray, up to its cap) */
+    reward?: Reward | null;
   } = {}
 ): Quote {
   const lines: QuoteLine[] = [];
@@ -391,7 +409,12 @@ export function quote(
     cups.shift();
   }
   let loyaltyDiscount = 0;
-  if (freeDrink && cups.length) loyaltyDiscount = Math.min(...cups.map((c) => c.unit));
+  let rewardId: string | null = null;
+  if (extra.reward) {
+    const r = extra.reward;
+    const units = lines.filter((l) => (r.items?.length ? r.items.includes(l.itemId) : (r.cats ?? []).includes(l.cat!))).map((l) => l.unit);
+    if (units.length) { loyaltyDiscount = Math.min(Math.min(...units), r.cap); rewardId = r.id; }
+  } else if (freeDrink && cups.length) { loyaltyDiscount = Math.min(...cups.map((c) => c.unit)); rewardId = "drink"; }
 
   let birthdayDiscount = 0;
   if (extra.birthdayTreat && bakes.length) birthdayDiscount = Math.min(Math.min(...bakes.map((b) => b.unit)), BIRTHDAY_CAP);
@@ -407,7 +430,8 @@ export function quote(
   const day = (extra.now ?? new Date()).getDay();
   const studentDiscount = extra.student && STUDENT.days.includes(day) ? Math.round(lines.filter((l) => isDrink(l.cat!)).reduce((s, l) => s + l.total, 0) * STUDENT.off) : 0;
 
-  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount - tierDiscount - lastHourDiscount - studentDiscount - combo.discount);
+  const ownCupDiscount = extra.ownCup ? lines.filter((l) => isDrink(l.cat!) && !find(l.itemId)?.groups?.length).reduce((s, l) => s + l.qty, 0) * OWN_CUP_OFF : 0;
+  const total = Math.max(0, subtotal - ownCupDiscount - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount - tierDiscount - lastHourDiscount - studentDiscount - combo.discount);
   const creditUsed = Math.min(total, Math.max(0, Math.floor(extra.credit ?? 0)));
   const giftUsed = Math.min(total - creditUsed, Math.max(0, Math.floor(extra.giftBalance ?? 0)));
   const terms = typeof extra.delivery === "object" ? extra.delivery : DELIVERY;
@@ -419,7 +443,7 @@ export function quote(
         ? Math.round((total * (extra.tipPercent ?? 0)) / 100)
         : 0;
   return {
-    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount, tierDiscount, lastHourDiscount, studentDiscount, comboDiscount: combo.discount, combos: combo.applied,
+    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount, tierDiscount, lastHourDiscount, studentDiscount, comboDiscount: combo.discount, combos: combo.applied, ownCupDiscount, rewardId,
     total, creditUsed, giftUsed, deliveryFee, tip, due: total - creditUsed - giftUsed + deliveryFee + tip,
   };
 }

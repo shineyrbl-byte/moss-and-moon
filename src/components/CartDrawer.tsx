@@ -8,7 +8,7 @@ import BranchPicker from "./BranchPicker";
 import { isLastHour, lastHour } from "@/lib/cafe";
 import { usePay } from "./Payment";
 import { photo } from "@/lib/menu";
-import { HAPPY_HOUR, TIP_CHOICES, deliveryTerms, deliveryZones, describeOptions, happyHour, combosAt, combosConfig, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
+import { HAPPY_HOUR, REWARDS, TIP_CHOICES, findReward, deliveryTerms, deliveryZones, describeOptions, happyHour, combosAt, combosConfig, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
 import { STAMPS_FOR_REWARD, hoursOn } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
 
@@ -24,6 +24,16 @@ function pickupTimes(branch?: string) {
   const start = Math.ceil((now.getHours() * 60 + now.getMinutes() + 15) / 15) * 15;
   const out: string[] = [];
   for (let t = start; t <= close * 60 - 15; t += 15) out.push(`${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`);
+  return out;
+}
+
+/** Pickup times tomorrow, from 15 minutes after opening */
+function tomorrowTimes(branch?: string) {
+  const d = new Date(Date.now() + 86_400_000);
+  const h = hoursOn(d, branch);
+  if (!h) return [];
+  const out: string[] = [];
+  for (let t = h[0] * 60 + 15; t <= h[1] * 60 - 15; t += 15) out.push(`${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`);
   return out;
 }
 
@@ -43,6 +53,12 @@ export default function CartDrawer() {
   const [tipPercent, setTipPercent] = useState(0);
   const [mode, setMode] = useState<"pickup" | "delivery">("pickup");
   const [address, setAddress] = useState("");
+  // "Order for tomorrow": saved now, made 15 minutes before pickup tomorrow
+  const [later, setLater] = useState(false);
+  const [ownCup, setOwnCup] = useState(false);
+  // Stamp rewards: "" = the usual (free drink at 10), "none" = save them, or a reward id
+  const [reward, setReward] = useState("");
+  const laterTimes = useMemo(() => tomorrowTimes(branch), [branch]);
   const [pincode, setPincode] = useState("");
   const hasZones = deliveryZones().length > 0;
   const [usePass, setUsePass] = useState(true);
@@ -102,7 +118,8 @@ export default function CartDrawer() {
   const terms = delivery ? deliveryTerms(hasZones ? (pincode.length === 6 ? pincode : null) : null) : null;
   const q = useMemo(
     () =>
-      quote(lines, find, promo?.rule, !!loyalty?.hasReward, {
+      quote(lines, find, promo?.rule, !!loyalty?.hasReward && reward !== "none", {
+        reward: reward && reward !== "none" ? findReward(reward) ?? null : null,
         giftBalance: gift?.balance,
         credit: me?.perks?.credit ?? 0,
         birthdayTreat: !!me?.perks?.birthdayTreat && useBirthday,
@@ -111,10 +128,11 @@ export default function CartDrawer() {
         lastHour: isLastHour(new Date(), branch) ? lastHour() : null,
         student: !!me?.perks?.student,
         combos: combosAt(combosConfig()),
+        ownCup: ownCup && !table,
         tipPercent: step === "checkout" ? tipPercent : 0,
         delivery: terms ? { fee: terms.fee, freeOver: terms.freeOver } : delivery,
       }),
-    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step, branch, terms]
+    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step, branch, terms, ownCup, table, reward]
   );
   const times = useMemo(() => (step === "checkout" ? pickupTimes(branch) : []), [step, branch]);
   const hasSoldOut = lines.some((l) => soldOut.has(l.itemId) || !find(l.itemId));
@@ -164,6 +182,24 @@ export default function CartDrawer() {
     e.preventDefault();
     setBusy(true);
     setError("");
+    if (later && !table && mode === "pickup") {
+      try {
+        const d0 = new Date(Date.now() + 86_400_000);
+        const pickupDate = `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, "0")}-${String(d0.getDate()).padStart(2, "0")}`;
+        const r = await post("/api/orders/later", { ...form, pickup: form.pickup === "asap" ? laterTimes[0] : form.pickup, pickupDate, branch, ownCup, promo: promo?.code, lines: lines.map(({ itemId, opts, qty }) => ({ itemId, opts, qty })) });
+        const d = await r.json();
+        if (!r.ok) return setError(d.error);
+        clear();
+        close();
+        toast(`Saved for tomorrow at ${d.time} ✿`);
+        router.push(`/later/${d.code}`);
+      } catch {
+        setError("Couldn't reach the café. Please try again.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     try {
       const r = await post("/api/orders", {
         ...form,
@@ -173,6 +209,8 @@ export default function CartDrawer() {
         promo: promo?.code,
         giftCard: gift?.code,
         tipPercent,
+        ownCup: ownCup && !table,
+        reward: reward || undefined,
         usePass,
         useBirthday,
         ...(delivery ? { delivery: { address, pincode } } : {}),
@@ -215,6 +253,7 @@ export default function CartDrawer() {
       {q.loyaltyDiscount > 0 && <div className="sum-row discount"><span>Free drink reward</span><span>−{rupees(q.loyaltyDiscount)}</span></div>}
       {q.passDiscount > 0 && <div className="sum-row discount"><span>☕ Coffee Pass drink</span><span>−{rupees(q.passDiscount)}</span></div>}
       {q.tierDiscount > 0 && <div className="sum-row discount"><span>{me?.perks?.tier === "gold" ? "🥇 Gold: free upgrades" : "🥈 Silver: free upgrade"}</span><span>−{rupees(q.tierDiscount)}</span></div>}
+      {q.ownCupDiscount > 0 && <div className="sum-row discount"><span>♻️ Own cup</span><span>−{rupees(q.ownCupDiscount)}</span></div>}
       {q.combos.map((c) => <div key={c.id} className="sum-row discount"><span>🍱 {c.name}{c.count > 1 ? ` × ${c.count}` : ""}</span><span>−{rupees(c.saving)}</span></div>)}
       {q.lastHourDiscount > 0 && <div className="sum-row discount"><span>🌙 Last-hour deal (−{Math.round(lastHour().off * 100)}%)</span><span>−{rupees(q.lastHourDiscount)}</span></div>}
       {q.studentDiscount > 0 && <div className="sum-row discount"><span>🎓 Student (drinks −10%)</span><span>−{rupees(q.studentDiscount)}</span></div>}
@@ -322,9 +361,19 @@ export default function CartDrawer() {
               </label>
               {loyalty && (
                 <div className="reward-banner">
-                  {loyalty.hasReward
+                  {loyalty.hasReward && !reward
                     ? "🎉 You've got a free drink! We'll take your cheapest drink off this order."
-                    : `☕ ${loyalty.stamps}/${STAMPS_FOR_REWARD} stamps — this order adds one more.`}
+                    : `☕ ${loyalty.stamps} stamp${loyalty.stamps === 1 ? "" : "s"} · this order adds one more.`}
+                  {loyalty.stamps >= REWARDS[0].stamps && (
+                    <div className="chips" style={{ justifyContent: "flex-start", marginTop: "0.4rem" }} role="radiogroup" aria-label="Spend stamps">
+                      <button type="button" role="radio" aria-checked={!reward} className={`chip ${!reward ? "on" : ""}`} onClick={() => setReward("")}>{loyalty.hasReward ? "Free drink" : "Keep collecting"}</button>
+                      {REWARDS.filter((r) => r.id !== "drink" && r.stamps <= loyalty.stamps).map((r) => (
+                        <button key={r.id} type="button" role="radio" aria-checked={reward === r.id} className={`chip ${reward === r.id ? "on" : ""}`} onClick={() => setReward(r.id)}>{r.label} · {r.stamps}★</button>
+                      ))}
+                      {loyalty.hasReward && <button type="button" role="radio" aria-checked={reward === "none"} className={`chip ${reward === "none" ? "on" : ""}`} onClick={() => setReward("none")}>Save them</button>}
+                    </div>
+                  )}
+                  {reward && reward !== "none" && q.rewardId !== reward && <p className="small" style={{ margin: "0.3rem 0 0" }}>Add {findReward(reward)?.label.toLowerCase()} to your tray to use this.</p>}
                 </div>
               )}
               <label className="field">Email (optional — for your receipt & "it's ready" note)<input className="input" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
@@ -341,12 +390,21 @@ export default function CartDrawer() {
                     <button type="button" className={`chip ${mode === "delivery" ? "on" : ""}`} onClick={() => setMode("delivery")} role="radio" aria-checked={mode === "delivery"}>🛵 {t("checkout.delivery")}</button>
                   </div>
                   {mode === "pickup" ? (
-                    <label className="field">Pickup time
-                      <select className="input" value={form.pickup} onChange={(e) => setForm({ ...form, pickup: e.target.value })}>
-                        <option value="asap">As soon as possible</option>
-                        {times.map((t) => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                    </label>
+                    <>
+                      {laterTimes.length > 0 && (
+                        <div className="chips" style={{ justifyContent: "flex-start" }} role="radiogroup" aria-label="Which day">
+                          <button type="button" role="radio" aria-checked={!later} className={`chip ${!later ? "on" : ""}`} onClick={() => { setLater(false); setForm({ ...form, pickup: "asap" }); }}>Today</button>
+                          <button type="button" role="radio" aria-checked={later} className={`chip ${later ? "on" : ""}`} onClick={() => { setLater(true); setForm({ ...form, pickup: laterTimes.find((t) => t >= "08:30") ?? laterTimes[0] }); }}>🌅 Tomorrow</button>
+                        </div>
+                      )}
+                      <label className="field">Pickup time{later ? " tomorrow" : ""}
+                        <select className="input" value={form.pickup} onChange={(e) => setForm({ ...form, pickup: e.target.value })}>
+                          {!later && <option value="asap">As soon as possible</option>}
+                          {(later ? laterTimes : times).map((t) => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </label>
+                      {later && <p className="small muted">🌅 Saved now and made fresh 15 minutes before. Pay at the counter when you collect. You can cancel any time before.</p>}
+                    </>
                   ) : (
                     <>
                       <label className="field">Delivery address
@@ -380,7 +438,7 @@ export default function CartDrawer() {
                   ))}
                 </div>
               </div>
-              {q.due > 0 && (
+              {q.due > 0 && !(later && mode === "pickup" && !table) && (
                 <div className="field">
                   {t("checkout.how")}
                   <div className="pay-options">
@@ -398,13 +456,18 @@ export default function CartDrawer() {
                   </div>
                 </div>
               )}
+              {!table && lines.some((l) => { const m = find(l.itemId); return m && ["coffee", "tea", "cold"].includes(m.cat) && !m.groups?.length; }) && (
+                <label className="row small" style={{ alignItems: "center", gap: "0.5rem" }}>
+                  <input type="checkbox" checked={ownCup} onChange={(e) => setOwnCup(e.target.checked)} /> ♻️ I&apos;ll bring my own cup <span className="muted">(₹10 off each drink)</span>
+                </label>
+              )}
               <label className="field">Anything we should know?<textarea className="input" rows={2} maxLength={200} placeholder="Allergies, a name for the cup…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
             </div>
             <div className="drawer-foot">
               {summary}
               {error && <p className="error">{error}</p>}
               <button className="btn btn-pink full" disabled={busy || (delivery && (!terms || q.total < terms.minOrder)) || (rush === "paused" && !table)}>
-                {busy ? "Placing order…" : q.due === 0 ? "Place order (covered ✿)" : payMethod === "online" ? `${t("checkout.payNow")} · ${rupees(q.due)}` : t("checkout.place")}
+                {busy ? "Placing order…" : later && mode === "pickup" && !table ? `Save for tomorrow · ${form.pickup}` : q.due === 0 ? "Place order (covered ✿)" : payMethod === "online" ? `${t("checkout.payNow")} · ${rupees(q.due)}` : t("checkout.place")}
               </button>
             </div>
           </form>

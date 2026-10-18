@@ -45,6 +45,10 @@ export const SEED_RECIPES: Record<string, string> = {
   "kokum-soda": "30 ml kokum syrup + juice of half a lime + a pinch of roasted cumin and black salt.\nIce, top with 200 ml soda; stir gently.",
   "sol-kadhi": "Batch: 150 ml kokum extract + 300 ml coconut milk + 1 small garlic clove (crushed) + green chilli sliver + salt. Stir, chill.\nServe 250 ml cold, chopped coriander on top. No ice.",
   "watermelon-cooler": "Blender: 250 g watermelon, 6 mint leaves, juice of half a lime, 10 ml sugar syrup. Blend 10 s, strain if seedy.\nPour over ice, mint sprig.",
+  "iced-hojicha": "Whisk 3 g hojicha powder with 40 ml water at 85 °C until smooth (or brew 5 g leaves in 60 ml, 2 min, strain).\nIce, 180 ml cold milk, pour the hojicha over. 10 ml syrup if asked.",
+  "turmeric-latte": "In a jug: ½ tsp turmeric paste, a pinch of ginger and black pepper, 1 tsp honey.\nSteam 220 ml milk to 60 °C, pour in, whisk. Dust with cinnamon.",
+  "juice-of-the-day": "Check the board for today's mix.\nCold-press 350 ml to order; pour without ice unless asked. Sell within 30 minutes of pressing.",
+  "nimbu-pani": "Juice of 1 lime, a pinch of roasted cumin and black salt.\nSweet: + 20 ml sugar syrup. Ice, 250 ml chilled water (or soda for a 'masala soda'). Stir.",
   "nutella-shake": "Blender: 2 tbsp Nutella, 1 scoop vanilla gelato, 200 ml cold milk. Blend 20 s.\nSmear Nutella round the jar rim, pour, whipped cream, chocolate shavings.",
 };
 

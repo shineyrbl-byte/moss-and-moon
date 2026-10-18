@@ -1786,3 +1786,36 @@ test("delivery areas by pincode, pairings, and high chairs on bookings", async (
   const list = (await s.api("/api/bookings")).body as { code: string; high_chairs: number }[];
   assert.equal(list.find((b) => b.code === bk.body.code)?.high_chairs, 2);
 });
+
+test("order for tomorrow: saved, checked against tomorrow's hours, and cancellable", async () => {
+  const d = new Date(Date.now() + 86_400_000);
+  const pickupDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const base = { name: "Early Bird", phone: "9811122211", email: "early@example.com", pickupDate, lines: [{ itemId: "flat-white", qty: 2 }, { itemId: "croissant", qty: 1 }] };
+  assert.equal((await s.api("/api/orders/later", { method: "POST", json: { ...base, pickup: "03:00" } })).status, 400, "outside opening hours");
+  assert.equal((await s.api("/api/orders/later", { method: "POST", json: { ...base, pickup: "09:00", pickupDate: "2020-01-01" } })).status, 400);
+  const r = await s.api("/api/orders/later", { method: "POST", json: { ...base, pickup: "10:00" } });
+  if (r.status === 400 && /closed tomorrow/.test(r.body.error)) return; // a closed day in the test calendar
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.match(r.body.summary, /2 × Flat White/);
+  assert.ok(r.body.estimate > 0);
+  assert.equal((await s.api(`/api/orders/later/${r.body.code}`)).body.status, "saved");
+  assert.equal((await s.api(`/api/orders/later/${r.body.code}`, { method: "DELETE" })).status, 200);
+  assert.equal((await s.api(`/api/orders/later/${r.body.code}`)).body.status, "cancelled");
+});
+
+test("own cup and the rewards shop", async () => {
+  // Own cup: ₹10 off each drink, takeaway only
+  const cup = await s.api("/api/orders", { method: "POST", json: { name: "Cup", phone: "9811133331", ownCup: true, lines: [{ itemId: "americano", qty: 2 }, { itemId: "croissant", qty: 1 }] } });
+  const plain = await s.api("/api/orders", { method: "POST", json: { name: "Cup", phone: "9811133332", lines: [{ itemId: "americano", qty: 2 }, { itemId: "croissant", qty: 1 }] } });
+  assert.equal(plain.body.total - cup.body.total, 20);
+  assert.match(cup.body.perks, /own cup/);
+  // Rewards: 5 orders = 5 stamps; spend 4 on a cookie
+  const phone = "9811144444";
+  for (let i = 0; i < 4; i++) await s.api("/api/orders", { method: "POST", json: { name: "Stamps", phone, lines: [{ itemId: "americano", qty: 1 }] } });
+  assert.equal((await s.api("/api/orders", { method: "POST", json: { name: "Stamps", phone, reward: "bake", lines: [{ itemId: "cookie", qty: 1 }] } })).status, 400, "needs 6 stamps");
+  const r = await s.api("/api/orders", { method: "POST", json: { name: "Stamps", phone, reward: "cookie", lines: [{ itemId: "cookie", qty: 1 }, { itemId: "americano", qty: 1 }] } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.usedReward, true);
+  const card = (await s.api(`/api/loyalty?phone=${phone}`)).body as { stamps: number };
+  assert.equal(card.stamps, 1, "4 + 1 for this order - 4 spent");
+});
