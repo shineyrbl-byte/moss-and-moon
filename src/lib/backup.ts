@@ -94,7 +94,7 @@ export async function backupTick(now = new Date()) {
       ownerEmail(),
       `Weekly backup of Moss & Moon (${toDateStr(now)})`,
       `<p>Here's this week's copy of your café's database: orders, bookings, accounts, reviews and the menu. Keep it somewhere safe.</p>
-       <p style="color:#8a6a5c;font-size:13px">To restore it, open Admin → Overview → Backups and upload this file. (Photos you uploaded aren't included; they stay on the server.)</p>`,
+       <p style="color:#8a6a5c;font-size:13px">To restore it, open Admin → Settings → Backups and upload this file. (Photos you uploaded aren't included; they stay on the server.)</p>`,
       [{ filename: b.name, content: fs.readFileSync(b.file) }]
     );
   }

@@ -1588,3 +1588,31 @@ test("company tab: join with a code, order on the tab, monthly invoice, mark pai
   await s.api("/api/admin/companies", { method: "PATCH", json: { id: co.id, action: "paid" } });
   assert.equal((await s.api(`/api/orders/${o.body.code}`)).body.pay_status, "paid");
 });
+
+test("rush mode: busy adds to ready times, paused stops online (not table) orders", async () => {
+  await s.login();
+  const before = (await s.api("/api/queue")).body as { minutes: number };
+  assert.equal((await s.api("/api/rush", { method: "PUT", json: { mode: "busy", minutes: 30, auto: false } })).body.mode, "busy");
+  assert.equal(((await s.api("/api/queue")).body as { minutes: number }).minutes, Math.min(60, before.minutes + 10));
+  await s.api("/api/rush", { method: "PUT", json: { mode: "paused", minutes: 15 } });
+  const online = await s.api("/api/orders", { method: "POST", json: { name: "Rush", phone: "9876500123", lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal(online.status, 503);
+  assert.match(online.body.error, /paused/);
+  const atTable = await s.api("/api/orders", { method: "POST", json: { name: "Rush", table: 3, lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal(atTable.status, 200);
+  assert.equal((await fetch(`${s.url}/api/rush`, { method: "PUT", headers: { "Content-Type": "application/json", Origin: s.url }, body: "{}" })).status, 401);
+  await s.api("/api/rush", { method: "PUT", json: { mode: "off", auto: false } });
+  const r = (await s.api("/api/rush")).body as { mode: string; active: number };
+  assert.equal(r.mode, "off");
+  // With auto on, a long queue (12+) counts as busy by itself
+  const auto = (await s.api("/api/rush", { method: "PUT", json: { mode: "off", auto: true } })).body as { mode: string; active: number };
+  assert.equal(auto.mode, auto.active >= 12 ? "busy" : "off");
+  await s.api("/api/rush", { method: "PUT", json: { mode: "off", auto: false } });
+});
+
+test("setup checklist lists what's missing", async () => {
+  await s.login();
+  const d = (await s.api("/api/admin/setup")).body as { items: { id: string; ok: boolean }[]; done: number; total: number };
+  assert.ok(d.total >= 6 && d.done < d.total);
+  assert.equal(d.items.find((i) => i.id === "payments")!.ok, false);
+});

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   if (!n) return Response.json({ error: "Newsletter not found." }, { status: 404 });
   if (b?.test) {
     const to = ownerEmail();
-    if (!to) return Response.json({ error: "Add your email in Overview → Emails for you first." }, { status: 400 });
+    if (!to) return Response.json({ error: "Add your email in Settings → Emails for you first." }, { status: 400 });
     await sendTest(n, to);
     return Response.json({ ok: true, to });
   }

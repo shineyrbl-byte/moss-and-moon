@@ -1167,3 +1167,24 @@ button.train-box { cursor: pointer; }
 .quiz-q { border: 1px solid var(--line); border-radius: 14px; padding: 0.7rem 0.9rem; margin: 0.8rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; }
 .quiz-q.right { border-color: var(--moss); }
 .quiz-q.wrong { border-color: var(--pink-deep); }
+
+/* Dashboard navigation: sections, then their tabs */
+.admin-nav { margin: 1.5rem 0; display: flex; flex-direction: column; gap: 0.7rem; }
+.admin-sections { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+.admin-section { font: inherit; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 0.55rem 0.9rem; cursor: pointer; }
+.admin-section:hover { border-color: var(--pink); }
+.admin-section.on { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+.admin-nav .admin-tabs { margin: 0; padding-left: 0.2rem; }
+.admin-jump { position: relative; margin-left: auto; min-width: 210px; }
+.admin-jump .input { padding: 0.5rem 0.8rem; font-size: 0.9rem; }
+.admin-jump-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 0.3rem; display: flex; flex-direction: column; }
+.admin-jump-list button { font: inherit; background: none; border: 0; text-align: left; padding: 0.45rem 0.6rem; border-radius: 8px; color: var(--text); cursor: pointer; }
+.admin-jump-list button:hover, .admin-jump-list button:focus-visible { background: var(--pink-soft); }
+@media (max-width: 640px) { .admin-jump { margin-left: 0; width: 100%; } .admin-section { padding: 0.45rem 0.7rem; font-size: 0.88rem; } }
+.setup-card { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; border: 1px solid var(--pink); }
+.rush { position: relative; display: inline-flex; }
+.rush-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; min-width: 270px; display: flex; flex-direction: column; padding: 0.5rem; gap: 0.15rem; box-shadow: var(--shadow); }
+.rush-menu > small { padding: 0.2rem 0.5rem; }
+.rush-menu button { font: inherit; text-align: left; background: none; border: 0; padding: 0.5rem; border-radius: 8px; color: var(--text); cursor: pointer; }
+.rush-menu button:hover, .rush-menu button:focus-visible { background: var(--pink-soft); }
+.rush-banner { margin: 0.6rem 1.5rem 0; }

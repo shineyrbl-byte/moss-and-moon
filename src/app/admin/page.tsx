@@ -46,6 +46,8 @@ import UseByCard from "@/components/admin/UseByCard";
 import PriceWatch from "@/components/admin/PriceWatch";
 import TrainingTab from "@/components/admin/TrainingTab";
 import CompaniesTab from "@/components/admin/CompaniesTab";
+import SetupCard from "@/components/admin/SetupCard";
+import RushControl from "@/components/RushControl";
 import ChecklistsTab from "@/components/admin/ChecklistsTab";
 import { useLive } from "@/components/useLive";
 
@@ -61,9 +63,36 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; branch?: string; deposit?: number; deposit_status?: string | null; table_no: number | null; preorder: string | null; preorder_code: string | null };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Catering", "Companies", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Catering", "Companies", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health", "Settings"] as const;
+type Tab = (typeof TABS)[number];
+// The tabs, grouped so there's less to scan
+const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
+  { label: "Today", icon: "☀︎", tabs: ["Overview", "Orders", "Bookings", "Checklists", "Cash-up"] },
+  { label: "Menu & stock", icon: "☕", tabs: ["Menu", "Stock", "Waste", "Tables & QR"] },
+  { label: "Guests", icon: "💌", tabs: ["Guests", "Reviews", "Events", "Catering", "Companies", "Promos", "Gift cards", "Newsletter", "Notices", "Journal"] },
+  { label: "Team", icon: "👥", tabs: ["Team", "Rota", "Training"] },
+  { label: "Money", icon: "📈", tabs: ["Analytics", "P&L"] },
+  { label: "Settings", icon: "⚙︎", tabs: ["Settings", "Emails", "Health"] },
+];
+/** Words that find a tab in "Jump to…" */
+const KEYWORDS: Partial<Record<Tab, string>> = {
+  Settings: "hours holidays golden hour last-hour branches google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
+  Analytics: "profit menu engineering missed sales price what if retention coming back visitors insights",
+  Stock: "ingredients use-by expiry supplier prices reorder shop stock",
+  Checklists: "opening closing fridge temperature equipment repairs maintenance",
+  "Cash-up": "till cash float upi card",
+  "P&L": "expenses rent wages profit loss",
+  Menu: "special of the day printable menu poster recipes story instagram",
+  Rota: "shifts swaps staffing",
+  Training: "quiz stations",
+  Guests: "we miss you vip regulars birthdays",
+  Bookings: "deposits no-show waitlist tables",
+  Health: "errors security uptime",
+  Emails: "sent emails preview",
+  "Tables & QR": "qr codes table cards",
+};
 // What baristas can see (owners see everything)
-const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "Tables & QR", "Rota", "Training", "Notices"];
+const BARISTA_TABS: Tab[] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "Tables & QR", "Rota", "Training", "Notices"];
 
 // A soft two-note "ding" when a new order arrives
 function chime() {
@@ -95,7 +124,14 @@ export default function AdminPage() {
   const [loginErr, setLoginErr] = useState("");
   const [needCode, setNeedCode] = useState(false);
   const [otp, setOtp] = useState("");
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
+  const [tab, setTabState] = useState<Tab>("Overview");
+  const [jump, setJump] = useState("");
+  // Remember the tab in the address (so a refresh or a shared link opens it)
+  const setTab = useCallback((t: Tab) => { setTabState(t); try { history.replaceState(null, "", `#${encodeURIComponent(t)}`); } catch {} }, []);
+  useEffect(() => {
+    const h = decodeURIComponent(location.hash.slice(1));
+    if ((TABS as readonly string[]).includes(h)) setTabState(h as Tab);
+  }, []);
   const [stats, setStats] = useState<Stats | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [showDone, setShowDone] = useState(false);
@@ -148,7 +184,7 @@ export default function AdminPage() {
 
   useLive(authed ? "/api/live?topic=staff" : null, (e) => e.type !== "menu" && load());
   useEffect(() => {
-    if (me && me.role !== "owner" && !BARISTA_TABS.includes(tab)) setTab("Orders");
+    if (me && me.role !== "owner" && !BARISTA_TABS.includes(tab)) setTabState("Orders");
   }, [me, tab]);
 
   async function login(e: React.FormEvent) {
@@ -239,6 +275,7 @@ export default function AdminPage() {
           <p className="small muted">Signed in as {me?.name} · {me?.role}</p>
         </div>
         <div className="row">
+          <RushControl />
           <SupportInbox onNew={chime} />
           <a className="btn btn-pink btn-sm" href="/staff">☕ Barista screen</a>
           <a className="btn btn-ghost btn-sm" href="/kiosk" title="Open on a counter tablet so guests can order themselves">🖥 Kiosk</a>
@@ -246,16 +283,44 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="admin-tabs">
-        {TABS.filter((t) => me?.role === "owner" || BARISTA_TABS.includes(t)).map((t) => (
-          <button key={t} className={`chip ${tab === t ? "on" : ""}`} onClick={() => setTab(t)}>
-            {t}{t === "Orders" && stats?.activeOrders ? ` (${stats.activeOrders})` : ""}
-          </button>
-        ))}
-      </div>
+      {(() => {
+        const allowed = (t: Tab) => me?.role === "owner" || BARISTA_TABS.includes(t);
+        const sections = SECTIONS.map((x) => ({ ...x, tabs: x.tabs.filter(allowed) })).filter((x) => x.tabs.length);
+        const current = sections.find((x) => x.tabs.includes(tab)) ?? sections[0];
+        const q = jump.trim().toLowerCase();
+        const matches = q ? TABS.filter(allowed).filter((t) => t.toLowerCase().includes(q) || (KEYWORDS[t] ?? "").includes(q)) : [];
+        const label = (t: Tab) => `${t}${t === "Orders" && stats?.activeOrders ? ` (${stats.activeOrders})` : ""}`;
+        return (
+          <nav className="admin-nav" aria-label="Dashboard sections">
+            <div className="admin-sections">
+              {sections.map((x) => (
+                <button key={x.label} className={`admin-section ${x === current ? "on" : ""}`} aria-current={x === current ? "true" : undefined} onClick={() => setTab(x.tabs[0])}>
+                  <span aria-hidden>{x.icon}</span> {x.label}
+                </button>
+              ))}
+              <label className="admin-jump">
+                <span className="sr-only">Jump to</span>
+                <input className="input" placeholder="Jump to… (e.g. wifi, rota)" value={jump} onChange={(e) => setJump(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && matches[0]) { setTab(matches[0]); setJump(""); } if (e.key === "Escape") setJump(""); }} />
+                {q && (
+                  <span className="admin-jump-list" role="listbox">
+                    {matches.length ? matches.slice(0, 6).map((t) => <button key={t} role="option" aria-selected={false} onClick={() => { setTab(t); setJump(""); }}>{t}</button>) : <span className="muted small">Nothing matches</span>}
+                  </span>
+                )}
+              </label>
+            </div>
+            {current.tabs.length > 1 && (
+              <div className="admin-tabs">
+                {current.tabs.map((t) => <button key={t} className={`chip ${tab === t ? "on" : ""}`} aria-pressed={tab === t} onClick={() => setTab(t)}>{label(t)}</button>)}
+              </div>
+            )}
+          </nav>
+        );
+      })()}
 
       {tab === "Overview" && stats && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          {me?.role === "owner" && <SetupCard go={(t) => setTab(t as Tab)} />}
           {mail && (
             <div className="mode-banner">
               <span>💳 Payments: <b>{mail.paymentMode === "razorpay" ? "Razorpay (live)" : "demo mode"}</b></span>
@@ -263,15 +328,6 @@ export default function AdminPage() {
               <span>🔔 A chime plays when a new order comes in, so keep this tab open.</span>
             </div>
           )}
-          {me?.role === "owner" && <HoursEditor />}
-          {me?.role === "owner" && <BranchesCard />}
-          {me?.role === "owner" && <LinksCard />}
-          {me?.role === "owner" && <GmailConnect />}
-          {me?.role === "owner" && <GstCard />}
-          {me?.role === "owner" && <WifiCard />}
-          {me?.role === "owner" && <OwnerEmails />}
-          {me?.role === "owner" && <Backups />}
-          {me?.role === "owner" && <TwoStep />}
           {season && (
             <div className="mode-banner">
               <span>
@@ -434,6 +490,19 @@ export default function AdminPage() {
         </div>
       )}
 
+      {tab === "Settings" && me?.role === "owner" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          <HoursEditor />
+          <BranchesCard />
+          <LinksCard />
+          <GmailConnect />
+          <GstCard />
+          <WifiCard />
+          <OwnerEmails />
+          <Backups />
+          <TwoStep />
+        </div>
+      )}
       {tab === "Menu" && <>{me?.role === "owner" && <SpecialsCard />}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}

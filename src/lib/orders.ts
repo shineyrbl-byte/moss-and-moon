@@ -6,6 +6,7 @@ import { DELIVERY, REFERRAL_CREDIT, quote, rupees } from "./pricing";
 import { isLastHour, lastHour } from "./cafe";
 import { recordMissed } from "./missed";
 import { companyFor, spentThisMonth } from "./companies";
+import { rushNow } from "./rush";
 import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, findBranch, hoursOn, toDateStr } from "./cafe";
 import { perksFor } from "./perks";
 import { checkStock, consumeStock } from "./stock";
@@ -48,6 +49,13 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   if (phone.length !== 10 && !(table && !phone) && !(opts.prepaid && !phone) && !(opts.kiosk && !phone)) return Response.json({ error: "Please enter a 10-digit phone number." }, { status: 400 });
   if (body.email && !email) return Response.json({ error: "That email doesn't look right." }, { status: 400 });
   if (body.delivery && !table && delivery.length < 10) return Response.json({ error: "Please add your full delivery address." }, { status: 400 });
+
+  // Rush mode: online orders paused for a bit (guests already in the café can still order)
+  const rush = rushNow();
+  if (rush.mode === "paused" && !table && !opts.kiosk && !opts.prepaid) {
+    const at = rush.until ? new Date(rush.until).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }) : "soon";
+    return Response.json({ error: `We're swamped right now, so online orders are paused until ${at}. Please try again then, or pop in ☕`, rush: "paused" }, { status: 503 });
+  }
 
   // Which branch: table QR codes are at the main café
   const branch = table ? findBranch("main") : findBranch(typeof body.branch === "string" ? body.branch : null);

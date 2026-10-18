@@ -8,6 +8,7 @@ import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useLive } from "@/components/useLive";
 import SupportInbox from "@/components/SupportInbox";
 import RecipeBook from "@/components/RecipeBook";
+import RushControl from "@/components/RushControl";
 import { activeBranches, findBranch } from "@/lib/cafe";
 
 type Order = {
@@ -139,6 +140,7 @@ export default function StaffScreen() {
         <NextShift />
         <ClockButton />
         <div className="row" style={{ marginLeft: "auto" }}>
+          <RushControl />
           <SupportInbox onNew={() => sound && beep("order")} />
           <button className="chip" onClick={() => setRecipe({ itemId: null })}>📖 Recipes</button>
           <button className={`chip ${sound ? "on" : ""}`} onClick={() => { setSound(!sound); if (!sound) beep("order"); }}>{sound ? "🔔 Sound on" : "🔕 Sound off"}</button>

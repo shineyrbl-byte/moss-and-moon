@@ -4,7 +4,7 @@ What protects Moss & Moon, and what was checked in the security review (October 
 
 ## Logins
 - **Staff:** the owner signs in with `ADMIN_PASSCODE`; staff get their own username and password (stored as scrypt hashes). Sessions are signed (HMAC) httpOnly cookies, `SameSite=Strict` and `Secure` on https.
-- **Two-step login** (Admin → Overview): owners can require a 6-digit authenticator code. Codes can't be reused; 8 one-time backup codes.
+- **Two-step login** (Admin → Settings): owners can require a 6-digit authenticator code. Codes can't be reused; 8 one-time backup codes.
 - **Guests:** a 6-digit code by email (hashed, 10 minutes, 5 tries, 5 emails an hour per address).
 - Staff login allows 10 tries per 15 minutes per address.
 

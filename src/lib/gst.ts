@@ -1,6 +1,6 @@
 // GST tax invoices. Menu prices include GST; the invoice works backwards to show the
 // taxable value and CGST + SGST (half each). Restaurants usually charge 5% with no input
-// tax credit; owners set their GSTIN, legal name, address and rate in Admin → Overview.
+// tax credit; owners set their GSTIN, legal name, address and rate in Admin → Settings.
 import "server-only";
 import { db, getSetting, setSetting, cleanText } from "./db";
 

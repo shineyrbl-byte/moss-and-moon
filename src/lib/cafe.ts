@@ -3,7 +3,7 @@
 /** [open hour, close hour], or null for a day the café is closed */
 export type DayHours = [number, number] | null;
 export type Closure = { date: string; note: string };
-/** Opening hours and holidays. Owners edit these in Admin → Overview; the server keeps
+/** Opening hours and holidays. Owners edit these in Admin → Settings; the server keeps
  * the current settings on globalThis and sends them to the browser with every page. */
 export type CafeConfig = { hours: Record<number, DayHours>; closures: Closure[]; happyHour?: unknown; branches?: Branch[]; lastHour?: unknown; links?: CafeLinks };
 /** Where to send guests: the Google review page, and a WhatsApp number (10 digits, India) */

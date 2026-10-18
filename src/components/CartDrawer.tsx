@@ -47,6 +47,7 @@ export default function CartDrawer() {
   const [useBirthday, setUseBirthday] = useState(true);
   const [loyalty, setLoyalty] = useState<Loyalty | null>(null);
   const [wait, setWait] = useState<number | null>(null);
+  const [rush, setRush] = useState<"off" | "busy" | "paused">("off");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [, tick] = useState(0);
@@ -71,7 +72,7 @@ export default function CartDrawer() {
     if (!drawerOpen) return setStep("tray");
     refreshSoldOut();
     tick((t) => t + 1); // re-check happy hour
-    fetch("/api/queue").then((r) => r.json()).then((d) => setWait(d.minutes)).catch(() => {});
+    fetch("/api/queue").then((r) => r.json()).then((d) => { setWait(d.minutes); setRush(d.rush ?? "off"); }).catch(() => {});
   }, [drawerOpen, refreshSoldOut]);
 
   // Remember name, phone & email for next time
@@ -307,6 +308,8 @@ export default function CartDrawer() {
             <div className="drawer-body" style={{ display: "flex", flexDirection: "column", gap: "0.9rem", paddingTop: "1rem" }}>
               <h3 style={{ fontSize: "1.8rem" }}>{t("checkout.title")}</h3>
               {wait !== null && <p className="small muted">⏱ Ready in about <b>{wait} min</b> right now</p>}
+              {rush === "paused" && !table && <p className="reward-banner small" role="alert">⏸ We&apos;re swamped, so online orders are paused for a few minutes. Please try again shortly, or pop in ☕</p>}
+              {rush === "busy" && <p className="reward-banner small">🚦 It&apos;s busy right now, so things take a little longer. Thank you for your patience!</p>}
               <label className="field">{t("checkout.name")}<input className="input" required maxLength={40} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
               <label className="field">
                 {table ? "Phone (optional — to collect a stamp)" : "Phone (for your stamp card)"}
@@ -393,7 +396,7 @@ export default function CartDrawer() {
             <div className="drawer-foot">
               {summary}
               {error && <p className="error">{error}</p>}
-              <button className="btn btn-pink full" disabled={busy || (delivery && q.total < DELIVERY.minOrder)}>
+              <button className="btn btn-pink full" disabled={busy || (delivery && q.total < DELIVERY.minOrder) || (rush === "paused" && !table)}>
                 {busy ? "Placing order…" : q.due === 0 ? "Place order (covered ✿)" : payMethod === "online" ? `${t("checkout.payNow")} · ${rupees(q.due)}` : t("checkout.place")}
               </button>
             </div>

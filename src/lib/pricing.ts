@@ -201,7 +201,7 @@ export type Quote = {
   due: number; // what's left to pay
 };
 
-// ----- golden hour: a daily discount on some categories (owners edit it in Admin → Overview) -----
+// ----- golden hour: a daily discount on some categories (owners edit it in Admin → Settings) -----
 export type HappyHour = { on: boolean; from: number; to: number; off: number; cats: Category[]; days: number[] };
 export const DEFAULT_HAPPY_HOUR: HappyHour = { on: true, from: 15, to: 17, off: 0.2, cats: ["bakes"], days: [0, 1, 2, 3, 4, 5, 6] };
 /** The current golden-hour settings (kept with the café settings on globalThis, see lib/cafe.ts) */

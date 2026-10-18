@@ -89,7 +89,7 @@ web API instead. One-time setup, about 10 minutes, signed in as the café Gmail:
 5. **Clients** → **Create client** → type **Web application** → under **Authorized redirect URIs** add
    `https://moss-and-moon.up.railway.app/api/admin/gmail/callback` → **Create**. Copy the **Client ID** and **Client secret**.
 6. In Railway → **web** → **Variables** add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
-7. On the site: **/admin → Overview → ✉️ Guest emails → Connect Gmail**, sign in with the café Gmail,
+7. On the site: **/admin → Settings → ✉️ Guest emails → Connect Gmail**, sign in with the café Gmail,
    and if Google says the app isn't verified tap **Advanced → Go to Moss & Moon → Continue**.
 
 Guests then get emails from **Moss & Moon** `<your café Gmail>`. The site only asks Google for permission to *send*, never to read the inbox.
@@ -162,7 +162,7 @@ and stored in the database.
 
 ## 9. Emails for you, backups and error alerts
 
-Open **/admin → Overview → 📬 Emails for you** and add your email (with Resend's free plan
+Open **/admin → Settings → 📬 Emails for you** and add your email (with Resend's free plan
 and no domain, use the address you signed up to Resend with). Then you get:
 
 - **Nightly summary**: 15 minutes after closing (orders and sales vs last week, best sellers, tips,
@@ -174,7 +174,7 @@ and no domain, use the address you signed up to Resend with). Then you get:
 You can also set the address with an `OWNER_EMAIL` variable in Railway instead.
 
 **Backups** are made every night (after 3am) and the last 14 are kept on the server.
-In **/admin → Overview → 🗄 Backups** you can back up now, download a copy, or **restore** one:
+In **/admin → Settings → 🗄 Backups** you can back up now, download a copy, or **restore** one:
 choose the `.db.gz` file and confirm. The current data is saved first, so a restore can be undone.
 Uploaded photos aren't in the backup; they stay on the Railway volume.
 
@@ -186,8 +186,8 @@ so a broken update never replaces a working site.
 
 Everything that used to need a code change is now in **/admin**:
 
-- **Overview → 🕰 Hours, holidays & golden hour**: each day's hours, closures (guests can't order or book that day), and golden hour's time, discount and sections.
-- **Overview → 🧾 GST invoices**: turn on with your GSTIN, legal name and address; receipts become tax invoices. Download a monthly GST report for your accountant.
+- **Settings → 🕰 Hours, holidays & golden hour**: each day's hours, closures (guests can't order or book that day), and golden hour's time, discount and sections.
+- **Settings → 🧾 GST invoices**: turn on with your GSTIN, legal name and address; receipts become tax invoices. Download a monthly GST report for your accountant.
 - **Events**: add or edit events and ticket prices. **Journal**: write blog posts. **Newsletter**: write and send the Pink Post.
 - **Guests**: your regulars, with VIP stars and notes. **Stock → Reorders**: supplier emails for low stock.
 - **Rota**: shifts, plus timesheets and the week's tip split.

@@ -50,7 +50,7 @@ export default function HealthTab() {
           </ul>
         </section>
       )}
-      <p className="small muted">Errors from the server, visitors&apos; browsers, emails, payments and background jobs show up here. Turn on email alerts in Overview → Emails for you.</p>
+      <p className="small muted">Errors from the server, visitors&apos; browsers, emails, payments and background jobs show up here. Turn on email alerts in Settings → Emails for you.</p>
       {errors && !errors.length && <p className="muted center" style={{ padding: "2rem 0" }}>All quiet. Nothing has gone wrong ✿</p>}
       {errors?.map((e) => (
         <article key={e.id} className="card error-row">
