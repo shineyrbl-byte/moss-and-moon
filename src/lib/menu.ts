@@ -41,6 +41,8 @@ export type MenuItem = {
   /** Ingredients used per item (leave empty to use sensible defaults for drinks) */
   uses?: { ingredient: string; amount: number }[];
   soldOut?: boolean; // filled in from the database
+  /** % of guests who gave it a thumbs up (only with enough ratings) */
+  loved?: number;
   /** Only sold at these branches (unset = everywhere) */
   branches?: string[];
 };

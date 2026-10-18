@@ -4,6 +4,7 @@ import BadgesCard from "@/components/BadgesCard";
 import TierDietCards from "@/components/TierDietCards";
 import WalletStudentCards from "@/components/WalletStudentCards";
 import CompanyCard from "@/components/CompanyCard";
+import MyDataCard from "@/components/MyDataCard";
 import RegularOrders from "@/components/RegularOrders";
 import BeanSubs from "@/components/BeanSubs";
 import { Suspense } from "react";
@@ -186,6 +187,7 @@ function Profile({ acc, reload }: { acc: Account; reload: () => Promise<void> })
       <TierDietCards />
       <WalletStudentCards />
       <CompanyCard />
+      <MyDataCard onDeleted={logout} />
       <BadgesCard />
       <RegularOrders />
       <Suspense fallback={null}><BeanSubs /></Suspense>

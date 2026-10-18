@@ -1626,3 +1626,35 @@ test("I'm here: pickup guests tell the team they've arrived", async () => {
   const t = await s.api("/api/orders", { method: "POST", json: { name: "T", table: 2, lines: [{ itemId: "cookie", qty: 1 }] } });
   assert.equal((await s.api(`/api/orders/${t.body.code}/here`, { method: "POST", json: {} })).status, 400);
 });
+
+test("rate each item: only once it's made, only items in the order, and enough ratings show on the menu", async () => {
+  await s.login();
+  const codes: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const o = await s.api("/api/orders", { method: "POST", json: { name: "Rater", table: 4, lines: [{ itemId: "tiramisu", qty: 1 }] } });
+    codes.push(o.body.code);
+  }
+  assert.equal((await s.api(`/api/orders/${codes[0]}/rate`, { method: "POST", json: { itemId: "tiramisu", up: true } })).status, 409, "not made yet");
+  for (const c of codes) for (const st of ["brewing", "ready"]) await s.api(`/api/orders/${c}`, { method: "PATCH", json: { status: st } });
+  assert.equal((await s.api(`/api/orders/${codes[0]}/rate`, { method: "POST", json: { itemId: "cookie", up: true } })).status, 400);
+  for (const [i, c] of codes.entries()) assert.equal((await s.api(`/api/orders/${c}/rate`, { method: "POST", json: { itemId: "tiramisu", up: i !== 0 } })).status, 200);
+  const menu = (await (await fetch(`${s.url}/api/menu`)).json()) as { items: { id: string; loved?: number }[] };
+  assert.equal(menu.items.find((m) => m.id === "tiramisu")!.loved, 90);
+  assert.deepEqual((await s.api(`/api/orders/${codes[0]}/rate`)).body, { tiramisu: false });
+});
+
+test("data rights: download everything, then delete the account", async () => {
+  await signIn("forgetme@example.com");
+  await s.api("/api/account", { method: "PATCH", json: { phone: "9811155555", name: "Forget Me" } });
+  const o = await s.api("/api/orders", { method: "POST", json: { name: "Forget Me", phone: "9811155555", email: "forgetme@example.com", lines: [{ itemId: "cookie", qty: 1 }] } });
+  const dump = await s.api("/api/account/data");
+  assert.equal(dump.status, 200);
+  assert.equal(dump.body.account.email, "forgetme@example.com");
+  assert.ok(dump.body.orders.some((x: { code: string }) => x.code === o.body.code));
+  assert.equal((await s.api("/api/account/data", { method: "DELETE", json: { confirm: "yes" } })).status, 400);
+  assert.equal((await s.api("/api/account/data", { method: "DELETE", json: { confirm: "DELETE" } })).status, 200);
+  assert.equal((await s.api("/api/account")).body.signedIn, false, "signed out");
+  await s.login();
+  const kept = (await s.api(`/api/orders/${o.body.code}`)).body as { name: string };
+  assert.equal(kept.name, "Deleted guest", "the order stays, without their name");
+});

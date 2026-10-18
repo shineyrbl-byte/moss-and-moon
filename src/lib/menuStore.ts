@@ -25,12 +25,20 @@ export function getMenu({ includeHidden = false } = {}): MenuItem[] {
   const today = toDateStr(new Date());
   const season = currentSeason();
   const have = stockMap();
+  const loved = lovedScores();
   return (db.prepare("SELECT id, data, sort FROM menu_items ORDER BY sort, rowid").all() as Row[])
     .map((r) => {
-      const m = { ...(JSON.parse(r.data) as MenuItem), id: r.id };
+      const m = { ...(JSON.parse(r.data) as MenuItem), id: r.id, ...(loved.has(r.id) ? { loved: loved.get(r.id) } : {}) };
       return { ...m, soldOut: out.has(r.id) || !canMake(m, have) || (m.stock !== undefined && m.stock <= 0) };
     })
     .filter((m) => includeHidden || (!m.hidden && inSeason(m, today, season)));
+}
+
+/** Thumbs-up share per item over the last 6 months, for items with at least 10 ratings */
+export const LOVED_MIN = 10;
+function lovedScores() {
+  const rows = db.prepare("SELECT item_id, SUM(up) AS ups, COUNT(*) AS n FROM item_ratings WHERE created_at >= datetime('now','localtime','-180 days') GROUP BY item_id HAVING COUNT(*) >= ?").all(LOVED_MIN) as { item_id: string; ups: number; n: number }[];
+  return new Map(rows.map((r) => [r.item_id, Math.round((r.ups / r.n) * 100)]));
 }
 
 /** One item that guests can order right now (visible), or undefined */

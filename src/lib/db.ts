@@ -475,6 +475,13 @@ function open() {
       paid_at TEXT,
       UNIQUE (company_id, month)
     );
+    CREATE TABLE IF NOT EXISTS item_ratings (
+      order_code TEXT NOT NULL,
+      item_id TEXT NOT NULL,
+      up INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      PRIMARY KEY (order_code, item_id)
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,

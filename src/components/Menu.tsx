@@ -108,6 +108,7 @@ export default function Menu() {
                 <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)}>{m.name}</h3>
                 {happy && m.cat === "bakes" && <span className="small" style={{ color: "var(--pink-deep)" }}>golden hour −20%</span>}
                 <p>{m.desc}</p>
+                {m.loved !== undefined && m.loved >= 80 && <span className="loved">❤ Loved by {m.loved}%</span>}
                 {m.cat === "shop" && m.stock !== undefined && m.stock > 0 && m.stock <= 5 && <span className="item-facts" style={{ color: "var(--pink-ink)" }}>Only {m.stock} left</span>}
                 {(() => {
                   const al = allergensFor(m, defaultOptions(m));

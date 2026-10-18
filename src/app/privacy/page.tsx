@@ -25,7 +25,8 @@ export default function Privacy() {
       <h2 className="h3">Who sees it</h2>
       <p>Only the café team. We share data only with the services that run the site: Railway (hosting), Razorpay (payments) and Google (email), and, if you use the AI barista or voice ordering, the AI provider that reads your message.</p>
       <h2 className="h3">Your choices</h2>
-      <p>Ask us at the counter or by email and we&apos;ll show you, correct or delete what we hold about you.</p>
+      <p>If you have an account, you can <b>download everything we hold about you</b> or <b>delete your account</b> yourself, any time, from your account page (“Your data”). Deleting removes your details from past orders too; we keep the orders themselves (without your name or contact details) because tax law requires it.</p>
+      <p>No account? Ask us at the counter or by email and we&apos;ll show you, correct or delete what we hold about you. These are your rights under India&apos;s Digital Personal Data Protection Act, 2023.</p>
       <p className="small muted">Moss &amp; Moon · 14 Willow Lane · Updated October 2026</p>
     </div>
   );

@@ -1191,3 +1191,6 @@ button.train-box { cursor: pointer; }
 .ticket-here { background: var(--butter); color: #3b2720; border-radius: 10px; padding: 0.4rem 0.6rem; font-weight: 700; margin: 0.4rem 0; animation: pulseRing 1.8s infinite; }
 @media (prefers-reduced-motion: reduce) { .ticket-here { animation: none; } }
 .kds-offline { margin: 0 1rem 0.6rem; padding: 0.5rem 0.8rem; border-radius: 12px; background: var(--butter); color: #3b2720; font-weight: 600; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.rate-items { padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.rate-row { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
+.loved { font-size: 0.78rem; color: var(--pink-ink); font-weight: 600; }
