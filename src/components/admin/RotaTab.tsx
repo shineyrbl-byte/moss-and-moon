@@ -5,6 +5,7 @@ import { toDateStr } from "@/lib/cafe";
 import { useStore } from "../Store";
 import Timesheets from "./Timesheets";
 
+type Swap = { id: number; shift_id: number; from_id: number; to_id: number | null; taker_id: number | null; status: string; note: string | null; day: string; start: string; end: string; fromName: string; toName: string | null; takerName: string | null };
 type Data = { week: string; days: string[]; shifts: Shift[]; team: { id: number; name: string; role: string }[]; me: number };
 const json = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 const shiftWeek = (monday: string, by: number) => toDateStr(new Date(new Date(monday + "T12:00").getTime() + by * 7 * 86_400_000));
@@ -16,6 +17,18 @@ export default function RotaTab({ canEdit }: { canEdit: boolean }) {
   const [d, setD] = useState<Data | null>(null);
   const [adding, setAdding] = useState<{ staffId: number; day: string } | null>(null);
   const [form, setForm] = useState({ start: "07:00", end: "13:00", note: "" });
+  const [swaps, setSwaps] = useState<Swap[]>([]);
+  const [asking, setAsking] = useState<{ shiftId: number; toId: string; note: string } | null>(null);
+  const loadSwaps = useCallback(() => fetch("/api/admin/swaps").then((r) => r.json()).then(setSwaps).catch(() => {}), []);
+  useEffect(() => { loadSwaps(); }, [loadSwaps]);
+  async function swapAct(body: object, msg: string) {
+    const r = await fetch("/api/admin/swaps", json(body && "action" in body ? "PATCH" : "POST", body));
+    if (!r.ok) return toast((await r.json()).error);
+    toast(msg);
+    setAsking(null);
+    loadSwaps();
+    load();
+  }
 
   const load = useCallback(() => {
     fetch(`/api/admin/shifts${week ? `?week=${week}` : ""}`).then((r) => r.json()).then((x) => { setD(x); setWeek(x.week); }).catch(() => {});
@@ -74,6 +87,8 @@ export default function RotaTab({ canEdit }: { canEdit: boolean }) {
                           <span key={s.id} className="shift" title={s.note ?? undefined}>
                             {fmtTime(s.start)}–{fmtTime(s.end)}
                             {canEdit && <button className="link-btn" onClick={() => remove(s.id)} aria-label={`Remove ${p.name}'s shift on ${label(day)}`}>✕</button>}
+                            {p.id === d.me && d.me !== 0 && day >= today && !swaps.some((w) => w.shift_id === s.id) && <button className="link-btn" onClick={() => setAsking({ shiftId: s.id, toId: "", note: "" })} aria-label={`Ask to swap your shift on ${label(day)}`} title="Ask someone to cover">⇄</button>}
+                            {swaps.some((w) => w.shift_id === s.id) && <span className="tiny" title="Swap requested"> ⇄</span>}
                           </span>
                         ))}
                         {canEdit && <button className="shift-add" onClick={() => { setAdding({ staffId: p.id, day }); }} aria-label={`Add a shift for ${p.name} on ${label(day)}`}>+</button>}
@@ -86,6 +101,39 @@ export default function RotaTab({ canEdit }: { canEdit: boolean }) {
             </tbody>
           </table>
         </div>
+      )}
+      {asking && (
+        <form className="card shift-form" onSubmit={(e) => { e.preventDefault(); swapAct({ shiftId: asking.shiftId, toId: asking.toId ? Number(asking.toId) : null, note: asking.note }, "Swap request sent ✓"); }}>
+          <strong>Ask someone to cover this shift</strong>
+          <label className="field">Who<select className="input" value={asking.toId} onChange={(e) => setAsking({ ...asking, toId: e.target.value })}>
+            <option value="">Anyone on the team</option>
+            {d.team.filter((t) => t.id !== d.me).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select></label>
+          <label className="field">Note<input className="input" maxLength={120} placeholder="e.g. exam that morning" value={asking.note} onChange={(e) => setAsking({ ...asking, note: e.target.value })} /></label>
+          <p className="tiny muted">Once someone takes it, the owner approves and the rota updates.</p>
+          <div className="row"><button className="btn btn-pink btn-sm">Ask</button><button type="button" className="btn btn-ghost btn-sm" onClick={() => setAsking(null)}>Cancel</button></div>
+        </form>
+      )}
+      {swaps.length > 0 && (
+        <section className="card" style={{ padding: "1rem 1.2rem" }}>
+          <h3 style={{ fontSize: "1.1rem" }}>⇄ Shift swaps</h3>
+          <ul className="check-list">
+            {swaps.map((w) => (
+              <li key={w.id}>
+                <span style={{ flex: 1 }}>
+                  <b>{w.fromName}</b>: {label(w.day)} {fmtTime(w.start)}–{fmtTime(w.end)}
+                  {w.toName ? <> → asked <b>{w.toName}</b></> : " → anyone"}
+                  {w.note && <span className="muted"> · {w.note}</span>}
+                  {w.status === "taken" && <> · <span className="success">{w.takerName} will cover</span>{canEdit ? "" : ", waiting for the owner"}</>}
+                </span>
+                {w.status === "open" && d.me !== 0 && w.from_id !== d.me && (!w.to_id || w.to_id === d.me) && <button className="btn btn-pink btn-sm" onClick={() => swapAct({ id: w.id, action: "take" }, "Thanks for covering! Waiting for the owner ✿")}>I&apos;ll take it</button>}
+                {canEdit && w.status === "taken" && <button className="btn btn-pink btn-sm" onClick={() => swapAct({ id: w.id, action: "approve" }, "Approved: the rota is updated")}>Approve</button>}
+                {canEdit && <button className="btn btn-ghost btn-sm" onClick={() => swapAct({ id: w.id, action: "decline" }, "Declined")}>Decline</button>}
+                {w.from_id === d.me && !canEdit && <button className="btn btn-ghost btn-sm" onClick={() => swapAct({ id: w.id, action: "cancel" }, "Cancelled")}>Cancel</button>}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {adding && (
         <form className="card shift-form" onSubmit={add}>

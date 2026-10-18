@@ -1350,3 +1350,48 @@ test("recipes: staff can read them, only the owner can change them, and they're 
   const menu = JSON.stringify((await fetch(`${s.url}/api/menu`).then((x) => x.json())));
   assert.ok(!menu.includes("Step one"));
 });
+
+test("checklists: tick tasks, record fridge temperatures, owner edits the list", async () => {
+  await s.login();
+  const d = (await s.api("/api/admin/checklists")).body as { lists: { id: string; items: { id: number; kind: string; text: string }[]; done: number }[] };
+  const opening = d.lists.find((l) => l.id === "opening")!;
+  const task = opening.items.find((i) => i.kind === "tick")!;
+  const fridge = opening.items.find((i) => i.kind === "temp")!;
+  const t1 = await s.api("/api/admin/checklists", { method: "POST", json: { itemId: task.id, done: true } });
+  assert.equal(t1.status, 200);
+  assert.equal((await s.api("/api/admin/checklists", { method: "POST", json: { itemId: fridge.id, done: true } })).status, 400, "needs a reading");
+  const warm = await s.api("/api/admin/checklists", { method: "POST", json: { itemId: fridge.id, done: true, value: 8 } });
+  assert.equal(warm.body.warn, true);
+  const after = warm.body.lists.find((l: { id: string }) => l.id === "opening");
+  assert.equal(after.done, 2);
+  await s.api("/api/admin/checklists", { method: "POST", json: { itemId: task.id, done: false } });
+  const added = await s.api("/api/admin/checklists", { method: "PUT", json: { list: "closing", text: "Water the plants" } });
+  assert.ok(added.body.lists.find((l: { id: string }) => l.id === "closing").items.some((i: { text: string }) => i.text === "Water the plants"));
+});
+
+test("shift swaps: ask, a teammate takes it, the owner approves and the rota updates", async () => {
+  await s.login();
+  for (const u of ["swapa", "swapb"]) await s.api("/api/admin/staff", { method: "POST", json: { name: u === "swapa" ? "Asha" : "Ben", username: u, password: "swap-pass-123", role: "barista" } });
+  const team = (await s.api("/api/admin/staff")).body as { id: number; username: string }[];
+  const a = team.find((m) => m.username === "swapa")!, b = team.find((m) => m.username === "swapb")!;
+  const d = new Date(Date.now() + 2 * 86_400_000);
+  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const shift = (await s.api("/api/admin/shifts", { method: "POST", json: { staffId: a.id, day, start: "07:00", end: "13:00" } })).body.id as number;
+  // Each barista gets their own session
+  const as = async (username: string) => {
+    const r = await fetch(`${s.url}/api/admin/login`, { method: "POST", headers: { "Content-Type": "application/json", Origin: s.url }, body: JSON.stringify({ username, password: "swap-pass-123" }) });
+    const cookie = r.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+    return (path: string, method: string, body?: unknown) => fetch(s.url + path, { method, headers: { "Content-Type": "application/json", Origin: s.url, cookie }, body: body ? JSON.stringify(body) : undefined });
+  };
+  const asA = await as("swapa"), asB = await as("swapb");
+  assert.equal((await asB("/api/admin/swaps", "POST", { shiftId: shift })).status, 403, "can't give away someone else's shift");
+  const ask = await asA("/api/admin/swaps", "POST", { shiftId: shift, note: "exam" });
+  assert.equal(ask.status, 200);
+  const id = (await ask.json()).id;
+  assert.equal((await asA("/api/admin/swaps", "PATCH", { id, action: "take" })).status, 403);
+  assert.equal((await asB("/api/admin/swaps", "PATCH", { id, action: "approve" })).status, 403, "baristas can't approve");
+  assert.equal((await asB("/api/admin/swaps", "PATCH", { id, action: "take" })).status, 200);
+  assert.equal((await s.api("/api/admin/swaps", { method: "PATCH", json: { id, action: "approve" } })).status, 200);
+  const rota = (await s.api(`/api/admin/shifts?week=${day}`)).body as { shifts: { id: number; staff_id: number }[] };
+  assert.equal(rota.shifts.find((x) => x.id === shift)!.staff_id, b.id);
+});

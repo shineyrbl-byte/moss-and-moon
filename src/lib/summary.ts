@@ -6,6 +6,7 @@ import { orderDue, rupees, type QuoteLine } from "./pricing";
 import { ownerEmail, ownerPref } from "./owner";
 import { sendEmail } from "./email";
 import { difference, getCashup } from "./cashup";
+import { checklistSummary } from "./checklists";
 
 type Day = { orders: number; revenue: number; tips: number };
 
@@ -32,6 +33,7 @@ export function buildSummary(date = new Date()) {
   const tickets = db.prepare("SELECT COALESCE(SUM(qty), 0) AS n, COALESCE(SUM(amount), 0) AS a FROM tickets WHERE paid = 1 AND date(created_at) = ?").get(day) as { n: number; a: number };
   const waste = db.prepare("SELECT COALESCE(SUM(qty), 0) AS n, COALESCE(SUM(cost), 0) AS c FROM waste WHERE day = ?").get(day) as { n: number; c: number };
   const cash = getCashup(day);
+  const checks = checklistSummary(day);
   const refunds = db.prepare("SELECT COALESCE(SUM(refund_amount), 0) AS a FROM orders WHERE date(refunded_at) = ?").get(day) as { a: number };
 
   const change = (now: number, before: number) => {
@@ -54,6 +56,8 @@ export function buildSummary(date = new Date()) {
       ${refunds.a ? row("Refunds", `−${rupees(refunds.a)}`) : ""}
       ${waste.n ? row("Thrown away", `${waste.n} items · ${rupees(Math.round(waste.c))}`) : ""}
       ${row("Cash-up", cash ? (difference(cash) === 0 ? "matched ✓" : `<span style="color:${Math.abs(difference(cash)) > 50 ? "#a8455f" : "#3b2621"}">${difference(cash) > 0 ? "over" : "short"} by ${rupees(Math.abs(difference(cash)))}</span>`) : `<span style="color:#a8455f">not done</span>`)}
+      ${checks.lists.map((l) => row(`${l.label} checklist`, l.done === l.total ? "all done ✓" : `<span style="color:#a8455f">${l.done} of ${l.total}</span>`)).join("")}
+      ${checks.warm.length ? row("⚠️ Fridge too warm", checks.warm.map(esc).join("<br>")) : ""}
       ${row("Tomorrow's bookings", `${book.n} tables · ${book.g} guests`)}
     </table>
     <h3 style="font-family:Georgia,serif;font-weight:normal;margin:22px 0 6px">Best sellers</h3>

@@ -359,6 +359,32 @@ function open() {
       text TEXT NOT NULL,
       updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS checklist_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      list TEXT NOT NULL,
+      text TEXT NOT NULL,
+      kind TEXT NOT NULL DEFAULT 'tick',
+      sort INTEGER NOT NULL DEFAULT 0,
+      active INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS checklist_ticks (
+      day TEXT NOT NULL,
+      item_id INTEGER NOT NULL,
+      staff_name TEXT,
+      value REAL,
+      done_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      PRIMARY KEY (day, item_id)
+    );
+    CREATE TABLE IF NOT EXISTS shift_swaps (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shift_id INTEGER NOT NULL,
+      from_id INTEGER NOT NULL,
+      to_id INTEGER,
+      taker_id INTEGER,
+      status TEXT NOT NULL DEFAULT 'open',
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,
