@@ -365,6 +365,15 @@ function open() {
       note TEXT,
       updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS posts (
+      slug TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      cover TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      published_at TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -446,6 +455,14 @@ function open() {
     const add = db.prepare("INSERT OR IGNORE INTO events (id, data) VALUES (?, ?)");
     for (const e of SEED_EVENTS) add.run(e.id, JSON.stringify(e));
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_events', '1')").run();
+  }
+
+  // Two journal posts to start with
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_posts'").get()) {
+    const add = db.prepare("INSERT OR IGNORE INTO posts (slug, title, body, cover, status, published_at) VALUES (?, ?, ?, ?, 'published', datetime('now','localtime', ?))");
+    add.run("how-we-make-cold-brew", "How we make our 18-hour cold brew", "Cold brew isn't iced coffee. It's coffee that never meets hot water at all.\n\n## The slow way\nEvery evening we coarsely grind our House Blend, stir it into cold filtered water, and leave it in the fridge overnight. Eighteen hours later we strain it twice, slowly.\n\n## Why it tastes so smooth\nWithout heat, fewer of the bitter compounds come out of the beans, so you get the chocolate and caramel without the bite. It's naturally sweeter, and gentler on your stomach too.\n\n- Try it black first\n- Then with a splash of oat milk\n- Then with **vanilla syrup**, if you're feeling fancy\n\n[Order a Slow Cold Brew](/#menu) ☕", "1517701604599-bb29b565090c", "-3 days");
+    add.run("meet-the-new-menu", "Meet our new menu: cold drinks and proper food", "We've grown! Alongside your favourite lattes and bakes, you'll now find a whole section of **cold drinks** and a menu of **real food**.\n\n## Cold drinks\nSmoothies made with thick curd, mocktails with fresh fruit, a cookies & cream frappé, and our slow cold brew.\n\n## Food\nToasties pressed on sourdough, a Bombay masala grill, pancakes, pasta and big colourful bowls. Most of it comes with add-ons: an egg, extra cheese, gluten-free bread, or a coffee combo.\n\n[See the menu](/#menu) ✿", "1528736235302-52922df5c122", "-1 days");
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_posts', '1')").run();
   }
 
   // The café shop, added once to existing cafés

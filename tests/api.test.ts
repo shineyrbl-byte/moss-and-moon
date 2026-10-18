@@ -1003,3 +1003,20 @@ test("café shop: grind choices are priced, stock counts down and sells out", as
   assert.equal((beans.body as { total: number }).total, 680);
   await s.api("/api/menu", { method: "PATCH", json: { itemId: "moss-mug", stock: 30 } });
 });
+
+test("journal: posts publish to their own page, drafts stay hidden", async () => {
+  const list = await (await fetch(`${s.url}/journal`)).text();
+  assert.match(list, /18-hour cold brew/, "starter posts");
+  await s.login();
+  const d = await s.api("/api/admin/posts", { method: "POST", json: { title: "Why our chai has rose petals", body: "It started as a happy accident.\n\n## The rose\nDried petals from **Kannauj**.", status: "draft" } });
+  const slug = (d.body as { slug: string }).slug;
+  assert.equal(slug, "why-our-chai-has-rose-petals");
+  assert.equal((await fetch(`${s.url}/journal/${slug}`)).status, 404, "drafts aren't public");
+  await s.api("/api/admin/posts", { method: "POST", json: { slug, title: "Why our chai has rose petals", body: "It started as a happy accident.\n\n## The rose\nDried petals from **Kannauj**. <script>x</script>", status: "published" } });
+  const page = await fetch(`${s.url}/journal/${slug}`);
+  assert.equal(page.status, 200);
+  const html = await page.text();
+  assert.match(html, /<strong>Kannauj<\/strong>/);
+  assert.ok(!html.includes("<script>x</script>"), "post text is escaped");
+  assert.match(await (await fetch(`${s.url}/sitemap.xml`)).text(), new RegExp(`/journal/${slug}`));
+});
