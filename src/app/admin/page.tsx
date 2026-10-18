@@ -35,6 +35,7 @@ import CashupTab from "@/components/admin/CashupTab";
 import PnlTab from "@/components/admin/PnlTab";
 import CateringTab from "@/components/admin/CateringTab";
 import SupportInbox from "@/components/SupportInbox";
+import WinbackCard from "@/components/admin/WinbackCard";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -431,7 +432,7 @@ export default function AdminPage() {
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
       {tab === "Notices" && <NoticesTab />}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
-      {tab === "Guests" && me?.role === "owner" && <GuestsTab />}
+      {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
       {tab === "Journal" && me?.role === "owner" && <JournalTab />}
       {tab === "Rota" && <RotaTab canEdit={me?.role === "owner"} />}
       {tab === "Health" && me?.role === "owner" && <HealthTab />}

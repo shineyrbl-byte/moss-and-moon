@@ -29,6 +29,8 @@ export function unsubscribe(email: string, token: string) {
   const b = Buffer.from(String(token));
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;
   db.prepare("UPDATE subscribers SET unsubscribed_at = COALESCE(unsubscribed_at, datetime('now','localtime')) WHERE email = ?").run(email.toLowerCase());
+  // Also stops "we miss you" emails
+  db.prepare("INSERT OR IGNORE INTO no_marketing (email) VALUES (?)").run(email.toLowerCase());
   return true;
 }
 

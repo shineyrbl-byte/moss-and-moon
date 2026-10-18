@@ -1321,3 +1321,32 @@ test("coffee wallet top-up adds the bonus; student discount needs a college emai
   assert.equal(ok.body.verified, true);
   assert.equal(((await s.api("/api/account")).body as { perks: { student: boolean } }).perks.student, true);
 });
+
+test("we miss you: regulars who stopped coming are counted, unsubscribed ones aren't", async () => {
+  await s.login();
+  const { DatabaseSync } = await import("node:sqlite");
+  const path = await import("node:path");
+  const db = new DatabaseSync(path.join(s.dataDir, "cafe.db"));
+  const old = "datetime('now','localtime','-40 days')";
+  for (const [email, n] of [["gone@example.com", 3], ["once@example.com", 1], ["optout@example.com", 3]] as const)
+    for (let i = 0; i < n; i++) db.prepare(`INSERT INTO orders (code, name, phone, email, pickup, note, lines, subtotal, discount, total, created_at) VALUES (?, 'Gone', '9000011111', ?, 'asap', '', '[]', 0, 0, 0, ${old})`).run(`MM-WB${email.slice(0, 4)}${i}`, email);
+  db.prepare("INSERT INTO no_marketing (email) VALUES ('optout@example.com')").run();
+  db.close();
+  const st = (await s.api("/api/admin/winback")).body as { on: boolean; waiting: number };
+  assert.equal(st.on, true);
+  assert.equal(st.waiting, 1, "only the regular who hasn't opted out");
+  assert.equal(((await s.api("/api/admin/winback", { method: "PUT", json: { on: false } })).body as { on: boolean }).on, false);
+  await s.api("/api/admin/winback", { method: "PUT", json: { on: true } });
+});
+
+test("recipes: staff can read them, only the owner can change them, and they're not on the public menu", async () => {
+  assert.equal((await fetch(`${s.url}/api/admin/recipes`)).status, 401);
+  await s.login();
+  const r = (await s.api("/api/admin/recipes")).body as { recipes: Record<string, string> };
+  assert.match(r.recipes["cappuccino"], /Double shot/);
+  assert.equal((await s.api("/api/admin/recipes", { method: "PUT", json: { itemId: "cappuccino", text: "Step one\nStep two" } })).status, 200);
+  assert.equal(((await s.api("/api/admin/recipes")).body as { recipes: Record<string, string> }).recipes["cappuccino"], "Step one\nStep two");
+  assert.equal((await s.api("/api/admin/recipes", { method: "PUT", json: { itemId: "nope", text: "x" } })).status, 404);
+  const menu = JSON.stringify((await fetch(`${s.url}/api/menu`).then((x) => x.json())));
+  assert.ok(!menu.includes("Step one"));
+});

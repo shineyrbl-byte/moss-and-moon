@@ -7,6 +7,7 @@ import { ORDER_STEPS, type OrderStatus } from "@/lib/cafe";
 import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useLive } from "@/components/useLive";
 import SupportInbox from "@/components/SupportInbox";
+import RecipeBook from "@/components/RecipeBook";
 import { activeBranches, findBranch } from "@/lib/cafe";
 
 type Order = {
@@ -56,6 +57,7 @@ export default function StaffScreen() {
   const [now, setNow] = useState(Date.now());
   const [sound, setSound] = useState(true);
   const [awake, setAwake] = useState(false);
+  const [recipe, setRecipe] = useState<{ itemId: string | null; note?: string } | null>(null);
   // With more than one café, each tablet can show just its own branch
   const [only, setOnly] = useState("all");
   useEffect(() => { try { setOnly(localStorage.getItem("mm-kds-branch") || "all"); } catch {} }, []);
@@ -130,6 +132,7 @@ export default function StaffScreen() {
 
   return (
     <div className="kds">
+      {recipe && <RecipeBook itemId={recipe.itemId} note={recipe.note} onClose={() => setRecipe(null)} />}
       <header className="kds-head">
         <h1 className="logo" style={{ fontSize: "1.6rem" }}>Barista <span>screen</span></h1>
         <span className="muted small">{orders.length} open · updates instantly</span>
@@ -137,6 +140,7 @@ export default function StaffScreen() {
         <ClockButton />
         <div className="row" style={{ marginLeft: "auto" }}>
           <SupportInbox onNew={() => sound && beep("order")} />
+          <button className="chip" onClick={() => setRecipe({ itemId: null })}>📖 Recipes</button>
           <button className={`chip ${sound ? "on" : ""}`} onClick={() => { setSound(!sound); if (!sound) beep("order"); }}>{sound ? "🔔 Sound on" : "🔕 Sound off"}</button>
           <button className={`chip ${awake ? "on" : ""}`} onClick={toggleAwake}>{awake ? "☀︎ Screen stays on" : "Keep screen on"}</button>
           <Link href="/admin" className="chip">Dashboard</Link>
@@ -178,7 +182,7 @@ export default function StaffScreen() {
                     </div>
                     <ul className="ticket-items">
                       {o.lines.map((l, i) => (
-                        <li key={i}><b>{l.qty}×</b> {l.name}{l.note && <small>{l.note}</small>}</li>
+                        <li key={i}><b>{l.qty}×</b> <button className="recipe-link" onClick={() => setRecipe({ itemId: l.itemId, note: l.note })} title="How to make it">{l.name}</button>{l.note && <small>{l.note}</small>}</li>
                       ))}
                     </ul>
                     {o.note && <p className="ticket-note">📝 {o.note}</p>}
