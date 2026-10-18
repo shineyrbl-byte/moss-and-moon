@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useEscape, useStore } from "./Store";
 import { usePay } from "./Payment";
 import { photo } from "@/lib/menu";
-import { DELIVERY, HAPPY_HOUR, TIP_CHOICES, describeOptions, quote, rupees, unitPrice } from "@/lib/pricing";
+import { DELIVERY, HAPPY_HOUR, TIP_CHOICES, describeOptions, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
 import { HOURS, STAMPS_FOR_REWARD } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
 
@@ -31,7 +31,7 @@ export default function CartDrawer() {
   const router = useRouter();
   const [step, setStep] = useState<"tray" | "checkout">("tray");
   const [code, setCode] = useState("");
-  const [promo, setPromo] = useState<{ code: string; label: string } | null>(null);
+  const [promo, setPromo] = useState<{ code: string; label: string; rule: PromoRule } | null>(null);
   const [gift, setGift] = useState<Gift | null>(null);
   const [codeErr, setCodeErr] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", pickup: "asap", note: "" });
@@ -81,7 +81,7 @@ export default function CartDrawer() {
   const delivery = !table && mode === "delivery";
   const q = useMemo(
     () =>
-      quote(lines, find, promo?.code, !!loyalty?.hasReward, {
+      quote(lines, find, promo?.rule, !!loyalty?.hasReward, {
         giftBalance: gift?.balance,
         credit: me?.perks?.credit ?? 0,
         birthdayTreat: !!me?.perks?.birthdayTreat && useBirthday,
@@ -106,7 +106,7 @@ export default function CartDrawer() {
       setGift({ code: d.code, balance: d.balance });
       toast(`Gift card applied · ${rupees(d.balance)} available 🎁`);
     } else {
-      const r = await post("/api/promo", { code: c });
+      const r = await post("/api/promo", { code: c, phone: form.phone });
       const d = await r.json();
       if (!r.ok) return setCodeErr(d.error);
       setPromo(d);

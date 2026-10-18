@@ -93,11 +93,24 @@ export function describeOptions(item: MenuItem, o: Options) {
 export const lineKey = (itemId: string, o: Options) => `${itemId}|${JSON.stringify(o)}`;
 
 // ----- promo codes -----
-export const PROMOS: Record<string, { label: string; apply: (subtotal: number) => number }> = {
-  BLOOM10: { label: "10% off everything", apply: (s) => Math.round(s * 0.1) },
-  FIRSTSIP: { label: "₹50 off orders over ₹300", apply: (s) => (s >= 300 ? 50 : 0) },
-  PINKMOON: { label: "15% off orders over ₹500", apply: (s) => (s >= 500 ? Math.round(s * 0.15) : 0) },
-};
+// Owners manage codes in /admin → Promos (stored in the database). These are the starting ones.
+export type PromoRule = { code: string; kind: "percent" | "amount"; value: number; minOrder: number };
+
+export const DEFAULT_PROMOS: PromoRule[] = [
+  { code: "BLOOM10", kind: "percent", value: 10, minOrder: 0 },
+  { code: "FIRSTSIP", kind: "amount", value: 50, minOrder: 300 },
+  { code: "PINKMOON", kind: "percent", value: 15, minOrder: 500 },
+];
+
+export function promoLabel(p: PromoRule) {
+  const what = p.kind === "percent" ? `${p.value}% off` : `₹${p.value} off`;
+  return p.minOrder > 0 ? `${what} orders over ₹${p.minOrder}` : `${what} everything`;
+}
+
+export function promoDiscountFor(p: PromoRule, subtotal: number) {
+  if (subtotal < p.minOrder) return 0;
+  return p.kind === "percent" ? Math.round((subtotal * p.value) / 100) : Math.min(p.value, subtotal);
+}
 
 export type QuoteLine = { itemId: string; name: string; cat?: Category; opts: Options; note: string; qty: number; unit: number; base?: number; total: number };
 export type Quote = {
@@ -146,7 +159,7 @@ export const orderDue = (o: { total: number; giftcard_used?: number | null; cred
 export function quote(
   raw: { itemId: string; opts?: unknown; qty: number }[],
   find: FindItem,
-  promo?: string | null,
+  promo?: PromoRule | string | null,
   freeDrink = false,
   extra: {
     now?: Date; giftBalance?: number; credit?: number; birthdayTreat?: boolean; passDrink?: boolean;
@@ -168,9 +181,10 @@ export function quote(
   const bakes = lines.filter((l) => !isDrink(l.cat!));
   const happyDiscount = happyHour ? Math.round(bakes.reduce((s, l) => s + l.total, 0) * HAPPY_HOUR.off) : 0;
 
-  const code = promo?.trim().toUpperCase() || null;
-  const p = code ? PROMOS[code] : undefined;
-  const promoDiscount = p ? p.apply(subtotal - happyDiscount) : 0;
+  // A code on its own (e.g. in tests) is looked up in the starting codes
+  const p = typeof promo === "string" ? DEFAULT_PROMOS.find((x) => x.code === promo.trim().toUpperCase()) : promo ?? undefined;
+  const code = p?.code ?? null;
+  const promoDiscount = p ? promoDiscountFor(p, subtotal - happyDiscount) : 0;
 
   // One entry per drink cup, so a pass and a loyalty reward can't use the same cup
   const cups = lines.filter((l) => isDrink(l.cat!)).flatMap((l) => Array.from({ length: l.qty }, () => ({ unit: l.unit, base: l.base ?? l.unit })));

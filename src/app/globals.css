@@ -863,3 +863,8 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .error-msg { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .error-detail { margin: 0; padding: 0.8rem 1rem; background: var(--surface-2); font-size: 0.75rem; white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; }
 @media (max-width: 600px) { .error-head { grid-template-columns: auto 1fr; } .error-head .small { grid-column: 1 / -1; } }
+
+/* ============ Promos ============ */
+.promo-form { padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.promo-row { padding: 0.9rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.promo-live { background: color-mix(in srgb, var(--sage) 30%, var(--surface)); }

@@ -10,6 +10,7 @@ import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { orderPlacedEmail, referralRewardEmail, sendLater } from "@/lib/email";
 import { getGroup, isHost } from "@/lib/groups";
 import { paidShares } from "@/lib/orderMoney";
+import { checkPromo, usePromo } from "@/lib/promos";
 
 // Place an order (pickup, table or delivery)
 export async function POST(req: Request) {
@@ -66,7 +67,14 @@ export async function POST(req: Request) {
   const hasReward = (card?.stamps ?? 0) >= STAMPS_FOR_REWARD;
   const perks = perksFor(me);
   const tipAmount = body.tipAmount !== undefined && body.tipAmount !== null && body.tipAmount !== "" ? Number(body.tipAmount) : undefined;
-  const q = quote(raw, find, body.promo, hasReward, {
+  // Promo code: checked again here (dates, limits, once per guest)
+  let promoRule = null;
+  if (body.promo) {
+    const p = checkPromo(body.promo, phone);
+    if ("error" in p) return Response.json({ error: p.error }, { status: 400 });
+    promoRule = p.rule;
+  }
+  const q = quote(raw, find, promoRule, hasReward, {
     giftBalance: gift?.balance ?? 0,
     credit: perks.credit,
     birthdayTreat: perks.birthdayTreat && body.useBirthday !== false,
@@ -98,6 +106,7 @@ export async function POST(req: Request) {
   );
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
   consumeStock(q.lines);
+  if (q.promoCode && q.promoDiscount > 0) usePromo(q.promoCode);
   if (group) {
     db.prepare("UPDATE groups SET status = 'placed', order_code = ? WHERE code = ?").run(code, group.code);
     db.prepare("UPDATE orders SET group_code = ? WHERE code = ?").run(group.code, code);

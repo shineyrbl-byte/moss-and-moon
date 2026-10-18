@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
+import { DEFAULT_PROMOS } from "./pricing";
 
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
 
@@ -243,6 +244,20 @@ function open() {
       first_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
       last_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS promos (
+      code TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      value INTEGER NOT NULL,
+      min_order INTEGER NOT NULL DEFAULT 0,
+      max_uses INTEGER,
+      uses INTEGER NOT NULL DEFAULT 0,
+      once_per_guest INTEGER NOT NULL DEFAULT 0,
+      starts TEXT,
+      expires TEXT,
+      active INTEGER NOT NULL DEFAULT 1,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -285,6 +300,13 @@ function open() {
   if (items.n === 0) {
     const add = db.prepare("INSERT INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
     SEED_MENU.forEach((m, i) => add.run(m.id, JSON.stringify(m), i * 10));
+  }
+
+  // Starting promo codes (only the first time)
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_promos'").get()) {
+    const add = db.prepare("INSERT OR IGNORE INTO promos (code, kind, value, min_order, once_per_guest) VALUES (?, ?, ?, ?, ?)");
+    for (const p of DEFAULT_PROMOS) add.run(p.code, p.kind, p.value, p.minOrder, p.code === "FIRSTSIP" ? 1 : 0);
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_promos', '1')").run();
   }
 
   // Seasonal specials: added once, so an owner who deletes one doesn't get it back

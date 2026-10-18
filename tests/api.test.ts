@@ -593,3 +593,28 @@ test("error alerts: browser errors are logged, grouped and emailed to the owner 
   assert.equal((await s.api("/api/errors", { method: "DELETE" })).status, 200);
   assert.equal(((await s.api("/api/errors")).body as { errors: unknown[] }).errors.length, 0);
 });
+
+test("promo codes: owner creates them, limits and dates are enforced", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/promo", { method: "POST", json: { code: "bloom10" } })).status, 200, "starting codes still work");
+  assert.equal((await s.api("/api/admin/promos", { method: "POST", json: { code: "x", kind: "percent", value: 10 } })).status, 400);
+  assert.equal((await s.api("/api/admin/promos", { method: "POST", json: { code: "TWICE", kind: "amount", value: 30, maxUses: 1 } })).status, 200);
+  const old = new Date(Date.now() - 3 * 86_400_000).toISOString().slice(0, 10);
+  await s.api("/api/admin/promos", { method: "POST", json: { code: "OLDCODE", kind: "percent", value: 20, expires: old } });
+
+  const order = (promo: string, phone = "9000077777") => s.api("/api/orders", { method: "POST", json: { name: "Promo", phone, promo, lines: [{ itemId: "cookie", qty: 2 }] } });
+  const first = await order("TWICE");
+  assert.equal(first.status, 200);
+  assert.equal((first.body as { total: number }).total, 220 - 30);
+  assert.equal((await order("TWICE")).status, 400, "used up");
+  assert.equal((await order("OLDCODE")).status, 400, "expired");
+  assert.equal((await order("FIRSTSIP", "9000088888")).status, 200);
+  const again = await s.api("/api/promo", { method: "POST", json: { code: "FIRSTSIP", phone: "9000088888" } });
+  assert.equal(again.status, 404, "once per guest");
+
+  await s.api("/api/admin/promos", { method: "PATCH", json: { code: "BLOOM10", active: false } });
+  assert.equal((await s.api("/api/promo", { method: "POST", json: { code: "BLOOM10" } })).status, 404, "switched off");
+  await s.api("/api/admin/promos", { method: "PATCH", json: { code: "BLOOM10", active: true } });
+  const list = (await s.api("/api/admin/promos")).body as { code: string; uses: number }[];
+  assert.equal(list.find((p) => p.code === "TWICE")!.uses, 1);
+});

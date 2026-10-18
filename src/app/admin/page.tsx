@@ -15,6 +15,7 @@ import RefundButton from "@/components/admin/RefundButton";
 import RotaTab from "@/components/admin/RotaTab";
 import Backups from "@/components/admin/Backups";
 import HealthTab from "@/components/admin/HealthTab";
+import PromosTab from "@/components/admin/PromosTab";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -29,7 +30,7 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR", "Team", "Rota", "Gift cards", "Emails", "Reviews", "Health"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR", "Team", "Rota", "Promos", "Gift cards", "Emails", "Reviews", "Health"] as const;
 // What baristas can see (owners see everything)
 const BARISTA_TABS: (typeof TABS)[number][] = ["Orders", "Bookings", "Events", "Menu", "Stock", "Tables & QR", "Rota"];
 
@@ -386,6 +387,7 @@ export default function AdminPage() {
       {tab === "Events" && <EventsTab />}
       {tab === "Rota" && <RotaTab canEdit={me?.role === "owner"} />}
       {tab === "Health" && me?.role === "owner" && <HealthTab />}
+      {tab === "Promos" && me?.role === "owner" && <PromosTab />}
 
       {tab === "Gift cards" && (
         <div className="card table-wrap" style={{ padding: "1rem" }}>
