@@ -2,6 +2,7 @@ import Hero from "@/components/Hero";
 import About from "@/components/About";
 import Menu from "@/components/Menu";
 import Quiz from "@/components/Quiz";
+import SurpriseWheel from "@/components/SurpriseWheel";
 import Gallery from "@/components/Gallery";
 import Events from "@/components/Events";
 import NoticeboardTeaser from "@/components/NoticeboardTeaser";
@@ -23,6 +24,7 @@ export default function Home() {
       <About />
       <Menu />
       <Quiz />
+      <SurpriseWheel />
       <Gallery />
       <Events />
       <Reviews />

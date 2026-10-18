@@ -52,6 +52,19 @@ export default function CartDrawer() {
   const close = useCallback(() => setDrawerOpen(false), [setDrawerOpen]);
   useEscape(drawerOpen, close);
 
+  // A code won on the surprise wheel: apply it when the tray opens
+  useEffect(() => {
+    if (!drawerOpen || promo) return;
+    let won: string | null = null;
+    try { won = sessionStorage.getItem("mm-promo"); } catch {}
+    if (!won) return;
+    post("/api/promo", { code: won }).then(async (r) => {
+      const d = await r.json();
+      try { sessionStorage.removeItem("mm-promo"); } catch {}
+      if (r.ok) { setPromo(d); toast(`Code applied: ${d.label}`); }
+    }).catch(() => {});
+  }, [drawerOpen, promo, toast]);
+
   useEffect(() => {
     if (!drawerOpen) return setStep("tray");
     refreshSoldOut();

@@ -1020,3 +1020,17 @@ test("journal: posts publish to their own page, drafts stay hidden", async () =>
   assert.ok(!html.includes("<script>x</script>"), "post text is escaped");
   assert.match(await (await fetch(`${s.url}/sitemap.xml`)).text(), new RegExp(`/journal/${slug}`));
 });
+
+test("surprise wheel lands on a real drink; at most one discount a day", async () => {
+  let codes = 0;
+  for (let i = 0; i < 6; i++) {
+    const r = await fetch(`${s.url}/api/surprise`, { method: "POST", headers: { "x-forwarded-for": "10.7.7.7" } });
+    const d = (await r.json()) as { wheel: { id: string }[]; index: number; code: string | null };
+    assert.ok(d.wheel[d.index], "lands on a slice");
+    if (d.code) {
+      codes++;
+      assert.equal((await s.api("/api/promo", { method: "POST", json: { code: d.code } })).status, 200, "the code works");
+    }
+  }
+  assert.ok(codes <= 1, "one discount per visitor per day");
+});
