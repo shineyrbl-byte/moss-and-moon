@@ -41,7 +41,8 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 👤 **Accounts** with a sign-in code by email: favourites on every device, order history, birthday treat, referrals with credit, a monthly **Coffee Pass**
 - 🏅 **Streaks and badges**: 16 badges like Early bird, Matcha lover and Kind soul
 - 📌 **Community noticeboard**: lost & found, study buddies and book swaps, approved by staff
-- ⭐ **"How was it?" emails** after pickup, with verified-visit reviews
+- ✉️ **Emails from "Moss & Moon"** to any guest: order confirmed (with the ready time), it's ready, pickup reminder, PDF receipt, "How was it?" review request, booking confirmation with a calendar invite, and a reminder before the booking. Sent through the café Gmail via Gmail's API (works on Railway's Hobby plan), or Resend with your own domain
+- ⭐ Verified-visit reviews from those emails
 - 📅 Table booking with real availability and a **waitlist** that emails you when a table frees up
 - 🎟 **Events**: free RSVPs, and **paid tickets** for classes with a QR code checked at the door
 - 🌿 **"How busy is it?"** meter with today's forecast and the quietest time to visit
@@ -69,7 +70,7 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 ## Tests
 
 ```bash
-npm test           # 81 tests: price maths, the whole API against a real server, and payments against a fake Razorpay
+npm test           # 83 tests: price maths, the whole API against a real server, payments against a fake Razorpay, and Gmail against a fake Google
 npm run test:e2e   # 9 browser tests: ordering, booking, group orders, tickets, gifting a drink, phone layout, security headers
 ```
 
@@ -85,6 +86,9 @@ Both run on GitHub for every push, and Railway only deploys once they pass.
 | TV board | `src/app/board/page.tsx` |
 | Payments (Razorpay) | `src/lib/payments.ts` |
 | Emails & their templates | `src/lib/email.ts` |
+| Sending through Gmail | `src/lib/gmailApi.ts`, `src/app/api/admin/gmail/…` |
+| Pickup & booking reminders | `src/lib/reminders.ts` |
+| Privacy & terms pages | `src/app/privacy`, `src/app/terms` |
 | Drink options, promo codes, happy hour, price maths | `src/lib/pricing.ts` |
 | Opening hours, events, gallery | `src/lib/cafe.ts` |
 | Colours (day + night themes) | top of `src/app/globals.css` |
