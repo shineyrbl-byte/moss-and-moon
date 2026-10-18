@@ -33,7 +33,7 @@ const hash = (s: string) => crypto.createHash("sha256").update(s).digest("hex").
 
 /** Five "which drink is this?" questions: the recipe's steps, and four drinks to pick from */
 export function makeQuiz() {
-  if (!getSetting("seeded_recipes")) { seedRecipes(); setSetting("seeded_recipes", "1"); }
+  if (getSetting("seeded_recipes_v2") !== "1") { seedRecipes(); setSetting("seeded_recipes", "1"); setSetting("seeded_recipes_v2", "1"); }
   const find = menuLookup();
   const recipes = Object.entries(allRecipes()).filter(([id]) => find(id));
   const shuffle = <T,>(a: T[]) => a.map((x) => [Math.random(), x] as const).sort((p, q) => p[0] - q[0]).map(([, x]) => x);

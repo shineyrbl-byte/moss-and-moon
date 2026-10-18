@@ -4,7 +4,7 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import { MENU_SHOP, MENU_V2, SEED_MENU } from "./menu";
+import { MENU_SHOP, MENU_V2, MENU_V3, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
@@ -715,6 +715,14 @@ function open() {
     const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
     MENU_V2.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v2', '1')").run();
+  }
+
+  // More menu items, added once to existing cafés (owners' own edits are never touched)
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v3'").get()) {
+    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
+    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
+    MENU_V3.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v3', '1')").run();
   }
 
   // Events: the starting ones, once (then owners manage them in Admin → Events)
