@@ -7,6 +7,7 @@ import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useLive } from "@/components/useLive";
 
 type Order = {
+  vip?: boolean;
   id: number; code: string; name: string; pickup: string; note: string; lines: QuoteLine[]; total: number; giftcard_used: number;
   pay_method: string; pay_status: string; status: OrderStatus; created_at: string; table_no: number | null;
   tip: number; credit_used: number; delivery_fee: number; delivery_address?: string | null;
@@ -156,7 +157,7 @@ export default function StaffScreen() {
                     </div>
                     <div className="ticket-who">
                       {o.delivery_address ? <span className="table-tag">🛵 Delivery</span> : o.table_no ? <span className="table-tag">🪑 Table {o.table_no}</span> : <span className="ticket-pickup">🛍 {o.pickup === "asap" ? "ASAP" : o.pickup}</span>}
-                      <span>{o.name}</span>
+                      <span>{o.name}{o.vip ? <span className="vip-tag" title="A regular the owner starred"> ⭐ VIP</span> : null}</span>
                     </div>
                     <ul className="ticket-items">
                       {o.lines.map((l, i) => (

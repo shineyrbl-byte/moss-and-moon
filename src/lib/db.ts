@@ -359,6 +359,12 @@ function open() {
       status TEXT NOT NULL DEFAULT 'queued',
       PRIMARY KEY (newsletter_id, email)
     );
+    CREATE TABLE IF NOT EXISTS guest_notes (
+      guest_key TEXT PRIMARY KEY,
+      vip INTEGER NOT NULL DEFAULT 0,
+      note TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,

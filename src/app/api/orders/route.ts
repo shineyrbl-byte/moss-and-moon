@@ -3,6 +3,7 @@ import { currentCustomer } from "@/lib/account";
 import { isAdmin, unauthorized, ownerGate } from "@/lib/auth";
 import { paidShares } from "@/lib/orderMoney";
 import { placeOrder } from "@/lib/orders";
+import { guestKey, vipKeys } from "@/lib/guests";
 import { limited, tooMany } from "@/lib/rateLimit";
 
 // Place an order (pickup, table or delivery)
@@ -36,5 +37,13 @@ export async function GET(req: Request) {
   const rows = db
     .prepare(`SELECT * FROM orders ${active ? "WHERE status != 'collected'" : ""} ORDER BY id DESC LIMIT 100`)
     .all() as Record<string, unknown>[];
-  return Response.json(rows.map((r) => ({ ...r, lines: JSON.parse(String(r.lines)), paid_shares: paidShares(String(r.code)) })));
+  const vips = vipKeys();
+  return Response.json(
+    rows.map((r) => ({
+      ...r,
+      lines: JSON.parse(String(r.lines)),
+      paid_shares: paidShares(String(r.code)),
+      vip: vips.has(guestKey(r as { customer_id: number | null; phone: string; email: string | null }) ?? ""),
+    }))
+  );
 }

@@ -962,3 +962,6 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .newsletter-preview p, .newsletter-preview ul { margin: 0 0 0.7rem; }
 .newsletter-preview a { color: var(--pink-ink); text-decoration: underline; }
 @media (max-width: 760px) { .newsletter-split { grid-template-columns: 1fr; } }
+.vip-star { background: none; border: none; font-size: 1.3rem; color: var(--muted); padding: 0 0.3rem; line-height: 1; }
+.vip-star.on { color: #d99a2b; }
+.vip-tag { color: #b0731a; font-weight: 600; }

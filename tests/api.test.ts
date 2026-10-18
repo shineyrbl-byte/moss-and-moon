@@ -967,3 +967,20 @@ test("newsletter: draft, test, send to subscribers, one-click unsubscribe", asyn
   const after = (await s.api("/api/admin/newsletter")).body as { unsubscribed: number };
   assert.ok(after.unsubscribed >= 1);
 });
+
+test("guest list: visits and spend grouped by person, VIP stars show on the barista queue", async () => {
+  for (let i = 0; i < 3; i++) await s.api("/api/orders", { method: "POST", json: { name: "Regular Rhea", phone: "9000023434", lines: [{ itemId: "rose-latte", qty: 1 }] } });
+  await s.login();
+  const d = (await s.api("/api/admin/guests?q=rhea")).body as { guests: { key: string; name: string; visits: number; spend: number; favourite: string }[] };
+  const g = d.guests[0];
+  assert.equal(g.visits, 3);
+  assert.equal(g.spend, 750);
+  assert.equal(g.favourite, "Rose Pistachio Latte");
+  await s.api("/api/admin/guests", { method: "PATCH", json: { key: g.key, vip: true, note: "Oat milk, extra hot" } });
+  const again = (await s.api("/api/admin/guests?vip=1")).body as { guests: { key: string; note: string }[] };
+  assert.equal(again.guests.find((x) => x.key === g.key)?.note, "Oat milk, extra hot");
+  const queue = (await s.api("/api/orders?active=1")).body as { name: string; vip: boolean }[];
+  assert.ok(queue.some((o) => o.name === "Regular Rhea" && o.vip));
+  const csv = await (await fetch(`${s.url}/api/admin/guests?format=csv`, { headers: { cookie: s.cookie() } })).text();
+  assert.match(csv, /Regular Rhea/);
+});
