@@ -1,7 +1,7 @@
 // The nightly "how did today go?" email for the owner.
 import "server-only";
 import { db, getSetting, setSetting } from "./db";
-import { HOURS, toDateStr } from "./cafe";
+import { hoursOn, toDateStr } from "./cafe";
 import { orderDue, rupees, type QuoteLine } from "./pricing";
 import { ownerEmail, ownerPref } from "./owner";
 import { sendEmail } from "./email";
@@ -79,7 +79,7 @@ export async function summaryTick(now = new Date()) {
   if (!ownerPref("daily_summary") || !ownerEmail()) return;
   const today = toDateStr(now);
   if (getSetting("summary_sent") === today) return;
-  const [, close] = HOURS[now.getDay()];
+  const close = hoursOn(now)?.[1] ?? 20; // closed today: still send it in the evening
   if (now.getHours() * 60 + now.getMinutes() < close * 60 + 15) return;
   setSetting("summary_sent", today);
   await sendSummary(now);

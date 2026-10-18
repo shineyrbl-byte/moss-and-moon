@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { HOURS_LABEL } from "@/lib/cafe";
+import { hoursLabel } from "@/lib/cafe";
 import InstallButton from "./InstallButton";
 import { useStore } from "./Store";
 
@@ -32,7 +32,7 @@ export default function Footer() {
         <div>
           <h2>{t("footer.hours")}</h2>
           <ul>
-            {HOURS_LABEL.map((h) => (
+            {hoursLabel().map((h) => (
               <li key={h.days}>{h.days} · {h.time}</li>
             ))}
           </ul>

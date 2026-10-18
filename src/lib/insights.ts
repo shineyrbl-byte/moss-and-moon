@@ -5,7 +5,7 @@
 import "server-only";
 import { db, getSetting, setSetting } from "./db";
 import { askJSON, aiProvider, type JsonSchema } from "./ai";
-import { HOURS, toDateStr } from "./cafe";
+import { cafeConfig, toDateStr } from "./cafe";
 import { rupees, type QuoteLine } from "./pricing";
 import { ownerEmail, ownerPref } from "./owner";
 import { sendEmail } from "./email";
@@ -103,7 +103,7 @@ function businessFacts() {
     fallers: changes.slice(-4).reverse().filter((c) => c.now < c.before),
     neverOrdered: neverOrdered.slice(0, 8),
     busiestSlots: busiest.map(([k, n]) => `${k} (${n} orders)`),
-    openingHours: HOURS,
+    openingHours: cafeConfig().hours,
     lowStock: low.map((l) => l.name),
     shiftsComingUp: shifts.length,
     waste: waste.map((w) => `${w.item_name}: ${w.q} thrown away (${rupees(Math.round(w.c ?? 0))})`),

@@ -15,6 +15,7 @@ import SeasonLayer from "@/components/SeasonLayer";
 import ErrorReporter from "@/components/ErrorReporter";
 import StatsBeacon from "@/components/StatsBeacon";
 import { currentSeason } from "@/lib/seasonStore";
+import { fullConfig } from "@/lib/cafeConfig";
 
 // Pages read the live menu from the database, so render them on each request
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <StoreProvider initialMenu={getMenu()}>
+        <StoreProvider initialMenu={getMenu()} config={fullConfig()}>
           <PaymentProvider>
             <SeasonLayer season={season} />
             <TableBanner />

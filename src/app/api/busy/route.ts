@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { HOURS, TABLES_PER_SLOT, busyLevel, forecastDay, openStatus, quietestHour, toDateStr } from "@/lib/cafe";
+import { TABLES_PER_SLOT, busyLevel, forecastDay, hoursOn, openStatus, quietestHour, toDateStr } from "@/lib/cafe";
 
 // "How busy is it right now?" plus a forecast for the rest of today.
 export async function GET() {
@@ -34,7 +34,7 @@ export async function GET() {
     .all(day) as { h: number; n: number; days: number }[];
   const total = rows.reduce((s, r) => s + r.n, 0);
   const history = total >= 30 ? Object.fromEntries(rows.map((r) => [r.h, r.n / Math.max(1, r.days)])) : null;
-  const forecast = forecastDay(day, history, bookedGuests);
+  const forecast = forecastDay(day, history, bookedGuests, hoursOn(now));
 
   const live = Math.min(1, (recent / 10) * 0.6 + (active / 8) * 0.2 + (seatedNow / TABLES_PER_SLOT) * 0.4);
   const expected = forecast.find((f) => f.hour === now.getHours())?.score ?? 0;
@@ -48,7 +48,7 @@ export async function GET() {
     score,
     quietestHour: quiet,
     forecast,
-    hours: HOURS[day],
+    hours: hoursOn(now),
     basedOn: history ? "history" : "typical",
   });
 }

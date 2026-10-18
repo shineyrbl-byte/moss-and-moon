@@ -2,7 +2,7 @@
 // itself 15 minutes before pickup, to pay at the counter, for signed-in guests.
 import "server-only";
 import { db } from "./db";
-import { HOURS, toDateStr } from "./cafe";
+import { weeklyHours, toDateStr, hoursOn } from "./cafe";
 import { placeOrder } from "./orders";
 import { sendEmail } from "./email";
 import { menuLookup } from "./menuStore";
@@ -23,8 +23,8 @@ const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 /** Is this pickup time inside opening hours on every chosen day? Returns the first problem day, or null */
 export function badDay(days: number[], time: string) {
   for (const d of days) {
-    const [open, close] = HOURS[d];
-    if (mins(time) < open * 60 + LEAD_MINUTES || mins(time) > close * 60 - 15) return DAY_NAMES[d];
+    const h = weeklyHours(d);
+    if (!h || mins(time) < h[0] * 60 + LEAD_MINUTES || mins(time) > h[1] * 60 - 15) return DAY_NAMES[d];
   }
   return null;
 }
@@ -60,7 +60,7 @@ export async function scheduleTick(now = new Date()) {
   const nowMins = now.getHours() * 60 + now.getMinutes();
   const rows = db.prepare("SELECT * FROM schedules WHERE active = 1 AND (last_date IS NULL OR last_date != ?)").all(today) as ScheduleRow[];
   for (const s of rows) {
-    if (!s.days.split(",").map(Number).includes(now.getDay()) || s.skip_date === today) continue;
+    if (!s.days.split(",").map(Number).includes(now.getDay()) || s.skip_date === today || !hoursOn(now)) continue;
     const due = mins(s.time) - LEAD_MINUTES;
     if (nowMins < due || nowMins > mins(s.time)) continue; // only in the 15 minutes before pickup
     db.prepare("UPDATE schedules SET last_date = ? WHERE id = ?").run(today, s.id);

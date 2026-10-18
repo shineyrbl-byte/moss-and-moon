@@ -869,3 +869,25 @@ test("new menu: cold drinks and food with add-ons, priced on the server", async 
   assert.equal(smoothie.opts.milk, undefined, "smoothies have no milk choice");
   assert.equal(smoothie.total, 220);
 });
+
+test("hours & holidays: a closure stops orders and bookings; golden hour is editable", async () => {
+  await s.login();
+  const today = new Date();
+  const ds = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const before = (await s.api("/api/admin/cafe-config")).body as { hours: Record<string, unknown>; closures: unknown[] };
+  assert.equal((await s.api("/api/admin/cafe-config", { method: "PUT", json: { hours: { 1: [10, 9] } } })).status, 400, "closing before opening");
+  const put = await s.api("/api/admin/cafe-config", { method: "PUT", json: { closures: [{ date: ds, note: "Deep clean" }], happyHour: { on: true, from: 14, to: 16, off: 25, cats: ["bakes", "food"], days: [1, 2, 3, 4, 5] } } });
+  assert.equal(put.status, 200);
+
+  const order = await s.api("/api/orders", { method: "POST", json: { name: "Closed", phone: "9000021212", lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal(order.status, 409);
+  assert.match((order.body as { error: string }).error, /closed today \(Deep clean\)/);
+  assert.deepEqual((await s.api(`/api/bookings/availability?date=${ds}`)).body, []);
+  assert.equal(((await s.api("/api/busy")).body as { open: boolean }).open, false);
+  const home = await (await fetch(`${s.url}/`)).text();
+  assert.match(home, /25% off food &amp; bakes, 2–4pm on weekdays|25% off bakes &amp; food/, "golden hour label follows the settings");
+
+  // Back to normal
+  await s.api("/api/admin/cafe-config", { method: "PUT", json: { closures: [], hours: before.hours, happyHour: { on: true, from: 15, to: 17, off: 20, cats: ["bakes"], days: [0, 1, 2, 3, 4, 5, 6] } } });
+  assert.equal((await s.api("/api/orders", { method: "POST", json: { name: "Open", phone: "9000021212", lines: [{ itemId: "cookie", qty: 1 }] } })).status, 200);
+});

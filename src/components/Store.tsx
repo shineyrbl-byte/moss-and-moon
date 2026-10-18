@@ -4,7 +4,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { MenuItem } from "@/lib/menu";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
-import { TABLE_COUNT } from "@/lib/cafe";
+import { TABLE_COUNT, applyConfig, type CafeConfig } from "@/lib/cafe";
 import { DICT, type Lang, type TKey } from "@/lib/i18n";
 
 export type Me = {
@@ -47,7 +47,9 @@ type Store = {
 const Ctx = createContext<Store | null>(null);
 const STORAGE = "mm-tray-v2";
 
-export function StoreProvider({ children, initialMenu }: { children: React.ReactNode; initialMenu: MenuItem[] }) {
+export function StoreProvider({ children, initialMenu, config }: { children: React.ReactNode; initialMenu: MenuItem[]; config: CafeConfig }) {
+  // Opening hours, holidays and golden hour from the server, ready before anything below renders
+  applyConfig(config);
   const [menu, setMenu] = useState<MenuItem[]>(initialMenu);
   const [table, setTableState] = useState<number | null>(null);
   const [lines, setLines] = useState<CartLine[]>([]);

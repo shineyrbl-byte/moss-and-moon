@@ -7,7 +7,7 @@ import { useEscape, useStore } from "./Store";
 import { usePay } from "./Payment";
 import { photo } from "@/lib/menu";
 import { DELIVERY, HAPPY_HOUR, TIP_CHOICES, describeOptions, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
-import { HOURS, STAMPS_FOR_REWARD } from "@/lib/cafe";
+import { STAMPS_FOR_REWARD, hoursOn } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
 
 type Loyalty = { stamps: number; hasReward: boolean; found: boolean };
@@ -16,7 +16,9 @@ type Gift = { code: string; balance: number };
 /** Pickup times for today in 15-minute steps */
 function pickupTimes() {
   const now = new Date();
-  const [, close] = HOURS[now.getDay()];
+  const today = hoursOn(now);
+  if (!today) return [];
+  const [, close] = today;
   const start = Math.ceil((now.getHours() * 60 + now.getMinutes() + 15) / 15) * 15;
   const out: string[] = [];
   for (let t = start; t <= close * 60 - 15; t += 15) out.push(`${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`);

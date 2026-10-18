@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getMenu } from "@/lib/menuStore";
-import { HOURS_LABEL, openStatus } from "@/lib/cafe";
+import { cafeConfig, hoursLabel, openStatus } from "@/lib/cafe";
 import { HAPPY_HOUR, isHappyHour, rupees } from "@/lib/pricing";
 import type { MenuItem } from "@/lib/menu";
 import { clientIp } from "@/lib/site";
@@ -71,7 +71,7 @@ Good to know:
 - Drinks can be customised in the app: size, hot or iced (cold drinks are always iced, with light/normal/extra ice), whole/oat/almond/soy milk, sweetness, syrups (vanilla, caramel, hazelnut, rose), toppings (whipped cream, caramel drizzle, cinnamon, cocoa), and for coffee an extra shot or decaf.
 - Food has add-ons like extra cheese, an egg, gluten-free bread or pasta, and combos with a coffee or chai.
 - The menu has sections: coffee, tea & matcha, cold drinks (iced coffees, frappés, smoothies, mocktails, juices), food (toasties, sandwiches, toast, pancakes, pasta, bowls) and bakes.
-- Opening hours: ${HOURS_LABEL.map((h) => `${h.days} ${h.time}`).join("; ")}.
+- Opening hours: ${hoursLabel().map((h) => `${h.days} ${h.time}`).join("; ")}.${cafeConfig().closures.length ? ` Closed on: ${cafeConfig().closures.map((c) => `${c.date}${c.note ? ` (${c.note})` : ""}`).join(", ")}.` : ""}
 - ${HAPPY_HOUR.label}.${isHappyHour(now) ? " It's golden hour right now!" : ""}
 - Right now: ${now.toLocaleString("en-IN", { weekday: "long", hour: "numeric", minute: "2-digit" })} (${openStatus(now).text}).
 - For allergies, give your best guess from the menu but tell them to double-check with staff.

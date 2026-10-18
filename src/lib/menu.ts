@@ -1,7 +1,7 @@
 // The starting menu. On first run it is copied into the database; after that,
 // staff edit the menu from /admin → Menu (no code changes needed).
 
-export type Category = "coffee" | "tea" | "cold" | "food" | "bakes";
+export type Category = "coffee" | "tea" | "cold" | "food" | "bakes" | "shop";
 
 /** Something extra on a food item, e.g. "Add an egg +₹40". adds/removes change its allergens. */
 export type Addon = { id: string; label: string; price: number; kcal?: number; adds?: string[]; removes?: string[] };
@@ -44,7 +44,7 @@ export const photo = (img: string, w = 900) =>
 
 /** Menu tabs: every category, plus "all" and "specials" (new, pink picks and festival drinks) */
 export type MenuTab = Category | "all" | "specials";
-export const CATEGORY_ORDER: Category[] = ["coffee", "tea", "cold", "food", "bakes"];
+export const CATEGORY_ORDER: Category[] = ["coffee", "tea", "cold", "food", "bakes", "shop"];
 export const inTab = (m: Pick<MenuItem, "cat" | "badge" | "season">, tab: MenuTab) =>
   tab === "all" || (tab === "specials" ? m.badge === "new" || m.badge === "pink pick" || !!m.season : m.cat === tab);
 
@@ -56,6 +56,7 @@ export const CATEGORIES: { id: MenuTab; label: string }[] = [
   { id: "cold", label: "Cold drinks" },
   { id: "food", label: "Food" },
   { id: "bakes", label: "Bakes & sweets" },
+  { id: "shop", label: "Shop" },
 ];
 
 const BASE_MENU: MenuItem[] = [

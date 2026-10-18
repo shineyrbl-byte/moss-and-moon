@@ -300,3 +300,14 @@ test("voice orders understand syrups, toppings, ice and food add-ons", async () 
   assert.equal(h.milk, undefined, "saying the name 'Honey Oat Latte' doesn't pick oat milk");
   assert.equal(parseVoiceOrder("honey oat latte with oat milk", menu).lines[0].opts.milk, "oat");
 });
+
+test("hours labels group days, and closures close a date", async () => {
+  const { hoursLabel, applyConfig, DEFAULT_CONFIG, openStatus, slotsFor } = await import("../src/lib/cafe.ts");
+  assert.deepEqual(hoursLabel().map((r) => `${r.days} ${r.time}`), ["Mon – Fri 7am – 8pm", "Saturday 8am – 10pm", "Sunday 9am – 6pm"]);
+  applyConfig({ hours: { ...DEFAULT_CONFIG.hours, 1: null }, closures: [{ date: "2026-10-21", note: "Staff day out" }] });
+  assert.equal(hoursLabel()[0].time, "Closed");
+  assert.match(openStatus(new Date("2026-10-19T10:00:00")).text, /Closed today · open tomorrow at 7am/, "Monday closed");
+  assert.match(openStatus(new Date("2026-10-21T10:00:00")).text, /Closed today · Staff day out/);
+  assert.deepEqual(slotsFor("2026-10-21"), []);
+  applyConfig(DEFAULT_CONFIG);
+});

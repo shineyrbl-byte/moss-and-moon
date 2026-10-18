@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useStore } from "./Store";
-import { HOURS } from "@/lib/cafe";
+import { weeklyHours } from "@/lib/cafe";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -10,14 +10,16 @@ const json = (method: string, body: unknown) => ({ method, headers: { "Content-T
 const fmt = (t: string) => { const h = Number(t.slice(0, 2)); return `${h % 12 || 12}:${t.slice(3)}${h >= 12 ? "pm" : "am"}`; };
 const dayName = (d: string) => new Date(d + "T12:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 
-/** Pickup times that work on at least one day */
-const TIMES = (() => {
-  const earliest = Math.min(...Object.values(HOURS).map(([o]) => o));
-  const latest = Math.max(...Object.values(HOURS).map(([, c]) => c));
+/** Pickup times that work on at least one open day */
+function pickupTimes() {
+  const open = [0, 1, 2, 3, 4, 5, 6].map(weeklyHours).filter((h): h is [number, number] => !!h);
+  if (!open.length) return [];
+  const earliest = Math.min(...open.map(([o]) => o));
+  const latest = Math.max(...open.map(([, c]) => c));
   const out: string[] = [];
   for (let m = earliest * 60 + 15; m <= latest * 60 - 15; m += 15) out.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
   return out;
-})();
+}
 
 /** "Make it a regular" form: used on the order page with that order's items */
 export function MakeRegular({ lines, onDone }: { lines: { itemId: string; opts: object; qty: number }[]; onDone?: () => void }) {
@@ -50,7 +52,7 @@ export function MakeRegular({ lines, onDone }: { lines: { itemId: string; opts: 
       </div>
       <label className="row small" style={{ alignItems: "center", gap: "0.5rem" }}>at
         <select className="input" style={{ width: "auto" }} value={time} onChange={(e) => setTime(e.target.value)}>
-          {TIMES.map((t) => <option key={t} value={t}>{fmt(t)}</option>)}
+          {pickupTimes().map((t) => <option key={t} value={t}>{fmt(t)}</option>)}
         </select>
       </label>
       <p className="small muted">We place it 15 minutes before, so it&apos;s fresh when you arrive. You pay at the counter, and can pause or skip a day any time from your account.</p>

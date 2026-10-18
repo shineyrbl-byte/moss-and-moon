@@ -1,21 +1,41 @@
 // Opening hours, table booking slots, loyalty rules and events.
 
-/** [open hour, close hour] for each weekday, 0 = Sunday */
-export const HOURS: Record<number, [number, number]> = {
-  0: [9, 18],
-  1: [7, 20],
-  2: [7, 20],
-  3: [7, 20],
-  4: [7, 20],
-  5: [7, 20],
-  6: [8, 22],
-};
+/** [open hour, close hour], or null for a day the café is closed */
+export type DayHours = [number, number] | null;
+export type Closure = { date: string; note: string };
+/** Opening hours and holidays. Owners edit these in Admin → Overview; the server keeps
+ * the current settings on globalThis and sends them to the browser with every page. */
+export type CafeConfig = { hours: Record<number, DayHours>; closures: Closure[]; happyHour?: unknown };
 
-export const HOURS_LABEL = [
-  { days: "Mon – Fri", time: "7am – 8pm" },
-  { days: "Saturday", time: "8am – 10pm" },
-  { days: "Sunday", time: "9am – 6pm" },
-];
+export const DEFAULT_HOURS: Record<number, DayHours> = { 0: [9, 18], 1: [7, 20], 2: [7, 20], 3: [7, 20], 4: [7, 20], 5: [7, 20], 6: [8, 22] };
+export const DEFAULT_CONFIG: CafeConfig = { hours: DEFAULT_HOURS, closures: [] };
+
+export const cafeConfig = (): CafeConfig => (globalThis as { __mmConfig?: CafeConfig }).__mmConfig ?? DEFAULT_CONFIG;
+export const applyConfig = (c: CafeConfig) => void ((globalThis as { __mmConfig?: CafeConfig }).__mmConfig = c);
+
+/** The usual hours on a weekday (0 = Sunday), ignoring holidays */
+export const weeklyHours = (day: number): DayHours => cafeConfig().hours[day] ?? null;
+export const closureOn = (d: Date) => cafeConfig().closures.find((c) => c.date === toDateStr(d)) ?? null;
+/** Hours on a particular date: null if it's a closed weekday or a holiday */
+export const hoursOn = (d: Date): DayHours => (closureOn(d) ? null : weeklyHours(d.getDay()));
+
+export const hourText = (x: number) => (x === 0 || x === 24 ? "12am" : x === 12 ? "12pm" : x > 12 ? `${x - 12}pm` : `${x}am`);
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** "Mon – Fri 7am – 8pm" style rows, grouping days in a row with the same hours (Monday first) */
+export function hoursLabel() {
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const rows: { days: string; time: string; from: number; to: number }[] = [];
+  for (const d of order) {
+    const h = weeklyHours(d);
+    const time = h ? `${hourText(h[0])} – ${hourText(h[1])}` : "Closed";
+    const last = rows[rows.length - 1];
+    if (last && last.time === time) last.to = d;
+    else rows.push({ days: "", time, from: d, to: d });
+  }
+  return rows.map((r) => ({ days: r.from === r.to ? DAY_NAMES[r.from] : `${SHORT[r.from]} – ${SHORT[r.to]}`, time: r.time, today: false, from: r.from, to: r.to }));
+}
 
 export const TABLES_PER_SLOT = 6;
 /** Tables with a QR code for ordering from your seat (1 to TABLE_COUNT) */
@@ -53,7 +73,9 @@ export function parseDate(s: string) {
 export function slotsFor(dateStr: string): string[] {
   const d = parseDate(dateStr);
   if (!d) return [];
-  const [open, close] = HOURS[d.getDay()];
+  const h = hoursOn(d);
+  if (!h) return [];
+  const [open, close] = h;
   const out: string[] = [];
   for (let t = open * 60; t <= (close - 1) * 60; t += 30) out.push(`${pad(Math.floor(t / 60))}:${pad(t % 60)}`);
   // Hide times that have already passed today
@@ -66,11 +88,21 @@ export function slotsFor(dateStr: string): string[] {
 }
 
 export function openStatus(now = new Date()) {
-  const [open, close] = HOURS[now.getDay()];
+  const closure = closureOn(now);
+  const today = hoursOn(now);
+  const nextOpen = () => {
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 12);
+      const h = hoursOn(d);
+      if (h) return i === 1 ? `tomorrow at ${hourText(h[0])}` : `${DAY_NAMES[d.getDay()]} at ${hourText(h[0])}`;
+    }
+    return "soon";
+  };
+  if (!today) return { open: false, text: closure ? `Closed today${closure.note ? ` · ${closure.note}` : ""} · back ${nextOpen()}` : `Closed today · open ${nextOpen()}` };
+  const [open, close] = today;
   const h = now.getHours() + now.getMinutes() / 60;
-  const fmt = (x: number) => (x === 12 ? "12pm" : x > 12 ? `${x - 12}pm` : `${x}am`);
-  if (h >= open && h < close) return { open: true, text: `Open now · until ${fmt(close)}` };
-  return { open: false, text: h < open ? `Closed · opens at ${fmt(open)}` : "Closed · see you tomorrow" };
+  if (h >= open && h < close) return { open: true, text: `Open now · until ${hourText(close)}` };
+  return { open: false, text: h < open ? `Closed · opens at ${hourText(open)}` : `Closed · open ${nextOpen()}` };
 }
 
 /** price 0 = free (just RSVP); otherwise guests buy a ticket */
@@ -116,8 +148,9 @@ export const hourLabel = (h: number) => (h === 0 ? "12am" : h === 12 ? "12pm" : 
  * Expected busyness for each open hour today (0–1).
  * history: average orders per hour on this weekday (null when there isn't enough history yet).
  */
-export function forecastDay(day: number, history: Record<number, number> | null, bookedGuests: Record<number, number> = {}) {
-  const [open, close] = HOURS[day];
+export function forecastDay(day: number, history: Record<number, number> | null, bookedGuests: Record<number, number> = {}, hours: DayHours = weeklyHours(day)) {
+  if (!hours) return [];
+  const [open, close] = hours;
   const peak = history ? Math.max(1, ...Object.values(history)) : 1;
   const out: { hour: number; score: number }[] = [];
   for (let h = open; h < close; h++) {

@@ -3,7 +3,7 @@
 import "server-only";
 import { db, makeCode, cleanPhone, cleanText, cleanEmail } from "./db";
 import { DELIVERY, REFERRAL_CREDIT, quote, rupees } from "./pricing";
-import { HOURS, STAMPS_FOR_REWARD, TABLE_COUNT, toDateStr } from "./cafe";
+import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, hoursOn, toDateStr } from "./cafe";
 import { perksFor } from "./perks";
 import { checkStock, consumeStock } from "./stock";
 import { menuLookup } from "./menuStore";
@@ -41,7 +41,13 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   if (body.email && !email) return Response.json({ error: "That email doesn't look right." }, { status: 400 });
   if (body.delivery && !table && delivery.length < 10) return Response.json({ error: "Please add your full delivery address." }, { status: 400 });
 
-  const [open, close] = HOURS[new Date().getDay()];
+  // Closed all day (a holiday or a weekly day off): no orders, except gifted drinks being claimed later
+  const todayHours = hoursOn(new Date());
+  if (!todayHours && !opts.prepaid) {
+    const c = closureOn(new Date());
+    return Response.json({ error: `Sorry, we're closed today${c?.note ? ` (${c.note})` : ""}. See you soon ☕` }, { status: 409 });
+  }
+  const [open, close] = todayHours ?? [0, 24];
   const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
   if (delivery && !(nowMins >= open * 60 && nowMins < close * 60 - 30))
     return Response.json({ error: "Delivery runs during opening hours (until 30 min before closing)." }, { status: 400 });

@@ -948,3 +948,7 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .addon input { accent-color: var(--pink-fill); width: 1.05rem; height: 1.05rem; }
 .legal ul { padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; margin: 0.6rem 0 1.4rem; }
 .legal h2 { margin-top: 1.6rem; }
+.hours-grid { display: flex; flex-direction: column; gap: 0.35rem; }
+.hours-row { display: grid; grid-template-columns: 7rem 1fr auto; gap: 0.6rem; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid var(--line); }
+.hours-row .input { width: auto; padding: 0.3rem 0.5rem; }
+@media (max-width: 560px) { .hours-row { grid-template-columns: 1fr auto; } .hours-row > span { grid-column: 1 / -1; grid-row: 2; } }

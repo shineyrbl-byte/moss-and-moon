@@ -3,6 +3,8 @@ import type { Instrumentation } from "next";
 // Runs once when the server starts
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { loadConfig } = await import("@/lib/cafeConfig");
+    loadConfig(); // opening hours, holidays and golden hour
     const { startJobs } = await import("@/lib/jobs");
     startJobs();
   }

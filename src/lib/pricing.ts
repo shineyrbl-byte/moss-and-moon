@@ -191,11 +191,30 @@ export type Quote = {
   due: number; // what's left to pay
 };
 
-// ----- happy hour: 20% off bakes, every day 3pm–5pm -----
-export const HAPPY_HOUR = { from: 15, to: 17, off: 0.2, label: "Golden hour · 20% off bakes, 3–5pm" };
-export const isHappyHour = (now = new Date()) =>
+// ----- golden hour: a daily discount on some categories (owners edit it in Admin → Overview) -----
+export type HappyHour = { on: boolean; from: number; to: number; off: number; cats: Category[]; days: number[] };
+export const DEFAULT_HAPPY_HOUR: HappyHour = { on: true, from: 15, to: 17, off: 0.2, cats: ["bakes"], days: [0, 1, 2, 3, 4, 5, 6] };
+/** The current golden-hour settings (kept with the café settings on globalThis, see lib/cafe.ts) */
+export const happyHour = (): HappyHour => ((globalThis as { __mmConfig?: { happyHour?: HappyHour } }).__mmConfig?.happyHour ?? DEFAULT_HAPPY_HOUR);
+
+const CAT_WORDS: Record<string, string> = { coffee: "coffee", tea: "tea", cold: "cold drinks", food: "food", bakes: "bakes", shop: "shop items" };
+const hr = (x: number) => (x === 12 ? "12pm" : x > 12 ? `${x - 12}pm` : `${x}am`);
+const range = (a: number, b: number) => `${hr(a).replace(/[ap]m$/, (m) => (hr(b).endsWith(m) ? "" : m))}–${hr(b)}`;
+/** e.g. "Golden hour · 20% off bakes, 3–5pm" */
+export function happyHourLabel(h = happyHour()) {
+  const cats = h.cats.map((c) => CAT_WORDS[c] ?? c);
+  const what = cats.length > 1 ? `${cats.slice(0, -1).join(", ")} & ${cats.at(-1)}` : cats[0] ?? "everything";
+  const days = h.days.length === 7 ? "" : h.days.length === 5 && [1, 2, 3, 4, 5].every((d) => h.days.includes(d)) ? " on weekdays" : ` on ${h.days.map((d) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]).join(", ")}`;
+  return `Golden hour · ${Math.round(h.off * 100)}% off ${what}, ${range(h.from, h.to)}${days}`;
+}
+export const isHappyHour = (now = new Date()) => {
+  const h = happyHour();
   // (The automated tests switch it off so prices don't change with the time of day)
-  !(typeof process !== "undefined" && process.env?.HAPPY_HOUR === "off") && now.getHours() >= HAPPY_HOUR.from && now.getHours() < HAPPY_HOUR.to;
+  if (typeof process !== "undefined" && process.env?.HAPPY_HOUR === "off") return false;
+  return h.on && h.days.includes(now.getDay()) && now.getHours() >= h.from && now.getHours() < h.to;
+};
+/** Kept for older code: the golden-hour label and discount right now */
+export const HAPPY_HOUR = { get label() { return happyHourLabel(); }, get off() { return happyHour().off; } };
 
 // ----- perks & extras -----
 export const TIP_CHOICES = [0, 5, 10, 15];
@@ -239,9 +258,11 @@ export function quote(
   }
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
 
-  const happyHour = isHappyHour(extra.now);
-  const bakes = lines.filter((l) => l.cat === "bakes"); // golden hour and birthday treats are for bakes (not savoury food)
-  const happyDiscount = happyHour ? Math.round(bakes.reduce((s, l) => s + l.total, 0) * HAPPY_HOUR.off) : 0;
+  const isGolden = isHappyHour(extra.now);
+  const bakes = lines.filter((l) => l.cat === "bakes"); // birthday treats are for bakes (not savoury food)
+  const hh = happyHour();
+  const golden = lines.filter((l) => hh.cats.includes(l.cat!));
+  const happyDiscount = isGolden ? Math.round(golden.reduce((s, l) => s + l.total, 0) * hh.off) : 0;
 
   // A code on its own (e.g. in tests) is looked up in the starting codes
   const p = typeof promo === "string" ? DEFAULT_PROMOS.find((x) => x.code === promo.trim().toUpperCase()) : promo ?? undefined;
@@ -273,7 +294,7 @@ export function quote(
         ? Math.round((total * (extra.tipPercent ?? 0)) / 100)
         : 0;
   return {
-    lines, subtotal, happyHour, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount,
+    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount,
     total, creditUsed, giftUsed, deliveryFee, tip, due: total - creditUsed - giftUsed + deliveryFee + tip,
   };
 }

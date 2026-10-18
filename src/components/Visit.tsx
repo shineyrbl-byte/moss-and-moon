@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { HOURS_LABEL, openStatus, toDateStr } from "@/lib/cafe";
+import { hoursLabel, openStatus, toDateStr } from "@/lib/cafe";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
 import BusyMeter from "./BusyMeter";
@@ -61,7 +61,10 @@ export default function Visit() {
   }
 
   const weekdayIdx = new Date().getDay();
-  const todayRow = weekdayIdx === 0 ? 2 : weekdayIdx === 6 ? 1 : 0;
+  // Which row of the hours list is today (rows group days with the same hours, Monday first)
+  const rows = hoursLabel();
+  const mondayFirst = (d: number) => (d + 6) % 7;
+  const todayRow = rows.findIndex((r) => mondayFirst(weekdayIdx) >= mondayFirst(r.from) && mondayFirst(weekdayIdx) <= mondayFirst(r.to));
 
   return (
     <Reveal id="visit" className="section visit">
@@ -70,7 +73,7 @@ export default function Visit() {
         <h2>{t("visit.title1")} <em>{t("visit.title2")}</em></h2>
         <p className="lead">14 Willow Lane, your favourite neighbourhood. Look for the pink door and the bicycles outside.</p>
         <ul className="hours">
-          {HOURS_LABEL.map((h, i) => (
+          {rows.map((h, i) => (
             <li key={h.days} className={status && i === todayRow ? "today" : ""}><span>{h.days}</span><span>{h.time}</span></li>
           ))}
         </ul>

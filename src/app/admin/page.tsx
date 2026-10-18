@@ -23,6 +23,7 @@ import NoticesTab from "@/components/admin/NoticesTab";
 import VisitorsPanel from "@/components/admin/VisitorsPanel";
 import TwoStep from "@/components/admin/TwoStep";
 import GmailConnect from "@/components/admin/GmailConnect";
+import HoursEditor from "@/components/admin/HoursEditor";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -237,6 +238,7 @@ export default function AdminPage() {
               <span>🔔 A chime plays when a new order comes in, so keep this tab open.</span>
             </div>
           )}
+          {me?.role === "owner" && <HoursEditor />}
           {me?.role === "owner" && <GmailConnect />}
           {me?.role === "owner" && <OwnerEmails />}
           {me?.role === "owner" && <Backups />}
