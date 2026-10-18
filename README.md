@@ -33,7 +33,7 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - ✨ **Golden hour**: 20% off bakes every day 3–5pm, applied automatically
 - ⏱ Live wait-time estimate (homepage, checkout, order page)
 - ♥ Favourites filter, and **My orders** with one-tap "order again"
-- 🤖 **Ask the barista**: AI chat (Claude) that recommends drinks from the live menu, with one-tap "Add". Keyword demo mode until an API key is added
+- 🤖 **Ask the barista**: AI chat (free Google Gemini, or Claude) that recommends drinks from the live menu, with one-tap "Add". Keyword demo mode until an API key is added
 - 🪑 **Order from your table**: scan the table's QR code, order, and it's brought over (phone optional)
 - 📲 **Installable app** (PWA): add to home screen, works offline for pages you've seen
 - 🔔 **"Your order is ready" notifications**: real push notifications, even with the site closed

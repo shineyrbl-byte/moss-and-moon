@@ -5,12 +5,14 @@ import { HAPPY_HOUR, isHappyHour, rupees } from "@/lib/pricing";
 import type { MenuItem } from "@/lib/menu";
 
 // "Ask the barista": chat that recommends drinks & bakes from the live menu.
-// Uses Claude when ANTHROPIC_API_KEY is set; otherwise a simple keyword demo.
+// Uses Claude when ANTHROPIC_API_KEY is set, else Google Gemini (free tier) when
+// GEMINI_API_KEY is set, else a simple keyword demo.
 
 type Rec = { itemId: string; reason: string };
-type Reply = { reply: string; recommendations: Rec[]; mode: "claude" | "demo" };
+type Reply = { reply: string; recommendations: Rec[]; mode: "claude" | "gemini" | "demo" };
 
 const MODEL = "claude-opus-5-5";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
 // ---- tiny per-visitor rate limit (protects the API bill) ----
 const hits = new Map<string, number[]>();
@@ -38,7 +40,11 @@ export async function POST(req: Request) {
 
   // Only recommend things guests can actually order right now
   const menu = getMenu().filter((m) => !m.soldOut);
-  const result = process.env.ANTHROPIC_API_KEY ? await askClaude(messages, menu) : demoReply(String(messages[messages.length - 1].content), menu);
+  const lastText = String(messages[messages.length - 1].content);
+  let result: Reply | { error: string };
+  if (process.env.ANTHROPIC_API_KEY) result = await askClaude(messages, menu);
+  else if (process.env.GEMINI_API_KEY) result = (await askGemini(messages, menu)) ?? demoReply(lastText, menu); // free limit used up → demo
+  else result = demoReply(lastText, menu);
   if ("error" in result) return Response.json(result, { status: 502 });
 
   // Keep only real item ids, at most 3
@@ -130,6 +136,54 @@ async function askClaude(messages: Anthropic.Beta.BetaMessageParam[], menu: Menu
     if (e instanceof SyntaxError) return { error: "The barista mumbled something. Try asking again?" };
     console.error("Barista error", e);
     return { error: "Couldn't reach the barista. Try again?" };
+  }
+}
+
+// ---------- Gemini (free tier) ----------
+// Returns null on any failure so the chat quietly falls back to demo mode.
+async function askGemini(messages: Anthropic.Beta.BetaMessageParam[], menu: MenuItem[]): Promise<Reply | null> {
+  const schema = {
+    type: "OBJECT",
+    properties: {
+      reply: { type: "STRING", description: "What the barista says to the guest" },
+      recommendations: {
+        type: "ARRAY",
+        description: "Up to 3 menu items to suggest (empty if just chatting)",
+        items: {
+          type: "OBJECT",
+          properties: {
+            itemId: { type: "STRING", enum: menu.map((m) => m.id) },
+            reason: { type: "STRING", description: "One short line on why it fits" },
+          },
+          required: ["itemId", "reason"],
+        },
+      },
+    },
+    required: ["reply", "recommendations"],
+  };
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY! },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt(menu) }] },
+        contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content) }] })),
+        generationConfig: { responseMimeType: "application/json", responseSchema: schema, maxOutputTokens: 2000 },
+      }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!r.ok) {
+      console.error("Barista Gemini error", r.status, (await r.text()).slice(0, 300));
+      return null;
+    }
+    const d = await r.json();
+    const text: string = (d?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
+    const parsed = JSON.parse(text) as { reply?: string; recommendations?: Rec[] };
+    if (!parsed.reply) return null;
+    return { reply: String(parsed.reply), recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [], mode: "gemini" };
+  } catch (e) {
+    console.error("Barista Gemini failed", e);
+    return null;
   }
 }
 

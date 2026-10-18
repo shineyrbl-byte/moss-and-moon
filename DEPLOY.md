@@ -90,18 +90,27 @@ npm install
 npm run dev                  # http://localhost:3000
 ```
 
-## 5. Turn on the AI barista (Claude)
+## 5. Turn on the AI barista (free with Gemini)
 
 Until you do this, "Ask the barista" runs in **demo mode** (simple keyword matching).
 
-1. Get an API key at **https://console.anthropic.com** → API Keys (add a little credit under Billing).
-2. Add `ANTHROPIC_API_KEY=sk-ant-...` to your Railway variables (or `.env.local`).
-3. That's it — the chat header stops saying "demo mode".
+**Free: Google Gemini**
+1. Go to **https://aistudio.google.com/apikey** and sign in with a Google account.
+2. Click **Create API key** and copy it. No card is needed for the free tier.
+3. Add `GEMINI_API_KEY=...` to your Railway variables (or `.env.local`).
+4. That's it: the chat header stops saying "demo mode".
 
-It uses **Claude Opus 5.5** at low effort, so replies are quick. Each message costs roughly
-₹1–2. Every visitor is limited to 20 messages per 10 minutes so nobody can run up your bill;
-change that in `src/app/api/barista/route.ts`. Set a monthly spend limit in the Anthropic
-console too, just in case.
+It uses `gemini-3.8-flash` (change it with `GEMINI_MODEL`). If the free daily limit runs out,
+the chat quietly falls back to demo mode until the limit resets. Note: on Google's free tier,
+Google may use chats to improve its products, so don't put anything private in the prompt.
+
+**Paid: Claude**
+Add `ANTHROPIC_API_KEY=sk-ant-...` (from https://console.anthropic.com, with a little credit).
+If both keys are set, Claude is used. It runs **Claude Opus 5.5** at low effort; each message
+costs roughly ₹1–2. Set a monthly spend limit in the Anthropic console.
+
+Every visitor is limited to 20 messages per 10 minutes either way; change that in
+`src/app/api/barista/route.ts`.
 
 ## 6. Order-ready notifications & the app
 
