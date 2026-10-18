@@ -1731,3 +1731,19 @@ test("whole cakes: 2 days' notice, paid online, then on the staff list", async (
   assert.equal(list.find((c) => c.code === o.body.code)?.message, "Happy birthday Meera!");
   assert.equal((await s.api(`/api/cakes/${o.body.code}`, { method: "PATCH", json: { status: "collected" } })).status, 200);
 });
+
+test("build your own bowl and a tasting flight go through checkout", async () => {
+  const r = await s.api("/api/orders", { method: "POST", json: { name: "Builder", phone: "9876500888", lines: [
+    { itemId: "build-bowl", qty: 1, opts: { picks: { base: ["quinoa"], protein: ["paneer"], toppings: ["avocado", "feta", "corn", "seeds"], sauce: ["tahini"] } } },
+    { itemId: "coffee-flight", qty: 1, opts: { picks: { cups: ["espresso", "v60", "cold-brew"] } } },
+  ] } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  const o = (await s.api(`/api/orders/${r.body.code}`)).body as { lines: { itemId: string; unit: number; note: string }[] };
+  const bowl = o.lines.find((l) => l.itemId === "build-bowl")!;
+  assert.equal(bowl.unit, 240 + 40 + 40 + 40, "paneer + avocado + feta (+ free corn); only 3 toppings kept");
+  assert.equal(bowl.note, "Herby quinoa · Grilled paneer · Avocado · Charred corn · Feta · Lemon tahini");
+  assert.equal(o.lines.find((l) => l.itemId === "coffee-flight")!.note, "Espresso · V60 single origin · Cold brew");
+  const menu = (await (await fetch(`${s.url}/api/menu`)).json()) as { items: { id: string; half?: boolean; kids?: boolean }[] };
+  assert.equal(menu.items.find((m) => m.id === "pesto-pasta")?.half, true);
+  assert.equal(menu.items.find((m) => m.id === "kids-french-toast")?.kids, true);
+});

@@ -72,6 +72,9 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     id, cat, name, desc, price, img,
     ...(diet.length ? { diet } : {}),
     ...(cleanText(b.nameHi, 60) ? { nameHi: cleanText(b.nameHi, 60) } : {}),
+    ...(Array.isArray(b.groups) && b.groups.length && cat !== "shop" ? { groups: cleanGroups(b.groups) } : {}),
+    ...(b.half && (cat === "food") ? { half: true } : {}),
+    ...(b.kids ? { kids: true } : {}),
     ...(cleanText(b.descHi, 200) ? { descHi: cleanText(b.descHi, 200) } : {}),
     ...(badge ? { badge } : {}),
     ...(cat === "coffee" || cat === "tea" || cat === "cold" ? { traits: { energy: level(t.energy), sweet: level(t.sweet), temp: t.temp === "iced" ? "iced" : "hot" } } : {}),
@@ -97,6 +100,17 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
 }
 
 const ALLERGEN_IDS = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
+
+/** Build-your-own / flight choice groups, kept tidy */
+function cleanGroups(raw: unknown[]) {
+  return raw.slice(0, 6).map((g, gi) => {
+    const x = (g ?? {}) as Record<string, unknown>;
+    const choices = cleanAddons(Array.isArray(x.choices) ? x.choices : []);
+    const max = Math.max(1, Math.min(choices.length || 1, Math.floor(Number(x.max) || 1)));
+    const min = Math.max(0, Math.min(max, Math.floor(Number(x.min) || 0)));
+    return { id: /^[\w-]{1,30}$/.test(String(x.id)) ? String(x.id) : `group-${gi + 1}`, label: cleanText(x.label, 40) || "Choose", min, max, choices };
+  }).filter((g) => g.choices.length);
+}
 /** Up to 8 choices for a shop item (grind, colour…), each with an optional extra price */
 function cleanVariants(list: unknown[]) {
   return list.slice(0, 8).flatMap((raw) => {

@@ -1,6 +1,6 @@
 // Prices and drink options. The server uses these same functions to
 // recalculate every order, so prices can't be changed from the browser.
-import type { Category, MenuItem } from "./menu";
+import type { Addon, Category, MenuItem } from "./menu";
 import type { LastHour } from "./cafe";
 
 /** Looks up a menu item by id (from the database on the server, from the loaded menu in the browser) */
@@ -22,6 +22,10 @@ export type Options = {
   addons?: string[];
   /** Shop items: which version (grind, colour…) */
   variant?: string;
+  /** Build-your-own / flights: chosen ids per choice group */
+  picks?: Record<string, string[]>;
+  /** A half portion */
+  half?: boolean;
 };
 
 export type CartLine = { key: string; itemId: string; opts: Options; qty: number };
@@ -87,6 +91,7 @@ export function drinkChoices(item: Pick<MenuItem, "cat" | "noMilk">) {
 }
 
 export function defaultOptions(item: MenuItem): Options {
+  if (item.groups?.length) return { picks: cleanPicks(item, {}), addons: [] };
   if (item.cat === "shop") return item.variants?.length ? { variant: item.variants[0].id } : {};
   if (!isDrink(item.cat)) return item.cat === "bakes" ? { warm: false, addons: [] } : { addons: [] };
   const c = drinkChoices(item);
@@ -103,14 +108,34 @@ export function defaultOptions(item: MenuItem): Options {
 }
 
 /** Keep only allowed option values (anything else falls back to the default). */
+/** Picks for each choice group, kept to its min/max (missing ones filled with the first choices) */
+function cleanPicks(item: MenuItem, raw: unknown) {
+  const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const out: Record<string, string[]> = {};
+  for (const g of item.groups ?? []) {
+    const want = Array.isArray(r[g.id]) ? (r[g.id] as unknown[]).map(String) : [];
+    let ids = g.choices.map((c) => c.id).filter((id) => want.includes(id)).slice(0, g.max);
+    for (const c of g.choices) if (ids.length < g.min && !ids.includes(c.id)) ids = [...ids, c.id];
+    out[g.id] = ids;
+  }
+  return out;
+}
+/** Every add-on-like choice the options include (food add-ons and build-your-own picks) */
+export const chosenExtras = (item: MenuItem, o: { addons?: string[]; picks?: Record<string, string[]> }) => [
+  ...(o.addons ?? []).map((id) => item.addons?.find((a) => a.id === id)).filter(Boolean),
+  ...(item.groups ?? []).flatMap((g) => (o.picks?.[g.id] ?? []).map((id) => g.choices.find((c) => c.id === id)).filter(Boolean)),
+] as Addon[];
+const halfPrice = (p: number) => Math.round((p * 0.6) / 10) * 10;
+
 export function cleanOptions(item: MenuItem, raw: unknown): Options {
   const d = defaultOptions(item);
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  if (item.groups?.length) return { picks: cleanPicks(item, r.picks), addons: (item.addons ?? []).map((a) => a.id).filter((id) => Array.isArray(r.addons) && r.addons.includes(id)) };
   const pick = <V extends string>(list: Choice<V>[], v: unknown, fallback?: V) =>
     list.some((c) => c.value === v) ? (v as V) : fallback;
   if (item.cat === "shop") return item.variants?.length ? { variant: item.variants.some((v) => v.id === r.variant) ? String(r.variant) : item.variants[0].id } : {};
   const addons = (item.addons ?? []).map((a) => a.id).filter((id) => Array.isArray(r.addons) && r.addons.includes(id)); // in the menu's order
-  if (!isDrink(item.cat)) return item.cat === "bakes" ? { warm: r.warm === true, addons } : { addons };
+  if (!isDrink(item.cat)) return item.cat === "bakes" ? { warm: r.warm === true, addons } : { addons, ...(item.half && r.half === true ? { half: true } : {}) };
   const c = drinkChoices(item);
   const temp = c.temp ? pick(TEMPS, r.temp, d.temp) : "iced";
   return {
@@ -127,7 +152,8 @@ export function cleanOptions(item: MenuItem, raw: unknown): Options {
 }
 
 export function unitPrice(item: MenuItem, o: Options) {
-  let p = item.price;
+  let p = o.half && item.half ? halfPrice(item.price) : item.price;
+  for (const g of item.groups ?? []) for (const id of o.picks?.[g.id] ?? []) p += g.choices.find((c) => c.id === id)?.price ?? 0;
   p += SIZES.find((s) => s.value === o.size)?.extra ?? 0;
   p += MILKS.find((m) => m.value === o.milk)?.extra ?? 0;
   if (o.shot) p += SHOT_PRICE;
@@ -141,6 +167,8 @@ export function unitPrice(item: MenuItem, o: Options) {
 export function describeOptions(item: MenuItem, o: Options) {
   if (item.cat === "shop") return o.variant && item.variants && item.variants.length > 1 ? (item.variants.find((v) => v.id === o.variant)?.label ?? "") : "";
   const addons = (o.addons ?? []).map((id) => item.addons?.find((a) => a.id === id)?.label).filter(Boolean) as string[];
+  if (item.groups?.length) return [...item.groups.flatMap((g) => (o.picks?.[g.id] ?? []).map((id) => g.choices.find((c) => c.id === id)?.label ?? "")), ...addons].filter(Boolean).join(" · ");
+  if (o.half) addons.unshift("half portion");
   if (!isDrink(item.cat)) return [o.warm ? "warmed" : "", ...addons.map((a) => a.replace(/^Make it a combo: /, ""))].filter(Boolean).join(" · ");
   const d = defaultOptions(item);
   const parts: string[] = [];

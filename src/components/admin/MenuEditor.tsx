@@ -52,7 +52,7 @@ export default function MenuEditor({ canEdit = true }: { canEdit?: boolean }) {
             <button key={c.id} className={`chip ${filter === c.id ? "on" : ""}`} onClick={() => setFilter(c.id)}>{c.label}</button>
           ))}
         </div>
-        {canEdit && <button className="btn btn-pink btn-sm" onClick={() => setEditing({ ...BLANK, cat: filter === "all" || filter === "specials" ? "coffee" : filter })}>＋ New item</button>}
+        {canEdit && <button className="btn btn-pink btn-sm" onClick={() => setEditing({ ...BLANK, cat: filter === "all" || filter === "specials" || filter === "kids" ? "coffee" : filter, ...(filter === "kids" ? { kids: true } : {}) })}>＋ New item</button>}
       </div>
       <p className="muted small" style={{ marginBottom: "1rem" }}>{canEdit ? <>Changes show on the site straight away. &quot;Hidden&quot; keeps an item for later; seasonal items appear and disappear on their dates.</> : "Flip the switch when something runs out. It shows as sold out straight away."}</p>
 

@@ -33,7 +33,8 @@ export default function CustomizeModal() {
   const toggleIn = (k: "toppings" | "addons", v: string) =>
     setOpts((o) => cleanOptions(item, { ...o, [k]: ((o[k] as string[] | undefined) ?? []).includes(v) ? (o[k] as string[]).filter((x) => x !== v) : [...((o[k] as string[] | undefined) ?? []), v] }));
   const can = drinkChoices(item);
-  const drink = isDrink(item.cat);
+  const groups = item.groups ?? [];
+  const drink = isDrink(item.cat) && !groups.length;
   const unit = unitPrice(item, opts);
   const out = soldOut.has(item.id);
 
@@ -84,7 +85,32 @@ export default function CustomizeModal() {
             {drink && <DrinkCup item={item} opts={opts} />}
           </div>
 
-          {drink ? (
+          {groups.map((g) => {
+            const chosen = opts.picks?.[g.id] ?? [];
+            const one = g.max === 1;
+            const toggle = (id: string) => setOpts((o) => {
+              const cur = o.picks?.[g.id] ?? [];
+              const next = one ? [id] : cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= g.max ? cur : [...cur, id];
+              return cleanOptions(item, { ...o, picks: { ...(o.picks ?? {}), [g.id]: next } });
+            });
+            return (
+              <div key={g.id} className="opt-group">
+                <h4>{g.label}{!one && <span className="muted small" style={{ textTransform: "none", letterSpacing: 0 }}> · {chosen.length}/{g.max}</span>}</h4>
+                <div className="chips" role={one ? "radiogroup" : "group"} aria-label={g.label}>
+                  {g.choices.map((c) => {
+                    const on = chosen.includes(c.id);
+                    const full = !one && !on && chosen.length >= g.max;
+                    return (
+                      <button key={c.id} role={one ? "radio" : undefined} aria-checked={one ? on : undefined} aria-pressed={one ? undefined : on} disabled={full} className={`chip ${on ? "on" : ""}`} onClick={() => toggle(c.id)}>
+                        {c.label}{c.price > 0 && <span className="extra"> +₹{c.price}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+          {groups.length > 0 ? null : drink ? (
             <>
               {group("Size", "size", SIZES)}
               {can.temp && group("Hot or iced", "temp", TEMPS)}
@@ -149,6 +175,12 @@ export default function CustomizeModal() {
           ) : (
             <>
               {wholeCake(item.id) && <p className="small"><button className="link-btn" onClick={() => { close(); router.push(`/cakes?item=${item.id}`); }}>🎂 Order it as a whole cake, with a message on top →</button></p>}
+              {item.half && (
+                <div className="toggle-row">
+                  <span>Half portion <span className="muted small">· smaller appetite or for a little one</span></span>
+                  <button className={`switch ${opts.half ? "" : "off"}`} onClick={() => setOpts((o) => cleanOptions(item, { ...o, half: !o.half }))} aria-pressed={!!opts.half} aria-label="Half portion" />
+                </div>
+              )}
               {item.cat === "bakes" && (
                 <div className="toggle-row">
                   <span>Warm it up for me ♨</span>

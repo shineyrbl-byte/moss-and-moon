@@ -371,3 +371,22 @@ test("combo deals: matched once per unit, only when they save money, and they do
   const m = matchCombos(quote([{ itemId: "latte", qty: 1 }, { itemId: "croissant", qty: 1 }], find).lines, combos);
   assert.deepEqual(m.used, [1, 1]);
 });
+
+test("build-your-own groups and half portions", () => {
+  const bowl: MenuItem = {
+    id: "bowl", cat: "food", name: "Bowl", desc: "", price: 240, img: "", kcal: 300, allergens: [],
+    groups: [
+      { id: "base", label: "Base", min: 1, max: 1, choices: [{ id: "rice", label: "Rice", price: 0 }, { id: "quinoa", label: "Quinoa", price: 0 }] },
+      { id: "top", label: "Toppings", min: 0, max: 2, choices: [{ id: "avo", label: "Avocado", price: 40, kcal: 120 }, { id: "feta", label: "Feta", price: 40, adds: ["milk"] }, { id: "corn", label: "Corn", price: 0 }] },
+    ],
+  };
+  const o = cleanOptions(bowl, { picks: { base: ["quinoa"], top: ["feta", "avo", "corn"] } });
+  assert.deepEqual(o.picks, { base: ["quinoa"], top: ["avo", "feta"] }, "kept to each group's max, in menu order");
+  assert.equal(unitPrice(bowl, o), 320);
+  assert.equal(describeOptions(bowl, o), "Quinoa · Avocado · Feta");
+  assert.deepEqual(cleanOptions(bowl, {}).picks, { base: ["rice"], top: [] }, "a required choice is filled in");
+  const pasta: MenuItem = { id: "pasta", cat: "food", name: "Pasta", desc: "", price: 340, img: "", half: true };
+  assert.equal(unitPrice(pasta, cleanOptions(pasta, { half: true })), 200);
+  const noHalf: MenuItem = { ...pasta, half: undefined };
+  assert.equal(unitPrice(noHalf, cleanOptions(noHalf, { half: true })), 340, "only items that offer it");
+});

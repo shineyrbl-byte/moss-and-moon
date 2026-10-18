@@ -28,7 +28,7 @@ export default function MenuBoard() {
     const out: Slide[] = [];
     const visible = menu.filter((m) => m.cat !== "shop" && !m.soldOut);
     for (const sp of visible.filter((m) => m.id.startsWith("special-"))) out.push({ kind: "special", item: sp });
-    for (const c of CATEGORIES.filter((c) => !["all", "specials", "shop"].includes(c.id))) {
+    for (const c of CATEGORIES.filter((c) => !["all", "specials", "shop", "kids"].includes(c.id))) {
       const items = visible.filter((m) => m.cat === c.id && !m.id.startsWith("special-"));
       // Long sections are split over two screens
       for (let k = 0; k < items.length; k += 8) out.push({ kind: "section", label: c.label, items: items.slice(k, k + 8) });

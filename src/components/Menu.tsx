@@ -143,6 +143,8 @@ export default function Menu() {
                     disabled={out}
                     aria-label={`Add ${m.name}`}
                     onClick={() => {
+                      // Build-your-own and flights need choosing first
+                      if (m.groups?.length) return setCustomizing(m);
                       add(m.id, defaultOptions(m));
                       toast(`${m.name} added ✿`);
                     }}

@@ -12,8 +12,9 @@ export const ALLERGENS: { id: Allergen; label: string; icon: string }[] = [
 ];
 
 type Addon = { id: string; kcal?: number; adds?: string[]; removes?: string[] };
-type Item = { id: string; cat: string; diet?: string[]; allergens?: Allergen[]; kcal?: number; noMilk?: boolean; addons?: Addon[] };
-type Opts = { size?: string; milk?: string; sweet?: string; shot?: boolean; temp?: string; syrup?: string; toppings?: string[]; addons?: string[] };
+type Item = { id: string; cat: string; diet?: string[]; allergens?: Allergen[]; kcal?: number; noMilk?: boolean; addons?: Addon[]; groups?: { id: string; choices: Addon[] }[]; half?: boolean };
+type Opts = { size?: string; milk?: string; sweet?: string; shot?: boolean; temp?: string; syrup?: string; toppings?: string[]; addons?: string[]; picks?: Record<string, string[]>; half?: boolean };
+const extras = (item: Item, o: Opts) => [...(o.addons ?? []).map((id) => item.addons?.find((x) => x.id === id)), ...(item.groups ?? []).flatMap((g) => (o.picks?.[g.id] ?? []).map((id) => g.choices.find((c) => c.id === id)))].filter(Boolean) as Addon[];
 const ALL = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
 
 /** Starting values for the menu (owners can change them in the menu editor). kcal = regular size, as it usually comes. */
@@ -34,7 +35,7 @@ const isDrink = (cat: string) => cat === "coffee" || cat === "tea" || cat === "c
 /** Allergens for this item as customised. A drink's milk adds milk (dairy), nuts (almond) or a gluten note (oat). */
 export function allergensFor(item: Item, o: Opts = {}): Allergen[] {
   const set = new Set<Allergen>(item.allergens ?? []);
-  if (isDrink(item.cat)) {
+  if (isDrink(item.cat) && !item.groups?.length) {
     if (o.milk === "whole") set.add("milk");
     if (o.milk === "almond") set.add("nuts");
     if (o.milk === "soy") set.add("soy");
@@ -43,10 +44,9 @@ export function allergensFor(item: Item, o: Opts = {}): Allergen[] {
     if (o.toppings?.includes("whipped") || o.toppings?.includes("caramel-drizzle")) set.add("milk");
   }
   // Food add-ons: an egg adds egg, gluten-free bread takes gluten away…
-  for (const id of o.addons ?? []) {
-    const a = item.addons?.find((x) => x.id === id);
-    for (const r of a?.removes ?? []) set.delete(r as Allergen);
-    for (const x of a?.adds ?? []) if (ALL.includes(x)) set.add(x as Allergen);
+  for (const a of extras(item, o)) {
+    for (const r of a.removes ?? []) set.delete(r as Allergen);
+    for (const x of a.adds ?? []) if (ALL.includes(x)) set.add(x as Allergen);
   }
   return ALLERGENS.map((a) => a.id).filter((a) => set.has(a));
 }
@@ -54,8 +54,8 @@ export function allergensFor(item: Item, o: Opts = {}): Allergen[] {
 /** Rough calories for this item as customised (null if unknown) */
 export function kcalFor(item: Item, o: Opts = {}): number | null {
   if (item.kcal === undefined) return null;
-  const addons = (o.addons ?? []).reduce((s, id) => s + (item.addons?.find((a) => a.id === id)?.kcal ?? 0), 0);
-  if (!isDrink(item.cat)) return item.kcal + addons;
+  const addons = extras(item, o).reduce((s, a) => s + (a.kcal ?? 0), 0);
+  if (!isDrink(item.cat) || item.groups?.length) return Math.round((o.half && item.half ? item.kcal * 0.6 : item.kcal) + addons);
   const size = o.size === "small" ? 0.8 : o.size === "large" ? 1.3 : 1;
   const milky = item.kcal > 60 && !item.diet?.includes("vegan") && !item.noMilk;
   // Change from whole milk (what the starting values assume) for a regular cup

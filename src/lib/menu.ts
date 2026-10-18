@@ -5,6 +5,8 @@ export type Category = "coffee" | "tea" | "cold" | "food" | "bakes" | "shop";
 
 /** Something extra on a food item, e.g. "Add an egg +₹40". adds/removes change its allergens. */
 export type Addon = { id: string; label: string; price: number; kcal?: number; adds?: string[]; removes?: string[] };
+/** "Pick one" or "pick up to three" choices, for build-your-own items and tasting flights */
+export type ChoiceGroup = { id: string; label: string; min: number; max: number; choices: Addon[] };
 export type Diet = "vegan" | "gf";
 
 export type MenuItem = {
@@ -41,6 +43,12 @@ export type MenuItem = {
   /** Ingredients used per item (leave empty to use sensible defaults for drinks) */
   uses?: { ingredient: string; amount: number }[];
   soldOut?: boolean; // filled in from the database
+  /** Build-your-own / flights: groups of choices (the item then has no drink options) */
+  groups?: ChoiceGroup[];
+  /** Food that also comes as a half portion (about 60% of the price) */
+  half?: boolean;
+  /** Shown in the Kids section */
+  kids?: boolean;
   /** Hindi name and description, shown when a guest switches to हिन्दी */
   nameHi?: string;
   descHi?: string;
@@ -54,10 +62,10 @@ export const photo = (img: string, w = 900) =>
   img.startsWith("/") || img.startsWith("http") ? img : `https://images.unsplash.com/photo-${img}?auto=format&fit=crop&q=75&w=${w}`;
 
 /** Menu tabs: every category, plus "all" and "specials" (new, pink picks and festival drinks) */
-export type MenuTab = Category | "all" | "specials";
+export type MenuTab = Category | "all" | "specials" | "kids";
 export const CATEGORY_ORDER: Category[] = ["coffee", "tea", "cold", "food", "bakes", "shop"];
-export const inTab = (m: Pick<MenuItem, "cat" | "badge" | "season">, tab: MenuTab) =>
-  tab === "all" || (tab === "specials" ? m.badge === "new" || m.badge === "pink pick" || !!m.season : m.cat === tab);
+export const inTab = (m: Pick<MenuItem, "cat" | "badge" | "season" | "kids">, tab: MenuTab) =>
+  tab === "all" || (tab === "specials" ? m.badge === "new" || m.badge === "pink pick" || !!m.season : tab === "kids" ? !!m.kids : m.cat === tab);
 
 export const CATEGORIES: { id: MenuTab; label: string }[] = [
   { id: "all", label: "Everything" },
@@ -67,6 +75,7 @@ export const CATEGORIES: { id: MenuTab; label: string }[] = [
   { id: "cold", label: "Cold drinks" },
   { id: "food", label: "Food" },
   { id: "bakes", label: "Bakes & sweets" },
+  { id: "kids", label: "Kids" },
   { id: "shop", label: "Shop" },
 ];
 
@@ -198,3 +207,49 @@ export const MENU_V3: MenuItem[] = [
   { id: "cold-brew-bottle", cat: "shop", name: "Cold Brew Concentrate · 1 L", desc: "Makes about 8 drinks: mix one part with two of milk or water over ice.", price: 690, img: "1509785307050-d4066910ec1e", stock: 12, cost: 260, nameHi: "कोल्ड ब्रू कॉन्सन्ट्रेट (1 लीटर)", descHi: "लगभग 8 ड्रिंक: एक भाग में दो भाग दूध या पानी मिलाइए।" },
   { id: "milk-pitcher", cat: "shop", name: "Latte Art Milk Pitcher", desc: "350 ml stainless steel jug with a sharp spout, for hearts at home.", price: 790, img: "1550583724-b2692b85b150", stock: 15, cost: 350, nameHi: "लाटे आर्ट मिल्क पिचर", descHi: "350 मि.ली. स्टील जग, घर पर लाटे आर्ट के लिए।" },
 ];
+
+// Build your own, tasting flights and the kids' menu
+export const MENU_V4: MenuItem[] = [
+  {
+    id: "build-bowl", cat: "food", name: "Build Your Own Bowl", desc: "Pick a base, a protein, up to three toppings and a sauce.", price: 240, img: "1540189549336-e6e99c3679fe", badge: "new", allergens: [], kcal: 380, cost: 85,
+    groups: [
+      { id: "base", label: "Base", min: 1, max: 1, choices: [{ id: "quinoa", label: "Herby quinoa", price: 0, kcal: 180 }, { id: "brown-rice", label: "Brown rice", price: 0, kcal: 200 }, { id: "greens", label: "Big leafy greens", price: 0, kcal: 30 }] },
+      { id: "protein", label: "Protein", min: 1, max: 1, choices: [{ id: "chickpeas", label: "Spiced chickpeas", price: 0, kcal: 150 }, { id: "paneer", label: "Grilled paneer", price: 40, kcal: 220, adds: ["milk"] }, { id: "tofu", label: "Sesame tofu", price: 40, kcal: 160, adds: ["soy", "sesame"] }, { id: "egg", label: "Two soft eggs", price: 30, kcal: 140, adds: ["egg"] }] },
+      { id: "toppings", label: "Toppings · up to 3", min: 0, max: 3, choices: [{ id: "roast-veg", label: "Roast veg", price: 0, kcal: 60 }, { id: "avocado", label: "Avocado", price: 40, kcal: 120 }, { id: "pickled-onion", label: "Pickled onion", price: 0, kcal: 10 }, { id: "corn", label: "Charred corn", price: 0, kcal: 60 }, { id: "feta", label: "Feta", price: 40, kcal: 90, adds: ["milk"] }, { id: "seeds", label: "Toasted seeds", price: 20, kcal: 70, adds: ["sesame"] }] },
+      { id: "sauce", label: "Sauce", min: 1, max: 1, choices: [{ id: "tahini", label: "Lemon tahini", price: 0, kcal: 90, adds: ["sesame"] }, { id: "green-goddess", label: "Green goddess (yogurt)", price: 0, kcal: 70, adds: ["milk"] }, { id: "chilli-lime", label: "Chilli lime", price: 0, kcal: 40 }] },
+    ],
+    nameHi: "अपना बाउल बनाइए", descHi: "बेस, प्रोटीन, तीन टॉपिंग और सॉस चुनिए।",
+  },
+  {
+    id: "build-sandwich", cat: "food", name: "Build Your Own Sandwich", desc: "Your bread, your fillings, pressed or cold.", price: 190, img: "1509722747041-616f39b57569", allergens: ["gluten"], kcal: 260, cost: 55,
+    groups: [
+      { id: "bread", label: "Bread", min: 1, max: 1, choices: [{ id: "sourdough", label: "Sourdough", price: 0 }, { id: "multigrain", label: "Multigrain", price: 0, adds: ["sesame"] }, { id: "gf", label: "Gluten-free bread", price: 50, removes: ["gluten"] }] },
+      { id: "fillings", label: "Fillings · up to 2", min: 1, max: 2, choices: [{ id: "cheddar", label: "Cheddar", price: 0, kcal: 120, adds: ["milk"] }, { id: "egg-mayo", label: "Egg mayo", price: 0, kcal: 160, adds: ["egg"] }, { id: "paneer-bhurji", label: "Paneer bhurji", price: 30, kcal: 180, adds: ["milk"] }, { id: "mushroom", label: "Garlic mushroom", price: 20, kcal: 70 }, { id: "hummus", label: "Hummus & roast veg", price: 20, kcal: 140, adds: ["sesame"] }] },
+      { id: "extras", label: "Extras", min: 0, max: 4, choices: [{ id: "tomato", label: "Tomato", price: 0, kcal: 5 }, { id: "onion", label: "Red onion", price: 0, kcal: 5 }, { id: "jalapeno", label: "Jalapeños", price: 0, kcal: 5 }, { id: "mint-chutney", label: "Mint chutney", price: 0, kcal: 15 }, { id: "extra-cheese", label: "Extra cheese", price: 40, kcal: 110, adds: ["milk"] }] },
+      { id: "style", label: "How", min: 1, max: 1, choices: [{ id: "toasted", label: "Toasted & pressed", price: 0 }, { id: "cold", label: "Cold", price: 0 }] },
+    ],
+    nameHi: "अपना सैंडविच बनाइए", descHi: "अपनी ब्रेड और भरावन चुनिए, सेंका हुआ या ठंडा।",
+  },
+  {
+    id: "coffee-flight", cat: "coffee", name: "Coffee Tasting Flight", desc: "Three small cups side by side. Find your favourite.", price: 360, img: "1498804103079-a6351b050096", badge: "new", allergens: [], kcal: 120, uses: [{ ingredient: "espresso-beans", amount: 40 }],
+    groups: [{ id: "cups", label: "Pick 3", min: 3, max: 3, choices: [{ id: "espresso", label: "Espresso", price: 0 }, { id: "cortado", label: "Cortado", price: 0, adds: ["milk"] }, { id: "flat-white", label: "Flat white", price: 0, adds: ["milk"] }, { id: "v60", label: "V60 single origin", price: 0 }, { id: "cold-brew", label: "Cold brew", price: 0 }, { id: "kaapi", label: "Filter kaapi", price: 0, adds: ["milk"] }] }],
+    nameHi: "कॉफ़ी टेस्टिंग फ़्लाइट", descHi: "तीन छोटे कप साथ-साथ, अपनी पसंद ढूँढिए।",
+  },
+  {
+    id: "matcha-flight", cat: "tea", name: "Matcha Flight", desc: "Three ways with ceremonial matcha, in little cups.", price: 420, img: "1582793988951-9aed5509eb97", badge: "pink pick", allergens: [], kcal: 200, uses: [{ ingredient: "matcha", amount: 8 }, { ingredient: "milk", amount: 150 }],
+    groups: [{ id: "cups", label: "Pick 3", min: 3, max: 3, choices: [{ id: "usucha", label: "Straight (usucha)", price: 0 }, { id: "honey-latte", label: "Honey matcha latte", price: 0, adds: ["milk"] }, { id: "strawberry", label: "Iced strawberry matcha", price: 0, adds: ["milk"] }, { id: "coconut", label: "Coconut matcha", price: 0 }, { id: "hojicha", label: "Hojicha latte", price: 0, adds: ["milk"] }] }],
+    nameHi: "माचा फ़्लाइट", descHi: "सेरेमोनियल माचा के तीन रूप, छोटे कपों में।",
+  },
+  {
+    id: "mocktail-flight", cat: "cold", name: "Mocktail Flight", desc: "Three mini mocktails to share (or not).", price: 340, img: "1622597467836-f3285f2131b8", diet: ["vegan", "gf"], noMilk: true, allergens: [], kcal: 200,
+    groups: [{ id: "glasses", label: "Pick 3", min: 3, max: 3, choices: [{ id: "kokum", label: "Kokum soda", price: 0 }, { id: "mojito", label: "Strawberry mint mojito", price: 0 }, { id: "fizz", label: "Blackberry ginger fizz", price: 0 }, { id: "passionfruit", label: "Passionfruit lemonade", price: 0 }, { id: "watermelon", label: "Watermelon mint cooler", price: 0 }] }],
+    nameHi: "मॉकटेल फ़्लाइट", descHi: "तीन छोटे मॉकटेल, बाँटने के लिए (या नहीं)।",
+  },
+  // Kids
+  { id: "kids-pancakes", cat: "food", name: "Kids' Mini Pancakes", desc: "Five little pancakes with banana, berries and a drizzle of honey.", price: 170, img: "1528207776546-365bb710ee93", kids: true, allergens: ["gluten", "milk", "egg"], kcal: 360, cost: 35, nameHi: "बच्चों के मिनी पैनकेक", descHi: "पाँच छोटे पैनकेक, केला, बेरी और शहद के साथ।" },
+  { id: "babyccino", cat: "tea", name: "Babyccino", desc: "Warm frothy milk with cocoa dust and a marshmallow. No caffeine.", price: 70, img: "1542990253-0d0f5be5f0ed", kids: true, traits: { energy: 0, sweet: 1, temp: "hot" }, allergens: [], kcal: 110, uses: [{ ingredient: "milk", amount: 120 }], nameHi: "बेबीचीनो", descHi: "कोको वाला गरम झागदार दूध और एक मार्शमैलो। कैफ़ीन नहीं।" },
+  { id: "kids-milk", cat: "cold", name: "Kids' Chocolate Milk", desc: "Cold milk shaken with real cocoa. Plain milk if you'd rather.", price: 110, img: "1517448931760-9bf4414148c5", kids: true, traits: { energy: 0, sweet: 2, temp: "iced" }, allergens: ["milk"], noMilk: true, kcal: 180, uses: [{ ingredient: "milk-whole", amount: 200 }], nameHi: "बच्चों का चॉकलेट दूध", descHi: "असली कोको के साथ ठंडा दूध।" },
+];
+/** Existing dishes that also come as a half portion, and the kids' items from before */
+export const HALF_PORTIONS = ["penne-arrabbiata", "pesto-pasta", "buddha-bowl", "margherita-flatbread", "pancakes", "mezze-bowl", "granola-bowl"];
+export const KIDS_ITEMS = ["kids-french-toast"];

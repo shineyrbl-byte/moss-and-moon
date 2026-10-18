@@ -4,7 +4,7 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import { MENU_SHOP, MENU_V2, MENU_V3, SEED_MENU } from "./menu";
+import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
@@ -741,6 +741,20 @@ function open() {
     const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
     MENU_V3.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v3', '1')").run();
+  }
+
+  // Build-your-own, flights and kids' items; half portions on some dishes
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v4'").get()) {
+    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
+    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
+    MENU_V4.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
+    const upd = db.prepare("UPDATE menu_items SET data = ? WHERE id = ?");
+    for (const r of db.prepare("SELECT id, data FROM menu_items").all() as { id: string; data: string }[]) {
+      const d = JSON.parse(r.data);
+      if (HALF_PORTIONS.includes(r.id) && d.half === undefined) upd.run(JSON.stringify({ ...d, half: true }), r.id);
+      if (KIDS_ITEMS.includes(r.id) && d.kids === undefined) upd.run(JSON.stringify({ ...d, kids: true }), r.id);
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v4', '1')").run();
   }
 
   // Events: the starting ones, once (then owners manage them in Admin → Events)
