@@ -483,3 +483,16 @@ test("paid event tickets: reserve, pay, check in once", async () => {
   assert.equal((await s.api(`/api/tickets/${code}`, { method: "PATCH" })).status, 200);
   assert.equal((await s.api(`/api/tickets/${code}`, { method: "PATCH" })).status, 409, "only once");
 });
+
+test("nightly summary: owner email settings, preview and send", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/settings", { method: "PATCH", json: { ownerEmail: "not-an-email" } })).status, 400);
+  const set = await s.api("/api/admin/settings", { method: "PATCH", json: { ownerEmail: "owner@example.com", dailySummary: true } });
+  assert.equal((set.body as { ownerEmail: string }).ownerEmail, "owner@example.com");
+  const p = await s.api("/api/admin/summary");
+  assert.equal(p.status, 200);
+  assert.match((p.body as { subject: string }).subject, /orders/);
+  assert.equal((await s.api("/api/admin/summary", { method: "POST" })).status, 200);
+  const mail = (await s.api("/api/admin/emails")).body as { emails: { to_email: string; subject: string }[] };
+  assert.ok(mail.emails.some((e) => e.to_email === "owner@example.com" && /Today at Moss/.test(e.subject)), "summary lands in the outbox");
+});

@@ -10,6 +10,7 @@ import { orderDue, rupees, type QuoteLine } from "@/lib/pricing";
 import { useStore } from "@/components/Store";
 import { SEASONS } from "@/lib/seasons";
 import EventsTab from "@/components/admin/EventsTab";
+import OwnerEmails from "@/components/admin/OwnerEmails";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -211,6 +212,7 @@ export default function AdminPage() {
               <span>🔔 A chime plays when a new order comes in, so keep this tab open.</span>
             </div>
           )}
+          {me?.role === "owner" && <OwnerEmails />}
           {season && (
             <div className="mode-banner">
               <span>

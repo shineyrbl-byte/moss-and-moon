@@ -68,12 +68,4 @@ export function demoTick(now = new Date()) {
   return moved;
 }
 
-/** Start the background check once per server */
-export function startDemoBarista() {
-  const g = globalThis as { __demoBarista?: NodeJS.Timeout };
-  if (g.__demoBarista) return;
-  g.__demoBarista = setInterval(() => {
-    try { demoTick(); } catch (e) { console.error("Demo barista", e); }
-  }, 15_000);
-  g.__demoBarista.unref?.();
-}
+

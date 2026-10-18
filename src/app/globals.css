@@ -822,3 +822,5 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 @keyframes steam { 0%, 100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(-4px); opacity: 0.7; } }
 @media (prefers-reduced-motion: reduce) { .cup-layer, .drink-cup svg { transition: none; } .steam path { animation: none; } }
 @media (max-width: 480px) { .drink-cup { width: 84px; height: 106px; } }
+.summary-preview { border: 1px solid var(--line); border-radius: 14px; padding: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.summary-preview iframe { width: 100%; height: 420px; border: none; border-radius: 10px; background: #fffaf6; }
