@@ -17,13 +17,18 @@ export async function PATCH(req: Request) {
   if (!db.prepare("SELECT 1 FROM ingredients WHERE id = ?").get(id)) return Response.json({ error: "Unknown ingredient." }, { status: 404 });
   if (b.add !== undefined) db.prepare("UPDATE ingredients SET qty = MAX(0, qty + ?) WHERE id = ?").run(Number(b.add) || 0, id);
   if (b.qty !== undefined) db.prepare("UPDATE ingredients SET qty = MAX(0, ?) WHERE id = ?").run(Number(b.qty) || 0, id);
-  if (b.low_at !== undefined || b.name !== undefined) {
+  if (b.low_at !== undefined || b.name !== undefined || b.cost !== undefined) {
     {
     const gate = await ownerGate();
     if (gate) return gate;
   }
     if (b.low_at !== undefined) db.prepare("UPDATE ingredients SET low_at = MAX(0, ?) WHERE id = ?").run(Number(b.low_at) || 0, id);
     if (b.name) db.prepare("UPDATE ingredients SET name = ? WHERE id = ?").run(cleanText(b.name, 40), id);
+    if (b.cost !== undefined) {
+      const c = Number(b.cost);
+      if (!(c >= 0 && c <= 10000)) return Response.json({ error: "Cost should be between ₹0 and ₹10,000 per unit." }, { status: 400 });
+      db.prepare("UPDATE ingredients SET cost = ? WHERE id = ?").run(c, id);
+    }
   }
   publish({ type: "menu" });
   return Response.json({ ok: true });

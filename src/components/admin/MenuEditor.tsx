@@ -189,6 +189,9 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
               <input className="input" type="date" value={f.until ?? ""} onChange={(e) => set("until", e.target.value || undefined)} aria-label="Season ends" />
             </div>
           </div>
+          <label className="field">Cost to make (optional, ₹){f.cat === "bakes" ? ": what one costs you to bake or buy" : ": anything not tracked in Stock (syrups, cream…)"}
+            <input className="input" type="number" min={0} step="0.5" value={f.cost ?? ""} onChange={(e) => set("cost", e.target.value === "" ? undefined : Number(e.target.value))} placeholder={f.cat === "bakes" ? "e.g. 45" : "e.g. 12"} />
+          </label>
           <label className="field">Festival special (optional): only on the menu during
             <select className="input" value={f.season ?? ""} onChange={(e) => set("season", e.target.value || undefined)}>
               <option value="">Every season</option>

@@ -5,23 +5,28 @@ import { db } from "./db";
 import type { MenuItem } from "./menu";
 import type { Options, QuoteLine } from "./pricing";
 
-export type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number };
+export type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number; cost: number | null };
 
+// cost: rough Indian wholesale prices in ₹ per g or ml (owners can change them in Admin → Stock)
 export const DEFAULT_INGREDIENTS: Ingredient[] = [
-  { id: "espresso-beans", name: "Espresso beans", unit: "g", qty: 5000, low_at: 500 },
-  { id: "milk-whole", name: "Whole milk", unit: "ml", qty: 20000, low_at: 2000 },
-  { id: "milk-oat", name: "Oat milk", unit: "ml", qty: 10000, low_at: 1500 },
-  { id: "milk-almond", name: "Almond milk", unit: "ml", qty: 6000, low_at: 1000 },
-  { id: "matcha", name: "Matcha powder", unit: "g", qty: 1000, low_at: 120 },
-  { id: "tea-leaves", name: "Loose-leaf tea", unit: "g", qty: 2000, low_at: 200 },
-  { id: "tapioca", name: "Tapioca pearls", unit: "g", qty: 3000, low_at: 400 },
+  { id: "espresso-beans", name: "Espresso beans", unit: "g", qty: 5000, low_at: 500, cost: 1.6 },
+  { id: "milk-whole", name: "Whole milk", unit: "ml", qty: 20000, low_at: 2000, cost: 0.07 },
+  { id: "milk-oat", name: "Oat milk", unit: "ml", qty: 10000, low_at: 1500, cost: 0.28 },
+  { id: "milk-almond", name: "Almond milk", unit: "ml", qty: 6000, low_at: 1000, cost: 0.32 },
+  { id: "matcha", name: "Matcha powder", unit: "g", qty: 1000, low_at: 120, cost: 6 },
+  { id: "tea-leaves", name: "Loose-leaf tea", unit: "g", qty: 2000, low_at: 200, cost: 1.2 },
+  { id: "tapioca", name: "Tapioca pearls", unit: "g", qty: 3000, low_at: 400, cost: 0.45 },
 ];
 
 export function seedIngredients() {
   const n = (db.prepare("SELECT COUNT(*) AS n FROM ingredients").get() as { n: number }).n;
-  if (n) return;
-  const add = db.prepare("INSERT INTO ingredients (id, name, unit, qty, low_at) VALUES (?, ?, ?, ?, ?)");
-  for (const i of DEFAULT_INGREDIENTS) add.run(i.id, i.name, i.unit, i.qty, i.low_at);
+  if (!n) {
+    const add = db.prepare("INSERT INTO ingredients (id, name, unit, qty, low_at, cost) VALUES (?, ?, ?, ?, ?, ?)");
+    for (const i of DEFAULT_INGREDIENTS) add.run(i.id, i.name, i.unit, i.qty, i.low_at, i.cost);
+  }
+  // Older databases: fill in starting costs once
+  const fill = db.prepare("UPDATE ingredients SET cost = ? WHERE id = ? AND cost IS NULL");
+  for (const i of DEFAULT_INGREDIENTS) fill.run(i.cost, i.id);
 }
 
 export function getIngredients(): Ingredient[] {

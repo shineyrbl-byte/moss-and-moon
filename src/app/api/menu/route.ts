@@ -69,6 +69,7 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(until ? { until } : {}),
     ...(uses.length ? { uses } : {}),
     ...(typeof b.season === "string" && b.season in SEASONS ? { season: b.season } : {}),
+    ...(b.cost !== undefined && b.cost !== "" && Number(b.cost) >= 0 && Number(b.cost) <= 5000 ? { cost: Math.round(Number(b.cost) * 100) / 100 } : {}),
   };
 }
 

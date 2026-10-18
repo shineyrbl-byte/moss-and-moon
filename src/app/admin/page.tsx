@@ -17,6 +17,7 @@ import Backups from "@/components/admin/Backups";
 import HealthTab from "@/components/admin/HealthTab";
 import PromosTab from "@/components/admin/PromosTab";
 import InsightsCard from "@/components/admin/InsightsCard";
+import ProfitPanel from "@/components/admin/ProfitPanel";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -381,7 +382,7 @@ export default function AdminPage() {
       )}
 
       {tab === "Menu" && <MenuEditor canEdit={me?.role === "owner"} />}
-      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><Analytics /></>}
+      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><ProfitPanel /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}

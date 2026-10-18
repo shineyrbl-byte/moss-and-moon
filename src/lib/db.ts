@@ -326,6 +326,7 @@ function open() {
   addColumn(db, "order_payments", "person", "TEXT");
   addColumn(db, "orders", "review_asked", "INTEGER NOT NULL DEFAULT 0"); // 1 = asked, 2 = skipped
   addColumn(db, "reviews", "order_code", "TEXT"); // set when the review came from a real order
+  addColumn(db, "ingredients", "cost", "REAL"); // ₹ per g / ml / piece
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };

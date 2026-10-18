@@ -663,3 +663,17 @@ test("reviews from a visit are verified, once per order; insights work without A
   assert.ok((biz.body as { data: { suggestions: unknown[] } }).data.suggestions.length >= 1);
   assert.equal((await s.api("/api/admin/insights?kind=business", { method: "POST" })).status, 429, "not too often");
 });
+
+test("profit: costs are saved with each order and add up", async () => {
+  await s.login();
+  await s.api("/api/admin/stock", { method: "PATCH", json: { id: "espresso-beans", cost: 2 } });
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Profit", phone: "9000012121", lines: [{ itemId: "americano", qty: 2 }] } });
+  assert.equal(placed.status, 200);
+  const code = (placed.body as { code: string }).code;
+  const saved = (await s.api(`/api/orders/${code}`)).body as { lines: { cost: number }[] };
+  assert.equal(saved.lines[0].cost, 84, "18 g of beans at ₹2/g + ₹6 cup = ₹42 a cup, × 2");
+  const rep = (await s.api("/api/admin/profit?days=7")).body as { revenue: number; cost: number; profit: number; items: { name: string; cost: number; qty: number }[] };
+  assert.ok(rep.items.find((i) => i.name === "Long Black")!.qty >= 2);
+  assert.equal(rep.profit, rep.revenue - rep.cost - ((rep as unknown as { waste: number }).waste ?? 0));
+  assert.equal((await s.api("/api/admin/stock", { method: "PATCH", json: { id: "espresso-beans", cost: -1 } })).status, 400);
+});

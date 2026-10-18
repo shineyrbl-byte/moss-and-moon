@@ -12,6 +12,7 @@ import { publish } from "./live";
 import { orderPlacedEmail, referralRewardEmail, sendLater } from "./email";
 import { getGroup, isHost } from "./groups";
 import { checkPromo, usePromo } from "./promos";
+import { withCosts } from "./profit";
 
 type Customer = Awaited<ReturnType<typeof currentCustomer>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,7 +105,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
        tip, credit_used, delivery_fee, delivery_address, perks)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
-    code, name, phone, email || null, pickup, note, JSON.stringify(q.lines), q.subtotal,
+    code, name, phone, email || null, pickup, note, JSON.stringify(withCosts(q.lines, find)), q.subtotal,
     q.subtotal - q.total, q.total, q.promoCode,
     opts.prepaid ? opts.prepaid.method : q.due === 0 && q.giftUsed + q.creditUsed > 0 ? "giftcard" : payMethod, payStatus, gift?.code ?? null, q.giftUsed, q.happyHour ? 1 : 0, table, me?.id ?? null,
     q.tip, q.creditUsed, q.deliveryFee, delivery || null, usedPerks || null

@@ -2,7 +2,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useStore } from "../Store";
 
-type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number };
+type Ingredient = { id: string; name: string; unit: string; qty: number; low_at: number; cost: number | null };
+// Costs are stored per g / ml / piece, but shown per kg / litre / piece
+const PER: Record<string, { label: string; x: number }> = { g: { label: "₹ per kg", x: 1000 }, ml: { label: "₹ per litre", x: 1000 }, pcs: { label: "₹ each", x: 1 } };
 const send = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 const fmt = (n: number, unit: string) => (unit === "g" && n >= 1000 ? `${(n / 1000).toFixed(1)} kg` : unit === "ml" && n >= 1000 ? `${(n / 1000).toFixed(1)} L` : `${Math.round(n)} ${unit}`);
 const STEP: Record<string, number> = { g: 1000, ml: 1000, pcs: 10 };
@@ -60,6 +62,24 @@ export default function StockTab({ canEdit }: { canEdit: boolean }) {
               <div className="row">
                 <button className="chip" onClick={() => change(i, { add: STEP[i.unit] ?? 10 }, `+${fmt(STEP[i.unit] ?? 10, i.unit)} ${i.name}`)}>+ {fmt(STEP[i.unit] ?? 10, i.unit)}</button>
                 <button className="chip" onClick={() => change(i, { qty: 0 }, `${i.name} marked as run out`)}>Ran out</button>
+                {canEdit && (
+                  <label className="stock-cost small">
+                    <span className="muted">{(PER[i.unit] ?? PER.pcs).label}</span>
+                    <input
+                      className="input"
+                      type="number"
+                      min={0}
+                      step="1"
+                      defaultValue={i.cost === null ? "" : Math.round(i.cost * (PER[i.unit] ?? PER.pcs).x * 100) / 100}
+                      onBlur={(e) => {
+                        if (e.target.value === "") return;
+                        const per = Number(e.target.value) / (PER[i.unit] ?? PER.pcs).x;
+                        if (per !== i.cost) change(i, { cost: per }, `Cost of ${i.name} saved`);
+                      }}
+                      aria-label={`${i.name} cost, ${(PER[i.unit] ?? PER.pcs).label}`}
+                    />
+                  </label>
+                )}
                 {canEdit && (
                   <button className="chip" onClick={() => {
                     const v = window.prompt?.(`Set ${i.name} to how many ${i.unit}?`, String(Math.round(i.qty)));

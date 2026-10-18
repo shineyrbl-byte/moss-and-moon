@@ -19,6 +19,8 @@ export type MenuItem = {
   /** Seasonal: only on the menu between these dates (YYYY-MM-DD, either can be left empty) */
   from?: string;
   until?: string;
+  /** What one costs to make in ₹, on top of tracked ingredients (e.g. a whole croissant from the bakery) */
+  cost?: number;
   /** Festival special: only on the menu during this season (see lib/seasons.ts) */
   season?: string;
   /** Ingredients used per item (leave empty to use sensible defaults for drinks) */

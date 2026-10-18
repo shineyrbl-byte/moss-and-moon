@@ -112,7 +112,7 @@ export function promoDiscountFor(p: PromoRule, subtotal: number) {
   return p.kind === "percent" ? Math.round((subtotal * p.value) / 100) : Math.min(p.value, subtotal);
 }
 
-export type QuoteLine = { itemId: string; name: string; cat?: Category; opts: Options; note: string; qty: number; unit: number; base?: number; total: number };
+export type QuoteLine = { itemId: string; name: string; cat?: Category; opts: Options; note: string; qty: number; unit: number; base?: number; total: number; cost?: number };
 export type Quote = {
   lines: QuoteLine[];
   subtotal: number;
