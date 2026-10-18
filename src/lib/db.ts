@@ -308,6 +308,12 @@ function open() {
 
 const getDb = () => (g.__cafeDb ??= open());
 
+/** Close the database so its file can be swapped (used when restoring a backup). It reopens on next use. */
+export function closeDb() {
+  try { g.__cafeDb?.close(); } catch {}
+  g.__cafeDb = undefined;
+}
+
 // Opens the database the first time it's actually used (not when the code
 // loads), so building the site never touches it.
 export const db = new Proxy({} as DatabaseSync, {

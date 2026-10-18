@@ -13,6 +13,7 @@ import EventsTab from "@/components/admin/EventsTab";
 import OwnerEmails from "@/components/admin/OwnerEmails";
 import RefundButton from "@/components/admin/RefundButton";
 import RotaTab from "@/components/admin/RotaTab";
+import Backups from "@/components/admin/Backups";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -215,6 +216,7 @@ export default function AdminPage() {
             </div>
           )}
           {me?.role === "owner" && <OwnerEmails />}
+          {me?.role === "owner" && <Backups />}
           {season && (
             <div className="mode-banner">
               <span>

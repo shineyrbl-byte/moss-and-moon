@@ -2,6 +2,7 @@
 import "server-only";
 import { demoTick } from "./orderFlow";
 import { summaryTick } from "./summary";
+import { backupTick } from "./backup";
 
 const g = globalThis as { __mmJobs?: NodeJS.Timeout[] };
 
@@ -18,5 +19,6 @@ export function startJobs() {
   g.__mmJobs = [
     every(15_000, "demo barista", () => demoTick()),
     every(60_000, "nightly summary", () => summaryTick()),
+    every(60_000, "backups", () => backupTick()),
   ];
 }

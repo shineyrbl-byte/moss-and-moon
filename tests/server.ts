@@ -14,6 +14,8 @@ export type TestServer = {
   /** fetch JSON from the test server; keeps the staff cookie if logged in */
   api: (p: string, init?: RequestInit & { json?: unknown }) => Promise<{ status: number; body: any }>;
   login: () => Promise<void>;
+  /** the cookies the api helper is sending */
+  cookie: () => string;
 };
 
 export async function startServer(port = 3900 + Math.floor(Math.random() * 90)): Promise<TestServer> {
@@ -62,6 +64,7 @@ export async function startServer(port = 3900 + Math.floor(Math.random() * 90)):
     url,
     dataDir,
     api,
+    cookie: () => cookie,
     login: async () => {
       const r = await api("/api/admin/login", { method: "POST", json: { passcode: PASSCODE } });
       if (r.status !== 200) throw new Error("Staff login failed in tests: " + JSON.stringify(r.body));

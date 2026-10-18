@@ -547,3 +547,30 @@ test("rota: owner plans shifts, no double-booking, baristas see their next shift
   const week = (await s.api(`/api/admin/shifts?week=${day}`)).body as { shifts: { name: string; start: string }[] };
   assert.ok(week.shifts.some((x) => x.name === "Mira" && x.start === "07:00"));
 });
+
+test("backups: back up, download, restore (and reject junk)", async () => {
+  await s.login();
+  const before = await s.api("/api/orders", { method: "POST", json: { name: "Kept", phone: "9000055555", lines: [{ itemId: "cookie", qty: 1 }] } });
+  const kept = (before.body as { code: string }).code;
+  assert.equal((await s.api("/api/admin/backup", { method: "POST" })).status, 200);
+  const list = (await s.api("/api/admin/backup")).body as { backups: { name: string }[] };
+  assert.ok(list.backups.length >= 1);
+
+  const cookie = s.cookie();
+  const file = await fetch(`${s.url}/api/admin/backup?file=${encodeURIComponent(list.backups[0].name)}`, { headers: { cookie } });
+  const bytes = Buffer.from(await file.arrayBuffer());
+  assert.equal(bytes[0], 0x1f, "gzipped");
+
+  const after = await s.api("/api/orders", { method: "POST", json: { name: "Gone", phone: "9000066666", lines: [{ itemId: "cookie", qty: 1 }] } });
+  const gone = (after.body as { code: string }).code;
+
+  const junk = await fetch(`${s.url}/api/admin/backup`, { method: "PUT", headers: { cookie }, body: Buffer.from("not a database") });
+  assert.equal(junk.status, 400);
+  const restored = await fetch(`${s.url}/api/admin/backup`, { method: "PUT", headers: { cookie }, body: bytes });
+  assert.equal(restored.status, 200);
+
+  assert.equal((await s.api(`/api/orders/${kept}`)).status, 200, "data from the backup is back");
+  assert.equal((await s.api(`/api/orders/${gone}`)).status, 404, "later data is replaced");
+  const again = (await s.api("/api/admin/backup")).body as { backups: { name: string }[] };
+  assert.ok(again.backups.some((b) => b.name.includes("before-restore")), "a safety copy was made first");
+});

@@ -854,3 +854,5 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .shift-add:hover { border-color: var(--pink-fill); color: var(--text); }
 .shift-form { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
 .next-shift { font-size: 0.85rem; }
+.backup-list { list-style: none; display: flex; flex-direction: column; font-size: 0.88rem; }
+.backup-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; padding: 0.4rem 0; border-top: 1px solid var(--line); }
