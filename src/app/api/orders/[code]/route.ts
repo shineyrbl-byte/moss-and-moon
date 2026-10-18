@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { ORDER_STEPS } from "@/lib/cafe";
 import { currentStaff } from "@/lib/auth";
 import { setOrderStatus } from "@/lib/orderFlow";
-import { paidShares } from "@/lib/orderMoney";
+import { claimedItems, paidShares } from "@/lib/orderMoney";
 import { limited, tooMany } from "@/lib/rateLimit";
 
 type Ctx = { params: Promise<{ code: string }> };
@@ -26,7 +26,7 @@ export async function GET(req: Request, { params }: Ctx) {
   const ahead = db
     .prepare("SELECT COUNT(*) AS n FROM orders WHERE status IN ('received','brewing') AND id < (SELECT id FROM orders WHERE code = ?)")
     .get(code.toUpperCase()) as { n: number };
-  return Response.json({ ...row, lines: JSON.parse(String(row.lines)), ahead: ahead.n, paidShares: paidShares(code.toUpperCase()) });
+  return Response.json({ ...row, lines: JSON.parse(String(row.lines)), ahead: ahead.n, paidShares: paidShares(code.toUpperCase()), claimedItems: claimedItems(code.toUpperCase()) });
 }
 
 // Staff: move an order to the next status

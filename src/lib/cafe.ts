@@ -146,7 +146,8 @@ export function openStatus(now = new Date(), branch?: string | null) {
 }
 
 /** price 0 = free (just RSVP); otherwise guests buy a ticket */
-export type CafeEvent = { id: string; title: string; date: string; time: string; desc: string; img: string; capacity: number; price: number; /** events made together as a repeating series */ series?: string };
+export type CafeEvent = { id: string; title: string; date: string; time: string; desc: string; img: string; capacity: number; price: number; /** events made together as a repeating series */ series?: string; /** optional food & drink packages, added to the ticket price */ packages?: EventPackage[] };
+export type EventPackage = { id: string; label: string; price: number };
 
 /** The starting events (owners add and edit events in Admin → Events) */
 export const SEED_EVENTS: CafeEvent[] = [

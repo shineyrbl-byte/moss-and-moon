@@ -16,6 +16,7 @@ import { MakeRegular } from "@/components/RegularOrders";
 
 type Order = {
   arrived_at?: string | null; arrived_note?: string | null;
+  claimedItems?: Record<number, number>;
   code: string; name: string; pickup: string; note: string; lines: QuoteLine[];
   subtotal: number; discount: number; total: number; promo: string | null; status: OrderStatus; created_at: string;
   pay_method: string; pay_status: "unpaid" | "pending" | "paid" | "refunded"; giftcard_used: number; happy_hour: number; ahead: number; table_no: number | null;
@@ -67,6 +68,14 @@ export default function OrderPage() {
 
   useLive(`/api/live?topic=order&code=${encodeURIComponent(code)}`, () => setReload((r) => r + 1));
 
+  const [mine, setMine] = useState<Record<number, number> | null>(null);
+  async function payMine() {
+    setPaying(true);
+    const ok = await pay("share", code, {}, { items: mine });
+    setPaying(false);
+    if (ok) { toast("Your part is paid ✿"); setMine(null); }
+    setReload((r) => r + 1);
+  }
   async function payNow(kind: "order" | "share") {
     setPaying(true);
     const ok = await pay(kind, code);
@@ -170,12 +179,43 @@ export default function OrderPage() {
               </div>
             </>
           )}
+          {mine && !order.split_count && (() => {
+            const taken = order.claimedItems ?? {};
+            const gross = order.lines.reduce((s, l) => s + l.total, 0) || 1;
+            const part = Object.entries(mine).reduce((s, [i, n]) => s + (order.lines[Number(i)].total / order.lines[Number(i)].qty) * n, 0);
+            const amount = Math.min(left, Math.round((part / gross) * due));
+            return (
+              <div className="split-items">
+                <span className="small">Tick what you had. Discounts, tip and delivery are shared out fairly.</span>
+                {order.lines.map((l, i) => {
+                  const free = l.qty - (taken[i] ?? 0);
+                  if (free <= 0) return <div key={i} className="sum-row small muted"><span>{l.qty} × {l.name}</span><span>paid ✓</span></div>;
+                  const n = mine[i] ?? 0;
+                  return (
+                    <div key={i} className="sum-row small" style={{ alignItems: "center" }}>
+                      <span>{l.name}{l.note ? <small className="muted"> · {l.note}</small> : null}</span>
+                      <span className="stepper">
+                        <button onClick={() => setMine({ ...mine, [i]: Math.max(0, n - 1) })} aria-label={`One less ${l.name}`}>−</button>
+                        <strong>{n}/{free}</strong>
+                        <button onClick={() => setMine({ ...mine, [i]: Math.min(free, n + 1) })} aria-label={`One more ${l.name}`}>+</button>
+                      </span>
+                    </div>
+                  );
+                })}
+                <div className="row">
+                  <button className="btn btn-pink btn-sm" disabled={paying || !Object.values(mine).some((n) => n > 0)} onClick={payMine}>{paying ? "Opening…" : `Pay ${rupees(amount)}`}</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setMine(null)}>Cancel</button>
+                </div>
+              </div>
+            );
+          })()}
           {splitOpen && !order.split_count && (
             <div className="split-picker">
               <span className="small">Split between</span>
               {[2, 3, 4, 5, 6].map((n) => (
                 <button key={n} className="chip" onClick={() => split(n)}>{n} people · {rupees(Math.ceil(due / n))}</button>
               ))}
+              {order.lines.reduce((s, l) => s + l.qty, 0) > 1 && <button className="chip" onClick={() => setMine({})}>🧾 Pay for what I had</button>}
             </div>
           )}
         </div>

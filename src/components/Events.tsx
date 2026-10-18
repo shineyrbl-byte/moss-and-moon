@@ -19,6 +19,8 @@ export default function Events() {
   const [error, setError] = useState("");
   const [going, setGoing] = useState<string[]>([]);
   const [qty, setQty] = useState(1);
+  const [pkg, setPkg] = useState("");
+  const each = (ev: Ev) => ev.price + (ev.packages?.find((p) => p.id === pkg)?.price ?? 0);
   const [busy, setBusy] = useState(false);
   const pay = usePay();
   const router = useRouter();
@@ -32,7 +34,7 @@ export default function Events() {
     e.preventDefault();
     setError("");
     setBusy(true);
-    const r = await fetch("/api/tickets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventId: ev.id, qty, ...form }) });
+    const r = await fetch("/api/tickets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventId: ev.id, qty, package: pkg || undefined, ...form }) });
     const d = await r.json();
     if (!r.ok) { setBusy(false); return setError(d.error); }
     const ok = await pay("ticket", d.code, { name: form.name, email: form.email });
@@ -44,7 +46,7 @@ export default function Events() {
   }
 
   async function rsvp(e: React.FormEvent, ev: Ev) {
-    if (ev.price) return buy(e, ev);
+    if (each(ev)) return buy(e, ev);
     e.preventDefault();
     setError("");
     const r = await fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventId: ev.id, ...form }) });
@@ -96,23 +98,29 @@ export default function Events() {
                   <form className="rsvp-form" onSubmit={(e) => rsvp(e, ev)}>
                     <input className="input" required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                     <input className="input" required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-                    {ev.price > 0 && (
+                    {!!ev.packages?.length && (
+                      <div className="chips" style={{ justifyContent: "flex-start" }} role="radiogroup" aria-label="Package">
+                        <button type="button" role="radio" aria-checked={!pkg} className={`chip ${!pkg ? "on" : ""}`} onClick={() => setPkg("")}>{ev.price ? `Ticket only · ${rupees(ev.price)}` : "Just come (free)"}</button>
+                        {ev.packages.map((p) => <button key={p.id} type="button" role="radio" aria-checked={pkg === p.id} className={`chip ${pkg === p.id ? "on" : ""}`} onClick={() => setPkg(p.id)}>{p.label} · +{rupees(p.price)}</button>)}
+                      </div>
+                    )}
+                    {each(ev) > 0 && (
                       <label className="row small" style={{ alignItems: "center", gap: "0.5rem" }}>
                         Tickets
                         <select className="input" style={{ width: "auto" }} value={qty} onChange={(e) => setQty(Number(e.target.value))}>
                           {[1, 2, 3, 4].filter((n) => n <= ev.spotsLeft).map((n) => <option key={n} value={n}>{n}</option>)}
                         </select>
-                        <span className="muted">= {rupees(ev.price * qty)}</span>
+                        <span className="muted">= {rupees(each(ev) * qty)}</span>
                       </label>
                     )}
                     {error && <p className="error small">{error}</p>}
                     <div className="row">
-                      <button className="btn btn-pink btn-sm" style={{ flex: 1 }} disabled={busy}>{ev.price ? (busy ? "Opening payment…" : `Pay ${rupees(ev.price * qty)}`) : "Save my spot"}</button>
+                      <button className="btn btn-pink btn-sm" style={{ flex: 1 }} disabled={busy}>{each(ev) ? (busy ? "Opening payment…" : `Pay ${rupees(each(ev) * qty)}`) : "Save my spot"}</button>
                       <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpenId(null)}>Cancel</button>
                     </div>
                   </form>
                 ) : (
-                  <button className="btn btn-sm" disabled={ev.spotsLeft === 0} onClick={() => { setOpenId(ev.id); setError(""); setQty(1); }}>{ev.price ? "Get tickets" : "RSVP"}</button>
+                  <button className="btn btn-sm" disabled={ev.spotsLeft === 0} onClick={() => { setOpenId(ev.id); setError(""); setQty(1); setPkg(""); }}>{ev.price ? "Get tickets" : "RSVP"}</button>
                 )}
               </div>
             </article>

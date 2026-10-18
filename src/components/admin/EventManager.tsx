@@ -7,7 +7,9 @@ import type { CafeEvent } from "@/lib/cafe";
 import { useStore } from "../Store";
 
 type Ev = CafeEvent & { spotsLeft: number };
-const blank = { id: "", title: "", date: "", time: "18:00", desc: "", img: "", capacity: 20, price: 0, repeat: "none", times: 4 };
+const blank = { id: "", title: "", date: "", time: "18:00", desc: "", img: "", capacity: 20, price: 0, repeat: "none", times: 4, packages: "" };
+/** "Label | 150" per line ⇄ packages */
+const parsePackages = (t: string) => t.split("\n").map((l) => l.split("|")).filter((p) => p.length === 2 && p[0].trim()).map(([label, price]) => ({ label: label.trim(), price: Number(price.replace(/\D/g, "")) }));
 const json = (method: string, body: unknown) => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 /** Owner: add, edit and delete events (free RSVP when the price is ₹0) */
@@ -23,7 +25,7 @@ export default function EventManager({ onChange }: { onChange?: () => void }) {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!f) return;
-    const r = await fetch("/api/events", json("PUT", { ...f, id: f.id || undefined }));
+    const r = await fetch("/api/events", json("PUT", { ...f, id: f.id || undefined, packages: parsePackages(f.packages) }));
     const d = await r.json();
     if (!r.ok) return toast(d.error);
     toast(f.id ? "Event updated ✓" : d.created ? `${d.created} events added ✓` : "Event added ✓ It's on the site now.");
@@ -80,6 +82,9 @@ export default function EventManager({ onChange }: { onChange?: () => void }) {
                 </span>
               </label>
             )}
+            <label className="field">Food &amp; drink packages <span className="muted small">· optional, one per line: “Brunch included | 250”</span>
+              <textarea className="input" rows={2} value={f.packages} onChange={(e) => setF({ ...f, packages: e.target.value })} placeholder={"Any drink included | 150\nBrunch included | 350"} />
+            </label>
             <label className="field">Spots<input className="input" type="number" min={1} max={500} required value={f.capacity} onChange={(e) => setF({ ...f, capacity: Number(e.target.value) })} /></label>
             <label className="field">Ticket price (₹, 0 = free RSVP)<input className="input" type="number" min={0} max={20000} value={f.price} onChange={(e) => setF({ ...f, price: Number(e.target.value) })} /></label>
           </div>
@@ -105,7 +110,7 @@ export default function EventManager({ onChange }: { onChange?: () => void }) {
           <li key={e.id} className={e.date < today ? "muted" : ""}>
             <span><b>{e.title}</b> · {new Date(`${e.date}T${e.time}`).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}{e.date < today ? " · past" : ""}</span>
             <span className="small">{e.price ? rupees(e.price) : "free"} · {e.capacity - e.spotsLeft}/{e.capacity}</span>
-            <button className="link-btn" onClick={() => setF({ id: e.id, title: e.title, date: e.date, time: e.time, desc: e.desc, img: e.img, capacity: e.capacity, price: e.price, repeat: "none", times: 4 })}>Edit</button>
+            <button className="link-btn" onClick={() => setF({ id: e.id, title: e.title, date: e.date, time: e.time, desc: e.desc, img: e.img, capacity: e.capacity, price: e.price, repeat: "none", times: 4, packages: (e.packages ?? []).map((p) => `${p.label} | ${p.price}`).join("\n") })}>Edit</button>
             <a className="link-btn" href={`/api/admin/story?event=${encodeURIComponent(e.id)}`} target="_blank" title="Instagram story image">📸 Story</a>
             {e.series && <button className="link-btn" onClick={() => removeSeries(e.id)} title="Remove this and every later date in the series">Remove series</button>}
           </li>

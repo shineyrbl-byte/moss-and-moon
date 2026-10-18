@@ -672,6 +672,8 @@ function open() {
   addColumn(db, "orders", "company_id", "INTEGER");
   addColumn(db, "orders", "arrived_at", "TEXT");
   addColumn(db, "orders", "delivery_eta", "INTEGER");
+  addColumn(db, "tickets", "package", "TEXT");
+  addColumn(db, "order_payments", "items", "TEXT"); // pay-for-what-I-had: {line index: how many}
   addColumn(db, "orders", "arrived_note", "TEXT");
   addColumn(db, "orders", "branch", "TEXT NOT NULL DEFAULT 'main'");
   addColumn(db, "bookings", "branch", "TEXT NOT NULL DEFAULT 'main'");

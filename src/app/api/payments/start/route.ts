@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { startPayment } from "@/lib/payments";
 import { orderDue } from "@/lib/pricing";
 import { currentCustomer } from "@/lib/account";
-import { paidShares } from "@/lib/orderMoney";
+import { claimedItems, itemsShare, paidShares } from "@/lib/orderMoney";
 import { personShare } from "@/lib/groups";
 import { cleanText } from "@/lib/db";
 import { reportError } from "@/lib/errors";
@@ -38,6 +38,23 @@ export async function POST(req: Request) {
       amount = Math.min(left, mine);
       shareId = Number(db.prepare("INSERT INTO order_payments (order_code, amount, person) VALUES (?, ?, ?)").run(c, amount, person).lastInsertRowid);
       label = `${person}'s part of ${c}`;
+    } else if (kind === "share" && body.items && typeof body.items === "object") {
+      // Pay for what I had: chosen units of each line, not already paid by someone else
+      const lines = JSON.parse((db.prepare("SELECT lines FROM orders WHERE code = ?").get(c) as { lines: string }).lines) as { qty: number; total: number }[];
+      const taken = claimedItems(c);
+      const pick: Record<number, number> = {};
+      for (const [k, v] of Object.entries(body.items as Record<string, unknown>)) {
+        const i = Number(k), n = Math.floor(Number(v));
+        if (!lines[i] || !(n >= 1)) continue;
+        if (n > lines[i].qty - (taken[i] ?? 0)) return Response.json({ error: "Someone has already paid for some of those. Refresh and pick again." }, { status: 409 });
+        pick[i] = n;
+      }
+      if (!Object.keys(pick).length) return Response.json({ error: "Tick what you had first." }, { status: 400 });
+      // The last person pays whatever's left, so rounding never leaves a rupee unpaid
+      const allClaimed = lines.every((l, i) => (taken[i] ?? 0) + (pick[i] ?? 0) >= l.qty);
+      amount = allClaimed ? left : Math.min(left, itemsShare(lines, pick, orderDue(o)));
+      shareId = Number(db.prepare("INSERT INTO order_payments (order_code, amount, items) VALUES (?, ?, ?)").run(c, amount, JSON.stringify(pick)).lastInsertRowid);
+      label = `What you had from ${c}`;
     } else if (kind === "share") {
       if (!o.split_count) return Response.json({ error: "Choose how many ways to split first." }, { status: 400 });
       amount = Math.min(left, Math.ceil(orderDue(o) / o.split_count));

@@ -33,7 +33,12 @@ export function cleanEvent(b: Record<string, unknown>, existingId?: string): Caf
   if (!img) img = "1501339847302-ac426a4a7cbb";
   if (!/^[\w-]+$/.test(img) && !/^\/api\/uploads\/[\w-]+\.(jpg|png|webp)$/.test(img)) return { error: "That photo link doesn't look right." };
   const id = existingId ?? `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30)}-${Math.random().toString(36).slice(2, 6)}`;
-  return { id, title, date, time, desc, img, capacity, price };
+  // Packages: one per line in the editor, "Open mic + any drink | 150"
+  const packages = (Array.isArray(b.packages) ? b.packages : [])
+    .slice(0, 6)
+    .map((p: { label?: unknown; price?: unknown }, i: number) => ({ id: `p${i + 1}`, label: cleanText(p?.label, 60), price: Math.floor(Number(p?.price)) }))
+    .filter((p: { label: string; price: number }) => p.label && p.price > 0 && p.price <= 20000);
+  return { id, title, date, time, desc, img, capacity, price, ...(packages.length ? { packages } : {}) };
 }
 
 export const saveEvent = (e: CafeEvent) =>

@@ -6,7 +6,7 @@ import { rupees } from "@/lib/pricing";
 import { useStore } from "@/components/Store";
 import type { CafeEvent } from "@/lib/cafe";
 
-type Ticket = { code: string; name: string; qty: number; amount: number; paid: boolean; checkedIn: boolean; checkedInAt: string | null; event: CafeEvent | null };
+type Ticket = { code: string; name: string; qty: number; amount: number; package?: string | null; paid: boolean; checkedIn: boolean; checkedInAt: string | null; event: CafeEvent | null };
 
 export default function TicketPage() {
   const { code } = useParams<{ code: string }>();
@@ -66,6 +66,7 @@ export default function TicketPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/api/tickets/${t.code}/qr`} alt={`QR code for ticket ${t.code}`} width={200} height={200} />
               <strong>{t.qty} {t.qty === 1 ? "ticket" : "tickets"} · {rupees(t.amount)} paid</strong>
+              {t.package && <span className="small">🍽 {t.package}</span>}
               {t.checkedIn ? <span className="success">✓ Checked in at {t.checkedInAt?.slice(11, 16)}</span> : <span className="small muted">Show this at the door</span>}
             </>
           ) : (

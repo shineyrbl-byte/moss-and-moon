@@ -1819,3 +1819,34 @@ test("own cup and the rewards shop", async () => {
   const card = (await s.api(`/api/loyalty?phone=${phone}`)).body as { stamps: number };
   assert.equal(card.stamps, 1, "4 + 1 for this order - 4 spent");
 });
+
+test("events with food packages: the package is added to the ticket price", async () => {
+  await s.login();
+  const d = new Date(Date.now() + 6 * 86_400_000);
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const ev = await s.api("/api/events", { method: "PUT", json: { title: "Brunch Jazz", date, time: "11:00", desc: "Live trio", capacity: 20, price: 0, packages: [{ label: "Brunch included", price: 350 }, { label: "bad", price: 0 }] } });
+  assert.equal(ev.status, 200);
+  assert.equal(ev.body.packages.length, 1);
+  const pkg = ev.body.packages[0].id;
+  const t = await s.api("/api/tickets", { method: "POST", json: { eventId: ev.body.id, qty: 2, package: pkg, name: "Jazz Fan", email: "jazz@example.com" } });
+  assert.equal(t.status, 200, JSON.stringify(t.body));
+  assert.equal(t.body.amount, 700);
+  assert.equal((await s.api("/api/tickets", { method: "POST", json: { eventId: ev.body.id, qty: 1, name: "X", email: "x@example.com" } })).status, 400, "free without a package: RSVP instead");
+  const view = (await s.api(`/api/tickets/${t.body.code}`)).body as { package: string };
+  assert.equal(view.package, "Brunch included");
+});
+
+test("split by item: each pays for what they had, the last one pays the rest", async () => {
+  const o = await s.api("/api/orders", { method: "POST", json: { name: "Friends", phone: "9811155511", tipPercent: 10, lines: [{ itemId: "americano", qty: 1 }, { itemId: "fudge-cake", qty: 2 }] } });
+  const code = o.body.code as string;
+  const a = await s.api("/api/payments/start", { method: "POST", json: { kind: "share", code, items: { 1: 1 } } });
+  assert.equal(a.status, 200, JSON.stringify(a.body));
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "share", code, shareId: a.body.shareId, demo: true } });
+  assert.equal((await s.api("/api/payments/start", { method: "POST", json: { kind: "share", code, items: { 1: 2 } } })).status, 409, "one cake is already paid");
+  const v = (await s.api(`/api/orders/${code}`)).body as { claimedItems: Record<string, number> };
+  assert.equal(v.claimedItems["1"], 1);
+  const b = await s.api("/api/payments/start", { method: "POST", json: { kind: "share", code, items: { 0: 1, 1: 1 } } });
+  assert.equal(a.body.amount + b.body.amount, o.body.due, "together they cover exactly what's due (tip included)");
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "share", code, shareId: b.body.shareId, demo: true } });
+  assert.equal((await s.api(`/api/orders/${code}`)).body.pay_status, "paid");
+});

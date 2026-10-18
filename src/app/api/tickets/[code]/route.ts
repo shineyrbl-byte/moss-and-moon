@@ -12,7 +12,7 @@ export async function GET(req: Request, { params }: Ctx) {
   const t = getTicket((await params).code);
   if (!t) return Response.json({ error: "We couldn't find that ticket." }, { status: 404 });
   const ev = findEvent(t.event_id);
-  return Response.json({ code: t.code, name: t.name, qty: t.qty, amount: t.amount, paid: !!t.paid, checkedIn: !!t.checked_in, checkedInAt: t.checked_in_at, event: ev ?? null });
+  return Response.json({ code: t.code, name: t.name, qty: t.qty, amount: t.amount, package: (t as { package?: string | null }).package ?? null, paid: !!t.paid, checkedIn: !!t.checked_in, checkedInAt: t.checked_in_at, event: ev ?? null });
 }
 
 // Staff at the door: check a ticket in (once)

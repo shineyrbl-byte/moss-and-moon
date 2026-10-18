@@ -287,5 +287,13 @@ export const MENU_V5: MenuItem[] = [
   { id: "rose-kulfi", cat: "bakes", name: "Rose Kulfi", desc: "Slow-reduced milk kulfi with rose and pistachio, on a stick.", price: 120, img: "1505394033641-40c6ad1178d7", diet: ["gf"], allergens: ["milk", "nuts"], kcal: 210, cost: 25, kids: true, nameHi: "गुलाब कुल्फ़ी", descHi: "धीमे पकाए दूध की कुल्फ़ी, गुलाब और पिस्ता के साथ, डंडी पर।" },
   { id: "brownie-sundae", cat: "bakes", name: "Brownie Sundae", desc: "Warm fudge brownie, vanilla gelato, salted caramel and a wafer.", price: 270, img: "1551024506-0bccd828d307", allergens: ["gluten", "milk", "egg", "soy"], kcal: 680, cost: 60, nameHi: "ब्राउनी संडे", descHi: "गरम ब्राउनी, वनीला जेलाटो, नमकीन कैरमल और वेफ़र।" },
   // Shop
+  {
+    id: "gift-hamper", cat: "shop", name: "Build a Gift Hamper", desc: "A pink box with ribbon and a handwritten card. Pick the coffee and up to three treats.", price: 300, img: "1501747315-124a0eaca060", badge: "pink pick", stock: 15, cost: 650,
+    groups: [
+      { id: "coffee", label: "The coffee", min: 1, max: 1, choices: [{ id: "drip", label: "Drip bags (10)", price: 450 }, { id: "house", label: "House Blend 250 g", price: 650 }, { id: "mystery", label: "Mystery Bean 250 g", price: 720 }, { id: "single", label: "Single Origin 250 g", price: 780 }] },
+      { id: "treats", label: "Treats & things · up to 3", min: 0, max: 3, choices: [{ id: "mug", label: "Ceramic mug", price: 450 }, { id: "cup", label: "Reusable cup", price: 550 }, { id: "tote", label: "Canvas tote", price: 350 }, { id: "macarons", label: "Rose macarons (4)", price: 260, adds: ["nuts", "egg", "milk"] }, { id: "cookies", label: "Brown butter cookies (4)", price: 380, adds: ["gluten", "milk", "egg", "soy"] }, { id: "bebinca", label: "Bebinca slab", price: 500, adds: ["egg", "milk"] }] },
+    ],
+    nameHi: "गिफ़्ट हैंपर बनाइए", descHi: "रिबन और हाथ से लिखे कार्ड वाला गुलाबी डिब्बा। कॉफ़ी और तीन तोहफ़े चुनिए।",
+  },
   { id: "mystery-beans", cat: "shop", name: "Mystery Bean of the Month · 250 g", desc: "A new single origin every month, picked by our head barista. Tasting notes inside.", price: 720, img: "1442550528053-c431ecb55509", badge: "new", variants: GRINDS, stock: 20, cost: 300, nameHi: "महीने की मिस्ट्री बीन्स (250 ग्राम)", descHi: "हर महीने नई सिंगल ओरिजिन कॉफ़ी, हमारे हेड बरिस्ता की पसंद।" },
 ];

@@ -119,6 +119,7 @@ export default function CustomizeModal() {
               </div>
             );
           })}
+          {groups.length > 0 && item.cat === "shop" && <p className="small muted">✍️ Write your card message in “Anything we should know?” at checkout. Pick it up or have it delivered.</p>}
           {groups.length > 0 ? null : drink ? (
             <>
               {group("Size", "size", SIZES)}

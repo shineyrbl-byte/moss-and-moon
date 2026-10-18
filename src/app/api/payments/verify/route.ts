@@ -76,7 +76,7 @@ export async function POST(req: Request) {
   if (body.kind === "ticket") {
     const r = db.prepare("UPDATE tickets SET paid = 1, payment_ref = ? WHERE code = ? AND paid = 0").run(v.ref, code);
     if (r.changes) {
-      const t = db.prepare("SELECT code, event_id, name, email, qty FROM tickets WHERE code = ?").get(code) as { code: string; event_id: string; name: string; email: string; qty: number };
+      const t = db.prepare("SELECT code, event_id, name, email, qty, package FROM tickets WHERE code = ?").get(code) as { code: string; event_id: string; name: string; email: string; qty: number; package: string | null };
       const ev = findEvent(t.event_id);
       if (ev) sendLater(t.email, ...ticketEmail({ ...t, title: ev.title, date: ev.date, time: ev.time }));
     }
