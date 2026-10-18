@@ -7,7 +7,7 @@ import { useStore } from "./Store";
 import Reveal from "./Reveal";
 import UsualCard from "./Usual";
 import VoiceOrder from "./VoiceOrder";
-import { ALLERGENS, allergensFor, canAvoid, kcalFor } from "@/lib/nutrition";
+import { ALLERGENS, allergensFor, canAvoid, kcalFor, type Allergen } from "@/lib/nutrition";
 
 export default function Menu() {
   const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t } = useStore();
@@ -16,7 +16,18 @@ export default function Menu() {
   useEffect(() => setHappy(isHappyHour()), []);
   const [cat, setCat] = useState<MenuTab>("all");
   const [diet, setDiet] = useState<Diet[]>([]);
-  const [avoid, setAvoid] = useState<("nuts" | "egg")[]>([]);
+  const [avoid, setAvoid] = useState<Allergen[]>([]);
+  // Signed-in guests with a dietary profile see what suits them first
+  const { me } = useStore();
+  const [usingProfile, setUsingProfile] = useState(false);
+  useEffect(() => {
+    if (!me?.diet) return;
+    const d = me.diet;
+    if (!d.vegan && !d.gf && !d.avoid.length) return;
+    setDiet([...(d.vegan ? ["vegan" as Diet] : []), ...(d.gf ? ["gf" as Diet] : [])]);
+    setAvoid(d.avoid as Allergen[]);
+    setUsingProfile(true);
+  }, [me?.diet]);
   const [q, setQ] = useState("");
 
   const items = useMemo(() => {
@@ -69,6 +80,12 @@ export default function Menu() {
         </div>
       </div>
 
+      {usingProfile && (
+        <p className="center small" style={{ marginBottom: "1rem" }}>
+          ✿ Showing what suits your profile ({[...diet.map((d) => (d === "gf" ? "gluten-free" : d)), ...avoid.map((a) => `no ${a}`)].join(" · ")}){" "}
+          <button className="link-btn" onClick={() => { setDiet([]); setAvoid([]); setUsingProfile(false); }}>Show everything</button>
+        </p>
+      )}
       <div className="menu-grid">
         {items.map((m, i) => {
           const out = soldOut.has(m.id);

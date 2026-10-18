@@ -189,6 +189,7 @@ export type Quote = {
   loyaltyDiscount: number; // 10-stamp free drink
   birthdayDiscount: number; // free bake in your birthday week
   passDiscount: number; // coffee pass: one drink a day
+  tierDiscount: number; // silver/gold members: free size upgrades
   total: number; // goods after discounts
   creditUsed: number; // account credit (from invites)
   giftUsed: number; // paid from a gift card
@@ -250,7 +251,7 @@ export function quote(
   freeDrink = false,
   extra: {
     now?: Date; giftBalance?: number; credit?: number; birthdayTreat?: boolean; passDrink?: boolean;
-    tipPercent?: number; tipAmount?: number; delivery?: boolean;
+    tipPercent?: number; tipAmount?: number; delivery?: boolean; tier?: "bronze" | "silver" | "gold";
   } = {}
 ): Quote {
   const lines: QuoteLine[] = [];
@@ -289,7 +290,12 @@ export function quote(
   let birthdayDiscount = 0;
   if (extra.birthdayTreat && bakes.length) birthdayDiscount = Math.min(Math.min(...bakes.map((b) => b.unit)), BIRTHDAY_CAP);
 
-  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount);
+  // Loyalty tiers: the upgrade to large is free (silver: one drink, gold: every drink)
+  const upgrade = SIZES.find((x) => x.value === "large")!.extra;
+  const largeCups = lines.filter((l) => isDrink(l.cat!) && l.opts.size === "large").reduce((s, l) => s + l.qty, 0);
+  const tierDiscount = extra.tier === "gold" ? largeCups * upgrade : extra.tier === "silver" ? Math.min(1, largeCups) * upgrade : 0;
+
+  const total = Math.max(0, subtotal - happyDiscount - promoDiscount - loyaltyDiscount - birthdayDiscount - passDiscount - tierDiscount);
   const creditUsed = Math.min(total, Math.max(0, Math.floor(extra.credit ?? 0)));
   const giftUsed = Math.min(total - creditUsed, Math.max(0, Math.floor(extra.giftBalance ?? 0)));
   const deliveryFee = extra.delivery && lines.length ? (total >= DELIVERY.freeOver ? 0 : DELIVERY.fee) : 0;
@@ -300,7 +306,7 @@ export function quote(
         ? Math.round((total * (extra.tipPercent ?? 0)) / 100)
         : 0;
   return {
-    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount,
+    lines, subtotal, happyHour: isGolden, happyDiscount, promoCode: p ? code : null, promoDiscount, loyaltyDiscount, birthdayDiscount, passDiscount, tierDiscount,
     total, creditUsed, giftUsed, deliveryFee, tip, due: total - creditUsed - giftUsed + deliveryFee + tip,
   };
 }

@@ -10,7 +10,7 @@ import { ICE, MILKS, SHOT_PRICE, SIZES, SWEETS, SYRUPS, TEMPS, TOPPINGS, cleanOp
 
 // Pop-up for choosing size, milk, sweetness etc. before adding to the tray.
 export default function CustomizeModal() {
-  const { customizing: item, setCustomizing, add, toast, soldOut } = useStore();
+  const { customizing: item, setCustomizing, add, toast, soldOut, me } = useStore();
   const [opts, setOpts] = useState<Options>({});
   const [qty, setQty] = useState(1);
   const router = useRouter();
@@ -65,11 +65,17 @@ export default function CustomizeModal() {
               {item.cat !== "shop" && (() => {
                 const al = allergensFor(item, opts);
                 const kc = kcalFor(item, opts);
+                // Clash with the guest's dietary profile?
+                const avoid = me?.diet?.avoid ?? [];
+                const clash = al.filter((a) => avoid.includes(a) || (me?.diet?.vegan && (a === "milk" || a === "egg")) || (me?.diet?.gf && a === "gluten"));
                 return (
+                  <>
+                  {clash.length > 0 && <p className="diet-warn" role="alert">⚠️ Contains {clash.join(", ")}, which your profile says to avoid{al.includes("milk") && item.cat !== "bakes" && !item.noMilk ? ". Try a different milk." : "."}</p>}
                   <p className="small facts" aria-live="polite">
                     {al.length ? <>Contains: <b>{al.map((a) => ALLERGENS.find((x) => x.id === a)!.label.toLowerCase()).join(", ")}</b></> : "No common allergens"}
                     {kc !== null && <> · about {kc * qty} kcal</>}
                   </p>
+                  </>
                 );
               })()}
             </div>

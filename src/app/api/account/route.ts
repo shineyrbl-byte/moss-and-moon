@@ -3,6 +3,12 @@ import { currentCustomer } from "@/lib/account";
 import { STAMPS_FOR_REWARD } from "@/lib/cafe";
 import { perksFor } from "@/lib/perks";
 import { PASS } from "@/lib/pricing";
+import { ALLERGENS } from "@/lib/nutrition";
+
+type Diet = { vegan: boolean; gf: boolean; avoid: string[] };
+function parseDiet(raw: unknown): Diet {
+  try { const d = JSON.parse(String(raw ?? "{}")); return { vegan: !!d.vegan, gf: !!d.gf, avoid: Array.isArray(d.avoid) ? d.avoid : [] }; } catch { return { vegan: false, gf: false, avoid: [] }; }
+}
 
 // The signed-in guest's profile, stamps and recent orders
 export async function GET() {
@@ -17,8 +23,9 @@ export async function GET() {
   return Response.json({
     signedIn: true,
     pass: { active: !!perks.pass, until: perks.pass?.ends ?? null, usedToday: !!perks.pass && !perks.passDrink, price: PASS.price },
-    perks: { birthdayTreat: perks.birthdayTreat, passDrink: perks.passDrink, credit: perks.credit, canUseInvite: !c.referred_by && orderCount === 0 },
-    customer: { name: c.name, email: c.email, phone: c.phone, birthday: c.birthday, favs: c.favs, referralCode: c.referral_code, credit: c.credit, memberSince: c.created_at },
+    perks: { birthdayTreat: perks.birthdayTreat, passDrink: perks.passDrink, credit: perks.credit, canUseInvite: !c.referred_by && orderCount === 0, tier: perks.tier },
+    tier: perks.tierInfo,
+    customer: { name: c.name, email: c.email, phone: c.phone, birthday: c.birthday, favs: c.favs, referralCode: c.referral_code, credit: c.credit, memberSince: c.created_at, diet: parseDiet(c.diet) },
     stamps: { count: card?.stamps ?? 0, rewardsUsed: card?.rewards_used ?? 0, needed: STAMPS_FOR_REWARD },
     orders: orders.map((o) => ({ ...o, lines: JSON.parse(String(o.lines)) })),
   });
@@ -42,6 +49,10 @@ export async function PATCH(req: Request) {
     birthday = b.birthday || c.birthday;
   }
   const favs = Array.isArray(b.favs) ? JSON.stringify(b.favs.filter((x: unknown) => typeof x === "string").slice(0, 100)) : JSON.stringify(c.favs);
-  db.prepare("UPDATE customers SET name = ?, phone = ?, birthday = ?, favs = ? WHERE id = ?").run(name, phone, birthday, favs, c.id);
+  // Dietary profile: vegan / gluten-free, and allergens to avoid
+  const diet = b.diet && typeof b.diet === "object"
+    ? JSON.stringify({ vegan: !!b.diet.vegan, gf: !!b.diet.gf, avoid: ALLERGENS.map((a) => a.id).filter((a) => Array.isArray(b.diet.avoid) && b.diet.avoid.includes(a)) })
+    : (c.diet ?? null);
+  db.prepare("UPDATE customers SET name = ?, phone = ?, birthday = ?, favs = ?, diet = ? WHERE id = ?").run(name, phone, birthday, favs, diet, c.id);
   return Response.json({ ok: true });
 }

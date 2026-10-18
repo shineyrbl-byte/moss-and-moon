@@ -94,6 +94,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     birthdayTreat: perks.birthdayTreat && body.useBirthday !== false,
     passDrink: perks.passDrink && body.usePass !== false,
     tipPercent: Number(body.tipPercent) || 0,
+    tier: perks.tier,
     tipAmount: Number.isFinite(tipAmount) ? tipAmount : undefined,
     delivery: !!delivery,
   });
@@ -107,7 +108,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
 
   // Fully covered by credit / gift card = already paid
   const payStatus = q.due === 0 || opts.prepaid ? "paid" : payMethod === "online" ? "pending" : "unpaid";
-  const usedPerks = [q.passDiscount && "pass", q.birthdayDiscount && "birthday", q.loyaltyDiscount && "stamps", q.creditUsed && "credit"].filter(Boolean).join(",");
+  const usedPerks = [q.passDiscount && "pass", q.birthdayDiscount && "birthday", q.loyaltyDiscount && "stamps", q.creditUsed && "credit", q.tierDiscount && `${perks.tier} upgrade`].filter(Boolean).join(",");
   const code = makeCode("MM", 6); // 1 billion possibilities, so order pages can't be guessed
   db.prepare(
     `INSERT INTO orders (code, name, phone, email, pickup, note, lines, subtotal, discount, total, promo,
@@ -123,6 +124,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
   consumeStock(q.lines);
   takeShopStock(q.lines);
+  if (perks.tier === "gold") db.prepare("UPDATE orders SET priority = 1 WHERE code = ?").run(code); // gold members jump the queue
   if (opts.prepaid) db.prepare("UPDATE orders SET payment_ref = ? WHERE code = ?").run(opts.prepaid.ref, code);
   if (q.promoCode && q.promoDiscount > 0) usePromo(q.promoCode);
   if (group) {

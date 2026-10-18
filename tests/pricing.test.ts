@@ -322,3 +322,16 @@ test("the text formatter makes simple marks into safe HTML", async () => {
   assert.ok(!html.includes("<script"), "HTML is escaped");
   assert.ok(!html.includes('href="javascript'), "only http(s) links");
 });
+
+test("loyalty tiers and their free size upgrades", async () => {
+  const { tierFor } = await import("../src/lib/tiers.ts");
+  assert.equal(tierFor(3).id, "bronze");
+  assert.equal(tierFor(3).next?.needed, 7);
+  assert.equal(tierFor(10).id, "silver");
+  assert.equal(tierFor(31).id, "gold");
+  assert.equal(tierFor(31).next, null);
+  const lines = [{ itemId: "latte", qty: 2, opts: { size: "large" } }];
+  assert.equal(quote(lines, find, null, false, { tier: "silver" }).tierDiscount, 40, "silver: one cup");
+  assert.equal(quote(lines, find, null, false, { tier: "gold" }).tierDiscount, 80, "gold: every cup");
+  assert.equal(quote(lines, find, null, false, { tier: "bronze" }).tierDiscount, 0);
+});

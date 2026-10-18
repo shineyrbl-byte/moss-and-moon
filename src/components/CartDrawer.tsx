@@ -101,6 +101,7 @@ export default function CartDrawer() {
         credit: me?.perks?.credit ?? 0,
         birthdayTreat: !!me?.perks?.birthdayTreat && useBirthday,
         passDrink: !!me?.perks?.passDrink && usePass,
+        tier: me?.perks?.tier,
         tipPercent: step === "checkout" ? tipPercent : 0,
         delivery,
       }),
@@ -203,6 +204,7 @@ export default function CartDrawer() {
       {q.promoDiscount > 0 && <div className="sum-row discount"><span>Promo ({q.promoCode})</span><span>−{rupees(q.promoDiscount)}</span></div>}
       {q.loyaltyDiscount > 0 && <div className="sum-row discount"><span>Free drink reward</span><span>−{rupees(q.loyaltyDiscount)}</span></div>}
       {q.passDiscount > 0 && <div className="sum-row discount"><span>☕ Coffee Pass drink</span><span>−{rupees(q.passDiscount)}</span></div>}
+      {q.tierDiscount > 0 && <div className="sum-row discount"><span>{me?.perks?.tier === "gold" ? "🥇 Gold: free upgrades" : "🥈 Silver: free upgrade"}</span><span>−{rupees(q.tierDiscount)}</span></div>}
       {q.birthdayDiscount > 0 && <div className="sum-row discount"><span>🎂 Birthday treat</span><span>−{rupees(q.birthdayDiscount)}</span></div>}
       {q.creditUsed > 0 && <div className="sum-row discount"><span>💝 Your credit</span><span>−{rupees(q.creditUsed)}</span></div>}
       {q.giftUsed > 0 && <div className="sum-row discount"><span>Gift card</span><span>−{rupees(q.giftUsed)}</span></div>}

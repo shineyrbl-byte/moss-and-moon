@@ -1087,3 +1087,24 @@ test("wi-fi: owner sets it; staff get the QR; it's not public", async () => {
   assert.equal(qr.headers.get("content-type"), "image/svg+xml");
   assert.equal((await fetch(`${s.url}/api/admin/wifi/qr`)).status, 401, "not on the public site");
 });
+
+test("dietary profile is saved; silver members get a free size upgrade", async () => {
+  const email = "tier@example.com";
+  const sent = await s.api("/api/account/code", { method: "POST", json: { email } });
+  await s.api("/api/account/verify", { method: "POST", json: { email, code: (sent.body as { demoCode: string }).demoCode } });
+  await s.api("/api/account", { method: "PATCH", json: { name: "Tia", phone: "9000026767", diet: { vegan: true, avoid: ["nuts", "plutonium"] } } });
+  const acc = (await s.api("/api/account")).body as { customer: { diet: { vegan: boolean; avoid: string[] } }; tier: { id: string } };
+  assert.deepEqual(acc.customer.diet.avoid, ["nuts"], "only real allergens");
+  assert.equal(acc.tier.id, "bronze");
+  // Ten past visits → silver
+  const { DatabaseSync } = await import("node:sqlite");
+  const path = await import("node:path");
+  const db = new DatabaseSync(path.join(s.dataDir, "cafe.db"));
+  const cid = (db.prepare("SELECT id FROM customers WHERE email = ?").get(email) as { id: number }).id;
+  for (let i = 0; i < 10; i++) db.prepare("INSERT INTO orders (code, name, phone, pickup, note, lines, subtotal, discount, total, customer_id) VALUES (?, 'Tia', '9000026767', 'asap', '', '[]', 0, 0, 0, ?)").run(`MM-TIER${i}`, cid);
+  db.close();
+  assert.equal(((await s.api("/api/account")).body as { tier: { id: string } }).tier.id, "silver");
+  const r = await s.api("/api/orders", { method: "POST", json: { name: "Tia", phone: "9000026767", lines: [{ itemId: "rose-latte", qty: 1, opts: { size: "large", milk: "oat" } }] } });
+  assert.equal((r.body as { total: number }).total, 250 + 40 + 30 - 40, "large for free");
+  await s.api("/api/account/logout", { method: "POST" });
+});

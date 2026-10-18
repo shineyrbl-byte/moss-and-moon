@@ -993,3 +993,5 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 @media (max-width: 760px) { .surprise { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 1.5rem; } .surprise-text { align-items: center; } }
 @media (prefers-reduced-motion: reduce) { .wheel { transition: none; } }
 .qr-wifi { display: flex; gap: 0.5rem; align-items: center; border-top: 1px dashed var(--line); padding-top: 0.5rem; margin-top: 0.3rem; text-align: left; }
+.diet-warn { background: color-mix(in srgb, #e0a43a 20%, var(--surface)); border-radius: 10px; padding: 0.4rem 0.7rem; font-size: 0.85rem; margin-top: 0.4rem; }
+.tier-card .tier-badge { font-size: 2rem; }

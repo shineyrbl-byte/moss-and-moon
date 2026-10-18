@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import BadgesCard from "@/components/BadgesCard";
+import TierDietCards from "@/components/TierDietCards";
 import RegularOrders from "@/components/RegularOrders";
 import { useCallback, useEffect, useState } from "react";
 import { PASS, REFERRAL_CREDIT, orderDue, rupees, type QuoteLine } from "@/lib/pricing";
@@ -178,6 +179,7 @@ function Profile({ acc, reload }: { acc: Account; reload: () => Promise<void> })
         <div className="reward-banner" style={{ marginTop: "1.2rem" }}>🎂 <b>Happy birthday week!</b> A free bake (up to ₹250) comes off your next order automatically.</div>
       )}
 
+      <TierDietCards />
       <BadgesCard />
       <RegularOrders />
 

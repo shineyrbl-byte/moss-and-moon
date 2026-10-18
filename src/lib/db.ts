@@ -436,6 +436,8 @@ function open() {
   addColumn(db, "orders", "invoice_no", "TEXT");
   addColumn(db, "subscribers", "unsubscribed_at", "TEXT");
   addColumn(db, "ingredients", "supplier_name", "TEXT");
+  addColumn(db, "customers", "diet", "TEXT"); // { vegan, gf, avoid: [allergens] }
+  addColumn(db, "orders", "priority", "INTEGER NOT NULL DEFAULT 0"); // gold members jump the queue
   addColumn(db, "ingredients", "supplier_email", "TEXT");
   addColumn(db, "ingredients", "reorder_qty", "REAL");
 
