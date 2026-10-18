@@ -24,6 +24,7 @@ import VisitorsPanel from "@/components/admin/VisitorsPanel";
 import TwoStep from "@/components/admin/TwoStep";
 import GmailConnect from "@/components/admin/GmailConnect";
 import HoursEditor from "@/components/admin/HoursEditor";
+import GstCard from "@/components/admin/GstCard";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -240,6 +241,7 @@ export default function AdminPage() {
           )}
           {me?.role === "owner" && <HoursEditor />}
           {me?.role === "owner" && <GmailConnect />}
+          {me?.role === "owner" && <GstCard />}
           {me?.role === "owner" && <OwnerEmails />}
           {me?.role === "owner" && <Backups />}
           {me?.role === "owner" && <TwoStep />}

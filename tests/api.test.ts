@@ -911,3 +911,29 @@ test("events editor: owner adds, edits and deletes events", async () => {
   const free = await s.api("/api/events", { method: "PUT", json: { title: "Board games night", date: d, time: "20:00", capacity: 20, price: 0 } });
   assert.equal((await s.api("/api/events", { method: "DELETE", json: { id: (free.body as { id: string }).id } })).status, 200);
 });
+
+test("GST: paid orders get running tax invoice numbers and a monthly report", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/gst", { method: "PUT", json: { on: true, gstin: "bad", legalName: "Moss & Moon Cafe LLP" } })).status, 400);
+  assert.equal((await s.api("/api/admin/gst", { method: "PUT", json: { on: true, gstin: "30ABCDE1234F1Z5", legalName: "Moss & Moon Cafe LLP", address: "14 Willow Lane, Goa", rate: 5 } })).status, 200);
+  const make = async () => {
+    const r = await s.api("/api/orders", { method: "POST", json: { name: "Tax", phone: "9000022323", payMethod: "online", lines: [{ itemId: "cookie", qty: 2 }] } });
+    const code = (r.body as { code: string }).code;
+    await s.api("/api/payments/verify", { method: "POST", json: { kind: "order", code, demo: true } });
+    return code;
+  };
+  const a = await make();
+  const b = await make();
+  const pdf = (code: string) => fetch(`${s.url}/api/orders/${code}/receipt`).then((r) => r.arrayBuffer()).then((x) => Buffer.from(x).toString("latin1"));
+  await pdf(a);
+  await pdf(b);
+  const month = new Date().toISOString().slice(0, 7);
+  const csv = await (await fetch(`${s.url}/api/admin/gst?report=${month}`, { headers: { cookie: s.cookie() } })).text();
+  const fy = (() => { const d = new Date(); const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1; return `${y}-${String((y + 1) % 100).padStart(2, "0")}`; })();
+  const nums = [...csv.matchAll(new RegExp(`MM/${fy}/(\\d{4})`, "g"))].map((m) => Number(m[1]));
+  assert.ok(nums.length >= 2, "each paid order has an invoice number");
+  assert.equal(nums[nums.length - 1] - nums[nums.length - 2], 1, "numbers run in order");
+  // ₹220 incl. 5% GST → taxable 209.52, CGST 5.24, SGST 5.24
+  assert.match(csv, /"209\.52","5\.24","5\.24","220\.00"/);
+  await s.api("/api/admin/gst", { method: "PUT", json: { on: false } });
+});

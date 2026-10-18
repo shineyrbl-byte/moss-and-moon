@@ -2,6 +2,7 @@
 import "server-only";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { orderDue, type QuoteLine } from "./pricing";
+import { SAC, gstSettings, invoiceNumber, taxSplit } from "./gst";
 
 export type ReceiptOrder = {
   code: string; name: string; created_at: string; lines: QuoteLine[]; subtotal: number; discount: number; total: number; promo: string | null;
@@ -14,13 +15,15 @@ const MUTED = rgb(0.52, 0.4, 0.35);
 const PINK = rgb(0.72, 0.31, 0.43);
 const rs = (n: number) => `Rs. ${n.toLocaleString("en-IN")}`;
 // Built-in PDF fonts only know basic Latin letters: swap or drop anything else
-const plain = (s: string) => s.replace(/ · /g, ", ").replace(/·/g, ",").replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/×/g, "x").replace(/[^\x20-\x7E]/g, "").trim();
+const plain = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ · /g, ", ").replace(/·/g, ",").replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/×/g, "x").replace(/[^\x20-\x7E]/g, "").trim();
 
 export async function receiptPdf(o: ReceiptOrder) {
   const pdf = await PDFDocument.create();
   pdf.setTitle(`Moss & Moon receipt ${o.code}`);
   pdf.setAuthor("Moss & Moon");
-  const page = pdf.addPage([420, 300 + o.lines.length * 30]);
+  const gst = gstSettings();
+  const invoice = gst.on ? invoiceNumber(o.code) : null;
+  const page = pdf.addPage([420, 300 + o.lines.length * 30 + (gst.on ? 110 : 0)]);
   const serif = await pdf.embedFont(StandardFonts.TimesRoman);
   const serifI = await pdf.embedFont(StandardFonts.TimesRomanItalic);
   const sans = await pdf.embedFont(StandardFonts.Helvetica);
@@ -31,13 +34,18 @@ export async function receiptPdf(o: ReceiptOrder) {
   page.drawText("Moss", { x: 40, y, size: 26, font: serif, color: BROWN });
   page.drawText("&", { x: 40 + serif.widthOfTextAtSize("Moss ", 26), y, size: 26, font: serifI, color: PINK });
   page.drawText("Moon", { x: 40 + serif.widthOfTextAtSize("Moss & ", 26), y, size: 26, font: serif, color: BROWN });
-  page.drawText("14 Willow Lane", { x: 40, y: y - 16, size: 9, font: sans, color: MUTED });
+  page.drawText(gst.on && gst.address ? plain(gst.address).slice(0, 60) : "14 Willow Lane", { x: 40, y: y - 16, size: 9, font: sans, color: MUTED });
+  if (gst.on) {
+    page.drawText(plain(gst.legalName).slice(0, 60), { x: 40, y: y - 28, size: 8.5, font: sans, color: MUTED });
+    page.drawText(`GSTIN ${gst.gstin}`, { x: 40, y: y - 40, size: 8.5, font: bold, color: BROWN });
+  }
   const right = (text: string, yy: number, size = 10, font = sans, color = BROWN) => page.drawText(text, { x: width - 40 - font.widthOfTextAtSize(text, size), y: yy, size, font, color });
-  right("RECEIPT", y + 6, 9, bold, MUTED);
-  right(o.code, y - 8, 14, bold);
+  right(gst.on ? (invoice ? "TAX INVOICE" : "BILL OF SUPPLY (UNPAID)") : "RECEIPT", y + 6, 9, bold, MUTED);
+  right(invoice ?? o.code, y - 8, invoice ? 12 : 14, bold);
+  if (invoice) right(`Order ${o.code}`, y - 34, 8.5, sans, MUTED);
   right(new Date(o.created_at.replace(" ", "T")).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }), y - 22, 9, sans, MUTED);
 
-  y -= 56;
+  y -= gst.on ? 70 : 56;
   const how = o.delivery_address ? `Delivery to ${plain(o.delivery_address).slice(0, 60)}` : o.table_no ? `Table ${o.table_no}` : o.pickup === "asap" ? "Pickup" : `Pickup at ${o.pickup}`;
   page.drawText(plain(`For ${o.name}`) + ` - ${how}`, { x: 40, y, size: 10, font: sans, color: BROWN });
   y -= 14;
@@ -68,6 +76,19 @@ export async function receiptPdf(o: ReceiptOrder) {
   const due = orderDue(o);
   row(o.pay_status === "paid" || o.pay_status === "refunded" ? "Paid" : "To pay", rs(due), true);
   if (o.refund_amount > 0) row("Refunded", `- ${rs(o.refund_amount)}`);
+  if (gst.on && gst.rate > 0) {
+    // Prices include GST: show what's inside them
+    const t = taxSplit(o, gst.rate);
+    y -= 4;
+    page.drawLine({ start: { x: 40, y: y + 8 }, end: { x: width - 40, y: y + 8 }, thickness: 0.4, color: MUTED });
+    y -= 6;
+    const money = (n: number) => `Rs. ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    row(`Taxable value (SAC ${SAC})`, money(t.taxable));
+    row(`CGST @ ${gst.rate / 2}%`, money(t.cgst));
+    row(`SGST @ ${gst.rate / 2}%`, money(t.sgst));
+    page.drawText(`Prices include GST.${o.tip > 0 ? " Tips are not taxed." : ""}`, { x: 40, y, size: 8, font: sans, color: MUTED });
+    y -= 14;
+  }
   const method = o.pay_method === "online" ? "Paid online" : o.pay_method === "giftcard" ? "Covered by gift card / credit" : "Paid at the counter";
   page.drawText(o.pay_status === "unpaid" ? "Not paid yet" : method, { x: 40, y, size: 9, font: sans, color: MUTED });
 

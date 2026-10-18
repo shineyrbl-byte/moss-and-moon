@@ -385,6 +385,7 @@ function open() {
   addColumn(db, "orders", "collected_at", "TEXT");
   addColumn(db, "orders", "pickup_reminded", "INTEGER NOT NULL DEFAULT 0");
   addColumn(db, "bookings", "reminded", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "orders", "invoice_no", "TEXT");
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };
