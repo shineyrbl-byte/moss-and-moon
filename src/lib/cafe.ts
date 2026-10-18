@@ -108,7 +108,8 @@ export function openStatus(now = new Date()) {
 /** price 0 = free (just RSVP); otherwise guests buy a ticket */
 export type CafeEvent = { id: string; title: string; date: string; time: string; desc: string; img: string; capacity: number; price: number };
 
-export const EVENTS: CafeEvent[] = [
+/** The starting events (owners add and edit events in Admin → Events) */
+export const SEED_EVENTS: CafeEvent[] = [
   { id: "latte-art", title: "Latte Art for Beginners", date: "2026-10-24", time: "11:00", desc: "Pour your first heart (and maybe a tulip). Milk, cups and laughs included.", img: "1495474472287-4d71bcdd2085", capacity: 12, price: 499 },
   { id: "open-mic", title: "Moonlit Open Mic", date: "2026-10-31", time: "19:00", desc: "Poetry, guitars and pumpkin spice by candlelight. Sign up to perform at the counter.", img: "1501339847302-ac426a4a7cbb", capacity: 40, price: 0 },
   { id: "vinyl-sunday", title: "Vinyl & Pastry Sunday", date: "2026-11-08", time: "10:00", desc: "Bring a record, get a free pastry. We'll play every one.", img: "1445116572660-236099ec97a0", capacity: 30, price: 0 },

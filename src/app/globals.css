@@ -952,3 +952,6 @@ body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
 .hours-row { display: grid; grid-template-columns: 7rem 1fr auto; gap: 0.6rem; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid var(--line); }
 .hours-row .input { width: auto; padding: 0.3rem 0.5rem; }
 @media (max-width: 560px) { .hours-row { grid-template-columns: 1fr auto; } .hours-row > span { grid-column: 1 / -1; grid-row: 2; } }
+.event-form { display: flex; flex-direction: column; gap: 0.7rem; border: 1px dashed var(--line); border-radius: 14px; padding: 0.9rem; }
+.event-thumb { position: relative; width: 90px; height: 64px; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+.event-thumb img { object-fit: cover; }

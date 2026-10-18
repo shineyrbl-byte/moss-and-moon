@@ -3,11 +3,12 @@ import { useCallback, useEffect, useState } from "react";
 import { rupees } from "@/lib/pricing";
 import type { CafeEvent } from "@/lib/cafe";
 import { useStore } from "../Store";
+import EventManager from "./EventManager";
 
 type T = { code: string; event_id: string; name: string; email: string; qty: number; amount: number; checked_in: number; checked_in_at: string | null };
 
 /** Door list for paid events, with check-in */
-export default function EventsTab() {
+export default function EventsTab({ canEdit = false }: { canEdit?: boolean }) {
   const { toast } = useStore();
   const [data, setData] = useState<{ events: CafeEvent[]; tickets: T[] } | null>(null);
   const [code, setCode] = useState("");
@@ -26,6 +27,8 @@ export default function EventsTab() {
   if (!data) return <p className="muted">Loading…</p>;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+      {canEdit && <EventManager onChange={load} />}
+      <h3 style={{ fontSize: "1.2rem" }}>🎟 Door list</h3>
       <form className="row" onSubmit={(e) => { e.preventDefault(); if (code.trim()) checkIn(code); }}>
         <input className="input" style={{ flex: 1, maxWidth: 260 }} placeholder="Ticket code, e.g. TK-7KQ2M" value={code} onChange={(e) => setCode(e.target.value)} aria-label="Ticket code" />
         <button className="btn btn-pink btn-sm">Check in</button>

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { EVENTS } from "@/lib/cafe";
+import { findEvent } from "@/lib/eventsStore";
 import { getTicket } from "@/lib/tickets";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { limited, tooMany } from "@/lib/rateLimit";
@@ -11,7 +11,7 @@ export async function GET(req: Request, { params }: Ctx) {
   if (limited(req, "ticket-lookup", 300, 600000)) return tooMany();
   const t = getTicket((await params).code);
   if (!t) return Response.json({ error: "We couldn't find that ticket." }, { status: 404 });
-  const ev = EVENTS.find((e) => e.id === t.event_id);
+  const ev = findEvent(t.event_id);
   return Response.json({ code: t.code, name: t.name, qty: t.qty, amount: t.amount, paid: !!t.paid, checkedIn: !!t.checked_in, checkedInAt: t.checked_in_at, event: ev ?? null });
 }
 

@@ -408,7 +408,7 @@ export default function AdminPage() {
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <StockTab canEdit={me?.role === "owner"} />}
       {tab === "Tables & QR" && <TablesQR />}
-      {tab === "Events" && <EventsTab />}
+      {tab === "Events" && <EventsTab canEdit={me?.role === "owner"} />}
       {tab === "Waste" && <WasteTab />}
       {tab === "Notices" && <NoticesTab />}
       {tab === "Rota" && <RotaTab canEdit={me?.role === "owner"} />}

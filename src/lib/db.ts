@@ -8,6 +8,7 @@ import { MENU_V2, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
+import { SEED_EVENTS } from "./cafe";
 
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
 
@@ -336,6 +337,11 @@ function open() {
       used INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
     CREATE TABLE IF NOT EXISTS outbox (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       to_email TEXT NOT NULL,
@@ -408,6 +414,13 @@ function open() {
     const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
     MENU_V2.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v2', '1')").run();
+  }
+
+  // Events: the starting ones, once (then owners manage them in Admin → Events)
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_events'").get()) {
+    const add = db.prepare("INSERT OR IGNORE INTO events (id, data) VALUES (?, ?)");
+    for (const e of SEED_EVENTS) add.run(e.id, JSON.stringify(e));
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_events', '1')").run();
   }
 
   // Allergens & calories for the starting menu (once; items an owner already set are left alone)

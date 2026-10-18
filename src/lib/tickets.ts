@@ -1,7 +1,7 @@
 // Paid event tickets (free events still use a simple RSVP)
 import "server-only";
 import { db } from "./db";
-import { EVENTS } from "./cafe";
+import { findEvent } from "./eventsStore";
 
 export const TICKET_MAX = 4;
 const HOLD_MINUTES = 15; // an unpaid ticket keeps its seats this long
@@ -21,7 +21,7 @@ export function seatsTaken(eventId: string) {
 }
 
 export const spotsLeft = (eventId: string) => {
-  const ev = EVENTS.find((e) => e.id === eventId);
+  const ev = findEvent(eventId);
   return ev ? Math.max(0, ev.capacity - seatsTaken(eventId)) : 0;
 };
 

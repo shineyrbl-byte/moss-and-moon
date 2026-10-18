@@ -1,5 +1,6 @@
 import { db, cleanEmail, cleanText, makeCode } from "@/lib/db";
-import { EVENTS, toDateStr } from "@/lib/cafe";
+import { toDateStr } from "@/lib/cafe";
+import { findEvent, listEvents } from "@/lib/eventsStore";
 import { TICKET_MAX, spotsLeft } from "@/lib/tickets";
 import { isAdmin, unauthorized } from "@/lib/auth";
 import { limited, tooMany } from "@/lib/rateLimit";
@@ -8,7 +9,7 @@ import { limited, tooMany } from "@/lib/rateLimit";
 export async function POST(req: Request) {
   if (limited(req, "tickets", 30, 600000)) return tooMany();
   const b = await req.json().catch(() => null);
-  const ev = EVENTS.find((e) => e.id === b?.eventId);
+  const ev = findEvent(b?.eventId);
   if (!ev || ev.date < toDateStr(new Date())) return Response.json({ error: "Event not found." }, { status: 404 });
   if (!ev.price) return Response.json({ error: "This one is free, just RSVP ✿" }, { status: 400 });
   const name = cleanText(b?.name, 40);
@@ -26,5 +27,5 @@ export async function POST(req: Request) {
 export async function GET() {
   if (!(await isAdmin())) return unauthorized();
   const rows = db.prepare("SELECT code, event_id, name, email, qty, amount, checked_in, checked_in_at, created_at FROM tickets WHERE paid = 1 ORDER BY event_id, created_at").all();
-  return Response.json({ events: EVENTS.filter((e) => e.price > 0), tickets: rows });
+  return Response.json({ events: listEvents().filter((e) => e.price > 0), tickets: rows });
 }

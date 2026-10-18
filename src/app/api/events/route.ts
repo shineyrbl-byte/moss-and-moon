@@ -1,23 +1,48 @@
 import { db, cleanText } from "@/lib/db";
-import { EVENTS, toDateStr } from "@/lib/cafe";
+import { listEvents, findEvent, cleanEvent, saveEvent, deleteEvent } from "@/lib/eventsStore";
+import { isAdmin, ownerGate } from "@/lib/auth";
 import { rsvpEmail, sendLater } from "@/lib/email";
 import { seatsTaken } from "@/lib/tickets";
 import { limited, tooMany } from "@/lib/rateLimit";
 
 const going = seatsTaken;
 
-export async function GET() {
-  const today = toDateStr(new Date());
-  return Response.json(
-    EVENTS.filter((e) => e.date >= today).map((e) => ({ ...e, spotsLeft: Math.max(0, e.capacity - going(e.id)) }))
-  );
+// Upcoming events (staff can ask for past ones too with ?all=1)
+export async function GET(req: Request) {
+  const all = new URL(req.url).searchParams.get("all") === "1" && (await isAdmin());
+  return Response.json(listEvents({ upcoming: !all }).map((e) => ({ ...e, spotsLeft: Math.max(0, e.capacity - going(e.id)) })));
+}
+
+// Owner: add or edit an event ({ id? , title, date, time, desc, img, capacity, price })
+export async function PUT(req: Request) {
+  const gate = await ownerGate();
+  if (gate) return gate;
+  const b = await req.json().catch(() => null);
+  if (!b) return Response.json({ error: "Invalid request." }, { status: 400 });
+  const existing = typeof b.id === "string" && b.id ? findEvent(b.id) : undefined;
+  if (b.id && !existing) return Response.json({ error: "Event not found." }, { status: 404 });
+  const e = cleanEvent(b, existing?.id);
+  if ("error" in e) return Response.json(e, { status: 400 });
+  if (existing && e.capacity < going(e.id)) return Response.json({ error: `${going(e.id)} people are already coming, so spots can't go below that.` }, { status: 400 });
+  saveEvent(e);
+  return Response.json(e);
+}
+
+// Owner: delete an event (only if no paid tickets)
+export async function DELETE(req: Request) {
+  const gate = await ownerGate();
+  if (gate) return gate;
+  const b = await req.json().catch(() => null);
+  const r = deleteEvent(String(b?.id ?? ""));
+  return Response.json(r, { status: "error" in r ? 409 : 200 });
 }
 
 // RSVP to an event
 export async function POST(req: Request) {
   if (limited(req, "rsvp", 30, 600000)) return tooMany();
   const b = await req.json().catch(() => null);
-  const ev = EVENTS.find((e) => e.id === b?.eventId);
+  const ev = findEvent(String(b?.eventId ?? ""));
+  if (ev && ev.date < new Date().toISOString().slice(0, 10)) return Response.json({ error: "That event has already happened." }, { status: 410 });
   const name = cleanText(b?.name, 40);
   const email = cleanText(b?.email, 100).toLowerCase();
   if (!ev) return Response.json({ error: "Event not found." }, { status: 404 });

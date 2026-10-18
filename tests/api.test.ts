@@ -891,3 +891,23 @@ test("hours & holidays: a closure stops orders and bookings; golden hour is edit
   await s.api("/api/admin/cafe-config", { method: "PUT", json: { closures: [], hours: before.hours, happyHour: { on: true, from: 15, to: 17, off: 20, cats: ["bakes"], days: [0, 1, 2, 3, 4, 5, 6] } } });
   assert.equal((await s.api("/api/orders", { method: "POST", json: { name: "Open", phone: "9000021212", lines: [{ itemId: "cookie", qty: 1 }] } })).status, 200);
 });
+
+test("events editor: owner adds, edits and deletes events", async () => {
+  await s.login();
+  const d = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+  assert.equal((await s.api("/api/events", { method: "PUT", json: { title: "", date: d, time: "18:00", capacity: 10 } })).status, 400);
+  const add = await s.api("/api/events", { method: "PUT", json: { title: "Poetry & Pour-overs", date: d, time: "18:30", capacity: 8, price: 299, desc: "Bring a poem.", img: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=900" } });
+  assert.equal(add.status, 200);
+  const ev = add.body as { id: string; img: string };
+  assert.equal(ev.img, "1501339847302-ac426a4a7cbb", "an Unsplash link becomes its photo id");
+  const pub = (await s.api("/api/events")).body as { id: string; title: string; spotsLeft: number }[];
+  assert.ok(pub.some((e) => e.id === ev.id && e.spotsLeft === 8));
+  // Ticket sold, so it can't be deleted
+  const t = await s.api("/api/tickets", { method: "POST", json: { eventId: ev.id, name: "Poet", email: "poet@example.com", qty: 1 } });
+  const code = (t.body as { code: string }).code;
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "ticket", code, demo: true } });
+  assert.equal((await s.api("/api/events", { method: "PUT", json: { id: ev.id, title: "Poetry & Pour-overs", date: d, time: "19:00", capacity: 12, price: 299 } })).status, 200);
+  assert.equal((await s.api("/api/events", { method: "DELETE", json: { id: ev.id } })).status, 409);
+  const free = await s.api("/api/events", { method: "PUT", json: { title: "Board games night", date: d, time: "20:00", capacity: 20, price: 0 } });
+  assert.equal((await s.api("/api/events", { method: "DELETE", json: { id: (free.body as { id: string }).id } })).status, 200);
+});
