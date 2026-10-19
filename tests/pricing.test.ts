@@ -359,15 +359,16 @@ test("combo deals: matched once per unit, only when they save money, and they do
     cookie: { id: "cookie", cat: "bakes", name: "Cookie", desc: "", price: 60, img: "" },
   };
   const find = (id: string) => items[id];
+  const AM = new Date(2026, 9, 20, 10); // a Tuesday morning, outside golden hour
   const combos: Combo[] = [{ id: "bf", name: "Breakfast", price: 299, on: true, slots: [{ label: "Coffee", cats: ["coffee"] }, { label: "Bake", cats: ["bakes"] }] }];
   // 2 lattes + 1 croissant + 1 cookie: one combo with the croissant (saves 71), one with the cookie isn't worth it (280 < 299)
-  const q = quote([{ itemId: "latte", qty: 2 }, { itemId: "croissant", qty: 1 }, { itemId: "cookie", qty: 1 }], find, null, false, { combos });
+  const q = quote([{ itemId: "latte", qty: 2 }, { itemId: "croissant", qty: 1 }, { itemId: "cookie", qty: 1 }], find, null, false, { combos, now: AM });
   assert.deepEqual(q.combos, [{ id: "bf", name: "Breakfast", count: 1, saving: 71 }]);
   assert.equal(q.total, q.subtotal - 71);
   // Two of each: two combos
-  assert.equal(quote([{ itemId: "latte", qty: 2 }, { itemId: "croissant", qty: 2 }], find, null, false, { combos }).comboDiscount, 142);
+  assert.equal(quote([{ itemId: "latte", qty: 2 }, { itemId: "croissant", qty: 2 }], find, null, false, { combos, now: AM }).comboDiscount, 142);
   // Tea doesn't count as coffee
-  assert.equal(quote([{ itemId: "chai", qty: 1 }, { itemId: "croissant", qty: 1 }], find, null, false, { combos }).comboDiscount, 0);
+  assert.equal(quote([{ itemId: "chai", qty: 1 }, { itemId: "croissant", qty: 1 }], find, null, false, { combos, now: AM }).comboDiscount, 0);
   const m = matchCombos(quote([{ itemId: "latte", qty: 1 }, { itemId: "croissant", qty: 1 }], find).lines, combos);
   assert.deepEqual(m.used, [1, 1]);
 });

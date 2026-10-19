@@ -1289,3 +1289,29 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .table-tab { padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
 .table-tab ul { margin: 0; padding-left: 1.1rem; }
 .table-tab li.me { font-weight: 600; }
+
+/* Comfort settings: bigger text, calmer motion */
+.comfort { position: relative; }
+.comfort-pop { position: absolute; right: 0; top: calc(100% + 8px); width: 250px; z-index: 60; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; }
+.comfort-pop .toggle-row { gap: 0.8rem; }
+:root[data-text="large"] { font-size: 118%; }
+:root[data-text="large"] .small, :root[data-text="large"] small { font-size: 0.95rem; }
+:root[data-text="large"] .tiny { font-size: 0.85rem; }
+:root[data-motion="reduce"] *, :root[data-motion="reduce"] *::before, :root[data-motion="reduce"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+:root[data-motion="reduce"] .reveal { opacity: 1; transform: none; }
+:root[data-motion="reduce"] .season-sky { display: none; }
+@media (max-width: 480px) { .comfort-pop { position: fixed; left: 16px; right: 16px; top: 70px; width: auto; } }
+
+/* Coffee diary */
+.diary-lean { display: flex; align-items: center; gap: 0.6rem; margin: 0.25rem 0; }
+.diary-lean span:first-child, .diary-lean span:last-child { width: 72px; }
+.diary-lean span:last-child { text-align: right; }
+.diary-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.diary-list li { padding: 0.8rem 1rem; }
+
+/* Make-it-at-home recipes */
+.recipe-photo { position: relative; aspect-ratio: 16 / 10; border-radius: 22px; overflow: hidden; margin: 1rem 0 1.4rem; }
+.recipe-photo img { object-fit: cover; }
+.recipe-cols { display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.5rem; }
+.recipe-cols ul, .recipe-cols ol { padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.35rem; }
+@media (max-width: 700px) { .recipe-cols { grid-template-columns: 1fr; } }

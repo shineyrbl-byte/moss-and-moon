@@ -9,6 +9,7 @@ import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
 import { MENU_NAMES } from "./menuNames";
+import { MENU_DESCS } from "./menuDescs";
 import { SEED_EVENTS } from "./cafe";
 
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
@@ -682,6 +683,17 @@ function open() {
   `);
 
   // Newer columns (added safely to databases created by older versions)
+  db.exec(`CREATE TABLE IF NOT EXISTS coffee_diary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL,
+    item_id TEXT,
+    name TEXT NOT NULL,
+    place TEXT,
+    rating INTEGER NOT NULL,
+    note TEXT,
+    order_code TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  ); CREATE INDEX IF NOT EXISTS coffee_diary_by_customer ON coffee_diary (customer_id);`);
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
   addColumn(db, "customers", "student_email", "TEXT");
@@ -729,6 +741,7 @@ function open() {
   addColumn(db, "order_payments", "person", "TEXT");
   addColumn(db, "orders", "review_asked", "INTEGER NOT NULL DEFAULT 0"); // 1 = asked, 2 = skipped
   addColumn(db, "reviews", "order_code", "TEXT"); // set when the review came from a real order
+  addColumn(db, "reviews", "private", "INTEGER NOT NULL DEFAULT 0"); // 1 = an unhappy visit review, for the owner only
   addColumn(db, "ingredients", "cost", "REAL"); // ₹ per g / ml / piece
   addColumn(db, "customers", "badges", "TEXT"); // badges already shown to them
   addColumn(db, "orders", "collected_at", "TEXT");
@@ -739,6 +752,9 @@ function open() {
   addColumn(db, "ingredients", "supplier_name", "TEXT");
   addColumn(db, "customers", "diet", "TEXT"); // { vegan, gf, avoid: [allergens] }
   addColumn(db, "orders", "priority", "INTEGER NOT NULL DEFAULT 0"); // gold members jump the queue
+  addColumn(db, "orders", "source", "TEXT NOT NULL DEFAULT 'web'"); // web | swiggy | zomato
+  addColumn(db, "orders", "source_ref", "TEXT"); // the platform's own order number
+  addColumn(db, "orders", "sim", "INTEGER NOT NULL DEFAULT 0"); // 1 = made by "a day in the life"
   addColumn(db, "ingredients", "supplier_email", "TEXT");
   addColumn(db, "ingredients", "reorder_qty", "REAL");
 
@@ -814,6 +830,14 @@ function open() {
     if (n.hi && !d.nameHi) next.nameHi = n.hi;
     if (n.mr && !d.nameMr) next.nameMr = n.mr;
     return next.nameHi !== d.nameHi || next.nameMr !== d.nameMr ? next : null;
+  }));
+  once("menu_descs_v1", () => patchItems(null, (d, id) => {
+    const n = MENU_DESCS[id];
+    if (!n) return null;
+    const next = { ...d };
+    if (n.hi && !d.descHi) next.descHi = n.hi;
+    if (n.mr && !d.descMr) next.descMr = n.mr;
+    return next.descHi !== d.descHi || next.descMr !== d.descMr ? next : null;
   }));
   once("seeded_nutrition", () => patchItems(null, (d, id) => {
     const n = NUTRITION[id];

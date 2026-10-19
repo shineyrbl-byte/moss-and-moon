@@ -4,10 +4,14 @@ import { isOurPhoto } from "@/lib/uploads";
 import { ownerEmail } from "@/lib/owner";
 import { sendLater } from "@/lib/email";
 import { limited, tooMany } from "@/lib/rateLimit";
+import { isAdmin } from "@/lib/auth";
 
+// Public wall: private feedback (unhappy visit reviews) is left out. Staff see everything.
 export async function GET() {
-  const rows = db.prepare("SELECT id, name, rating, text, photo, created_at, order_code IS NOT NULL AS verified FROM reviews ORDER BY id DESC LIMIT 30").all();
-  const s = db.prepare("SELECT COUNT(*) AS count, ROUND(AVG(rating), 1) AS avg FROM reviews").get();
+  const staff = await isAdmin();
+  const where = staff ? "" : "WHERE private = 0";
+  const rows = db.prepare(`SELECT id, name, rating, text, photo, created_at, order_code IS NOT NULL AS verified, private FROM reviews ${where} ORDER BY id DESC LIMIT ${staff ? 60 : 30}`).all();
+  const s = db.prepare(`SELECT COUNT(*) AS count, ROUND(AVG(rating), 1) AS avg FROM reviews ${where}`).get();
   return Response.json({ reviews: rows, ...s });
 }
 
@@ -31,11 +35,13 @@ export async function POST(req: Request) {
     if (!db.prepare("SELECT 1 FROM orders WHERE code = ?").get(orderCode)) return Response.json({ error: "We couldn't find that order." }, { status: 404 });
     if (db.prepare("SELECT 1 FROM reviews WHERE order_code = ?").get(orderCode)) return Response.json({ error: "You've already reviewed this visit. Thank you ✿" }, { status: 409 });
   }
-  db.prepare("INSERT INTO reviews (name, rating, text, photo, order_code) VALUES (?, ?, ?, ?, ?)").run(name, rating, text, photo, orderCode);
+  // A so-so or unhappy visit goes privately to the owner instead of the public wall
+  const isPrivate = orderCode && rating <= 3 ? 1 : 0;
+  db.prepare("INSERT INTO reviews (name, rating, text, photo, order_code, private) VALUES (?, ?, ?, ?, ?, ?)").run(name, rating, text, photo, orderCode, isPrivate);
 
   // A heads-up for the owner when someone wasn't happy, so they can make it right
   if (rating <= 2) alertOwner("review", `${rating}★ review from ${name}`, text.slice(0, 120), "/admin#Reviews");
   if (rating <= 2 && ownerEmail())
     sendLater(ownerEmail(), `A guest gave ${rating} star${rating === 1 ? "" : "s"} 😟`, `<p><b>${esc(name)}</b>${orderCode ? ` (order ${esc(orderCode)})` : ""} wrote:</p><p style="font-style:italic">“${esc(text)}”</p><p style="color:#8a6a5c;font-size:13px">You can reply in person, or remove the review in Admin → Reviews if it's not genuine.</p>`);
-  return Response.json({ ok: true });
+  return Response.json({ ok: true, private: !!isPrivate });
 }

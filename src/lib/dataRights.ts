@@ -28,6 +28,7 @@ export function exportData(c: Customer) {
     loyalty: c.phone ? all("SELECT phone, name, stamps, rewards_used FROM loyalty WHERE phone = ?", c.phone) : [],
     regularOrders: all("SELECT name, phone, lines, days, time, active, created_at FROM schedules WHERE customer_id = ?", c.id),
     beanSubscriptions: all("SELECT item_id, variant, qty, every_days, method, address, next_date, status, created_at FROM bean_subs WHERE customer_id = ?", c.id),
+    coffeeDiary: all("SELECT name, place, rating, note, created_at FROM coffee_diary WHERE customer_id = ? ORDER BY id", c.id),
     coffeePasses: all("SELECT starts, ends, price, paid, created_at FROM passes WHERE customer_id = ?", c.id),
     walletTopUps: all("SELECT amount, bonus, paid, created_at FROM wallet_topups WHERE customer_id = ?", c.id),
     giftCardsReceived: all("SELECT code, amount, balance, from_name, message, created_at FROM giftcards WHERE lower(to_email) = ? AND paid = 1", email),
@@ -56,7 +57,7 @@ export function deleteAccount(c: Customer) {
     run("DELETE FROM waitlist WHERE lower(email) = ?", email);
     if (phone) { run("DELETE FROM loyalty WHERE phone = ?", phone); run("DELETE FROM guest_notes WHERE guest_key = ?", `p${phone}`); }
     run("DELETE FROM guest_notes WHERE guest_key IN (?, ?)", `c${c.id}`, `e${email}`);
-    for (const t of ["schedules", "bean_subs", "wallet_topups", "pass_uses", "company_members"]) run(`DELETE FROM ${t} WHERE customer_id = ?`, c.id);
+    for (const t of ["schedules", "bean_subs", "wallet_topups", "pass_uses", "company_members", "coffee_diary"]) run(`DELETE FROM ${t} WHERE customer_id = ?`, c.id);
     run("UPDATE passes SET payment_ref = NULL WHERE customer_id = ?", c.id);
     run("UPDATE tickets SET name = 'Deleted guest', email = '' WHERE lower(email) = ?", email);
     run("DELETE FROM rsvps WHERE lower(email) = ?", email);

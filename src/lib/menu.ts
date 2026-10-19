@@ -60,6 +60,8 @@ export type MenuItem = {
   /** Marathi and Konkani names (Konkani falls back to Marathi, then Hindi) */
   nameMr?: string;
   nameKok?: string;
+  descMr?: string;
+  descKok?: string;
   /** % of guests who gave it a thumbs up (only with enough ratings) */
   loved?: number;
   /** Only sold at these branches (unset = everywhere) */
@@ -342,4 +344,12 @@ export function itemName(m: Pick<MenuItem, "name" | "nameHi" | "nameMr" | "nameK
   if (lang === "mr") return m.nameMr || m.nameHi || m.name;
   if (lang === "kok") return m.nameKok || m.nameMr || m.nameHi || m.name;
   return m.name;
+}
+
+/** The description in the guest's language, falling back to the nearest one we have */
+export function itemDesc(m: Pick<MenuItem, "desc" | "descHi" | "descMr" | "descKok">, lang: Lang): string {
+  if (lang === "hi") return m.descHi || m.desc;
+  if (lang === "mr") return m.descMr || m.desc;
+  if (lang === "kok") return m.descKok || m.descMr || m.desc;
+  return m.desc;
 }

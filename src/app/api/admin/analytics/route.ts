@@ -3,7 +3,7 @@ import { ownerGate } from "@/lib/auth";
 import { getMenu } from "@/lib/menuStore";
 import type { QuoteLine } from "@/lib/pricing";
 
-type Row = { created_at: string; lines: string; total: number; tip: number; phone: string; customer_id: number | null; table_no: number | null; delivery_address: string | null; staff_id: number | null };
+type Row = { created_at: string; lines: string; total: number; tip: number; phone: string; customer_id: number | null; table_no: number | null; delivery_address: string | null; staff_id: number | null; source: string };
 
 // Owner: numbers for the Analytics tab. ?days=7|30|90
 export async function GET(req: Request) {
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   }
   const days = [7, 30, 90].includes(Number(new URL(req.url).searchParams.get("days"))) ? Number(new URL(req.url).searchParams.get("days")) : 30;
   const rows = db
-    .prepare(`SELECT created_at, lines, total, tip, phone, customer_id, table_no, delivery_address, staff_id FROM orders WHERE created_at >= datetime('now','localtime','-${days} days')`)
+    .prepare(`SELECT created_at, lines, total, tip, phone, customer_id, table_no, delivery_address, staff_id, source FROM orders WHERE created_at >= datetime('now','localtime','-${days} days')`)
     .all() as Row[];
   const catOf = new Map(getMenu({ includeHidden: true }).map((m) => [m.id, m.cat]));
 
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   const size: Record<string, number> = { small: 0, regular: 0, large: 0 };
   const temp: Record<string, number> = { hot: 0, iced: 0 };
   let shots = 0, drinks = 0, items = 0, revenue = 0, tips = 0;
-  const channels = { pickup: { orders: 0, revenue: 0 }, table: { orders: 0, revenue: 0 }, delivery: { orders: 0, revenue: 0 } };
+  const channels = { pickup: { orders: 0, revenue: 0 }, table: { orders: 0, revenue: 0 }, delivery: { orders: 0, revenue: 0 }, swiggy: { orders: 0, revenue: 0 }, zomato: { orders: 0, revenue: 0 } };
   const guests = new Map<string, number>();
   const byStaff = new Map<number, number>();
 
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     heat[d.getDay()][d.getHours()]++;
     revenue += r.total;
     tips += r.tip ?? 0;
-    const ch = r.delivery_address ? "delivery" : r.table_no ? "table" : "pickup";
+    const ch: keyof typeof channels = r.source === "swiggy" || r.source === "zomato" ? r.source : r.delivery_address ? "delivery" : r.table_no ? "table" : "pickup";
     channels[ch].orders++;
     channels[ch].revenue += r.total;
     const who = r.customer_id ? `c${r.customer_id}` : r.phone ? `p${r.phone}` : null;

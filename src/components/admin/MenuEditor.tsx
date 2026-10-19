@@ -168,6 +168,10 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
             <label className="field" lang="kok">Name in Konkani <span className="muted small">· optional, uses Marathi if blank</span><input className="input" maxLength={60} value={f.nameKok ?? ""} onChange={(e) => set("nameKok", e.target.value || undefined)} /></label>
           </div>
           <div className="row">
+            <label className="field" lang="mr">Description in Marathi<input className="input" maxLength={200} value={f.descMr ?? ""} onChange={(e) => set("descMr", e.target.value || undefined)} /></label>
+            <label className="field" lang="kok">Description in Konkani<input className="input" maxLength={200} value={f.descKok ?? ""} onChange={(e) => set("descKok", e.target.value || undefined)} /></label>
+          </div>
+          <div className="row">
             <label className="field">Category
               <select className="input" value={f.cat} onChange={(e) => set("cat", e.target.value as Category)}>
                 <option value="coffee">Coffee</option><option value="tea">Tea & matcha</option><option value="cold">Cold drinks</option><option value="food">Food</option><option value="shop">Shop (beans, merch)</option><option value="bakes">Bakes & sweets</option>

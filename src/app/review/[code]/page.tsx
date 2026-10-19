@@ -40,7 +40,7 @@ function ReviewVisit() {
       <div className="page narrow center">
         <span style={{ fontSize: "3rem" }}>{rating >= 4 ? "🌸" : "🤍"}</span>
         <h1 className="h2">Thank you, <em>{form.name}</em></h1>
-        <p className="lead">{rating >= 4 ? "That made our day. See you again soon ☕" : "Sorry it wasn't perfect. We've passed this to the team and we'll do better."}</p>
+        <p className="lead">{rating >= 4 ? "That made our day. See you again soon ☕" : "Sorry it wasn't perfect. This went privately to the owner, not the public reviews, and we'll do better."}</p>
         {rating >= 4 && <GoogleNudge text={form.text} />}
         <Link href="/#menu" className="btn" style={{ marginTop: "1.5rem" }}>Back to the menu</Link>
       </div>
@@ -61,6 +61,7 @@ function ReviewVisit() {
         <label className="field">{rating && rating <= 3 ? "What could we do better?" : "What did you love?"}
           <textarea className="input" rows={3} required minLength={5} maxLength={400} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} />
         </label>
+        {rating > 0 && rating <= 3 && <p className="small muted">🔒 Only the owner will read this. It won&apos;t go on the public reviews.</p>}
         {error && <p className="error small">{error}</p>}
         <button className="btn btn-pink" disabled={busy || !rating}>{busy ? "Sending…" : "Send"}</button>
       </form>

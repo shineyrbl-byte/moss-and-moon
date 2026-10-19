@@ -7,7 +7,9 @@ import BackInStock from "./BackInStock";
 import { wholeCake } from "@/lib/cakes";
 import { allergensFor, kcalFor } from "@/lib/nutrition";
 import { useRouter } from "next/navigation";
-import { itemName, photo } from "@/lib/menu";
+import { itemDesc, itemName, photo } from "@/lib/menu";
+import { findHomeRecipe } from "@/lib/homeRecipes";
+import Link from "next/link";
 import { fill, type TKey } from "@/lib/i18n";
 import { ICE, ITEM_NOTE_MAX, MILKS, SHOT_PRICE, SIZES, SWEETS, SYRUPS, TEMPS, TOPPINGS, cleanOptions, defaultOptions, drinkChoices, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
 
@@ -74,7 +76,8 @@ export default function CustomizeModal() {
           <div className="modal-title-row">
             <div>
               <h3 style={{ fontSize: "2rem" }}>{itemName(item, lang)}</h3>
-              <p className="muted">{lang === "hi" && item.descHi ? item.descHi : item.desc}</p>
+              <p className="muted">{itemDesc(item, lang)}</p>
+              {findHomeRecipe(item.id) && <Link href={`/recipes/${item.id}`} className="link-btn small" onClick={close}>{t("opt.atHome")}</Link>}
               {item.cat !== "shop" && (() => {
                 const al = allergensFor(item, opts);
                 const kc = kcalFor(item, opts);

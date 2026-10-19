@@ -249,6 +249,13 @@ const en = {
   "al.shellfish": "shellfish",
   "al.mustard": "mustard",
   "al.celery": "celery",
+  "comfort.title": "Comfort settings",
+  "comfort.large": "Larger text",
+  "comfort.motion": "Less motion",
+  "comfort.saved": "Saved on this device.",
+  "footer.recipes": "Make it at home",
+  "footer.diary": "Coffee diary",
+  "opt.atHome": "🏠 Make it at home",
 };
 
 type Key = keyof typeof en;
@@ -498,6 +505,13 @@ const hi: Record<Key, string> = {
   "al.shellfish": "शेलफ़िश",
   "al.mustard": "सरसों",
   "al.celery": "सेलेरी",
+  "comfort.title": "आराम सेटिंग",
+  "comfort.large": "बड़े अक्षर",
+  "comfort.motion": "कम हलचल",
+  "comfort.saved": "इस डिवाइस पर सेव है।",
+  "footer.recipes": "घर पर बनाएँ",
+  "footer.diary": "कॉफ़ी डायरी",
+  "opt.atHome": "🏠 घर पर बनाएँ",
 };
 
 const mr: Record<Key, string> = {
@@ -745,6 +759,13 @@ const mr: Record<Key, string> = {
   "al.shellfish": "शिंपले-कोळंबी",
   "al.mustard": "मोहरी",
   "al.celery": "सेलरी",
+  "comfort.title": "सोयीची सेटिंग",
+  "comfort.large": "मोठी अक्षरे",
+  "comfort.motion": "कमी हालचाल",
+  "comfort.saved": "या डिव्हाइसवर जतन केले.",
+  "footer.recipes": "घरी बनवा",
+  "footer.diary": "कॉफी डायरी",
+  "opt.atHome": "🏠 घरी बनवा",
 };
 
 const kok: Record<Key, string> = {
@@ -992,6 +1013,13 @@ const kok: Record<Key, string> = {
   "al.shellfish": "खुबे-सुंगटां",
   "al.mustard": "सासम",
   "al.celery": "सेलरी",
+  "comfort.title": "सोयीची सेटिंग",
+  "comfort.large": "व्हडलीं अक्षरां",
+  "comfort.motion": "उणी हालचाल",
+  "comfort.saved": "ह्या डिव्हायसाचेर सांबाळलां.",
+  "footer.recipes": "घरा करात",
+  "footer.diary": "कॉफी डायरी",
+  "opt.atHome": "🏠 घरा करात",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

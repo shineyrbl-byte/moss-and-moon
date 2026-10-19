@@ -37,6 +37,8 @@ test("every dish has a Hindi and a Marathi name", async () => {
   const kaapi = items.find((m) => m.id === "filter-kaapi")!;
   assert.equal(kaapi.nameHi, "फ़िल्टर कापी"); // existing Hindi name kept
   assert.equal(kaapi.nameMr, "फिल्टर कापी");
+  const noDesc = (items as unknown as { id: string; descHi?: string; descMr?: string }[]).filter((m) => !m.descHi || !m.descMr).map((m) => m.id);
+  assert.deepEqual(noDesc, [], "every dish has Hindi and Marathi descriptions");
 });
 
 test("order prices are worked out on the server", async () => {
@@ -681,6 +683,18 @@ test("reviews from a visit are verified, once per order; insights work without A
   assert.equal(biz.status, 200);
   assert.ok((biz.body as { data: { suggestions: unknown[] } }).data.suggestions.length >= 1);
   assert.equal((await s.api("/api/admin/insights?kind=business", { method: "POST" })).status, 429, "not too often");
+});
+
+test("an unhappy visit review goes privately to the owner", async () => {
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Meh", phone: "9000088888", email: "meh@example.com", lines: [{ itemId: "cookie", qty: 1 }] } });
+  const code = (placed.body as { code: string }).code;
+  const r = await s.api("/api/reviews", { method: "POST", json: { name: "Meh", rating: 2, text: "Cookie was cold and stale", orderCode: code } });
+  assert.equal((r.body as { private: boolean }).private, true);
+  const publicList = (await (await fetch(`${s.url}/api/reviews`)).json()) as { reviews: { name: string }[] };
+  assert.ok(!publicList.reviews.some((x) => x.name === "Meh"), "not on the public wall");
+  await s.login();
+  const staffList = (await s.api("/api/reviews")).body as { reviews: { name: string; private: number }[] };
+  assert.equal(staffList.reviews.find((x) => x.name === "Meh")?.private, 1, "the owner still sees it");
 });
 
 test("profit: costs are saved with each order and add up", async () => {
@@ -1962,6 +1976,94 @@ test("kitchen stations: the order is ready when the bar and the kitchen are both
 });
 
 // Keep this one last: it clears orders and refills the café with sample data
+test("swiggy and zomato: staff type an order in, the webhook needs the secret", async () => {
+  await s.login();
+  const set = await s.api("/api/admin/aggregators", { method: "PUT", json: { swiggy: { on: true, markup: 20, commission: 25 } } });
+  assert.equal(set.status, 200);
+  const info = (await s.api("/api/admin/aggregators")).body as { swiggy: { on: boolean; markup: number }; secret: string };
+  assert.equal(info.swiggy.on, true);
+  assert.equal(info.swiggy.markup, 20);
+  assert.ok(info.secret.length >= 20);
+
+  // Typed in from the tablet: paid, tagged, and on the barista queue
+  const add = await s.api("/api/admin/aggregators", { method: "POST", json: { platform: "swiggy", ref: "SW 123", customer: "Asha", lines: [{ itemId: "americano", qty: 2 }] } });
+  assert.equal(add.status, 200);
+  const o = (await s.api(`/api/orders/${add.body.code}`)).body as { pay_status: string; note: string; total: number; status: string };
+  assert.equal(o.pay_status, "paid");
+  assert.match(o.note, /Swiggy #SW123/);
+  assert.equal(o.status, "received");
+  const dupe = await s.api("/api/admin/aggregators", { method: "POST", json: { platform: "swiggy", ref: "SW123", lines: [{ itemId: "americano", qty: 1 }] } });
+  assert.equal(dupe.body.duplicate, true, "the same platform order isn't added twice");
+  assert.equal(dupe.body.code, add.body.code);
+
+  // Webhook: no secret, wrong platform state, then a good one that names the dish
+  const hook = (p: string, body: unknown, secret?: string) => fetch(`${s.url}/api/aggregators/${p}`, { method: "POST", headers: { "Content-Type": "application/json", ...(secret ? { "x-mm-secret": secret } : {}) }, body: JSON.stringify(body) });
+  assert.equal((await hook("swiggy", { ref: "1", lines: [{ name: "Long Black", qty: 1 }] })).status, 401);
+  assert.equal((await hook("zomato", { ref: "1", lines: [{ name: "Long Black", qty: 1 }] }, info.secret)).status, 409, "zomato is switched off");
+  const ok = await hook("swiggy", { ref: "777", total: 455, lines: [{ name: "long  black", qty: 1 }] }, info.secret);
+  assert.equal(ok.status, 200);
+  const hooked = (await s.api(`/api/orders/${(await ok.json()).code}`)).body as { total: number };
+  assert.equal(hooked.total, 455, "keeps what the guest paid on the platform");
+  assert.equal((await hook("swiggy", { ref: "778", lines: [{ name: "Unicorn Latte", qty: 1 }] }, info.secret)).status, 400);
+
+  const week = (await s.api("/api/admin/aggregators")).body as { summary: { platform: string; orders: number; commission: number; gross: number }[] };
+  const sw = week.summary.find((x) => x.platform === "swiggy")!;
+  assert.ok(sw.orders >= 2);
+  assert.equal(sw.commission, Math.round(sw.gross * 0.25));
+  const csv = await fetch(`${s.url}/api/admin/aggregators/menu?platform=swiggy`, { headers: { cookie: s.cookie() } });
+  assert.match(await csv.text(), /americano,Long Black,coffee,/);
+  const an = (await s.api("/api/admin/analytics?days=7")).body as { channels: { swiggy: { orders: number } } };
+  assert.ok(an.channels.swiggy.orders >= 2, "shows in the sales channel split");
+});
+
+test("coffee diary: log drinks, rate past orders, get a taste profile", async () => {
+  assert.equal((await fetch(`${s.url}/api/account/diary`)).status, 401);
+  await signIn("diary@example.com");
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Di", phone: "9811122233", lines: [{ itemId: "cold-brew", qty: 1 }, { itemId: "cookie", qty: 1 }] } });
+  const first = (await s.api("/api/account/diary")).body as { toRate: { itemId: string; orderCode: string }[] };
+  assert.deepEqual(first.toRate.map((x) => x.itemId), ["cold-brew"], "drinks only");
+  assert.equal((await s.api("/api/account/diary", { method: "POST", json: { itemId: "cold-brew", orderCode: placed.body.code, rating: 5 } })).status, 200);
+  assert.equal((await s.api("/api/account/diary", { method: "POST", json: { itemId: "cold-brew", orderCode: placed.body.code, rating: 4 } })).status, 400, "once per order");
+  assert.equal((await s.api("/api/account/diary", { method: "POST", json: { itemId: "iced-mocha", rating: 4 } })).status, 200);
+  assert.equal((await s.api("/api/account/diary", { method: "POST", json: { name: "Flat white", place: "Somewhere in Pune", rating: 3, note: "a bit hot" } })).status, 200);
+  assert.equal((await s.api("/api/account/diary", { method: "POST", json: { name: "Mystery", rating: 9 } })).status, 400);
+  const d = (await s.api("/api/account/diary")).body as { entries: { id: number }[]; profile: { count: number; words: string; iced: number; tryNext: { id: string } | null; places: number }; toRate: unknown[] };
+  assert.equal(d.entries.length, 3);
+  assert.equal(d.toRate.length, 0);
+  assert.match(d.profile.words, /iced/);
+  assert.ok(d.profile.tryNext && !["cold-brew", "iced-mocha"].includes(d.profile.tryNext.id));
+  assert.equal(d.profile.places, 2);
+  assert.equal((await s.api(`/api/account/diary?id=${d.entries[0].id}`, { method: "DELETE" })).status, 200);
+  const exported = (await s.api("/api/account/data")).body as { coffeeDiary: unknown[] };
+  assert.equal(exported.coffeeDiary.length, 2, "included in 'download my data'");
+});
+
+test("a day in the life: pretend orders appear, move along and clear away", async () => {
+  await s.login();
+  const started = await s.api("/api/admin/sim", { method: "POST", json: { action: "start", minutes: 15, speed: "rush" } });
+  assert.equal(started.status, 200);
+  assert.equal(started.body.on, true);
+  assert.ok(started.body.orders >= 1, "the first order lands straight away");
+  const queue = (await s.api("/api/orders")).body as { orders?: { note: string }[] } | { note: string }[];
+  const list = Array.isArray(queue) ? queue : queue.orders ?? [];
+  assert.ok(list.some((o) => /simulated/.test(o.note ?? "")), "on the barista queue");
+  assert.equal((await s.api("/api/admin/sim", { method: "POST", json: { action: "stop" } })).body.on, false);
+  const cleared = await s.api("/api/admin/sim", { method: "POST", json: { action: "clear" } });
+  assert.ok(cleared.body.cleared >= 1);
+  assert.equal(cleared.body.orders, 0);
+});
+
+test("make it at home: every recipe page opens and matches a dish", async () => {
+  const { HOME_RECIPES } = await import("../src/lib/homeRecipes.ts");
+  const ids = new Set(((await s.api("/api/menu")).body.items as { id: string }[]).map((m) => m.id));
+  for (const r of HOME_RECIPES) assert.ok(ids.has(r.id), `${r.id} is on the menu`);
+  assert.equal((await fetch(`${s.url}/recipes`)).status, 200);
+  const page = await fetch(`${s.url}/recipes/${HOME_RECIPES[0].id}`);
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), new RegExp(HOME_RECIPES[0].title));
+  assert.equal((await fetch(`${s.url}/recipes/nope`)).status, 404);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

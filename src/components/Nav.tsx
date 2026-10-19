@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { LANGS } from "@/lib/i18n";
 import { useStore } from "./Store";
 import ThemeToggle from "./ThemeToggle";
+import ComfortMenu from "./ComfortMenu";
 import AmbientSound from "./AmbientSound";
 
 const LINKS = [
@@ -67,6 +68,7 @@ export default function Nav() {
           {me ? (me.name || me.email)[0].toUpperCase() : "👤"}
         </Link>
         {!small && extras}
+        <ComfortMenu />
         <ThemeToggle />
         <button className="cart-btn" onClick={() => setDrawerOpen(true)}>
           <span aria-hidden>🛍</span>

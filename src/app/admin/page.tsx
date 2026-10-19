@@ -44,6 +44,7 @@ import RotationCard from "@/components/admin/RotationCard";
 import MenuTidyCard from "@/components/admin/MenuTidyCard";
 import ImportCard from "@/components/admin/ImportCard";
 import DemoResetCard from "@/components/admin/DemoResetCard";
+import SimCard from "@/components/admin/SimCard";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
 import OwnerAlertsCard from "@/components/admin/OwnerAlertsCard";
@@ -58,6 +59,7 @@ import CompaniesTab from "@/components/admin/CompaniesTab";
 import SetupCard from "@/components/admin/SetupCard";
 import RushControl from "@/components/RushControl";
 import ChecklistsTab from "@/components/admin/ChecklistsTab";
+import AggregatorsCard from "@/components/admin/AggregatorsCard";
 import { useLive } from "@/components/useLive";
 
 type Stats = {
@@ -70,7 +72,7 @@ type Order = { branch?: string; id: number; code: string; name: string; phone: s
 type Gift = { code: string; amount: number; balance: number; from_name: string; to_name: string; to_email: string; paid: number; created_at: string };
 type Email = { id: number; to_email: string; subject: string; html: string; status: string; error: string | null; created_at: string };
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; branch?: string; high_chairs?: number; deposit?: number; deposit_status?: string | null; table_no: number | null; preorder: string | null; preorder_code: string | null };
-type Review = { id: number; name: string; rating: number; text: string; created_at: string };
+type Review = { id: number; name: string; rating: number; text: string; created_at: string; private?: number };
 
 const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Cakes", "Events", "Catering", "Companies", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health", "Settings"] as const;
 type Tab = (typeof TABS)[number];
@@ -85,7 +87,8 @@ const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
 ];
 /** Words that find a tab in "Jump to…" */
 const KEYWORDS: Partial<Record<Tab, string>> = {
-  Settings: "import csv spreadsheet excel demo reset alerts notifications push phone hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
+  Orders: "swiggy zomato aggregator delivery apps",
+  Settings: "simulate simulation day in the life fake orders import csv spreadsheet excel demo reset alerts notifications push phone hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
   Analytics: "profit menu engineering missed sales price what if retention coming back visitors insights",
   Stock: "ingredients use-by expiry supplier prices reorder shop stock",
   Checklists: "opening closing fridge temperature equipment repairs maintenance",
@@ -416,6 +419,7 @@ export default function AdminPage() {
       {tab === "Orders" && (
         <>
           <OpenTabs />
+          <AggregatorsCard />
           <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <label className="small muted" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
               <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> Show collected orders too
@@ -516,6 +520,7 @@ export default function AdminPage() {
           <ImportCard />
           <Backups />
           <TwoStep />
+          <SimCard />
           <DemoResetCard />
         </div>
       )}
@@ -596,7 +601,7 @@ export default function AdminPage() {
               <span className="stars">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
               <p style={{ fontSize: "1.05rem" }}>“{r.text}”</p>
               <footer style={{ justifyContent: "space-between" }}>
-                <span>{r.name} · {r.created_at.slice(0, 10)}</span>
+                <span>{r.name} · {r.created_at.slice(0, 10)}{r.private ? <span className="branch-tag" title="Only you can see this one">🔒 private</span> : null}</span>
                 <button className="chip" onClick={() => deleteReview(r.id)}>Remove</button>
               </footer>
             </article>

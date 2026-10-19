@@ -74,6 +74,8 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(cleanText(b.nameHi, 60) ? { nameHi: cleanText(b.nameHi, 60) } : {}),
     ...(cleanText(b.nameMr, 60) ? { nameMr: cleanText(b.nameMr, 60) } : {}),
     ...(cleanText(b.nameKok, 60) ? { nameKok: cleanText(b.nameKok, 60) } : {}),
+    ...(cleanText(b.descMr, 200) ? { descMr: cleanText(b.descMr, 200) } : {}),
+    ...(cleanText(b.descKok, 200) ? { descKok: cleanText(b.descKok, 200) } : {}),
     ...(Array.isArray(b.groups) && b.groups.length && cat !== "shop" ? { groups: cleanGroups(b.groups) } : {}),
     ...(b.half && (cat === "food") ? { half: true } : {}),
     ...(b.kids ? { kids: true } : {}),

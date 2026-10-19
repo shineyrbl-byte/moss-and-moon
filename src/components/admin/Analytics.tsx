@@ -6,7 +6,7 @@ type Data = {
   days: number; orders: number; revenue: number; avgOrder: number; tips: number; items: number; guests: number; repeatRate: number;
   heat: number[][]; byCategory: Record<string, number>;
   options: { milk: Record<string, number>; size: Record<string, number>; temp: Record<string, number>; extraShot: number; drinks: number };
-  channels: Record<"pickup" | "table" | "delivery", { orders: number; revenue: number }>;
+  channels: Record<"pickup" | "table" | "delivery" | "swiggy" | "zomato", { orders: number; revenue: number }>;
   staff: { name: string; orders: number }[];
 };
 type Tip = { x: number; y: number; value: string; label: string } | null;
@@ -113,6 +113,8 @@ export default function Analytics() {
     { label: "Pick up", value: data.channels.pickup.orders, note: rupees(data.channels.pickup.revenue) },
     { label: "At a table", value: data.channels.table.orders, note: rupees(data.channels.table.revenue) },
     { label: "Delivery", value: data.channels.delivery.orders, note: rupees(data.channels.delivery.revenue) },
+    { label: "Swiggy", value: data.channels.swiggy?.orders ?? 0, note: rupees(data.channels.swiggy?.revenue ?? 0) },
+    { label: "Zomato", value: data.channels.zomato?.orders ?? 0, note: rupees(data.channels.zomato?.revenue ?? 0) },
   ];
   const cups = (n: number) => `${n} cup${n === 1 ? "" : "s"}`;
 
