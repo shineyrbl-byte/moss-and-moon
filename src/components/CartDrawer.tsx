@@ -9,7 +9,7 @@ import { isLastHour, lastHour } from "@/lib/cafe";
 import { usePay } from "./Payment";
 import { photo } from "@/lib/menu";
 import { HAPPY_HOUR, REWARDS, TIP_CHOICES, findReward, deliveryTerms, deliveryZones, describeOptions, happyHour, combosAt, combosConfig, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
-import { STAMPS_FOR_REWARD, hoursOn } from "@/lib/cafe";
+import { hoursOn } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
 
 type Loyalty = { stamps: number; hasReward: boolean; found: boolean };

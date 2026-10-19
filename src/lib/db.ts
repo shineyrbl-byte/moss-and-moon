@@ -738,119 +738,66 @@ function open() {
     SEED_MENU.forEach((m, i) => add.run(m.id, JSON.stringify(m), i * 10));
   }
 
-  // Starting promo codes (only the first time)
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_promos'").get()) {
+  // ---- One-off additions, each run once per café (marked in settings), in this order ----
+  /** Run fn the first time only */
+  const once = (key: string, fn: () => void) => {
+    if (db.prepare("SELECT 1 FROM settings WHERE key = ?").get(key)) return;
+    fn();
+    db.prepare("INSERT INTO settings (key, value) VALUES (?, '1')").run(key);
+  };
+  /** Add menu items after the current ones (an item an owner already has, or deleted, is never touched) */
+  const addItems = (list: readonly { id: string }[], sortFrom?: number) => {
+    const last = sortFrom ?? (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s + 10;
+    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
+    list.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + i * (sortFrom === undefined ? 10 : 1)));
+  };
+  /** Change some existing items' data, e.g. set a new field only where the owner hasn't */
+  const patchItems = (ids: string[] | null, change: (d: Record<string, unknown>, id: string) => Record<string, unknown> | null) => {
+    const rows = (ids ? ids.map((id) => db.prepare("SELECT id, data FROM menu_items WHERE id = ?").get(id)).filter(Boolean) : db.prepare("SELECT id, data FROM menu_items").all()) as { id: string; data: string }[];
+    const upd = db.prepare("UPDATE menu_items SET data = ? WHERE id = ?");
+    for (const r of rows) { const d = change(JSON.parse(r.data), r.id); if (d) upd.run(JSON.stringify(d), r.id); }
+  };
+
+  once("seeded_promos", () => {
     const add = db.prepare("INSERT OR IGNORE INTO promos (code, kind, value, min_order, once_per_guest) VALUES (?, ?, ?, ?, ?)");
     for (const p of DEFAULT_PROMOS) add.run(p.code, p.kind, p.value, p.minOrder, p.code === "FIRSTSIP" ? 1 : 0);
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_promos', '1')").run();
-  }
-
-  // Seasonal specials: added once, so an owner who deletes one doesn't get it back
-  const seeded = db.prepare("SELECT value FROM settings WHERE key = 'seeded_seasonal'").get();
-  if (!seeded) {
-    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
-    SEASONAL_ITEMS.forEach((m, i) => add.run(m.id, JSON.stringify(m), -40 + i)); // shown first while in season
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_seasonal', '1')").run();
-  }
-
-  // October 2026 menu update: cold drinks and food, added once to existing cafés
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v2'").get()) {
-    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
-    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
-    MENU_V2.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v2', '1')").run();
-  }
-
-  // More menu items, added once to existing cafés (owners' own edits are never touched)
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v3'").get()) {
-    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
-    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
-    MENU_V3.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v3', '1')").run();
-  }
-
-  // Build-your-own, flights and kids' items; half portions on some dishes
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v4'").get()) {
-    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
-    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
-    MENU_V4.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
-    const upd = db.prepare("UPDATE menu_items SET data = ? WHERE id = ?");
-    for (const r of db.prepare("SELECT id, data FROM menu_items").all() as { id: string; data: string }[]) {
-      const d = JSON.parse(r.data);
-      if (HALF_PORTIONS.includes(r.id) && d.half === undefined) upd.run(JSON.stringify({ ...d, half: true }), r.id);
-      if (KIDS_ITEMS.includes(r.id) && d.kids === undefined) upd.run(JSON.stringify({ ...d, kids: true }), r.id);
-    }
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v4', '1')").run();
-  }
-
-  // Breakfast, wellness, Goan specials and desserts
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v5'").get()) {
-    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
-    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
-    MENU_V5.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v5', '1')").run();
-  }
-
-  // The seasonal rotation, and staff picks to start with
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v6'").get()) {
-    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
-    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
-    MENU_V6.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
-    const upd = db.prepare("UPDATE menu_items SET data = ? WHERE id = ?");
-    for (const id of ["honey-oat-latte", "matcha", "croissant", "bebinca", "chorizo-pao"]) {
-      const r = db.prepare("SELECT data FROM menu_items WHERE id = ?").get(id) as { data: string } | undefined;
-      if (r) { const d = JSON.parse(r.data); if (d.staffPick === undefined) upd.run(JSON.stringify({ ...d, staffPick: true }), id); }
-    }
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v6', '1')").run();
-  }
-
-  // More allergens tracked: the prawn dish declares shellfish
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'allergens_v2'").get()) {
-    const r = db.prepare("SELECT data FROM menu_items WHERE id = 'balchao-toast'").get() as { data: string } | undefined;
-    if (r) {
-      const d = JSON.parse(r.data);
-      if (Array.isArray(d.allergens) && !d.allergens.includes("shellfish")) d.allergens.push("shellfish");
-      d.desc = String(d.desc).replace(/ Contains shellfish\.$/, "");
-      db.prepare("UPDATE menu_items SET data = ? WHERE id = 'balchao-toast'").run(JSON.stringify(d));
-    }
-    db.prepare("INSERT INTO settings (key, value) VALUES ('allergens_v2', '1')").run();
-  }
-
-  // Events: the starting ones, once (then owners manage them in Admin → Events)
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_events'").get()) {
+  });
+  // Seasonal specials (shown first while in season), then each later menu update
+  once("seeded_seasonal", () => addItems(SEASONAL_ITEMS, -40));
+  once("seeded_menu_v2", () => addItems(MENU_V2)); // cold drinks and food
+  once("seeded_menu_v3", () => addItems(MENU_V3)); // more coffee, Goan favourites, bakes, shop
+  once("seeded_menu_v4", () => { // build-your-own, flights and kids; half portions on some dishes
+    addItems(MENU_V4);
+    patchItems(null, (d, id) => {
+      const half = HALF_PORTIONS.includes(id) && d.half === undefined, kids = KIDS_ITEMS.includes(id) && d.kids === undefined;
+      return half || kids ? { ...d, ...(half ? { half: true } : {}), ...(kids ? { kids: true } : {}) } : null;
+    });
+  });
+  once("seeded_menu_v5", () => addItems(MENU_V5)); // breakfast, wellness, Goan specials, desserts
+  once("seeded_menu_v6", () => { // the seasonal rotation, and staff picks to start with
+    addItems(MENU_V6);
+    patchItems(["honey-oat-latte", "matcha", "croissant", "bebinca", "chorizo-pao"], (d) => (d.staffPick === undefined ? { ...d, staffPick: true } : null));
+  });
+  once("allergens_v2", () => patchItems(["balchao-toast"], (d) => ({ // the prawn dish declares shellfish
+    ...d,
+    allergens: Array.isArray(d.allergens) && !d.allergens.includes("shellfish") ? [...d.allergens, "shellfish"] : d.allergens,
+    desc: String(d.desc).replace(/ Contains shellfish\.$/, ""),
+  })));
+  // Events and two journal posts to start with (then owners manage them)
+  once("seeded_events", () => {
     const add = db.prepare("INSERT OR IGNORE INTO events (id, data) VALUES (?, ?)");
     for (const e of SEED_EVENTS) add.run(e.id, JSON.stringify(e));
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_events', '1')").run();
-  }
-
-  // Two journal posts to start with
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_posts'").get()) {
+  });
+  once("seeded_posts", () => {
     const add = db.prepare("INSERT OR IGNORE INTO posts (slug, title, body, cover, status, published_at) VALUES (?, ?, ?, ?, 'published', datetime('now','localtime', ?))");
-    add.run("how-we-make-cold-brew", "How we make our 18-hour cold brew", "Cold brew isn't iced coffee. It's coffee that never meets hot water at all.\n\n## The slow way\nEvery evening we coarsely grind our House Blend, stir it into cold filtered water, and leave it in the fridge overnight. Eighteen hours later we strain it twice, slowly.\n\n## Why it tastes so smooth\nWithout heat, fewer of the bitter compounds come out of the beans, so you get the chocolate and caramel without the bite. It's naturally sweeter, and gentler on your stomach too.\n\n- Try it black first\n- Then with a splash of oat milk\n- Then with **vanilla syrup**, if you're feeling fancy\n\n[Order a Slow Cold Brew](/#menu) ☕", "1517701604599-bb29b565090c", "-3 days");
-    add.run("meet-the-new-menu", "Meet our new menu: cold drinks and proper food", "We've grown! Alongside your favourite lattes and bakes, you'll now find a whole section of **cold drinks** and a menu of **real food**.\n\n## Cold drinks\nSmoothies made with thick curd, mocktails with fresh fruit, a cookies & cream frappé, and our slow cold brew.\n\n## Food\nToasties pressed on sourdough, a Bombay masala grill, pancakes, pasta and big colourful bowls. Most of it comes with add-ons: an egg, extra cheese, gluten-free bread, or a coffee combo.\n\n[See the menu](/#menu) ✿", "1528736235302-52922df5c122", "-1 days");
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_posts', '1')").run();
-  }
-
-  // The café shop, added once to existing cafés
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_shop'").get()) {
-    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
-    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
-    MENU_SHOP.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_shop', '1')").run();
-  }
-
-  // Allergens & calories for the starting menu (once; items an owner already set are left alone)
-  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_nutrition'").get()) {
-    const rows = db.prepare("SELECT id, data FROM menu_items").all() as { id: string; data: string }[];
-    const upd = db.prepare("UPDATE menu_items SET data = ? WHERE id = ?");
-    for (const r of rows) {
-      const n = NUTRITION[r.id];
-      const d = JSON.parse(r.data);
-      if (!n || d.allergens || d.kcal !== undefined) continue;
-      upd.run(JSON.stringify({ ...d, allergens: n.allergens, kcal: n.kcal }), r.id);
-    }
-    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_nutrition', '1')").run();
-  }
+    for (const p of SEED_POSTS) add.run(p.slug, p.title, p.body, p.cover, p.ago);
+  });
+  once("seeded_shop", () => addItems(MENU_SHOP));
+  // Allergens & calories for the starting menu (items an owner already set are left alone)
+  once("seeded_nutrition", () => patchItems(null, (d, id) => {
+    const n = NUTRITION[id];
+    return n && !d.allergens && d.kcal === undefined ? { ...d, allergens: n.allergens, kcal: n.kcal } : null;
+  }));
 
   const count = db.prepare("SELECT COUNT(*) AS n FROM reviews").get() as { n: number };
   if (count.n === 0) {
@@ -862,6 +809,12 @@ function open() {
   }
   return db;
 }
+
+/** The two journal posts a new café starts with */
+const SEED_POSTS = [
+  { slug: "how-we-make-cold-brew", title: "How we make our 18-hour cold brew", body: "Cold brew isn't iced coffee. It's coffee that never meets hot water at all.\n\n## The slow way\nEvery evening we coarsely grind our House Blend, stir it into cold filtered water, and leave it in the fridge overnight. Eighteen hours later we strain it twice, slowly.\n\n## Why it tastes so smooth\nWithout heat, fewer of the bitter compounds come out of the beans, so you get the chocolate and caramel without the bite. It's naturally sweeter, and gentler on your stomach too.\n\n- Try it black first\n- Then with a splash of oat milk\n- Then with **vanilla syrup**, if you're feeling fancy\n\n[Order a Slow Cold Brew](/#menu) ☕", cover: "1517701604599-bb29b565090c", ago: "-3 days" },
+  { slug: "meet-the-new-menu", title: "Meet our new menu: cold drinks and proper food", body: "We've grown! Alongside your favourite lattes and bakes, you'll now find a whole section of **cold drinks** and a menu of **real food**.\n\n## Cold drinks\nSmoothies made with thick curd, mocktails with fresh fruit, a cookies & cream frappé, and our slow cold brew.\n\n## Food\nToasties pressed on sourdough, a Bombay masala grill, pancakes, pasta and big colourful bowls. Most of it comes with add-ons: an egg, extra cheese, gluten-free bread, or a coffee combo.\n\n[See the menu](/#menu) ✿", cover: "1528736235302-52922df5c122", ago: "-1 days" },
+];
 
 const getDb = () => (g.__cafeDb ??= open());
 
