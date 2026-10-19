@@ -5,16 +5,17 @@ import { useEscape, useStore } from "./Store";
 import DrinkCup from "./DrinkCup";
 import BackInStock from "./BackInStock";
 import { wholeCake } from "@/lib/cakes";
-import { ALLERGENS, allergensFor, kcalFor } from "@/lib/nutrition";
+import { allergensFor, kcalFor } from "@/lib/nutrition";
 import { useRouter } from "next/navigation";
 import { itemName, photo } from "@/lib/menu";
+import { fill, type TKey } from "@/lib/i18n";
 import { ICE, ITEM_NOTE_MAX, MILKS, SHOT_PRICE, SIZES, SWEETS, SYRUPS, TEMPS, TOPPINGS, cleanOptions, defaultOptions, drinkChoices, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
 
 let pairCache: Record<string, string> | null = null;
 
 // Pop-up for choosing size, milk, sweetness etc. before adding to the tray.
 export default function CustomizeModal() {
-  const { customizing: item, setCustomizing, add, toast, soldOut, me, find, lang } = useStore();
+  const { customizing: item, setCustomizing, add, toast, soldOut, me, find, lang, t } = useStore();
   const [opts, setOpts] = useState<Options>({});
   const [qty, setQty] = useState(1);
   const [pairs, setPairs] = useState<Record<string, string>>(pairCache ?? {});
@@ -53,7 +54,7 @@ export default function CustomizeModal() {
       <div className="chips">
         {list.map((c) => (
           <button key={c.value} className={`chip ${opts[key] === c.value ? "on" : ""}`} onClick={() => set(key, c.value as never)}>
-            {c.label}
+            {t(`${String(key)}.${c.value}` as TKey)}
             {c.extra !== 0 && <span className="extra"> {c.extra > 0 ? "+" : "−"}₹{Math.abs(c.extra)}</span>}
           </button>
         ))}
@@ -73,7 +74,7 @@ export default function CustomizeModal() {
           <div className="modal-title-row">
             <div>
               <h3 style={{ fontSize: "2rem" }}>{itemName(item, lang)}</h3>
-              <p className="muted">{item.desc}</p>
+              <p className="muted">{lang === "hi" && item.descHi ? item.descHi : item.desc}</p>
               {item.cat !== "shop" && (() => {
                 const al = allergensFor(item, opts);
                 const kc = kcalFor(item, opts);
@@ -82,10 +83,10 @@ export default function CustomizeModal() {
                 const clash = al.filter((a) => avoid.includes(a) || (me?.diet?.vegan && (a === "milk" || a === "egg")) || (me?.diet?.gf && a === "gluten"));
                 return (
                   <>
-                  {clash.length > 0 && <p className="diet-warn" role="alert">⚠️ Contains {clash.join(", ")}, which your profile says to avoid{al.includes("milk") && item.cat !== "bakes" && !item.noMilk ? ". Try a different milk." : "."}</p>}
+                  {clash.length > 0 && <p className="diet-warn" role="alert">{fill(t("opt.clash"), { list: clash.map((a) => t(`al.${a}` as TKey)).join(", ") })}{al.includes("milk") && item.cat !== "bakes" && !item.noMilk ? ` ${t("opt.tryMilk")}` : ""}</p>}
                   <p className="small facts" aria-live="polite">
-                    {al.length ? <>Contains: <b>{al.map((a) => ALLERGENS.find((x) => x.id === a)!.label.toLowerCase()).join(", ")}</b></> : "No common allergens"}
-                    {kc !== null && <> · about {kc * qty} kcal</>}
+                    {al.length ? <>{t("opt.contains")} <b>{al.map((a) => t(`al.${a}` as TKey)).join(", ")}</b></> : t("opt.noAllergens")}
+                    {kc !== null && <> · {fill(t("opt.kcal"), { n: kc * qty })}</>}
                   </p>
                   </>
                 );
@@ -122,21 +123,21 @@ export default function CustomizeModal() {
           {groups.length > 0 && item.cat === "shop" && <p className="small muted">✍️ Write your card message in “Anything we should know?” at checkout. Pick it up or have it delivered.</p>}
           {groups.length > 0 ? null : drink ? (
             <>
-              {group("Size", "size", SIZES)}
-              {can.temp && group("Hot or iced", "temp", TEMPS)}
-              {opts.temp === "iced" && group("Ice", "ice", ICE)}
-              {can.milk && group("Milk", "milk", MILKS)}
-              {group("Sweetness", "sweet", SWEETS)}
-              {can.syrup && group("Syrup", "syrup", SYRUPS)}
+              {group(t("opt.size"), "size", SIZES)}
+              {can.temp && group(t("opt.temp"), "temp", TEMPS)}
+              {opts.temp === "iced" && group(t("opt.ice"), "ice", ICE)}
+              {can.milk && group(t("opt.milk"), "milk", MILKS)}
+              {group(t("opt.sweet"), "sweet", SWEETS)}
+              {can.syrup && group(t("opt.syrup"), "syrup", SYRUPS)}
               {can.toppings && (
                 <div className="opt-group">
-                  <h4>Toppings <span className="muted small" style={{ textTransform: "none", letterSpacing: 0 }}>· pick any</span></h4>
+                  <h4>{t("opt.toppings")} <span className="muted small" style={{ textTransform: "none", letterSpacing: 0 }}>{t("opt.pickAny")}</span></h4>
                   <div className="chips">
-                    {TOPPINGS.map((t) => {
-                      const on = !!opts.toppings?.includes(t.value);
+                    {TOPPINGS.map((tp) => {
+                      const on = !!opts.toppings?.includes(tp.value);
                       return (
-                        <button key={t.value} className={`chip ${on ? "on" : ""}`} aria-pressed={on} onClick={() => toggleIn("toppings", t.value)}>
-                          {t.label}{t.extra > 0 && <span className="extra"> +₹{t.extra}</span>}
+                        <button key={tp.value} className={`chip ${on ? "on" : ""}`} aria-pressed={on} onClick={() => toggleIn("toppings", tp.value)}>
+                          {t(`toppings.${tp.value}` as TKey)}{tp.extra > 0 && <span className="extra"> +₹{tp.extra}</span>}
                         </button>
                       );
                     })}
@@ -145,19 +146,19 @@ export default function CustomizeModal() {
               )}
               {can.shot && (
                 <div className="toggle-row">
-                  <span>Extra espresso shot <span className="muted small">+₹{SHOT_PRICE}</span></span>
+                  <span>{t("opt.shot")} <span className="muted small">+₹{SHOT_PRICE}</span></span>
                   <button className={`switch ${opts.shot ? "" : "off"}`} onClick={() => set("shot", !opts.shot)} aria-pressed={!!opts.shot} aria-label="Extra shot" />
                 </div>
               )}
               {can.decaf && (
                 <div className="toggle-row">
-                  <span>Decaf <span className="muted small">· same taste, no buzz</span></span>
+                  <span>{t("opt.decaf")} <span className="muted small">{t("opt.decafSub")}</span></span>
                   <button className={`switch ${opts.decaf ? "" : "off"}`} onClick={() => set("decaf", !opts.decaf)} aria-pressed={!!opts.decaf} aria-label="Decaf" />
                 </div>
               )}
               {opts.temp === "hot" && (
                 <div className="toggle-row">
-                  <span>Extra hot 🔥</span>
+                  <span>{t("opt.extraHot")}</span>
                   <button className={`switch ${opts.extraHot ? "" : "off"}`} onClick={() => set("extraHot", !opts.extraHot)} aria-pressed={!!opts.extraHot} aria-label="Extra hot" />
                 </div>
               )}
@@ -166,7 +167,7 @@ export default function CustomizeModal() {
             <>
               {!!item.variants?.length && item.variants.length > 1 && (
                 <div className="opt-group">
-                  <h4>Choose</h4>
+                  <h4>{t("opt.choose")}</h4>
                   <div className="chips">
                     {item.variants.map((v) => (
                       <button key={v.id} className={`chip ${opts.variant === v.id ? "on" : ""}`} onClick={() => set("variant", v.id)}>
@@ -187,19 +188,19 @@ export default function CustomizeModal() {
               {wholeCake(item.id) && <p className="small"><button className="link-btn" onClick={() => { close(); router.push(`/cakes?item=${item.id}`); }}>🎂 Order it as a whole cake, with a message on top →</button></p>}
               {item.half && (
                 <div className="toggle-row">
-                  <span>Half portion <span className="muted small">· smaller appetite or for a little one</span></span>
+                  <span>{t("opt.half")} <span className="muted small">{t("opt.halfSub")}</span></span>
                   <button className={`switch ${opts.half ? "" : "off"}`} onClick={() => setOpts((o) => cleanOptions(item, { ...o, half: !o.half }))} aria-pressed={!!opts.half} aria-label="Half portion" />
                 </div>
               )}
               {item.cat === "bakes" && (
                 <div className="toggle-row">
-                  <span>Warm it up for me ♨</span>
+                  <span>{t("opt.warm")}</span>
                   <button className={`switch ${opts.warm ? "" : "off"}`} onClick={() => set("warm", !opts.warm)} aria-pressed={!!opts.warm} aria-label="Warm it up" />
                 </div>
               )}
               {!!item.addons?.length && (
                 <div className="opt-group">
-                  <h4>Add-ons</h4>
+                  <h4>{t("opt.addons")}</h4>
                   <div className="addon-list">
                     {item.addons.map((a) => {
                       const on = !!opts.addons?.includes(a.id);
@@ -224,17 +225,17 @@ export default function CustomizeModal() {
             return (
               <div className="pair-row">
                 <span className="pair-ph"><Image src={photo(p.img, 160)} alt="" fill sizes="48px" /></span>
-                <span><small className="muted">Goes well with</small><br /><b>{itemName(p, lang)}</b> <span className="muted small">{rupees(p.price)}</span></span>
-                <button className="btn btn-ghost btn-sm" disabled={paired} onClick={() => { add(p.id, defaultOptions(p), 1); setPaired(true); toast(`${itemName(p, lang)} added too ✿`); }}>{paired ? "Added ✓" : "+ Add"}</button>
+                <span><small className="muted">{t("opt.goesWith")}</small><br /><b>{itemName(p, lang)}</b> <span className="muted small">{rupees(p.price)}</span></span>
+                <button className="btn btn-ghost btn-sm" disabled={paired} onClick={() => { add(p.id, defaultOptions(p), 1); setPaired(true); toast(fill(t("opt.addedToo"), { name: itemName(p, lang) })); }}>{paired ? t("opt.added") : t("opt.add")}</button>
               </div>
             );
           })()}
           {item.cat !== "shop" && (
-            <label className="field small" style={{ marginTop: "0.4rem" }}>Anything for this one? <span className="muted">· optional</span>
-              <input className="input" maxLength={ITEM_NOTE_MAX} placeholder={drink ? "e.g. less ice, extra hot, no foam" : "e.g. cut in half, sauce on the side"} value={opts.note ?? ""} onChange={(e) => setOpts((o) => ({ ...o, note: e.target.value || undefined }))} />
+            <label className="field small" style={{ marginTop: "0.4rem" }}>{t("opt.note")} <span className="muted">{t("opt.optional")}</span>
+              <input className="input" maxLength={ITEM_NOTE_MAX} placeholder={drink ? t("opt.notePhDrink") : t("opt.notePhFood")} value={opts.note ?? ""} onChange={(e) => setOpts((o) => ({ ...o, note: e.target.value || undefined }))} />
             </label>
           )}
-          {item.cat !== "shop" && <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy, sesame and shellfish, so please tell us about severe allergies.</p>}
+          {item.cat !== "shop" && <p className="tiny muted">{t("opt.allergyNote")}</p>}
           <div className="toggle-row">
             <div className="stepper">
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="One less">−</button>
@@ -246,9 +247,9 @@ export default function CustomizeModal() {
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={() => { close(); router.push(`/gift-a-drink?item=${encodeURIComponent(item.id)}&o=${encodeURIComponent(JSON.stringify(opts))}`); }}
-                title="Buy this drink for a friend"
+                title={t("opt.giftTitle")}
               >
-                🎁 Gift it
+                {t("opt.gift")}
               </button>
             )}
             <button
@@ -256,11 +257,11 @@ export default function CustomizeModal() {
               disabled={out}
               onClick={() => {
                 add(item.id, opts, qty);
-                toast(`${qty > 1 ? qty + " × " : ""}${itemName(item, lang)} added ✿`);
+                toast(fill(t("opt.addedToast"), { name: `${qty > 1 ? qty + " × " : ""}${itemName(item, lang)}` }));
                 close();
               }}
             >
-              {out ? "Sold out" : `Add · ${rupees(unit * qty)}`}
+              {out ? t("opt.soldOut") : fill(t("opt.addPrice"), { price: rupees(unit * qty) })}
             </button>
             </span>
           </div>

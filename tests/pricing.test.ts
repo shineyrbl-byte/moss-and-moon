@@ -432,3 +432,15 @@ test("dish names fall back to the nearest language", async () => {
   assert.equal(itemName({ ...m, nameKok: "चा" }, "kok"), "चा");
   assert.equal(itemName({ name: "Chai" }, "mr"), "Chai");
 });
+
+test("every drink choice and allergen has a translated label", async () => {
+  const { DICT } = await import("../src/lib/i18n.ts");
+  const { SIZES, TEMPS, ICE, MILKS, SWEETS, SYRUPS, TOPPINGS } = await import("../src/lib/pricing.ts");
+  const { ALLERGENS } = await import("../src/lib/nutrition.ts");
+  const need = [
+    ...Object.entries({ size: SIZES, temp: TEMPS, ice: ICE, milk: MILKS, sweet: SWEETS, syrup: SYRUPS, toppings: TOPPINGS }).flatMap(([k, list]) => list.map((c) => `${k}.${c.value}`)),
+    ...ALLERGENS.map((a) => `al.${a.id}`),
+  ];
+  const missing = need.filter((k) => !(k in DICT.en));
+  assert.deepEqual(missing, []);
+});
