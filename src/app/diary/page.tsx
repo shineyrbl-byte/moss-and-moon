@@ -5,9 +5,9 @@ import { useStore } from "@/components/Store";
 import { isDrink, rupees } from "@/lib/pricing";
 import { defaultOptions } from "@/lib/pricing";
 
-type Entry = { id: number; item_id: string | null; name: string; place: string | null; rating: number; note: string | null; created_at: string };
+type Entry = { id: number; item_id: string | null; name: string; place: string | null; rating: number; note: string | null; caffeine: number | null; created_at: string };
 type Profile = { count: number; avg: number | null; places: number; best: { name: string; place: string | null; rating: number }[]; words: string | null; energy: number | null; sweet: number | null; iced: number | null; tryNext: { id: string; name: string; desc: string; price: number } | null };
-type Data = { entries: Entry[]; profile: Profile; toRate: { orderCode: string; itemId: string; name: string; date: string }[] };
+type Data = { entries: Entry[]; profile: Profile; toRate: { orderCode: string; itemId: string; name: string; date: string }[]; caffeine: { total: number; limit: number; drinks: { name: string; caffeine: number }[]; nudge: string | null } };
 
 function Stars({ value, onChange, label }: { value: number; onChange: (n: number) => void; label: string }) {
   return (
@@ -34,7 +34,7 @@ export default function Diary() {
   const { menu, add, toast, setDrawerOpen } = useStore();
   const [d, setD] = useState<Data | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
-  const [form, setForm] = useState({ where: "here" as "here" | "elsewhere", itemId: "", name: "", place: "", rating: 0, note: "" });
+  const [form, setForm] = useState({ where: "here" as "here" | "elsewhere", itemId: "", name: "", place: "", rating: 0, note: "", caffeine: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -57,8 +57,8 @@ export default function Diary() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!form.rating) return setError("Give it some stars first.");
-    const ok = await post(form.where === "here" ? { itemId: form.itemId, rating: form.rating, note: form.note } : { name: form.name, place: form.place, rating: form.rating, note: form.note });
-    if (ok) { setForm({ ...form, itemId: "", name: "", place: "", rating: 0, note: "" }); toast("Added to your diary ✿"); }
+    const ok = await post(form.where === "here" ? { itemId: form.itemId, rating: form.rating, note: form.note } : { name: form.name, place: form.place, rating: form.rating, note: form.note, caffeine: form.caffeine === "" ? undefined : Number(form.caffeine) });
+    if (ok) { setForm({ ...form, itemId: "", name: "", place: "", rating: 0, note: "", caffeine: "" }); toast("Added to your diary ✿"); }
   }
   async function remove(id: number) {
     await fetch(`/api/account/diary?id=${id}`, { method: "DELETE" });
@@ -103,6 +103,16 @@ export default function Diary() {
         )}
       </section>
 
+      <section className="card" style={{ marginTop: "1rem" }} aria-label="Caffeine today">
+        <div className="sum-row" style={{ alignItems: "baseline" }}>
+          <h3 style={{ fontSize: "1.1rem" }}>⚡ Caffeine today</h3>
+          <span><b>{d.caffeine.total} mg</b> <span className="muted small">of {d.caffeine.limit}</span></span>
+        </div>
+        <div className={`meter ${d.caffeine.total > d.caffeine.limit ? "over" : ""}`} role="meter" aria-valuenow={d.caffeine.total} aria-valuemin={0} aria-valuemax={d.caffeine.limit} aria-label="Caffeine today" style={{ maxWidth: "none" }}><span style={{ width: `${Math.min(100, (d.caffeine.total / d.caffeine.limit) * 100)}%` }} /></div>
+        {d.caffeine.drinks.length > 0 ? <p className="small muted" style={{ margin: "0.4rem 0 0" }}>{d.caffeine.drinks.map((x) => `${x.name} ${x.caffeine} mg`).join(" · ")}</p> : <p className="small muted" style={{ margin: "0.4rem 0 0" }}>Nothing logged today. Add your coffees below to keep count.</p>}
+        {d.caffeine.nudge && <p className="diet-warn small" style={{ marginTop: "0.5rem" }}>🌙 {d.caffeine.nudge}</p>}
+      </section>
+
       {d.toRate.length > 0 && (
         <section className="card" style={{ marginTop: "1rem" }}>
           <h3 style={{ fontSize: "1.1rem" }}>⭐ Rate your recent drinks</h3>
@@ -134,6 +144,7 @@ export default function Diary() {
           <div className="row">
             <label className="field">What was it?<input className="input" required maxLength={60} placeholder="e.g. Flat white" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
             <label className="field">Where? <span className="muted small">· optional</span><input className="input" maxLength={60} placeholder="e.g. a café in Bengaluru" value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })} /></label>
+            <label className="field">Caffeine (mg) <span className="muted small">· optional, we&apos;ll guess</span><input className="input" inputMode="numeric" maxLength={4} value={form.caffeine} onChange={(e) => setForm({ ...form, caffeine: e.target.value.replace(/\D/g, "") })} /></label>
           </div>
         )}
         <Stars value={form.rating} label="Your rating" onChange={(n) => setForm({ ...form, rating: n })} />
@@ -149,7 +160,7 @@ export default function Diary() {
           {d.entries.map((e) => (
             <li key={e.id} className="card">
               <div className="sum-row" style={{ alignItems: "baseline" }}>
-                <span><b>{e.name}</b>{e.place && <span className="muted small"> · {e.place}</span>}</span>
+                <span><b>{e.name}</b>{e.place && <span className="muted small"> · {e.place}</span>}{e.caffeine ? <span className="muted small"> · {e.caffeine} mg</span> : null}</span>
                 <span className="stars" aria-label={`${e.rating} stars`}>{"★".repeat(e.rating)}{"☆".repeat(5 - e.rating)}</span>
               </div>
               {e.note && <p className="small" style={{ margin: "0.3rem 0" }}>{e.note}</p>}

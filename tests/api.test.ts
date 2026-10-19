@@ -2064,6 +2064,63 @@ test("make it at home: every recipe page opens and matches a dish", async () => 
   assert.equal((await fetch(`${s.url}/recipes/nope`)).status, 404);
 });
 
+test("weather, brew timer, origins, shelf and game pages", async () => {
+  const w = (await s.api("/api/weather")).body as { temp: number; code: number };
+  assert.equal(w.temp, 26, "WEATHER=fake in tests");
+  assert.equal(w.code, 63);
+  for (const p of ["/brew", "/origins", "/shelf", "/play", "/diary"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+});
+
+test("barista rush scores: believable ones are saved and ranked", async () => {
+  assert.equal((await s.api("/api/game", { method: "POST", json: { name: "Cheat", score: 99999, served: 3 } })).status, 400);
+  assert.equal((await s.api("/api/game", { method: "POST", json: { name: "Cheat", score: 100, served: 500 } })).status, 400);
+  const a = await s.api("/api/game", { method: "POST", json: { name: "Asha <b>", score: 900, served: 8 } });
+  assert.equal(a.status, 200);
+  assert.equal(a.body.rank, 1);
+  const b = await s.api("/api/game", { method: "POST", json: { name: "Ben", score: 1200, served: 9 } });
+  assert.equal(b.body.rank, 1);
+  const board = (await s.api("/api/game")).body as { allTime: { name: string; score: number }[]; week: unknown[] };
+  assert.deepEqual(board.allTime.slice(0, 2).map((r) => r.name), ["Ben", "Asha b"]);
+  assert.ok(board.week.length >= 2);
+});
+
+test("games & books: reserve a game with a table, once per time slot", async () => {
+  const shelf = (await s.api("/api/shelf")).body as { items: { id: string; kind: string }[] };
+  assert.ok(shelf.items.filter((i) => i.kind === "game").length >= 10);
+  assert.ok(shelf.items.some((i) => i.kind === "book"));
+  const date = tomorrow();
+  const slots = (await s.api(`/api/bookings/availability?date=${date}`)).body as { time: string }[];
+  const time = slots[Math.min(4, slots.length - 1)].time;
+  const first = await s.api("/api/bookings", { method: "POST", json: { name: "Gamer", phone: "9555511111", date, time, guests: 2, game: "catan" } });
+  assert.equal(first.status, 200);
+  assert.equal(first.body.game, "Catan");
+  const second = await s.api("/api/bookings", { method: "POST", json: { name: "Gamer Two", phone: "9555522222", date, time, guests: 2, game: "catan" } });
+  assert.equal(second.status, 409, "someone already has Catan then");
+  assert.equal((await s.api("/api/bookings", { method: "POST", json: { name: "Gamer Two", phone: "9555522222", date, time, guests: 2, game: "azul" } })).status, 200);
+  const marked = (await s.api(`/api/shelf?date=${date}&time=${time}`)).body as { items: { id: string; taken: boolean }[] };
+  assert.equal(marked.items.find((i) => i.id === "catan")!.taken, true);
+  assert.equal(marked.items.find((i) => i.id === "jenga")!.taken, false);
+  // Owner: take a game off the shelf, then it can't be booked
+  await s.login();
+  const cur = shelf.items.find((i) => i.id === "jenga")!;
+  assert.equal((await s.api("/api/shelf", { method: "POST", json: { ...cur, out: true } })).status, 200);
+  assert.equal((await s.api("/api/bookings", { method: "POST", json: { name: "Late", phone: "9555533333", date, time, guests: 2, game: "jenga" } })).status, 409);
+  const added = await s.api("/api/shelf", { method: "POST", json: { kind: "game", title: "Pictionary", detail: "4–8 players", minutes: 30 } });
+  assert.equal(added.status, 200);
+  assert.equal((await s.api(`/api/shelf?id=${added.body.item.id}`, { method: "DELETE" })).status, 200);
+});
+
+test("coffee diary counts today's caffeine", async () => {
+  await signIn("caffeine@example.com");
+  await s.api("/api/account/diary", { method: "POST", json: { itemId: "cold-brew", rating: 5 } });
+  await s.api("/api/account/diary", { method: "POST", json: { name: "Double espresso", place: "Airport", rating: 3 } });
+  await s.api("/api/account/diary", { method: "POST", json: { name: "Mystery brew", rating: 3, caffeine: 150 } });
+  const d = (await s.api("/api/account/diary")).body as { caffeine: { total: number; limit: number; nudge: string | null } };
+  assert.equal(d.caffeine.total, 200 + 128 + 150);
+  assert.equal(d.caffeine.limit, 400);
+  assert.match(d.caffeine.nudge ?? "", /over 400/);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

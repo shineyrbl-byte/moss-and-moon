@@ -45,6 +45,7 @@ import MenuTidyCard from "@/components/admin/MenuTidyCard";
 import ImportCard from "@/components/admin/ImportCard";
 import DemoResetCard from "@/components/admin/DemoResetCard";
 import SimCard from "@/components/admin/SimCard";
+import ShelfCard from "@/components/admin/ShelfCard";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
 import OwnerAlertsCard from "@/components/admin/OwnerAlertsCard";
@@ -504,6 +505,7 @@ export default function AdminPage() {
           )}
         </div>
       )}
+      {tab === "Bookings" && <ShelfCard />}
 
       {tab === "Settings" && me?.role === "owner" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>

@@ -21,7 +21,7 @@ export type TestServer = {
 export async function startServer(port = 3900 + Math.floor(Math.random() * 90), extraEnv: Record<string, string> = {}): Promise<TestServer> {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "mm-test-"));
   const child: ChildProcess = spawn(process.execPath, [path.join("node_modules", "next", "dist", "bin", "next"), "start", "-p", String(port)], {
-    env: { ...process.env, DATA_DIR: dataDir, ADMIN_PASSCODE: PASSCODE, SITE_URL: `http://localhost:${port}`, ANTHROPIC_API_KEY: "", GEMINI_API_KEY: "", DEMO_BARISTA: "off", RATE_LIMIT_SCALE: "50", HAPPY_HOUR: "off", RESEND_API_KEY: "", RAZORPAY_KEY_ID: "", RAZORPAY_KEY_SECRET: "", NODE_ENV: "production", ...extraEnv },
+    env: { ...process.env, DATA_DIR: dataDir, ADMIN_PASSCODE: PASSCODE, SITE_URL: `http://localhost:${port}`, ANTHROPIC_API_KEY: "", GEMINI_API_KEY: "", DEMO_BARISTA: "off", RATE_LIMIT_SCALE: "50", HAPPY_HOUR: "off", WEATHER: "fake", RESEND_API_KEY: "", RAZORPAY_KEY_ID: "", RAZORPAY_KEY_SECRET: "", NODE_ENV: "production", ...extraEnv },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let log = "";

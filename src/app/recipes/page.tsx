@@ -14,7 +14,7 @@ export default function Recipes() {
     <div className="page" style={{ maxWidth: "62rem" }}>
       <p className="eyebrow">from our counter to your kitchen</p>
       <h1 className="h2">Make it <em>at home</em></h1>
-      <p className="lead">Our favourite drinks, rewritten for a home kitchen. No espresso machine needed.</p>
+      <p className="lead">Our favourite drinks, rewritten for a home kitchen. No espresso machine needed. Brewing plain coffee? Use the <Link href="/brew" className="link-btn">brew timer</Link>, and see <Link href="/origins" className="link-btn">where our beans grow</Link>.</p>
       <div className="journal-grid">
         {HOME_RECIPES.map((r) => {
           const m = menu.get(r.id);

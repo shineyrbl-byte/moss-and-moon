@@ -9,6 +9,7 @@ import { allergensFor, kcalFor } from "@/lib/nutrition";
 import { useRouter } from "next/navigation";
 import { itemDesc, itemName, photo } from "@/lib/menu";
 import { findHomeRecipe } from "@/lib/homeRecipes";
+import { caffeineFor } from "@/lib/caffeine";
 import Link from "next/link";
 import { fill, type TKey } from "@/lib/i18n";
 import { ICE, ITEM_NOTE_MAX, MILKS, SHOT_PRICE, SIZES, SWEETS, SYRUPS, TEMPS, TOPPINGS, cleanOptions, defaultOptions, drinkChoices, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
@@ -90,6 +91,7 @@ export default function CustomizeModal() {
                   <p className="small facts" aria-live="polite">
                     {al.length ? <>{t("opt.contains")} <b>{al.map((a) => t(`al.${a}` as TKey)).join(", ")}</b></> : t("opt.noAllergens")}
                     {kc !== null && <> · {fill(t("opt.kcal"), { n: kc * qty })}</>}
+                    {drink && caffeineFor(item, opts) > 0 && <> · {fill(t("opt.caffeine"), { n: caffeineFor(item, opts) })}</>}
                   </p>
                   </>
                 );

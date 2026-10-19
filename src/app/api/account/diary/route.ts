@@ -1,5 +1,5 @@
 import { currentCustomer } from "@/lib/account";
-import { addDiaryEntry, deleteDiaryEntry, diaryEntries, tasteProfile, toRate } from "@/lib/diary";
+import { addDiaryEntry, caffeineToday, deleteDiaryEntry, diaryEntries, tasteProfile, toRate } from "@/lib/diary";
 import { limited, tooMany } from "@/lib/rateLimit";
 
 const signIn = () => Response.json({ error: "Please sign in to keep a coffee diary." }, { status: 401 });
@@ -9,7 +9,7 @@ export async function GET() {
   const me = await currentCustomer();
   if (!me) return signIn();
   const entries = diaryEntries(me.id);
-  return Response.json({ entries, profile: tasteProfile(entries), toRate: toRate(me.id) });
+  return Response.json({ entries, profile: tasteProfile(entries), toRate: toRate(me.id), caffeine: caffeineToday(me.id) });
 }
 
 // Add an entry ({ itemId, orderCode? } for one of ours, or { name, place } for anywhere else; rating, note)

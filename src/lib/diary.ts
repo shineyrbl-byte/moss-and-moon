@@ -5,11 +5,12 @@ import { db, cleanText } from "./db";
 import { getMenu } from "./menuStore";
 import { isDrink } from "./pricing";
 import type { MenuItem } from "./menu";
+import { DAILY_LIMIT, caffeineFor, caffeineNudge, guessCaffeine } from "./caffeine";
 
-export type DiaryEntry = { id: number; item_id: string | null; name: string; place: string | null; rating: number; note: string | null; order_code: string | null; created_at: string };
+export type DiaryEntry = { id: number; item_id: string | null; name: string; place: string | null; rating: number; note: string | null; order_code: string | null; caffeine: number | null; created_at: string };
 
 export function diaryEntries(customerId: number): DiaryEntry[] {
-  return db.prepare("SELECT id, item_id, name, place, rating, note, order_code, created_at FROM coffee_diary WHERE customer_id = ? ORDER BY id DESC LIMIT 300").all(customerId) as DiaryEntry[];
+  return db.prepare("SELECT id, item_id, name, place, rating, note, order_code, caffeine, created_at FROM coffee_diary WHERE customer_id = ? ORDER BY id DESC LIMIT 300").all(customerId) as DiaryEntry[];
 }
 
 /** Add one entry. A drink from our menu (itemId) or anything else (name + place). */
@@ -24,16 +25,22 @@ export function addDiaryEntry(customerId: number, b: Record<string, unknown>): D
   const note = cleanText(b.note, 280) || null;
   // Rating a drink from one of your orders: once per order and dish
   let orderCode: string | null = null;
+  let opts: Record<string, unknown> | undefined;
   if (b.orderCode && item) {
     const code = String(b.orderCode).toUpperCase();
     const mine = db.prepare("SELECT lines FROM orders WHERE code = ? AND customer_id = ?").get(code, customerId) as { lines: string } | undefined;
-    if (!mine || !(JSON.parse(mine.lines) as { itemId: string }[]).some((l) => l.itemId === item.id)) return { error: "That drink isn't on one of your orders." };
+    const line = mine ? (JSON.parse(mine.lines) as { itemId: string; opts?: Record<string, unknown> }[]).find((l) => l.itemId === item.id) : undefined;
+    if (!line) return { error: "That drink isn't on one of your orders." };
+    opts = line.opts;
     if (db.prepare("SELECT 1 FROM coffee_diary WHERE customer_id = ? AND order_code = ? AND item_id = ?").get(customerId, code, item.id)) return { error: "You've already rated that one ✿" };
     orderCode = code;
   }
   if ((db.prepare("SELECT COUNT(*) AS n FROM coffee_diary WHERE customer_id = ?").get(customerId) as { n: number }).n >= 1000) return { error: "Your diary is full. Delete a few old entries?" };
-  const r = db.prepare("INSERT INTO coffee_diary (customer_id, item_id, name, place, rating, note, order_code) VALUES (?, ?, ?, ?, ?, ?, ?)").run(customerId, item?.id ?? null, name, place, rating, note, orderCode);
-  return db.prepare("SELECT id, item_id, name, place, rating, note, order_code, created_at FROM coffee_diary WHERE id = ?").get(r.lastInsertRowid) as DiaryEntry;
+  // Caffeine: worked out for our drinks, your number or a guess from the name for anything else
+  const given = b.caffeine === undefined || b.caffeine === null || b.caffeine === "" ? NaN : Number(b.caffeine);
+  const caffeine = item ? caffeineFor(item, opts as never) : given >= 0 && given <= 1000 ? Math.round(given) : guessCaffeine(name);
+  const r = db.prepare("INSERT INTO coffee_diary (customer_id, item_id, name, place, rating, note, order_code, caffeine) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(customerId, item?.id ?? null, name, place, rating, note, orderCode, caffeine);
+  return db.prepare("SELECT id, item_id, name, place, rating, note, order_code, caffeine, created_at FROM coffee_diary WHERE id = ?").get(r.lastInsertRowid) as DiaryEntry;
 }
 
 export function deleteDiaryEntry(customerId: number, id: number) {
@@ -84,4 +91,11 @@ export function tasteProfile(entries: DiaryEntry[]) {
     energy: Math.round((energy / 2) * 100), sweet: Math.round((sweet / 2) * 100), iced: Math.round(iced * 100),
     tryNext: pick ? { id: pick.id, name: pick.name, desc: pick.desc, price: pick.price } : null,
   };
+}
+
+/** Caffeine logged today (entries made today), with a gentle nudge */
+export function caffeineToday(customerId: number, now = new Date()) {
+  const rows = db.prepare("SELECT name, caffeine FROM coffee_diary WHERE customer_id = ? AND date(created_at) = date('now','localtime') AND caffeine > 0 ORDER BY id").all(customerId) as { name: string; caffeine: number }[];
+  const total = rows.reduce((t, r) => t + r.caffeine, 0);
+  return { total, limit: DAILY_LIMIT, drinks: rows, nudge: caffeineNudge(total, now.getHours()) };
 }

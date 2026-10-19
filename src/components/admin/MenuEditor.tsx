@@ -1,4 +1,5 @@
 "use client";
+import { baseCaffeine } from "@/lib/caffeine";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { CATEGORIES, ROTATIONS, inTab, photo, type Addon, type Category, type Diet, type MenuItem, type MenuTab } from "@/lib/menu";
@@ -255,6 +256,11 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
           <label className="field">Calories (optional, regular size as it usually comes)
             <input className="input" type="number" min={0} max={3000} value={f.kcal ?? ""} onChange={(e) => set("kcal", e.target.value === "" ? undefined : Number(e.target.value))} placeholder="e.g. 190" />
           </label>
+          {(f.cat === "coffee" || f.cat === "tea" || f.cat === "cold") && (
+            <label className="field">Caffeine in mg (optional, regular size)
+              <input className="input" type="number" min={0} max={1000} value={f.caffeine ?? ""} onChange={(e) => set("caffeine", e.target.value === "" ? undefined : Number(e.target.value))} placeholder={`about ${baseCaffeine({ ...f, caffeine: undefined })} if left blank`} />
+            </label>
+          )}
           <label className="field">Cost to make (optional, ₹){f.cat === "bakes" ? ": what one costs you to bake or buy" : ": anything not tracked in Stock (syrups, cream…)"}
             <input className="input" type="number" min={0} step="0.5" value={f.cost ?? ""} onChange={(e) => set("cost", e.target.value === "" ? undefined : Number(e.target.value))} placeholder={f.cat === "bakes" ? "e.g. 45" : "e.g. 12"} />
           </label>

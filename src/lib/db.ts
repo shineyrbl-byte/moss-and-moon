@@ -10,6 +10,7 @@ import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
 import { MENU_NAMES } from "./menuNames";
 import { MENU_DESCS } from "./menuDescs";
+import { SEED_SHELF } from "./shelfSeed";
 import { SEED_EVENTS } from "./cafe";
 
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
@@ -692,8 +693,28 @@ function open() {
     rating INTEGER NOT NULL,
     note TEXT,
     order_code TEXT,
+    caffeine INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   ); CREATE INDEX IF NOT EXISTS coffee_diary_by_customer ON coffee_diary (customer_id);`);
+  addColumn(db, "coffee_diary", "caffeine", "INTEGER"); // mg, estimated
+  db.exec(`CREATE TABLE IF NOT EXISTS shelf (
+    id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    detail TEXT NOT NULL DEFAULT '',
+    minutes INTEGER,
+    note TEXT,
+    out INTEGER NOT NULL DEFAULT 0,
+    sort INTEGER NOT NULL DEFAULT 0
+  );`);
+  addColumn(db, "bookings", "game", "TEXT"); // a board game reserved with the table
+  db.exec(`CREATE TABLE IF NOT EXISTS game_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    served INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
   addColumn(db, "customers", "student_email", "TEXT");
@@ -831,6 +852,10 @@ function open() {
     if (n.mr && !d.nameMr) next.nameMr = n.mr;
     return next.nameHi !== d.nameHi || next.nameMr !== d.nameMr ? next : null;
   }));
+  once("seeded_shelf", () => {
+    const add = db.prepare("INSERT OR IGNORE INTO shelf (id, kind, title, detail, minutes, note, sort) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    SEED_SHELF.forEach((g, i) => add.run(g.id, g.kind, g.title, g.detail, g.minutes, g.note, i));
+  });
   once("menu_descs_v1", () => patchItems(null, (d, id) => {
     const n = MENU_DESCS[id];
     if (!n) return null;

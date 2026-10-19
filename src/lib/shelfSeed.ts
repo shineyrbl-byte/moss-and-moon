@@ -1,0 +1,23 @@
+// The shelf the café starts with (owners add and remove items in Admin → Bookings)
+export const SEED_SHELF: { id: string; kind: "game" | "book"; title: string; detail: string; minutes: number | null; note: string | null }[] = [
+  { id: "catan", kind: "game", title: "Catan", detail: "3–4 players", minutes: 75, note: "Trade wood for sheep and build the longest road." },
+  { id: "ticket-to-ride", kind: "game", title: "Ticket to Ride", detail: "2–5 players", minutes: 60, note: "Claim railway routes across the map." },
+  { id: "codenames", kind: "game", title: "Codenames", detail: "4–8 players", minutes: 20, note: "One-word clues, two teams, lots of shouting." },
+  { id: "azul", kind: "game", title: "Azul", detail: "2–4 players", minutes: 40, note: "Pretty tiles, sneaky strategy." },
+  { id: "dixit", kind: "game", title: "Dixit", detail: "3–6 players", minutes: 30, note: "Dreamy picture cards and storytelling." },
+  { id: "jaipur", kind: "game", title: "Jaipur", detail: "2 players", minutes: 30, note: "Trade spices and silk to become the Maharaja's merchant." },
+  { id: "splendor", kind: "game", title: "Splendor", detail: "2–4 players", minutes: 30, note: "Collect gems, win nobles." },
+  { id: "carrom", kind: "game", title: "Carrom", detail: "2–4 players", minutes: 30, note: "The classic board, with fresh powder." },
+  { id: "uno", kind: "game", title: "UNO", detail: "2–10 players", minutes: 20, note: "You know this one." },
+  { id: "scrabble", kind: "game", title: "Scrabble", detail: "2–4 players", minutes: 60, note: "Dictionary on the shelf for arguments." },
+  { id: "chess", kind: "game", title: "Chess", detail: "2 players", minutes: 30, note: "A wooden set with a clock." },
+  { id: "jenga", kind: "game", title: "Jenga", detail: "2+ players", minutes: 15, note: "Not near the hot drinks, please." },
+  { id: "book-god-small-things", kind: "book", title: "The God of Small Things", detail: "Arundhati Roy", minutes: null, note: null },
+  { id: "book-malgudi", kind: "book", title: "Malgudi Days", detail: "R. K. Narayan", minutes: null, note: null },
+  { id: "book-goa-food", kind: "book", title: "Goa Portuguesa and Other Stories", detail: "Food and memories of Goa", minutes: null, note: null },
+  { id: "book-coffee-atlas", kind: "book", title: "The World Atlas of Coffee", detail: "James Hoffmann", minutes: null, note: null },
+  { id: "book-little-prince", kind: "book", title: "The Little Prince", detail: "Antoine de Saint-Exupéry", minutes: null, note: null },
+  { id: "book-ruskin", kind: "book", title: "The Room on the Roof", detail: "Ruskin Bond", minutes: null, note: null },
+  { id: "book-tagore", kind: "book", title: "Gitanjali", detail: "Rabindranath Tagore", minutes: null, note: null },
+  { id: "book-sea-of-poppies", kind: "book", title: "Sea of Poppies", detail: "Amitav Ghosh", minutes: null, note: null },
+];

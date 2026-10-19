@@ -445,3 +445,79 @@ test("every drink choice and allergen has a translated label", async () => {
   const missing = need.filter((k) => !(k in DICT.en));
   assert.deepEqual(missing, []);
 });
+
+test("weather picks: rain means chai, heat means something cold", async () => {
+  const { weatherPicks, moodFor, isRainy } = await import("../src/lib/weatherPicks.ts");
+  const menu = ["chai", "monsoon-ginger-chai", "kokum-soda", "cold-brew", "hot-chocolate", "rose-latte", "iced-brown-sugar"].map((id) => ({ id }));
+  assert.equal(moodFor({ temp: 27, code: 63, isDay: true }), "rain");
+  assert.ok(isRainy(95) && !isRainy(2));
+  assert.equal(moodFor({ temp: 34, code: 0, isDay: true }), "hot");
+  assert.equal(moodFor({ temp: 19, code: 1, isDay: false }), "cool");
+  assert.equal(moodFor({ temp: 27, code: 1, isDay: true }), "nice");
+  assert.deepEqual(weatherPicks({ temp: 27, code: 63, isDay: true }, menu).items.map((m) => m.id), ["monsoon-ginger-chai", "chai", "hot-chocolate"]);
+  const hot = weatherPicks({ temp: 35, code: 0, isDay: true }, [...menu.filter((m) => m.id !== "kokum-soda"), { id: "kokum-soda", soldOut: true }]);
+  assert.deepEqual(hot.items.map((m) => m.id), ["cold-brew"], "sold-out dishes are skipped");
+});
+
+test("caffeine: size, extra shot, decaf and herbal teas", async () => {
+  const { caffeineFor, guessCaffeine, caffeineNudge, DAILY_LIMIT } = await import("../src/lib/caffeine.ts");
+  const latte = { id: "x-latte", cat: "coffee", name: "Latte", traits: { energy: 1 } };
+  assert.equal(caffeineFor(latte), 128);
+  assert.equal(caffeineFor(latte, { size: "large" }), Math.round(128 * 1.3));
+  assert.equal(caffeineFor(latte, { shot: true }), 192);
+  assert.equal(caffeineFor(latte, { decaf: true, shot: true }), 5);
+  assert.equal(caffeineFor({ id: "cold-brew", cat: "cold", name: "Slow Cold Brew" }), 200);
+  assert.equal(caffeineFor({ id: "chamomile", cat: "tea", name: "Chamomile & Honey" }), 0);
+  assert.equal(caffeineFor({ id: "kokum-soda", cat: "cold", name: "Kokum Soda", desc: "Goan kokum syrup, lime" }), 0);
+  assert.equal(caffeineFor({ id: "new", cat: "coffee", name: "New", caffeine: 77 }), 77, "the owner's number wins");
+  assert.equal(guessCaffeine("Double espresso"), 128);
+  assert.equal(guessCaffeine("Peppermint tea"), 0);
+  assert.equal(guessCaffeine("Masala chai"), 45);
+  assert.equal(guessCaffeine("Lemonade"), null);
+  assert.match(caffeineNudge(DAILY_LIMIT + 1, 10)!, /over/);
+  assert.match(caffeineNudge(250, 17)!, /late/);
+  assert.equal(caffeineNudge(250, 10), null);
+});
+
+test("barista rush: orders make sense and are marked fairly", async () => {
+  const { newOrder, mistakes, points, gameChoices, playableDrinks } = await import("../src/lib/gameOrders.ts");
+  const drinks = playableDrinks([
+    { id: "cold", cat: "cold", name: "Cold", noMilk: true },
+    { id: "kid", cat: "cold", name: "Kids", kids: true },
+    { id: "bowl", cat: "food", name: "Bowl" },
+  ]);
+  assert.deepEqual(drinks.map((d) => d.id), ["cold"]);
+  for (let i = 0; i < 20; i++) {
+    const o = newOrder(drinks);
+    assert.equal(o.want.temp, "iced", "cold drinks are always iced");
+    assert.equal(o.want.milk, "none", "no milk when the drink has none");
+    assert.equal(o.want.shot, false, "shots are only for coffee");
+  }
+  assert.deepEqual(gameChoices({ id: "c", cat: "coffee", name: "C" }), { temp: true, milk: true, shot: true });
+  const want = { size: "large", temp: "iced", milk: "oat", shot: true } as const;
+  assert.deepEqual(mistakes(want, { ...want }), []);
+  assert.deepEqual(mistakes(want, { ...want, milk: "soy", size: "small" }), ["size", "milk"]);
+  assert.equal(points(0, 0), 150);
+  assert.equal(points(10, 0), 100, "slow but right still scores");
+  assert.equal(points(0, 20), 300, "the streak doubles it at most");
+});
+
+test("brew timer steps and the origins map", async () => {
+  const { BREW_METHODS, stepAt, mmss } = await import("../src/lib/brewMethods.ts");
+  for (const m of BREW_METHODS) {
+    assert.equal(m.steps[0].at, 0, `${m.id} starts at 0`);
+    assert.ok(m.steps.every((s, i) => i === 0 || s.at > m.steps[i - 1].at), `${m.id} steps in order`);
+    assert.ok(m.total > m.steps[m.steps.length - 1].at);
+    assert.ok(m.steps.some((s) => s.water === 1), `${m.id} pours all the water`);
+  }
+  const v60 = BREW_METHODS[0];
+  assert.equal(stepAt(v60, -1), -1);
+  assert.equal(stepAt(v60, 50), 2);
+  assert.equal(mmss(75), "1:15");
+  const { ORIGINS, CAFE_SPOT, project, MAP_SIZE, coastPath } = await import("../src/lib/origins.ts");
+  for (const o of [...ORIGINS, CAFE_SPOT]) {
+    const p = project(o.lat, o.lon);
+    assert.ok(p.x > 0 && p.x < MAP_SIZE.w && p.y > 0 && p.y < MAP_SIZE.h, `${o.name} is on the map`);
+  }
+  assert.match(coastPath(), /^M-?[\d.]+,-?[\d.]+ L.* Z$/);
+});

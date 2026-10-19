@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { findBranch, hoursLabel, openStatus, toDateStr } from "@/lib/cafe";
 import BranchPicker from "./BranchPicker";
 import { useStore } from "./Store";
+import { fill } from "@/lib/i18n";
 import Reveal from "./Reveal";
 import BusyMeter from "./BusyMeter";
 import TablePicker from "./TablePicker";
@@ -11,7 +12,7 @@ import { usePay } from "./Payment";
 import { DEPOSIT } from "@/lib/cafe";
 
 type Slot = { time: string; left: number };
-type Booked = { code: string; name: string; date: string; time: string; guests: number; table: number | null; preorderText: string | null };
+type Booked = { code: string; name: string; date: string; time: string; guests: number; table: number | null; preorderText: string | null ; game?: string | null };
 
 export default function Visit() {
   const { toast, t, lines, find, clear, branch, lang } = useStore();
@@ -22,7 +23,14 @@ export default function Visit() {
   const [preorder, setPreorder] = useState(false);
   const [today, setToday] = useState("");
   const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "", highChairs: 0 });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "", highChairs: 0, game: "" });
+  // Board games from the shelf (taken ones are marked once a time is picked); ?game=… from the shelf page picks one
+  const [games, setGames] = useState<{ id: string; title: string; detail: string; out: number; taken: boolean }[]>([]);
+  useEffect(() => { const g = new URLSearchParams(location.search).get("game"); if (g) setForm((f) => ({ ...f, game: g })); }, []);
+  useEffect(() => {
+    const qs = form.date && form.time ? `?date=${form.date}&time=${form.time}` : "";
+    fetch(`/api/shelf${qs}`).then((r) => r.json()).then((d) => setGames((d.items ?? []).filter((i: { kind: string }) => i.kind === "game"))).catch(() => {});
+  }, [form.date, form.time]);
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -134,6 +142,7 @@ export default function Visit() {
               {new Date(booked.date + "T00:00").toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })} at {booked.time}
             </p>
             {booked.preorderText && <p className="small">🍽 Ready when you arrive: {booked.preorderText}</p>}
+            {booked.game && <p className="small">🎲 {fill(t("visit.gameKept"), { game: booked.game })}</p>}
             <span className="code">{booked.code}</span>
             <p className="small muted">Show this code when you arrive.</p>
             <button className="btn btn-ghost btn-sm" onClick={() => { setBooked(null); setForm((f) => ({ ...f, time: "", note: "" })); }}>Book another</button>
@@ -185,6 +194,15 @@ export default function Visit() {
               <input type="checkbox" checked={form.highChairs > 0} onChange={(e) => setForm({ ...form, highChairs: e.target.checked ? 1 : 0 })} /> {t("visit.highChair")}
               {form.highChairs > 0 && <select className="input" style={{ width: "auto" }} value={form.highChairs} onChange={(e) => setForm({ ...form, highChairs: Number(e.target.value) })} aria-label="How many high chairs">{[1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}</select>}
             </label>
+            {!full && games.length > 0 && (
+              <div className="field">
+                <label htmlFor="visit-game">{t("visit.game")} <span className="muted small">{t("opt.optional")}</span></label>
+                <select id="visit-game" className="input" value={form.game} onChange={(e) => setForm({ ...form, game: e.target.value })}>
+                  <option value="">{t("visit.noGame")}</option>
+                  {games.map((g) => <option key={g.id} value={g.id} disabled={!!g.out || g.taken}>{g.title} · {g.detail}{g.taken ? ` · ${t("visit.gameTaken")}` : g.out ? ` · ${t("visit.gameOut")}` : ""}</option>)}
+                </select>
+              </div>
+            )}
             <label className="field">{t("visit.note")}<textarea className="input" rows={2} maxLength={200} placeholder={t("visit.notePh")} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
             {error && <p className="error">{error}</p>}
             <button className="btn btn-pink full" disabled={busy}>{busy ? t("visit.oneMoment") : full ? t("visit.waitlist") : t("visit.reserveBtn")}</button>

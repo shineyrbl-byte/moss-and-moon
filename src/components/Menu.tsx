@@ -7,6 +7,7 @@ import { hourText } from "@/lib/cafe";
 import { isLastHour, lastHourLabel } from "@/lib/cafe";
 import { useStore } from "./Store";
 import { fill } from "@/lib/i18n";
+import { weatherPicks, type Weather } from "@/lib/weatherPicks";
 import Reveal from "./Reveal";
 import UsualCard from "./Usual";
 import VoiceOrder from "./VoiceOrder";
@@ -14,6 +15,9 @@ import { ALLERGENS, allergensFor, canAvoid, kcalFor, type Allergen } from "@/lib
 
 export default function Menu() {
   const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t, branch, lang } = useStore();
+  // What suits the weather outside (hidden if the weather service is off or down)
+  const [weather, setWeather] = useState<Weather | null>(null);
+  useEffect(() => { fetch("/api/weather").then((r) => r.json()).then((w) => !w.off && typeof w.temp === "number" && setWeather(w)).catch(() => {}); }, []);
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [happy, setHappy] = useState(false);
   useEffect(() => setHappy(isHappyHour()), []);
@@ -128,8 +132,10 @@ export default function Menu() {
           </section>
         );
         const here = (m: (typeof menu)[number]) => !m.branches?.length || m.branches.includes(branch);
+        const wx = weather ? weatherPicks(weather, menu.filter(here)) : null;
         return (
           <>
+            {wx && wx.items.length >= 2 && strip(fill(t(`weather.${wx.mood}`), { temp: weather!.temp }), wx.items)}
             {strip(t("menu.staffPicks"), menu.filter((m) => m.staffPick && here(m)))}
             {strip(t("menu.newThisMonth"), menu.filter((m) => m.badge === "new" && !m.staffPick && here(m)))}
           </>

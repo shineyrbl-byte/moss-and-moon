@@ -6,6 +6,7 @@ import { limited, tooMany } from "@/lib/rateLimit";
 import { checkTable, cleanPreorder } from "@/lib/preorders";
 import { rupees } from "@/lib/pricing";
 import { depositFor, markNoShow } from "@/lib/deposits";
+import { checkGame } from "@/lib/library";
 
 /** Tables used in a slot. Groups of 5+ take two tables. */
 function tablesUsed(date: string, time: string, branch: string) {
@@ -50,6 +51,9 @@ export async function POST(req: Request) {
     const problem = checkTable(table, date, time, guests);
     if (problem) return Response.json({ error: problem }, { status: 409 });
   }
+  // Optional: a board game from the shelf, kept for this table
+  const game = checkGame(b.game, date, time);
+  if (game && "error" in game) return Response.json({ error: game.error }, { status: 409 });
   const pre = cleanPreorder(b.preorder);
   if (Array.isArray(b.preorder) && b.preorder.length && !pre.lines.length) return Response.json({ error: "Those pre-order items aren't on the menu any more." }, { status: 400 });
 
@@ -61,10 +65,11 @@ export async function POST(req: Request) {
     code, name, phone, email || null, date, time, guests, note, table, pre.lines.length ? JSON.stringify(pre.lines) : null, branch.id,
     deposit ? "pending" : "confirmed", deposit, deposit ? "due" : null, highChairs,
   );
-  if (deposit) return Response.json({ code, name, date, time, guests, table, needsDeposit: true, deposit });
+  if (game) db.prepare("UPDATE bookings SET game = ?, note = CASE WHEN COALESCE(note, '') = '' THEN ? ELSE ? || ' · ' || note END WHERE code = ?").run(game.id, `🎲 ${game.title}`, `🎲 ${game.title}`, code);
+  if (deposit) return Response.json({ code, name, date, time, guests, table, needsDeposit: true, deposit, game: game?.title ?? null });
   const extra = { table, preorder: pre.items, preorderTotal: pre.total, ...(activeBranches().length > 1 ? { branch: branch.name, address: branch.address } : {}) };
   if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests, ...extra }), [bookingInvite({ code, name, date, time, guests })]);
-  return Response.json({ code, name, date, time, guests, ...extra, preorderText: pre.items.length ? `${pre.items.join(", ")} · about ${rupees(pre.total)}, pay at the café` : null });
+  return Response.json({ code, name, date, time, guests, ...extra, game: game?.title ?? null, preorderText: pre.items.length ? `${pre.items.join(", ")} · about ${rupees(pre.total)}, pay at the café` : null });
 }
 
 // Staff: upcoming bookings

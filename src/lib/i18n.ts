@@ -256,6 +256,20 @@ const en = {
   "footer.recipes": "Make it at home",
   "footer.diary": "Coffee diary",
   "opt.atHome": "🏠 Make it at home",
+  "weather.rain": "☔ Raining in Panjim, {temp}°C: chai weather",
+  "weather.hot": "☀️ {temp}°C outside: something cold?",
+  "weather.cool": "🧣 A cool {temp}°C: warm up with these",
+  "weather.nice": "🌤 A lovely {temp}°C: perfect for these",
+  "opt.caffeine": "~{n} mg caffeine",
+  "visit.game": "🎲 Keep a board game for us",
+  "visit.noGame": "No game, thanks",
+  "visit.gameTaken": "taken then",
+  "visit.gameOut": "off the shelf",
+  "visit.gameKept": "{game} will be waiting on your table.",
+  "footer.brew": "Brew timer",
+  "footer.origins": "Where our coffee grows",
+  "footer.shelf": "Games & books",
+  "footer.play": "Barista rush (game)",
 };
 
 type Key = keyof typeof en;
@@ -512,6 +526,20 @@ const hi: Record<Key, string> = {
   "footer.recipes": "घर पर बनाएँ",
   "footer.diary": "कॉफ़ी डायरी",
   "opt.atHome": "🏠 घर पर बनाएँ",
+  "weather.rain": "☔ पणजी में बारिश, {temp}°C: चाय का मौसम",
+  "weather.hot": "☀️ बाहर {temp}°C: कुछ ठंडा?",
+  "weather.cool": "🧣 ठंडा {temp}°C: इनसे गरमाइए",
+  "weather.nice": "🌤 सुहाना {temp}°C: इनके लिए एकदम सही",
+  "opt.caffeine": "~{n} mg कैफ़ीन",
+  "visit.game": "🎲 हमारे लिए कोई बोर्ड गेम रखें",
+  "visit.noGame": "कोई गेम नहीं",
+  "visit.gameTaken": "उस समय बुक है",
+  "visit.gameOut": "अभी उपलब्ध नहीं",
+  "visit.gameKept": "{game} आपकी टेबल पर तैयार रहेगा।",
+  "footer.brew": "ब्रू टाइमर",
+  "footer.origins": "हमारी कॉफ़ी कहाँ उगती है",
+  "footer.shelf": "गेम और किताबें",
+  "footer.play": "बरिस्ता रश (गेम)",
 };
 
 const mr: Record<Key, string> = {
@@ -766,6 +794,20 @@ const mr: Record<Key, string> = {
   "footer.recipes": "घरी बनवा",
   "footer.diary": "कॉफी डायरी",
   "opt.atHome": "🏠 घरी बनवा",
+  "weather.rain": "☔ पणजीत पाऊस, {temp}°C: चहाची वेळ",
+  "weather.hot": "☀️ बाहेर {temp}°C: काहीतरी थंड?",
+  "weather.cool": "🧣 गार {temp}°C: यांनी ऊब घ्या",
+  "weather.nice": "🌤 छान {temp}°C: यांच्यासाठी अगदी योग्य",
+  "opt.caffeine": "~{n} mg कॅफीन",
+  "visit.game": "🎲 आमच्यासाठी एखादा बोर्ड गेम ठेवा",
+  "visit.noGame": "गेम नको",
+  "visit.gameTaken": "त्या वेळी बुक आहे",
+  "visit.gameOut": "सध्या उपलब्ध नाही",
+  "visit.gameKept": "{game} तुमच्या टेबलावर तयार असेल.",
+  "footer.brew": "ब्रू टायमर",
+  "footer.origins": "आमची कॉफी कुठे पिकते",
+  "footer.shelf": "खेळ आणि पुस्तके",
+  "footer.play": "बरिस्ता रश (खेळ)",
 };
 
 const kok: Record<Key, string> = {
@@ -1020,6 +1062,20 @@ const kok: Record<Key, string> = {
   "footer.recipes": "घरा करात",
   "footer.diary": "कॉफी डायरी",
   "opt.atHome": "🏠 घरा करात",
+  "weather.rain": "☔ पणजेंत पावस, {temp}°C: चाचो वेळ",
+  "weather.hot": "☀️ भायर {temp}°C: कितें तरी थंड?",
+  "weather.cool": "🧣 थंड {temp}°C: हांचेवरवीं ऊब घेयात",
+  "weather.nice": "🌤 बरें {temp}°C: हांचेखातीर एकदम बरें",
+  "opt.caffeine": "~{n} mg कॅफीन",
+  "visit.game": "🎲 आमचेखातीर एक बोर्ड गेम दवरात",
+  "visit.noGame": "गेम नाका",
+  "visit.gameTaken": "त्या वेळार बुक आसा",
+  "visit.gameOut": "सद्या मेळना",
+  "visit.gameKept": "{game} तुमच्या टेबलाचेर तयार आसतलो.",
+  "footer.brew": "ब्रू टायमर",
+  "footer.origins": "आमची कॉफी खंय पिकता",
+  "footer.shelf": "खेळ आनी पुस्तकां",
+  "footer.play": "बरिस्ता रश (खेळ)",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

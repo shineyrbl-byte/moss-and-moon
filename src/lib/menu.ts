@@ -62,6 +62,8 @@ export type MenuItem = {
   nameKok?: string;
   descMr?: string;
   descKok?: string;
+  /** Caffeine in mg as it comes, if you know it (otherwise it's estimated) */
+  caffeine?: number;
   /** % of guests who gave it a thumbs up (only with enough ratings) */
   loved?: number;
   /** Only sold at these branches (unset = everywhere) */
