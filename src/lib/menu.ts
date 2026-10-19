@@ -1,5 +1,6 @@
 // The starting menu. On first run it is copied into the database; after that,
 // staff edit the menu from /admin → Menu (no code changes needed).
+import type { Lang } from "./i18n";
 
 export type Category = "coffee" | "tea" | "cold" | "food" | "bakes" | "shop";
 
@@ -56,6 +57,9 @@ export type MenuItem = {
   /** Hindi name and description, shown when a guest switches to हिन्दी */
   nameHi?: string;
   descHi?: string;
+  /** Marathi and Konkani names (Konkani falls back to Marathi, then Hindi) */
+  nameMr?: string;
+  nameKok?: string;
   /** % of guests who gave it a thumbs up (only with enough ratings) */
   loved?: number;
   /** Only sold at these branches (unset = everywhere) */
@@ -331,3 +335,11 @@ export const MENU_V7: MenuItem[] = [
   { id: "gf-brownie", cat: "bakes", name: "Gluten-Free Fudge Brownie", desc: "Dense, gooey and made with almond flour. Nobody guesses it's gluten-free.", price: 150, img: "1564355808539-22fda35bed7e", diet: ["gf"], allergens: ["nuts", "egg", "milk", "soy"], kcal: 340, cost: 35, nameHi: "ग्लूटेन-फ़्री ब्राउनी", descHi: "बादाम के आटे से बनी, गाढ़ी और नरम ब्राउनी।" },
   { id: "gf-muffin", cat: "bakes", name: "Gluten-Free Berry Crumble Muffin", desc: "Made with rice flour, blueberries and a brown sugar crumble on top.", price: 140, img: "1558303420-f814d8a590f5", diet: ["gf"], allergens: ["egg", "milk"], kcal: 310, cost: 30, nameHi: "ग्लूटेन-फ़्री बेरी मफ़िन", descHi: "ब्लूबेरी और ब्राउन शुगर क्रम्बल वाला ग्लूटेन-फ़्री मफ़िन।" },
 ];
+
+/** The dish name in the guest's language, falling back to the nearest one we have */
+export function itemName(m: Pick<MenuItem, "name" | "nameHi" | "nameMr" | "nameKok">, lang: Lang): string {
+  if (lang === "hi") return m.nameHi || m.name;
+  if (lang === "mr") return m.nameMr || m.nameHi || m.name;
+  if (lang === "kok") return m.nameKok || m.nameMr || m.nameHi || m.name;
+  return m.name;
+}

@@ -30,6 +30,15 @@ test("menu is seeded and public", async () => {
   assert.ok(r.body.items.length >= 20);
 });
 
+test("every dish has a Hindi and a Marathi name", async () => {
+  const items = (await s.api("/api/menu")).body.items as { id: string; nameHi?: string; nameMr?: string }[];
+  const missing = items.filter((m) => !m.nameHi || !m.nameMr).map((m) => m.id);
+  assert.deepEqual(missing, []);
+  const kaapi = items.find((m) => m.id === "filter-kaapi")!;
+  assert.equal(kaapi.nameHi, "फ़िल्टर कापी"); // existing Hindi name kept
+  assert.equal(kaapi.nameMr, "फिल्टर कापी");
+});
+
 test("order prices are worked out on the server", async () => {
   const r = await order({ name: "Test", phone: "9876543210", lines: [{ itemId: "cookie", qty: 2, price: 1 }] });
   assert.equal(r.status, 200);
@@ -86,6 +95,9 @@ test("menu editor: create, price change, hide, delete", async () => {
   assert.equal((await order({ name: "A", phone: "9876543210", lines: [{ itemId: id, qty: 1 }] })).body.total, 249);
   await s.api("/api/menu", { method: "POST", json: { ...created.body.item, hidden: true } });
   assert.equal((await order({ name: "A", phone: "9876543210", lines: [{ itemId: id, qty: 1 }] })).status, 400);
+  const named = await s.api("/api/menu", { method: "POST", json: { ...created.body.item, nameMr: "टेस्ट ब्रू", nameKok: "टेस्ट ब्रू कोंकणी" } });
+  assert.equal(named.body.item.nameMr, "टेस्ट ब्रू");
+  assert.equal(named.body.item.nameKok, "टेस्ट ब्रू कोंकणी");
   assert.equal((await s.api(`/api/menu?id=${id}`, { method: "DELETE" })).status, 200);
   assert.equal((await s.api("/api/menu", { method: "POST", json: { name: "Bad", cat: "coffee", price: 99999, img: "x" } })).status, 400);
 });

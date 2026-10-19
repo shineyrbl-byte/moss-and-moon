@@ -7,7 +7,7 @@ import { useEscape, useStore } from "./Store";
 import BranchPicker from "./BranchPicker";
 import { isLastHour, lastHour } from "@/lib/cafe";
 import { usePay } from "./Payment";
-import { photo } from "@/lib/menu";
+import { itemName, photo } from "@/lib/menu";
 import { HAPPY_HOUR, REWARDS, TIP_CHOICES, findReward, deliveryTerms, deliveryZones, describeOptions, happyHour, combosAt, combosConfig, quote, rupees, unitPrice, type PromoRule } from "@/lib/pricing";
 import { hoursOn } from "@/lib/cafe";
 import { rememberOrder } from "@/lib/history";
@@ -40,7 +40,7 @@ function tomorrowTimes(branch?: string) {
 const post = (url: string, body: unknown) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export default function CartDrawer() {
-  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me, t, group, setGroup, branch } = useStore();
+  const { lines, setQty, clear, drawerOpen, setDrawerOpen, soldOut, refreshSoldOut, toast, find, table, setTable, me, t, group, setGroup, branch, lang } = useStore();
   const pay = usePay();
   const router = useRouter();
   const [step, setStep] = useState<"tray" | "checkout">("tray");
@@ -312,7 +312,7 @@ export default function CartDrawer() {
                   <div className="line" key={l.key}>
                     <div className="line-thumb"><Image src={photo(item.img, 200)} alt="" fill sizes="56px" /></div>
                     <div className="line-info">
-                      <strong>{item.name}</strong>
+                      <strong>{itemName(item, lang)}</strong>
                       <small>{describeOptions(item, l.opts) || "as it comes"}</small>
                       {soldOut.has(item.id) ? <small className="error" style={{ display: "block" }}>{t("tray.soldOut")}</small> : <small style={{ display: "block" }}>{rupees(unitPrice(item, l.opts) * l.qty)}</small>}
                     </div>

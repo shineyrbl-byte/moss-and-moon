@@ -8,6 +8,7 @@ import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
+import { MENU_NAMES } from "./menuNames";
 import { SEED_EVENTS } from "./cafe";
 
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
@@ -805,6 +806,15 @@ function open() {
   once("seeded_shop", () => addItems(MENU_SHOP));
   once("seeded_menu_v7", () => addItems(MENU_V7)); // more to take home, and gluten-free bakes
   // Allergens & calories for the starting menu (items an owner already set are left alone)
+  // Hindi and Marathi dish names, only where the owner hasn't written one
+  once("menu_names_v1", () => patchItems(null, (d, id) => {
+    const n = MENU_NAMES[id];
+    if (!n) return null;
+    const next = { ...d };
+    if (n.hi && !d.nameHi) next.nameHi = n.hi;
+    if (n.mr && !d.nameMr) next.nameMr = n.mr;
+    return next.nameHi !== d.nameHi || next.nameMr !== d.nameMr ? next : null;
+  }));
   once("seeded_nutrition", () => patchItems(null, (d, id) => {
     const n = NUTRITION[id];
     return n && !d.allergens && d.kcal === undefined ? { ...d, allergens: n.allergens, kcal: n.kcal } : null;

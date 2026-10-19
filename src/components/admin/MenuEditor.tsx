@@ -101,7 +101,7 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
     const d = await r.json();
     setWriting(false);
     if (!r.ok) return toast(d.error);
-    setF((x) => ({ ...x, desc: d.desc || x.desc, allergens: d.allergens, kcal: d.kcal || x.kcal, diet: d.diet, nameHi: d.nameHi, descHi: d.descHi }));
+    setF((x) => ({ ...x, desc: d.desc || x.desc, allergens: d.allergens, kcal: d.kcal || x.kcal, diet: d.diet, nameHi: d.nameHi, nameMr: d.nameMr || x.nameMr, descHi: d.descHi }));
     toast("Drafted ✿ Check the allergens and calories before saving");
   }
   const toggleDiet = (d: Diet) => set("diet", f.diet?.includes(d) ? f.diet.filter((x) => x !== d) : [...(f.diet ?? []), d]);
@@ -162,6 +162,10 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
           <div className="row">
             <label className="field" lang="hi">Name in Hindi <span className="muted small">· optional</span><input className="input" maxLength={60} value={f.nameHi ?? ""} onChange={(e) => set("nameHi", e.target.value || undefined)} /></label>
             <label className="field" lang="hi">Description in Hindi<input className="input" maxLength={200} value={f.descHi ?? ""} onChange={(e) => set("descHi", e.target.value || undefined)} /></label>
+          </div>
+          <div className="row">
+            <label className="field" lang="mr">Name in Marathi <span className="muted small">· optional</span><input className="input" maxLength={60} value={f.nameMr ?? ""} onChange={(e) => set("nameMr", e.target.value || undefined)} /></label>
+            <label className="field" lang="kok">Name in Konkani <span className="muted small">· optional, uses Marathi if blank</span><input className="input" maxLength={60} value={f.nameKok ?? ""} onChange={(e) => set("nameKok", e.target.value || undefined)} /></label>
           </div>
           <div className="row">
             <label className="field">Category

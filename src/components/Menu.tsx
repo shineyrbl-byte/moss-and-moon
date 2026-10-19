@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { CATEGORIES, CATEGORY_ORDER, inTab, photo, type Diet, type MenuTab } from "@/lib/menu";
+import { CATEGORIES, CATEGORY_ORDER, inTab, itemName, photo, type Diet, type MenuTab } from "@/lib/menu";
 import { HAPPY_HOUR, combosAt, combosConfig, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
 import { hourText } from "@/lib/cafe";
 import { isLastHour, lastHourLabel } from "@/lib/cafe";
@@ -120,7 +120,7 @@ export default function Menu() {
               {list.slice(0, 8).map((m) => (
                 <button key={m.id} className="pick-card" onClick={() => setCustomizing(m)} disabled={soldOut.has(m.id)}>
                   <span className="pick-ph"><Image src={photo(m.img, 300)} alt="" fill sizes="140px" /></span>
-                  <b>{lang !== "en" && m.nameHi ? m.nameHi : m.name}</b>
+                  <b>{itemName(m, lang)}</b>
                   <small className="muted">{rupees(m.price)}</small>
                 </button>
               ))}
@@ -152,7 +152,7 @@ export default function Menu() {
                 {favs.has(m.id) ? "♥" : "♡"}
               </button>
               <div className="item-body">
-                <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)} lang={lang !== "en" && m.nameHi ? lang : undefined}>{lang !== "en" && m.nameHi ? m.nameHi : m.name}</h3>
+                <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)} lang={itemName(m, lang) !== m.name ? lang : undefined}>{itemName(m, lang)}</h3>
                 {happy && m.cat === "bakes" && <span className="small" style={{ color: "var(--pink-deep)" }}>golden hour −20%</span>}
                 <p lang={lang === "hi" && m.descHi ? "hi" : undefined}>{lang === "hi" && m.descHi ? m.descHi : m.desc}</p>
                 {m.loved !== undefined && m.loved >= 80 && <span className="loved">❤ Loved by {m.loved}%</span>}

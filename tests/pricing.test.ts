@@ -421,3 +421,14 @@ test("every language has every label, and the opening status is translated", asy
   assert.match(hi, /खुला/);
   assert.doesNotMatch(hi, /\{|Open/);
 });
+
+test("dish names fall back to the nearest language", async () => {
+  const { itemName } = await import("../src/lib/menu.ts");
+  const m = { name: "Chai", nameHi: "चाय", nameMr: "चहा" };
+  assert.equal(itemName(m, "en"), "Chai");
+  assert.equal(itemName(m, "hi"), "चाय");
+  assert.equal(itemName(m, "mr"), "चहा");
+  assert.equal(itemName(m, "kok"), "चहा");
+  assert.equal(itemName({ ...m, nameKok: "चा" }, "kok"), "चा");
+  assert.equal(itemName({ name: "Chai" }, "mr"), "Chai");
+});
