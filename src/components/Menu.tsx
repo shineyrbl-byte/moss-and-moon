@@ -84,9 +84,9 @@ export default function Menu() {
         <div className="chips">
           <button className={`chip ${diet.includes("vegan") ? "on" : ""}`} onClick={() => toggleDiet("vegan")}>{t("menu.vegan")}</button>
           <button className={`chip ${diet.includes("gf") ? "on" : ""}`} onClick={() => toggleDiet("gf")}>{t("menu.gf")}</button>
-          {(["nuts", "egg"] as const).map((a) => (
+          {(["nuts", "egg", "shellfish"] as const).map((a) => (
             <button key={a} className={`chip ${avoid.includes(a) ? "on" : ""}`} aria-pressed={avoid.includes(a)} onClick={() => setAvoid((x) => (x.includes(a) ? x.filter((y) => y !== a) : [...x, a]))}>
-              {a === "nuts" ? "Nut-free" : "Egg-free"}
+              {a === "nuts" ? "Nut-free" : a === "egg" ? "Egg-free" : "No shellfish"}
             </button>
           ))}
           <button className={`chip ${onlyFavs ? "on" : ""}`} onClick={() => setOnlyFavs((v) => !v)}>{t("menu.favs")}{favs.size ? ` (${favs.size})` : ""}</button>

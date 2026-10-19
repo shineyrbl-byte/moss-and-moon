@@ -26,6 +26,8 @@ export type Options = {
   picks?: Record<string, string[]>;
   /** A half portion */
   half?: boolean;
+  /** A note just for this item ("less ice", "cut in half") */
+  note?: string;
 };
 
 export type CartLine = { key: string; itemId: string; opts: Options; qty: number };
@@ -127,7 +129,15 @@ export const chosenExtras = (item: MenuItem, o: { addons?: string[]; picks?: Rec
 ] as Addon[];
 const halfPrice = (p: number) => Math.round((p * 0.6) / 10) * 10;
 
+export const ITEM_NOTE_MAX = 60;
+/** Options as the server allows them, plus the guest's note for this item */
 export function cleanOptions(item: MenuItem, raw: unknown): Options {
+  const o = cleanOptionsBase(item, raw);
+  const note = raw && typeof raw === "object" ? String((raw as { note?: unknown }).note ?? "").replace(/\s+/g, " ").trim().slice(0, ITEM_NOTE_MAX) : "";
+  return note ? { ...o, note } : o;
+}
+
+function cleanOptionsBase(item: MenuItem, raw: unknown): Options {
   const d = defaultOptions(item);
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   if (item.groups?.length) return { picks: cleanPicks(item, r.picks), addons: (item.addons ?? []).map((a) => a.id).filter((id) => Array.isArray(r.addons) && r.addons.includes(id)) };
@@ -165,6 +175,11 @@ export function unitPrice(item: MenuItem, o: Options) {
 }
 
 export function describeOptions(item: MenuItem, o: Options) {
+  const base = describeOptionsBase(item, o);
+  return o.note ? [base, `“${o.note}”`].filter(Boolean).join(" · ") : base;
+}
+
+function describeOptionsBase(item: MenuItem, o: Options) {
   if (item.cat === "shop") return o.variant && item.variants && item.variants.length > 1 ? (item.variants.find((v) => v.id === o.variant)?.label ?? "") : "";
   const addons = (o.addons ?? []).map((id) => item.addons?.find((a) => a.id === id)?.label).filter(Boolean) as string[];
   if (item.groups?.length) return [...item.groups.flatMap((g) => (o.picks?.[g.id] ?? []).map((id) => g.choices.find((c) => c.id === id)?.label ?? "")), ...addons].filter(Boolean).join(" · ");

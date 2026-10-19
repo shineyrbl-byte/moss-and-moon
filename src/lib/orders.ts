@@ -110,11 +110,14 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
 
   const card = phone ? (db.prepare("SELECT stamps FROM loyalty WHERE phone = ?").get(phone) as { stamps: number } | undefined) : undefined;
   const stamps = card?.stamps ?? 0;
+  // Spending stamps needs the signed-in account that owns this phone (anyone could type a number)
+  const ownsCard = !!me?.phone && cleanPhone(me.phone) === phone;
   // "none" = keep my stamps for later (no automatic free drink)
-  const hasReward = stamps >= STAMPS_FOR_REWARD && body.reward !== "none";
+  const hasReward = ownsCard && stamps >= STAMPS_FOR_REWARD && body.reward !== "none";
   // A reward from the rewards shop (needs enough stamps)
   const reward = body.reward && body.reward !== "none" ? findReward(body.reward) : null;
   if (body.reward && body.reward !== "none" && (!reward || stamps < reward.stamps)) return Response.json({ error: reward ? `That needs ${reward.stamps} stamps; you have ${stamps}.` : "Unknown reward." }, { status: 400 });
+  if (reward && !ownsCard) return Response.json({ error: "Sign in with the account that has this phone number to spend stamps." }, { status: 401 });
   const perks = perksFor(me);
   const tipAmount = body.tipAmount !== undefined && body.tipAmount !== null && body.tipAmount !== "" ? Number(body.tipAmount) : undefined;
   // Promo code: checked again here (dates, limits, once per guest)

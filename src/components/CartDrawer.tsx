@@ -114,11 +114,13 @@ export default function CartDrawer() {
     fetch(`/api/loyalty?phone=${digits}`).then((r) => r.json()).then(setLoyalty).catch(() => {});
   }, [digits]);
 
+  // Stamps can only be spent from the signed-in account with this phone
+  const ownsCard = !!me?.phone && me.phone.replace(/\D/g, "").slice(-10) === digits;
   const delivery = !table && mode === "delivery";
   const terms = delivery ? deliveryTerms(hasZones ? (pincode.length === 6 ? pincode : null) : null) : null;
   const q = useMemo(
     () =>
-      quote(lines, find, promo?.rule, !!loyalty?.hasReward && reward !== "none", {
+      quote(lines, find, promo?.rule, !!loyalty?.hasReward && reward !== "none" && ownsCard, {
         reward: reward && reward !== "none" ? findReward(reward) ?? null : null,
         giftBalance: gift?.balance,
         credit: me?.perks?.credit ?? 0,
@@ -132,7 +134,7 @@ export default function CartDrawer() {
         tipPercent: step === "checkout" ? tipPercent : 0,
         delivery: terms ? { fee: terms.fee, freeOver: terms.freeOver } : delivery,
       }),
-    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step, branch, terms, ownCup, table, reward]
+    [lines, find, promo, loyalty, gift, me, useBirthday, usePass, tipPercent, delivery, step, branch, terms, ownCup, table, reward, ownsCard]
   );
   const times = useMemo(() => (step === "checkout" ? pickupTimes(branch) : []), [step, branch]);
   const hasSoldOut = lines.some((l) => soldOut.has(l.itemId) || !find(l.itemId));
@@ -361,10 +363,12 @@ export default function CartDrawer() {
               </label>
               {loyalty && (
                 <div className="reward-banner">
-                  {loyalty.hasReward && !reward
+                  {!ownsCard && loyalty.stamps >= REWARDS[0].stamps
+                    ? `☕ ${loyalty.stamps} stamps. Sign in with the account that has this phone number to spend them (so nobody else can).`
+                    : loyalty.hasReward && !reward
                     ? "🎉 You've got a free drink! We'll take your cheapest drink off this order."
                     : `☕ ${loyalty.stamps} stamp${loyalty.stamps === 1 ? "" : "s"} · this order adds one more.`}
-                  {loyalty.stamps >= REWARDS[0].stamps && (
+                  {ownsCard && loyalty.stamps >= REWARDS[0].stamps && (
                     <div className="chips" style={{ justifyContent: "flex-start", marginTop: "0.4rem" }} role="radiogroup" aria-label="Spend stamps">
                       <button type="button" role="radio" aria-checked={!reward} className={`chip ${!reward ? "on" : ""}`} onClick={() => setReward("")}>{loyalty.hasReward ? "Free drink" : "Keep collecting"}</button>
                       {REWARDS.filter((r) => r.id !== "drink" && r.stamps <= loyalty.stamps).map((r) => (

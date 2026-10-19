@@ -1,7 +1,7 @@
 // Allergens and rough calories. Milk-based allergens for drinks depend on the milk chosen.
 // (No imports, so the tests can load it directly.)
 
-export type Allergen = "milk" | "nuts" | "gluten" | "egg" | "soy" | "sesame";
+export type Allergen = "milk" | "nuts" | "peanuts" | "gluten" | "egg" | "soy" | "sesame" | "fish" | "shellfish" | "mustard" | "celery";
 export const ALLERGENS: { id: Allergen; label: string; icon: string }[] = [
   { id: "milk", label: "Milk", icon: "🥛" },
   { id: "nuts", label: "Nuts", icon: "🥜" },
@@ -9,13 +9,18 @@ export const ALLERGENS: { id: Allergen; label: string; icon: string }[] = [
   { id: "egg", label: "Egg", icon: "🥚" },
   { id: "soy", label: "Soy", icon: "🫘" },
   { id: "sesame", label: "Sesame", icon: "⚪" },
+  { id: "peanuts", label: "Peanuts", icon: "🥜" },
+  { id: "fish", label: "Fish", icon: "🐟" },
+  { id: "shellfish", label: "Shellfish", icon: "🦐" },
+  { id: "mustard", label: "Mustard", icon: "🟡" },
+  { id: "celery", label: "Celery", icon: "🥬" },
 ];
 
 type Addon = { id: string; kcal?: number; adds?: string[]; removes?: string[] };
 type Item = { id: string; cat: string; diet?: string[]; allergens?: Allergen[]; kcal?: number; noMilk?: boolean; addons?: Addon[]; groups?: { id: string; choices: Addon[] }[]; half?: boolean };
 type Opts = { size?: string; milk?: string; sweet?: string; shot?: boolean; temp?: string; syrup?: string; toppings?: string[]; addons?: string[]; picks?: Record<string, string[]>; half?: boolean };
 const extras = (item: Item, o: Opts) => [...(o.addons ?? []).map((id) => item.addons?.find((x) => x.id === id)), ...(item.groups ?? []).flatMap((g) => (o.picks?.[g.id] ?? []).map((id) => g.choices.find((c) => c.id === id)))].filter(Boolean) as Addon[];
-const ALL = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
+const ALL: string[] = ALLERGENS.map((a) => a.id);
 
 /** Starting values for the menu (owners can change them in the menu editor). kcal = regular size, as it usually comes. */
 export const NUTRITION: Record<string, { allergens: Allergen[]; kcal: number }> = {

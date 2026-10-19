@@ -43,7 +43,7 @@ export default function AllergenChart() {
         ))}
       </table>
       <footer className="mc-foot" style={{ display: "block" }}>
-        <p>● = contains. Toppings, syrups and add-ons can add allergens: please ask. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so traces are possible in anything. Tell us about severe allergies before ordering.</p>
+        <p>● = contains. Toppings, syrups and add-ons can add allergens: please ask. Our kitchen handles nuts, gluten, milk, egg, soy, sesame and shellfish, so traces are possible in anything. Tell us about severe allergies before ordering.</p>
       </footer>
     </div>
   );

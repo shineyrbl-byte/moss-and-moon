@@ -8,7 +8,7 @@ import { wholeCake } from "@/lib/cakes";
 import { ALLERGENS, allergensFor, kcalFor } from "@/lib/nutrition";
 import { useRouter } from "next/navigation";
 import { photo } from "@/lib/menu";
-import { ICE, MILKS, SHOT_PRICE, SIZES, SWEETS, SYRUPS, TEMPS, TOPPINGS, cleanOptions, defaultOptions, drinkChoices, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
+import { ICE, ITEM_NOTE_MAX, MILKS, SHOT_PRICE, SIZES, SWEETS, SYRUPS, TEMPS, TOPPINGS, cleanOptions, defaultOptions, drinkChoices, isDrink, rupees, unitPrice, type Options } from "@/lib/pricing";
 
 let pairCache: Record<string, string> | null = null;
 
@@ -229,7 +229,12 @@ export default function CustomizeModal() {
               </div>
             );
           })()}
-          {item.cat !== "shop" && <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so please tell us about severe allergies.</p>}
+          {item.cat !== "shop" && (
+            <label className="field small" style={{ marginTop: "0.4rem" }}>Anything for this one? <span className="muted">· optional</span>
+              <input className="input" maxLength={ITEM_NOTE_MAX} placeholder={drink ? "e.g. less ice, extra hot, no foam" : "e.g. cut in half, sauce on the side"} value={opts.note ?? ""} onChange={(e) => setOpts((o) => ({ ...o, note: e.target.value || undefined }))} />
+            </label>
+          )}
+          {item.cat !== "shop" && <p className="tiny muted">Allergens and calories are approximate. Our kitchen handles nuts, gluten, milk, egg, soy, sesame and shellfish, so please tell us about severe allergies.</p>}
           <div className="toggle-row">
             <div className="stepper">
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="One less">−</button>

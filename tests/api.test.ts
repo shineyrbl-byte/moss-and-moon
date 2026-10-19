@@ -115,10 +115,17 @@ test("loyalty: ten stamps earn a free drink", async () => {
   const phone = "9333333333";
   for (let i = 0; i < 10; i++) await order({ name: "Loyal", phone, lines: [{ itemId: "cookie", qty: 1 }] });
   assert.equal((await s.api(`/api/loyalty?phone=${phone}`)).body.hasReward, true);
+  // Just typing the number isn't enough to spend them
+  const anon = await order({ name: "Loyal", phone, lines: [{ itemId: "americano", qty: 1 }] });
+  assert.equal(anon.body.usedReward, false);
+  // Signed in with that phone on the account: the free drink comes off
+  await signIn("loyal@example.com");
+  await s.api("/api/account", { method: "PATCH", json: { phone } });
   const r = await order({ name: "Loyal", phone, lines: [{ itemId: "americano", qty: 1 }, { itemId: "matcha", qty: 1 }] });
   assert.equal(r.body.usedReward, true);
   assert.equal(r.body.total, 260);
-  assert.equal((await s.api(`/api/loyalty?phone=${phone}`)).body.stamps, 1);
+  assert.equal((await s.api(`/api/loyalty?phone=${phone}`)).body.stamps, 2, "10 + 1 + 1 - 10");
+  await s.api("/api/account/logout", { method: "POST" });
 });
 
 test("bookings respect table limits", async () => {
@@ -1755,7 +1762,7 @@ test("delivery areas by pincode, pairings, and high chairs on bookings", async (
   const ok = await s.api("/api/admin/cafe-config", { method: "PUT", json: { zones } });
   assert.equal(ok.status, 200, JSON.stringify(ok.body));
   assert.deepEqual(ok.body.zones[0].pincodes, ["403001", "403002"]);
-  const line = [{ itemId: "pesto-pasta", qty: 1 }];
+  const line = [{ itemId: "pesto-pasta", qty: 2 }];
   const now = new Date().getHours();
   // Delivery runs in opening hours only, so only check the area rules when that's the case
   const far = await s.api("/api/orders", { method: "POST", json: { name: "Far", phone: "9811188888", delivery: { address: "12 Long Road, Margao town", pincode: "403601" }, lines: line } });
@@ -1811,6 +1818,8 @@ test("own cup and the rewards shop", async () => {
   assert.match(cup.body.perks, /own cup/);
   // Rewards: 5 orders = 5 stamps; spend 4 on a cookie
   const phone = "9811144444";
+  await signIn("rewards@example.com");
+  await s.api("/api/account", { method: "PATCH", json: { phone } });
   for (let i = 0; i < 4; i++) await s.api("/api/orders", { method: "POST", json: { name: "Stamps", phone, lines: [{ itemId: "americano", qty: 1 }] } });
   assert.equal((await s.api("/api/orders", { method: "POST", json: { name: "Stamps", phone, reward: "bake", lines: [{ itemId: "cookie", qty: 1 }] } })).status, 400, "needs 6 stamps");
   const r = await s.api("/api/orders", { method: "POST", json: { name: "Stamps", phone, reward: "cookie", lines: [{ itemId: "cookie", qty: 1 }, { itemId: "americano", qty: 1 }] } });

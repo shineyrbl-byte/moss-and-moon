@@ -791,6 +791,18 @@ function open() {
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v5', '1')").run();
   }
 
+  // More allergens tracked: the prawn dish declares shellfish
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'allergens_v2'").get()) {
+    const r = db.prepare("SELECT data FROM menu_items WHERE id = 'balchao-toast'").get() as { data: string } | undefined;
+    if (r) {
+      const d = JSON.parse(r.data);
+      if (Array.isArray(d.allergens) && !d.allergens.includes("shellfish")) d.allergens.push("shellfish");
+      d.desc = String(d.desc).replace(/ Contains shellfish\.$/, "");
+      db.prepare("UPDATE menu_items SET data = ? WHERE id = 'balchao-toast'").run(JSON.stringify(d));
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('allergens_v2', '1')").run();
+  }
+
   // Events: the starting ones, once (then owners manage them in Admin → Events)
   if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_events'").get()) {
     const add = db.prepare("INSERT OR IGNORE INTO events (id, data) VALUES (?, ?)");

@@ -99,7 +99,7 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
   };
 }
 
-const ALLERGEN_IDS = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
+const ALLERGEN_IDS: string[] = ALLERGENS.map((a) => a.id);
 
 /** Build-your-own / flight choice groups, kept tidy */
 function cleanGroups(raw: unknown[]) {

@@ -10,7 +10,7 @@ export default function Terms() {
       <ul>
         <li><b>Orders:</b> prices are shown in rupees and include taxes. Times are estimates; we do our best.</li>
         <li><b>Payments:</b> online payments go through Razorpay. Refunds go back to the original payment method, usually in 5–7 working days.</li>
-        <li><b>Allergies:</b> allergen and calorie information is approximate. Our kitchen handles nuts, gluten, milk, egg, soy and sesame, so please tell us about severe allergies.</li>
+        <li><b>Allergies:</b> allergen and calorie information is approximate. Our kitchen handles nuts, gluten, milk, egg, soy, sesame and shellfish, so please tell us about severe allergies.</li>
         <li><b>Bookings:</b> we hold tables for 15 minutes. Please call if plans change so someone on the waitlist can come.</li>
         <li><b>Gift cards and gifted drinks:</b> gift cards don&apos;t expire; gifted drinks can be claimed within 90 days. Neither can be swapped for cash.</li>
         <li><b>Event tickets:</b> refundable up to 24 hours before the event.</li>

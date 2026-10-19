@@ -390,3 +390,11 @@ test("build-your-own groups and half portions", () => {
   const noHalf: MenuItem = { ...pasta, half: undefined };
   assert.equal(unitPrice(noHalf, cleanOptions(noHalf, { half: true })), 340, "only items that offer it");
 });
+
+test("the wider allergen list: shellfish, fish, peanuts, mustard, celery", async () => {
+  const { ALLERGENS, allergensFor, canAvoid } = await import("../src/lib/nutrition.ts");
+  assert.ok(["peanuts", "fish", "shellfish", "mustard", "celery"].every((a) => ALLERGENS.some((x) => x.id === a)));
+  const prawns = { id: "p", cat: "food", allergens: ["gluten", "shellfish"] as never[] };
+  assert.deepEqual(allergensFor(prawns), ["gluten", "shellfish"]);
+  assert.equal(canAvoid(prawns, "shellfish" as never), false);
+});

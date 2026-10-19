@@ -309,7 +309,7 @@ function UsesEditor({ uses, onChange }: { uses: { ingredient: string; amount: nu
 /** Food add-ons: label, price, and allergens it adds (e.g. an egg) or takes away (gluten-free bread) */
 function AddonsEditor({ addons, onChange }: { addons: Addon[]; onChange: (a: Addon[]) => void }) {
   const upd = (i: number, patch: Partial<Addon>) => onChange(addons.map((a, j) => (j === i ? { ...a, ...patch } : a)));
-  const ALLERGEN_IDS = ["milk", "nuts", "gluten", "egg", "soy", "sesame"];
+  const ALLERGEN_IDS: string[] = ALLERGENS.map((a) => a.id);
   return (
     <div className="field">Add-ons <span className="small">(extra cheese, add an egg, make it a combo…)</span>
       {addons.map((a, i) => (

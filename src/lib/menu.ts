@@ -33,7 +33,7 @@ export type MenuItem = {
   /** Drinks made without milk (smoothies, juices, mocktails): no milk choice */
   noMilk?: boolean;
   /** Allergens in the item itself (a drink's milk is added on top, see lib/nutrition.ts) */
-  allergens?: ("milk" | "nuts" | "gluten" | "egg" | "soy" | "sesame")[];
+  allergens?: import("./nutrition").Allergen[];
   /** Rough calories, regular size as it usually comes */
   kcal?: number;
   /** What one costs to make in ₹, on top of tracked ingredients (e.g. a whole croissant from the bakery) */
@@ -271,7 +271,7 @@ export const MENU_V5: MenuItem[] = [
   { id: "kale-salad", cat: "food", name: "Pomegranate Kale Salad", desc: "Kale, avocado, pomegranate, toasted seeds and a lemon honey dressing.", price: 310, img: "1511690743698-d9d85f2fbf38", diet: ["gf"], allergens: ["sesame"], kcal: 360, cost: 95, addons: [{ id: "paneer", label: "Grilled paneer", price: 60, kcal: 160, adds: ["milk"] }], half: true, nameHi: "अनार केल सलाद", descHi: "केल, एवोकाडो, अनार, भुने बीज और नींबू-शहद ड्रेसिंग।" },
   { id: "pea-soup", cat: "food", name: "Pea & Mint Soup", desc: "Bright green, silky and fresh, with a garlic breadstick.", price: 220, img: "1626200419199-391ae4be7a41", diet: ["vegan"], allergens: ["gluten"], kcal: 260, cost: 40, half: true, nameHi: "मटर और पुदीना सूप", descHi: "चमकीला हरा, मुलायम सूप, लहसुनी ब्रेडस्टिक के साथ।" },
   { id: "xacuti-pie", cat: "food", name: "Mushroom Xacuti Pie", desc: "Mushrooms in Goan xacuti spices under a buttery lattice crust.", price: 280, img: "1535920527002-b35e96722eb9", allergens: ["gluten", "milk"], kcal: 540, cost: 70, nameHi: "मशरूम शकुती पाई", descHi: "गोअन शकुती मसालों वाले मशरूम, मक्खनी जालीदार परत के नीचे।" },
-  { id: "balchao-toast", cat: "food", name: "Prawn Balchão Toast", desc: "Goa's tangy, fiery prawn pickle-curry on toasted pão. Contains shellfish.", price: 340, img: "1559737558-2f5a35f4523b", allergens: ["gluten"], kcal: 430, cost: 120, nameHi: "झींगा बालचाओ टोस्ट", descHi: "गोवा का खट्टा-तीखा झींगा बालचाओ, सिके पाव पर। इसमें शेलफ़िश है।" },
+  { id: "balchao-toast", cat: "food", name: "Prawn Balchão Toast", desc: "Goa's tangy, fiery prawn pickle-curry on toasted pão.", price: 340, img: "1559737558-2f5a35f4523b", allergens: ["gluten", "shellfish"], kcal: 430, cost: 120, nameHi: "झींगा बालचाओ टोस्ट", descHi: "गोवा का खट्टा-तीखा झींगा बालचाओ, सिके पाव पर। इसमें शेलफ़िश है।" },
   { id: "paneer-burger", cat: "food", name: "Crispy Paneer Burger", desc: "Spiced crumbed paneer, slaw and chipotle mayo in a brioche bun.", price: 290, img: "1571091718767-18b5b1457add", allergens: ["gluten", "milk", "egg"], kcal: 620, cost: 80, addons: [CHEESE, COMBO_COFFEE], nameHi: "क्रिस्पी पनीर बर्गर", descHi: "मसालेदार क्रिस्पी पनीर, स्लॉ और चिपोटले मेयो, ब्रिओश बन में।" },
   // Desserts
   { id: "serradura", cat: "bakes", name: "Serradura", desc: "Goa's 'sawdust pudding': layers of whipped cream and crumbled Marie biscuit.", price: 200, img: "1571115177098-24ec42ed204d", badge: "pink pick", allergens: ["milk", "gluten"], kcal: 380, cost: 40, nameHi: "सेराडुरा", descHi: "गोवा का 'बुरादा पुडिंग': व्हीप्ड क्रीम और मैरी बिस्किट की परतें।" },
