@@ -253,7 +253,7 @@ export default function CartDrawer() {
       <div className="sum-row"><span>{t("tray.subtotal")}</span><span>{rupees(q.subtotal)}</span></div>
       {q.happyDiscount > 0 && <div className="sum-row discount"><span>Golden hour (−{Math.round(happyHour().off * 100)}%)</span><span>−{rupees(q.happyDiscount)}</span></div>}
       {q.promoDiscount > 0 && <div className="sum-row discount"><span>Promo ({q.promoCode})</span><span>−{rupees(q.promoDiscount)}</span></div>}
-      {q.loyaltyDiscount > 0 && <div className="sum-row discount"><span>Free drink reward</span><span>−{rupees(q.loyaltyDiscount)}</span></div>}
+      {q.loyaltyDiscount > 0 && <div className="sum-row discount"><span>{t("tray.reward")}</span><span>−{rupees(q.loyaltyDiscount)}</span></div>}
       {q.passDiscount > 0 && <div className="sum-row discount"><span>☕ Coffee Pass drink</span><span>−{rupees(q.passDiscount)}</span></div>}
       {q.tierDiscount > 0 && <div className="sum-row discount"><span>{me?.perks?.tier === "gold" ? "🥇 Gold: free upgrades" : "🥈 Silver: free upgrade"}</span><span>−{rupees(q.tierDiscount)}</span></div>}
       {q.ownCupDiscount > 0 && <div className="sum-row discount"><span>♻️ Own cup</span><span>−{rupees(q.ownCupDiscount)}</span></div>}
@@ -262,9 +262,9 @@ export default function CartDrawer() {
       {q.studentDiscount > 0 && <div className="sum-row discount"><span>🎓 Student (drinks −10%)</span><span>−{rupees(q.studentDiscount)}</span></div>}
       {q.birthdayDiscount > 0 && <div className="sum-row discount"><span>🎂 Birthday treat</span><span>−{rupees(q.birthdayDiscount)}</span></div>}
       {q.creditUsed > 0 && <div className="sum-row discount"><span>💝 Your credit</span><span>−{rupees(q.creditUsed)}</span></div>}
-      {q.giftUsed > 0 && <div className="sum-row discount"><span>Gift card</span><span>−{rupees(q.giftUsed)}</span></div>}
-      {q.deliveryFee > 0 && <div className="sum-row"><span>Delivery</span><span>{rupees(q.deliveryFee)}</span></div>}
-      {q.tip > 0 && <div className="sum-row"><span>Tip for the team 💛</span><span>{rupees(q.tip)}</span></div>}
+      {q.giftUsed > 0 && <div className="sum-row discount"><span>{t("tray.giftCard")}</span><span>−{rupees(q.giftUsed)}</span></div>}
+      {q.deliveryFee > 0 && <div className="sum-row"><span>{t("checkout.delivery")}</span><span>{rupees(q.deliveryFee)}</span></div>}
+      {q.tip > 0 && <div className="sum-row"><span>{t("tray.tip")}</span><span>{rupees(q.tip)}</span></div>}
       <div className="sum-row total"><span>{step === "checkout" && q.due > 0 ? (payMethod === "online" ? "To pay now" : payMethod === "company" ? "On the company tab" : delivery ? "Pay on delivery" : "Pay at pickup") : t("tray.total")}</span><span>{rupees(q.due)}</span></div>
     </>
   );
@@ -288,7 +288,7 @@ export default function CartDrawer() {
               {group && (
                 <div className="reward-banner group-note" style={{ marginTop: "0.8rem" }}>
                   👯 {group.checkout ? <>Checking out <b>{group.host}&apos;s group order</b> for everyone.</> : <>Adding to <b>{group.host}&apos;s group order</b> as {group.person}.</>}{" "}
-                  <Link href={`/g/${group.code}`} className="link-btn" onClick={close}>See the group</Link>
+                  <Link href={`/g/${group.code}`} className="link-btn" onClick={close}>{t("tray.seeGroup")}</Link>
                 </div>
               )}
               {table && <div className="reward-banner table-note" style={{ marginTop: "0.8rem" }}>🪑 Ordering for <b>table {table}</b> — we&apos;ll bring it over.</div>}
@@ -296,7 +296,7 @@ export default function CartDrawer() {
               {!lines.length && (
                 <div className="empty-state">
                   <p>{t("tray.empty")}</p>
-                  <Link href="/orders" className="small" style={{ textDecoration: "underline" }} onClick={close}>See past orders</Link>
+                  <Link href="/orders" className="small" style={{ textDecoration: "underline" }} onClick={close}>{t("tray.pastOrders")}</Link>
                 </div>
               )}
               {lines.map((l) => {
@@ -304,8 +304,8 @@ export default function CartDrawer() {
                 if (!item)
                   return (
                     <div className="line" key={l.key}>
-                      <div className="line-info"><strong>No longer on the menu</strong><small className="error">Please remove this item</small></div>
-                      <button className="chip" onClick={() => setQty(l.key, 0)}>Remove</button>
+                      <div className="line-info"><strong>{t("tray.gone")}</strong><small className="error">{t("tray.goneHint")}</small></div>
+                      <button className="chip" onClick={() => setQty(l.key, 0)}>{t("tray.remove")}</button>
                     </div>
                   );
                 return (
@@ -314,7 +314,7 @@ export default function CartDrawer() {
                     <div className="line-info">
                       <strong>{item.name}</strong>
                       <small>{describeOptions(item, l.opts) || "as it comes"}</small>
-                      {soldOut.has(item.id) ? <small className="error" style={{ display: "block" }}>Sold out — please remove</small> : <small style={{ display: "block" }}>{rupees(unitPrice(item, l.opts) * l.qty)}</small>}
+                      {soldOut.has(item.id) ? <small className="error" style={{ display: "block" }}>{t("tray.soldOut")}</small> : <small style={{ display: "block" }}>{rupees(unitPrice(item, l.opts) * l.qty)}</small>}
                     </div>
                     <div className="stepper">
                       <button onClick={() => setQty(l.key, l.qty - 1)} aria-label="One less">−</button>
@@ -329,8 +329,8 @@ export default function CartDrawer() {
                   {promo && <p className="small success">✓ {promo.code}: {promo.label} <button className="link-btn" onClick={() => setPromo(null)}>remove</button></p>}
                   {gift && <p className="small success">🎁 {gift.code}: {rupees(gift.balance)} available <button className="link-btn" onClick={() => setGift(null)}>remove</button></p>}
                   <div className="row">
-                    <input className="input" style={{ flex: 1 }} placeholder="Promo or gift card code" value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && applyCode()} />
-                    <button className="btn btn-ghost btn-sm" onClick={applyCode} disabled={!code.trim()}>Apply</button>
+                    <input className="input" style={{ flex: 1 }} placeholder={t("tray.code")} value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && applyCode()} />
+                    <button className="btn btn-ghost btn-sm" onClick={applyCode} disabled={!code.trim()}>{t("tray.apply")}</button>
                   </div>
                   {codeErr && <p className="error small">{codeErr}</p>}
                   <p className="small muted">Try <b>BLOOM10</b> for 10% off.</p>
@@ -346,7 +346,7 @@ export default function CartDrawer() {
                 <button className="btn full" disabled={!lines.length || hasSoldOut} onClick={() => setStep("checkout")}>{t("tray.checkout")}</button>
               )}
               {!group && (
-                <Link href="/g/new" className="btn btn-ghost btn-sm full" style={{ marginTop: "0.5rem" }} onClick={close}>👯 Order with friends</Link>
+                <Link href="/g/new" className="btn btn-ghost btn-sm full" style={{ marginTop: "0.5rem" }} onClick={close}>{t("tray.withFriends")}</Link>
               )}
             </div>
           </>
@@ -375,17 +375,17 @@ export default function CartDrawer() {
                       {REWARDS.filter((r) => r.id !== "drink" && r.stamps <= loyalty.stamps).map((r) => (
                         <button key={r.id} type="button" role="radio" aria-checked={reward === r.id} className={`chip ${reward === r.id ? "on" : ""}`} onClick={() => setReward(r.id)}>{r.label} · {r.stamps}★</button>
                       ))}
-                      {loyalty.hasReward && <button type="button" role="radio" aria-checked={reward === "none"} className={`chip ${reward === "none" ? "on" : ""}`} onClick={() => setReward("none")}>Save them</button>}
+                      {loyalty.hasReward && <button type="button" role="radio" aria-checked={reward === "none"} className={`chip ${reward === "none" ? "on" : ""}`} onClick={() => setReward("none")}>{t("tray.saveThem")}</button>}
                     </div>
                   )}
                   {reward && reward !== "none" && q.rewardId !== reward && <p className="small" style={{ margin: "0.3rem 0 0" }}>Add {findReward(reward)?.label.toLowerCase()} to your tray to use this.</p>}
                 </div>
               )}
-              <label className="field">Email (optional — for your receipt & "it's ready" note)<input className="input" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+              <label className="field">{t("checkout.email")}<input className="input" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
               {table ? (
                 <div className="reward-banner table-note">
                   🪑 We&apos;ll bring it to <b>table {table}</b>.{" "}
-                  <button type="button" className="link-btn" onClick={() => setTable(null)}>Picking up instead?</button>
+                  <button type="button" className="link-btn" onClick={() => setTable(null)}>{t("checkout.pickInstead")}</button>
                 </div>
               ) : (
                 <>
@@ -398,13 +398,13 @@ export default function CartDrawer() {
                     <>
                       {laterTimes.length > 0 && (
                         <div className="chips" style={{ justifyContent: "flex-start" }} role="radiogroup" aria-label="Which day">
-                          <button type="button" role="radio" aria-checked={!later} className={`chip ${!later ? "on" : ""}`} onClick={() => { setLater(false); setForm({ ...form, pickup: "asap" }); }}>Today</button>
-                          <button type="button" role="radio" aria-checked={later} className={`chip ${later ? "on" : ""}`} onClick={() => { setLater(true); setForm({ ...form, pickup: laterTimes.find((t) => t >= "08:30") ?? laterTimes[0] }); }}>🌅 Tomorrow</button>
+                          <button type="button" role="radio" aria-checked={!later} className={`chip ${!later ? "on" : ""}`} onClick={() => { setLater(false); setForm({ ...form, pickup: "asap" }); }}>{t("checkout.today")}</button>
+                          <button type="button" role="radio" aria-checked={later} className={`chip ${later ? "on" : ""}`} onClick={() => { setLater(true); setForm({ ...form, pickup: laterTimes.find((t) => t >= "08:30") ?? laterTimes[0] }); }}>🌅 {t("checkout.tomorrow")}</button>
                         </div>
                       )}
                       <label className="field">Pickup time{later ? " tomorrow" : ""}
                         <select className="input" value={form.pickup} onChange={(e) => setForm({ ...form, pickup: e.target.value })}>
-                          {!later && <option value="asap">As soon as possible</option>}
+                          {!later && <option value="asap">{t("checkout.asap")}</option>}
                           {(later ? laterTimes : times).map((t) => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </label>
@@ -415,7 +415,7 @@ export default function CartDrawer() {
                       <label className="field">Delivery address
                         <textarea className="input" rows={2} required minLength={10} maxLength={200} placeholder="Flat, building, street, landmark" value={address} onChange={(e) => setAddress(e.target.value)} />
                       </label>
-                      {hasZones && <label className="field">Pincode<input className="input" required inputMode="numeric" maxLength={6} placeholder="6 digits" value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))} /></label>}
+                      {hasZones && <label className="field">{t("checkout.pincode")}<input className="input" required inputMode="numeric" maxLength={6} placeholder="6 digits" value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))} /></label>}
                       {hasZones && pincode.length === 6 && !terms && <p className="error small">Sorry, we don&apos;t deliver to {pincode} yet. Pick it up instead?</p>}
                       {terms && <p className="small muted">🛵 {terms.zone ? `${terms.zone}: ` : ""}{rupees(terms.fee)} delivery, free over {rupees(terms.freeOver)} · minimum {rupees(terms.minOrder)} · about {terms.minutes} min{terms.zone ? "" : " · nearby areas only"}</p>}
                       {terms && q.total < terms.minOrder && <p className="error small">Add {rupees(terms.minOrder - q.total)} more for delivery.</p>}
@@ -466,7 +466,7 @@ export default function CartDrawer() {
                   <input type="checkbox" checked={ownCup} onChange={(e) => setOwnCup(e.target.checked)} /> ♻️ I&apos;ll bring my own cup <span className="muted">(₹10 off each drink)</span>
                 </label>
               )}
-              <label className="field">Anything we should know?<textarea className="input" rows={2} maxLength={200} placeholder="Allergies, a name for the cup…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
+              <label className="field">{t("checkout.note")}<textarea className="input" rows={2} maxLength={200} placeholder={t("checkout.notePh")} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
             </div>
             <div className="drawer-foot">
               {summary}

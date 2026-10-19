@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { BUSY_LABEL, busyLevel, hourLabel, type BusyLevel } from "@/lib/cafe";
+import { fill } from "@/lib/i18n";
+import { useStore } from "./Store";
 
 type Busy = { open: boolean; level: BusyLevel | null; score: number; quietestHour: number | null; forecast: { hour: number; score: number }[]; basedOn: string };
 
@@ -18,11 +20,12 @@ function useBusy() {
 /** Small "☕ Cosy right now" pill */
 export function BusyBadge() {
   const b = useBusy();
+  const { t } = useStore();
   if (!b?.open || !b.level) return null;
   const l = BUSY_LABEL[b.level];
   return (
     <span className={`busy-pill busy-${b.level}`}>
-      <span aria-hidden>{l.icon}</span> {l.text} right now
+      <span aria-hidden>{l.icon}</span> {fill(t("busy.rightNow"), { level: t(`busy.${b.level}`) })}
     </span>
   );
 }
@@ -30,6 +33,7 @@ export function BusyBadge() {
 /** Pill + bars for each hour today, with the quietest time picked out */
 export default function BusyMeter() {
   const b = useBusy();
+  const { t } = useStore();
   const [hover, setHover] = useState<number | null>(null);
   if (!b) return null;
   const nowH = new Date().getHours();
@@ -39,15 +43,15 @@ export default function BusyMeter() {
   return (
     <div className="busy card">
       <div className="busy-head">
-        <strong>How busy is it?</strong>
+        <strong>{t("busy.title")}</strong>
         {l ? (
-          <span className={`busy-pill busy-${b.level}`}><span aria-hidden>{l.icon}</span> {l.text} right now</span>
+          <span className={`busy-pill busy-${b.level}`}><span aria-hidden>{l.icon}</span> {fill(t("busy.rightNow"), { level: t(`busy.${b.level!}`) })}</span>
         ) : (
-          <span className="busy-pill">Closed right now</span>
+          <span className="busy-pill">{t("busy.closedNow")}</span>
         )}
       </div>
       {b.quietestHour !== null && (
-        <p className="small muted">🌿 Quietest time later today: <b>around {hourLabel(b.quietestHour)}</b></p>
+        <p className="small muted">🌿 {t("busy.quietest")} <b>{fill(t("busy.around"), { time: hourLabel(b.quietestHour) })}</b></p>
       )}
       <div className="busy-bars" role="img" aria-label={`Expected busyness today: ${b.forecast.map((f) => `${hourLabel(f.hour)} ${BUSY_LABEL[busyLevel(f.score)].text.toLowerCase()}`).join(", ")}`}>
         {b.forecast.map((f) => (

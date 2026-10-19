@@ -407,3 +407,17 @@ test("CSV reading and item notes", async () => {
   assert.equal(o.note, "less ice please");
   assert.match(describeOptions(latte, o), /“less ice please”$/);
 });
+
+test("every language has every label, and the opening status is translated", async () => {
+  const { DICT } = await import("../src/lib/i18n.ts");
+  const keys = Object.keys(DICT.en).sort();
+  for (const lang of ["hi", "mr", "kok"] as const) {
+    assert.deepEqual(Object.keys(DICT[lang]).sort(), keys, lang);
+    for (const k of keys) assert.ok(DICT[lang][k as keyof typeof DICT.en].trim(), `${lang} ${k} is empty`);
+  }
+  const noon = new Date(2026, 9, 20, 12); // a Tuesday, open
+  assert.match(openStatus(noon).text, /^Open now/);
+  const hi = openStatus(noon, null, "hi").text;
+  assert.match(hi, /खुला/);
+  assert.doesNotMatch(hi, /\{|Open/);
+});

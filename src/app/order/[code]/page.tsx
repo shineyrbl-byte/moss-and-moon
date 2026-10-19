@@ -125,7 +125,7 @@ export default function OrderPage() {
   const unpaid = order.pay_status !== "paid" && order.pay_status !== "refunded" && left > 0;
   const share = order.split_count ? Math.ceil(due / order.split_count) : 0;
   const sharesPaid = order.split_count ? Math.round(order.paidShares / share) : 0;
-  const payLabel = isDelivery ? "Pay on delivery" : order.table_no ? "Pay at the table" : "Pay at pickup";
+  const payLabel = isDelivery ? t("order.payDelivery") : order.table_no ? t("order.payTable") : t("order.payPickup");
 
   return (
     <div className="page">
@@ -175,8 +175,8 @@ export default function OrderPage() {
                 <p className="small muted">Skip the till: pay {rupees(left)} online now{order.table_no || due >= 300 ? ", or split it with friends" : ""}.</p>
               </div>
               <div className="row">
-                <button className="btn btn-ghost btn-sm" onClick={() => setSplitOpen((v) => !v)}>👯 Split the bill</button>
-                <button className="btn btn-pink btn-sm" onClick={() => payNow("order")} disabled={paying}>{paying ? "Opening…" : "Pay now"}</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setSplitOpen((v) => !v)}>{t("order.split")}</button>
+                <button className="btn btn-pink btn-sm" onClick={() => payNow("order")} disabled={paying}>{paying ? "…" : t("checkout.payNow")}</button>
               </div>
             </>
           )}
@@ -274,8 +274,8 @@ export default function OrderPage() {
       </p>
       <div className="row" style={{ justifyContent: "center", marginTop: "1rem" }}>
         <MakeRegular lines={order.lines.map((l) => ({ itemId: l.itemId, opts: l.opts, qty: l.qty }))} />
-        <a href={`/api/orders/${order.code}/receipt`} className="btn btn-ghost btn-sm" target="_blank" rel="noreferrer">🧾 Receipt (PDF)</a>
-        <a href={`/?reorder=${order.code}`} className="btn btn-ghost btn-sm">🔁 Same again</a>
+        <a href={`/api/orders/${order.code}/receipt`} className="btn btn-ghost btn-sm" target="_blank" rel="noreferrer">{t("order.receipt")}</a>
+        <a href={`/?reorder=${order.code}`} className="btn btn-ghost btn-sm">{t("order.again")}</a>
         <Link href="/orders" className="btn btn-ghost btn-sm">My orders</Link>
         <Link href="/account" className="btn btn-ghost btn-sm">My account</Link>
         <Link href="/#menu" className="btn btn-sm">Order something else</Link>

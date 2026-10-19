@@ -14,7 +14,7 @@ type Slot = { time: string; left: number };
 type Booked = { code: string; name: string; date: string; time: string; guests: number; table: number | null; preorderText: string | null };
 
 export default function Visit() {
-  const { toast, t, lines, find, clear, branch } = useStore();
+  const { toast, t, lines, find, clear, branch, lang } = useStore();
   const here = findBranch(branch);
   const [table, setTable] = useState<number | null>(null);
   const pay = usePay();
@@ -34,7 +34,8 @@ export default function Visit() {
     setToday(t);
     setForm((f) => ({ ...f, date: t }));
   }, []);
-  useEffect(() => { setStatus(openStatus(new Date(), branch)); setForm((f) => ({ ...f, time: "" })); setTable(null); }, [branch]);
+  useEffect(() => { setStatus(openStatus(new Date(), branch, lang)); setForm((f) => ({ ...f, time: "" })); setTable(null); }, [branch]);
+  useEffect(() => { setStatus(openStatus(new Date(), branch, lang)); }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load free times whenever the date changes
   useEffect(() => {
@@ -141,12 +142,12 @@ export default function Visit() {
           <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <h3>{t("visit.reserve")}</h3>
             <div className="row">
-              <label className="field">Name<input className="input" required maxLength={40} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
-              <label className="field">Phone<input className="input" required inputMode="numeric" placeholder="10 digits" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
+              <label className="field">{t("visit.name")}<input className="input" required maxLength={40} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+              <label className="field">{t("visit.phone")}<input className="input" required inputMode="numeric" placeholder={t("visit.phonePh")} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
             </div>
             <div className="row">
-              <label className="field">Date<input className="input" type="date" required min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value, time: "" })} /></label>
-              <label className="field">Guests
+              <label className="field">{t("visit.date")}<input className="input" type="date" required min={today} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value, time: "" })} /></label>
+              <label className="field">{t("visit.guests")}
                 <select className="input" value={form.guests} onChange={(e) => setForm({ ...form, guests: Number(e.target.value) })}>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n} {n === 1 ? "guest" : "guests"}</option>)}
                 </select>
@@ -155,9 +156,9 @@ export default function Visit() {
             <div className="field">
               Time
               {slots === null ? (
-                <span className="small">Checking free tables…</span>
+                <span className="small">{t("visit.checking")}</span>
               ) : slots.length === 0 ? (
-                <span className="small">No times left on this day — try another date.</span>
+                <span className="small">{t("visit.noTimes")}</span>
               ) : (
                 <div className="slots">
                   {slots.map((s) => (
@@ -173,20 +174,20 @@ export default function Visit() {
             {!full && form.time && foodLines.length > 0 && (
               <label className="addon" style={{ alignItems: "flex-start" }}>
                 <input type="checkbox" checked={preorder} onChange={(e) => setPreorder(e.target.checked)} />
-                <span>Have my tray ready when I arrive <span className="muted small">· {foodLines.reduce((s, l) => s + l.qty, 0)} item{foodLines.reduce((s, l) => s + l.qty, 0) === 1 ? "" : "s"}, about {rupees(trayTotal)}, pay at the café. We start it 15 minutes before.</span></span>
+                <span>{t("visit.trayReady")} <span className="muted small">· {foodLines.reduce((s, l) => s + l.qty, 0)} item{foodLines.reduce((s, l) => s + l.qty, 0) === 1 ? "" : "s"}, about {rupees(trayTotal)}, pay at the café. We start it 15 minutes before.</span></span>
               </label>
             )}
-            {!full && form.time && !foodLines.length && <p className="tiny muted">Tip: add drinks and food to your tray first and we&apos;ll have them ready when you arrive.</p>}
+            {!full && form.time && !foodLines.length && <p className="tiny muted">{t("visit.trayTip")}</p>}
             {!full && form.guests >= DEPOSIT.minGuests && <p className="small muted">For {DEPOSIT.minGuests} or more we take a {rupees(form.guests * DEPOSIT.perGuest)} deposit online. It comes off your bill.</p>}
             {full && <p className="reward-banner small">⏳ {form.time} is fully booked. Join the waitlist and we&apos;ll email you if a table opens up.</p>}
-            <label className="field">{full ? "Email (so we can tell you)" : "Email (optional — we'll send a confirmation)"}<input className="input" type="email" required={full || form.guests >= DEPOSIT.minGuests} placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+            <label className="field">{full ? t("visit.emailFull") : t("visit.email")}<input className="input" type="email" required={full || form.guests >= DEPOSIT.minGuests} placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
             <label className="row small" style={{ alignItems: "center", gap: "0.5rem" }}>
-              <input type="checkbox" checked={form.highChairs > 0} onChange={(e) => setForm({ ...form, highChairs: e.target.checked ? 1 : 0 })} /> 🧸 We&apos;ll need a high chair
+              <input type="checkbox" checked={form.highChairs > 0} onChange={(e) => setForm({ ...form, highChairs: e.target.checked ? 1 : 0 })} /> {t("visit.highChair")}
               {form.highChairs > 0 && <select className="input" style={{ width: "auto" }} value={form.highChairs} onChange={(e) => setForm({ ...form, highChairs: Number(e.target.value) })} aria-label="How many high chairs">{[1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}</select>}
             </label>
-            <label className="field">A little note (optional)<textarea className="input" rows={2} maxLength={200} placeholder="Window seat, a birthday, a wheelchair…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
+            <label className="field">{t("visit.note")}<textarea className="input" rows={2} maxLength={200} placeholder={t("visit.notePh")} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
             {error && <p className="error">{error}</p>}
-            <button className="btn btn-pink full" disabled={busy}>{busy ? "One moment…" : full ? "Join the waitlist" : "Reserve"}</button>
+            <button className="btn btn-pink full" disabled={busy}>{busy ? t("visit.oneMoment") : full ? t("visit.waitlist") : t("visit.reserveBtn")}</button>
           </form>
         )}
       </div>

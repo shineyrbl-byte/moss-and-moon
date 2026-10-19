@@ -6,6 +6,7 @@ import { HAPPY_HOUR, combosAt, combosConfig, defaultOptions, isHappyHour, rupees
 import { hourText } from "@/lib/cafe";
 import { isLastHour, lastHourLabel } from "@/lib/cafe";
 import { useStore } from "./Store";
+import { fill } from "@/lib/i18n";
 import Reveal from "./Reveal";
 import UsualCard from "./Usual";
 import VoiceOrder from "./VoiceOrder";
@@ -98,7 +99,7 @@ export default function Menu() {
           <button className={`chip ${diet.includes("gf") ? "on" : ""}`} onClick={() => toggleDiet("gf")}>{t("menu.gf")}</button>
           {(["nuts", "egg", "shellfish"] as const).map((a) => (
             <button key={a} className={`chip ${avoid.includes(a) ? "on" : ""}`} aria-pressed={avoid.includes(a)} onClick={() => setAvoid((x) => (x.includes(a) ? x.filter((y) => y !== a) : [...x, a]))}>
-              {a === "nuts" ? "Nut-free" : a === "egg" ? "Egg-free" : "No shellfish"}
+              {t(a === "nuts" ? "menu.nutFree" : a === "egg" ? "menu.eggFree" : "menu.noShellfish")}
             </button>
           ))}
           <button className={`chip ${onlyFavs ? "on" : ""}`} onClick={() => setOnlyFavs((v) => !v)}>{t("menu.favs")}{favs.size ? ` (${favs.size})` : ""}</button>
@@ -107,8 +108,8 @@ export default function Menu() {
 
       {usingProfile && (
         <p className="center small" style={{ marginBottom: "1rem" }}>
-          ✿ Showing what suits your profile ({[...diet.map((d) => (d === "gf" ? "gluten-free" : d)), ...avoid.map((a) => `no ${a}`)].join(" · ")}){" "}
-          <button className="link-btn" onClick={() => { setDiet([]); setAvoid([]); setUsingProfile(false); }}>Show everything</button>
+          {t("menu.profile")} ({[...diet.map((d) => (d === "gf" ? "gluten-free" : d)), ...avoid.map((a) => `no ${a}`)].join(" · ")}){" "}
+          <button className="link-btn" onClick={() => { setDiet([]); setAvoid([]); setUsingProfile(false); }}>{t("menu.showEverything")}</button>
         </p>
       )}
       {cat === "all" && !q && !onlyFavs && !diet.length && !avoid.length && (() => {
@@ -129,8 +130,8 @@ export default function Menu() {
         const here = (m: (typeof menu)[number]) => !m.branches?.length || m.branches.includes(branch);
         return (
           <>
-            {strip("⭐ Staff picks", menu.filter((m) => m.staffPick && here(m)))}
-            {strip("✨ New this month", menu.filter((m) => m.badge === "new" && !m.staffPick && here(m)))}
+            {strip(t("menu.staffPicks"), menu.filter((m) => m.staffPick && here(m)))}
+            {strip(t("menu.newThisMonth"), menu.filter((m) => m.badge === "new" && !m.staffPick && here(m)))}
           </>
         );
       })()}
@@ -195,7 +196,7 @@ export default function Menu() {
           );
         })}
       </div>
-      {blk.more > 0 && <button className="btn btn-ghost btn-sm menu-more" onClick={() => setOpenCats((o) => [...o, blk.id])}>Show all {blk.total} {blk.label?.toLowerCase()} ↓</button>}
+      {blk.more > 0 && <button className="btn btn-ghost btn-sm menu-more" onClick={() => setOpenCats((o) => [...o, blk.id])}>{fill(t("menu.showAll"), { n: blk.total, label: blk.label?.toLowerCase() ?? "" })}</button>}
       </Fragment>
       ))}
       {!items.length && <p className="empty-state">{onlyFavs && !favs.size ? "Tap the ♡ on anything you love and it'll live here." : t("menu.empty")}</p>}

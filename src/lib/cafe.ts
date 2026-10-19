@@ -1,4 +1,5 @@
 // Opening hours, table booking slots, loyalty rules and events.
+import { DICT, fill, type Lang, type TKey } from "./i18n.ts";
 
 /** [open hour, close hour], or null for a day the café is closed */
 export type DayHours = [number, number] | null;
@@ -127,22 +128,23 @@ export function slotsFor(dateStr: string, branch?: string | null): string[] {
   return out;
 }
 
-export function openStatus(now = new Date(), branch?: string | null) {
+export function openStatus(now = new Date(), branch?: string | null, lang: Lang = "en") {
+  const say = (k: TKey, v: Record<string, string> = {}) => fill(DICT[lang][k] ?? DICT.en[k], v);
   const closure = closureOn(now);
   const today = hoursOn(now, branch);
   const nextOpen = () => {
     for (let i = 1; i <= 14; i++) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 12);
       const h = hoursOn(d, branch);
-      if (h) return i === 1 ? `tomorrow at ${hourText(h[0])}` : `${DAY_NAMES[d.getDay()]} at ${hourText(h[0])}`;
+      if (h) return i === 1 ? say("status.tomorrowAt", { time: hourText(h[0]) }) : say("status.dayAt", { day: say(`day.${d.getDay()}` as TKey), time: hourText(h[0]) });
     }
-    return "soon";
+    return say("status.soon");
   };
-  if (!today) return { open: false, text: closure ? `Closed today${closure.note ? ` · ${closure.note}` : ""} · back ${nextOpen()}` : `Closed today · open ${nextOpen()}` };
+  if (!today) return { open: false, text: closure ? say("status.closedBack", { note: closure.note ? ` · ${closure.note}` : "", next: nextOpen() }) : say("status.closedToday", { next: nextOpen() }) };
   const [open, close] = today;
   const h = now.getHours() + now.getMinutes() / 60;
-  if (h >= open && h < close) return { open: true, text: `Open now · until ${hourText(close)}` };
-  return { open: false, text: h < open ? `Closed · opens at ${hourText(open)}` : `Closed · open ${nextOpen()}` };
+  if (h >= open && h < close) return { open: true, text: say("status.openUntil", { time: hourText(close) }) };
+  return { open: false, text: h < open ? say("status.opensAt", { time: hourText(open) }) : say("status.closedOpen", { next: nextOpen() }) };
 }
 
 /** price 0 = free (just RSVP); otherwise guests buy a ticket */

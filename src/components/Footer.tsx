@@ -20,17 +20,17 @@ export default function Footer() {
           <ul>
             <li><Link href="/#menu">{t("nav.menu")}</Link></li>
             <li><Link href="/#events">{t("nav.events")}</Link></li>
-            <li><Link href="/#reviews">Reviews</Link></li>
+            <li><Link href="/#reviews">{t("footer.reviews")}</Link></li>
             <li><Link href="/loyalty">{t("nav.stamps")}</Link></li>
             <li><Link href="/gift-cards">{t("nav.gift")}</Link></li>
-            <li><Link href="/gift-a-drink">Buy a friend a coffee</Link></li>
-            <li><Link href="/noticeboard">Noticeboard</Link></li>
-            <li><Link href="/journal">Journal</Link></li>
-            <li><Link href="/catering">Catering</Link></li>
-            <li><Link href="/cakes">Whole cakes</Link></li>
-            {whatsappUrl() && <li><a href={whatsappUrl()!} target="_blank" rel="noopener noreferrer">WhatsApp us</a></li>}
-            <li><Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link></li>
-            <li><Link href="/orders">My orders</Link></li>
+            <li><Link href="/gift-a-drink">{t("footer.giftDrink")}</Link></li>
+            <li><Link href="/noticeboard">{t("footer.noticeboard")}</Link></li>
+            <li><Link href="/journal">{t("footer.journal")}</Link></li>
+            <li><Link href="/catering">{t("footer.catering")}</Link></li>
+            <li><Link href="/cakes">{t("footer.cakes")}</Link></li>
+            {whatsappUrl() && <li><a href={whatsappUrl()!} target="_blank" rel="noopener noreferrer">{t("footer.whatsapp")}</a></li>}
+            <li><Link href="/privacy">{t("footer.privacy")}</Link> · <Link href="/terms">{t("footer.terms")}</Link></li>
+            <li><Link href="/orders">{t("footer.orders")}</Link></li>
           </ul>
         </div>
         <div>
@@ -46,14 +46,14 @@ export default function Footer() {
           <ul>
             <li>14 Willow Lane</li>
             <li>hello@mossandmoon.cafe</li>
-            <li><Link href="/admin">Staff login</Link></li>
+            <li><Link href="/admin">{t("footer.staff")}</Link></li>
           </ul>
           <div style={{ marginTop: "1rem" }}><InstallButton className="btn btn-pink btn-sm" /></div>
         </div>
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} Moss & Moon</span>
-        <span>Photos from Unsplash</span>
+        <span>{t("footer.photos")}</span>
       </div>
     </footer>
   );

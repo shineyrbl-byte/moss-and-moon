@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useStore } from "./Store";
 
 const toKey = (base64: string) => {
   const pad = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -9,6 +10,7 @@ const toKey = (base64: string) => {
 
 // "Notify me when it's ready": a real push notification, even if this tab is closed.
 export default function NotifyButton({ code }: { code: string }) {
+  const { t } = useStore();
   const [state, setState] = useState<"idle" | "busy" | "on" | "blocked" | "unsupported" | "ios">("idle");
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function NotifyButton({ code }: { code: string }) {
   if (state === "on") return <p className="small success">🔔 We&apos;ll send a notification the moment it&apos;s ready.</p>;
   return (
     <button className="btn btn-ghost btn-sm" onClick={enable} disabled={state === "busy"}>
-      {state === "busy" ? "One sec…" : "🔔 Notify me when it's ready"}
+      {state === "busy" ? "One sec…" : t("order.notify")}
     </button>
   );
 }

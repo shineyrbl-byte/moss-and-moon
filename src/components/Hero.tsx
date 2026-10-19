@@ -10,15 +10,15 @@ import { useStore } from "./Store";
 export default function Hero() {
   const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
   const [wait, setWait] = useState<number | null>(null);
-  const { t } = useStore();
+  const { t, lang } = useStore();
   useEffect(() => {
-    const f = () => setStatus(openStatus());
+    const f = () => setStatus(openStatus(new Date(), null, lang));
     const w = () => fetch("/api/queue").then((r) => r.json()).then((d) => setWait(d.minutes)).catch(() => {});
     f();
     w();
     const t = setInterval(() => { f(); w(); }, 60_000);
     return () => clearInterval(t);
-  }, []);
+  }, [lang]);
 
   return (
     <section className="section hero" id="top">
@@ -55,11 +55,11 @@ export default function Hero() {
         </div>
         <div className="sticker s1">
           <span className="ico">🌸</span>
-          <div><strong>Rose Pistachio Latte</strong><span className="muted">this season&apos;s pink pick</span></div>
+          <div><strong>Rose Pistachio Latte</strong><span className="muted">{t("hero.sticker1Sub")}</span></div>
         </div>
         <div className="sticker s2">
           <span className="ico">🥐</span>
-          <div><strong>Baked at 6am</strong><span className="muted">every single day</span></div>
+          <div><strong>{t("hero.sticker2")}</strong><span className="muted">{t("hero.sticker2Sub")}</span></div>
         </div>
         <div className="sticker s3">
           <span className="ico">⏱</span>

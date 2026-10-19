@@ -6,7 +6,7 @@ const PLACES = ["At the counter", "Outside, by the door", "In my car outside"];
 
 /** Order page: "I'm here" so staff can bring it out */
 export default function ImHere({ code, arrived, note: saved, onDone }: { code: string; arrived: string | null; note: string | null; onDone: () => void }) {
-  const { toast } = useStore();
+  const { toast, t } = useStore();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState(PLACES[1]);
   const [extra, setExtra] = useState("");
@@ -17,7 +17,7 @@ export default function ImHere({ code, arrived, note: saved, onDone }: { code: s
     toast("Thanks! We'll bring it to you 🌸");
     onDone();
   }
-  if (!open) return <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>👋 I&apos;m here</button>;
+  if (!open) return <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>{t("order.here")}</button>;
   return (
     <div className="card" style={{ padding: "0.9rem 1rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
       <b>Where are you?</b>

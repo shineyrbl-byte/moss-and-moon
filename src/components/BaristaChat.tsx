@@ -130,7 +130,7 @@ export default function BaristaChat() {
             <input className="input" placeholder="What are you in the mood for?" value={text} maxLength={500} onChange={(e) => setText(e.target.value)} aria-label="Message the barista" />
             <button className="btn btn-sm" disabled={busy || !text.trim()} aria-label="Send">➤</button>
           </form>
-          <p className="tiny muted" style={{ textAlign: "center", margin: "-0.3rem 0 0.6rem" }}><button className="link-btn tiny" onClick={() => setHuman(true)}>👋 Talk to a person instead</button>{whatsappUrl() && <> · <a className="link-btn tiny" href={whatsappUrl("Hi Moss & Moon! ")!} target="_blank" rel="noopener noreferrer">WhatsApp us</a></>}</p>
+          <p className="tiny muted" style={{ textAlign: "center", margin: "-0.3rem 0 0.6rem" }}><button className="link-btn tiny" onClick={() => setHuman(true)}>{t("chat.person")}</button>{whatsappUrl() && <> · <a className="link-btn tiny" href={whatsappUrl("Hi Moss & Moon! ")!} target="_blank" rel="noopener noreferrer">{t("footer.whatsapp")}</a></>}</p>
           </>}
         </section>
       )}
