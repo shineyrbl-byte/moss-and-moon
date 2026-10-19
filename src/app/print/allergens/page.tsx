@@ -20,6 +20,7 @@ export default function AllergenChart() {
         <h1>Moss <em>&amp;</em> Moon</h1>
         <p>Allergen chart · as made by default · updated {today}</p>
       </header>
+      <div className="al-wrap">
       <table className="al-table">
         <thead>
           <tr><th scope="col">Item</th>{ALLERGENS.map((a) => <th key={a.id} scope="col">{a.icon}<br />{a.label}</th>)}<th scope="col">🌱<br />Vegan</th><th scope="col">GF</th></tr>
@@ -42,6 +43,7 @@ export default function AllergenChart() {
           </tbody>
         ))}
       </table>
+      </div>
       <footer className="mc-foot" style={{ display: "block" }}>
         <p>● = contains. Toppings, syrups and add-ons can add allergens: please ask. Our kitchen handles nuts, gluten, milk, egg, soy, sesame and shellfish, so traces are possible in anything. Tell us about severe allergies before ordering.</p>
       </footer>

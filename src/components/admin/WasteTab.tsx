@@ -20,7 +20,7 @@ export default function WasteTab() {
 
   const load = useCallback(() => fetch("/api/admin/waste").then((r) => r.json()).then(setD).catch(() => {}), []);
   useEffect(() => { load(); }, [load]);
-  const bakes = useMemo(() => menu.filter((m) => m.cat === "bakes" || m.cat === "food"), [menu]);
+  const bakes = useMemo(() => menu.filter((m) => (m.cat === "bakes" || m.cat === "food") && !m.groups?.length), [menu]);
 
   async function save() {
     const entries = Object.entries(counts).filter(([, q]) => q > 0).map(([itemId, qty]) => ({ itemId, qty, reason }));

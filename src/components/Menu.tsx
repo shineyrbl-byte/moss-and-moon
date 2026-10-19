@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { CATEGORIES, CATEGORY_ORDER, inTab, photo, type Diet, type MenuTab } from "@/lib/menu";
 import { HAPPY_HOUR, combosAt, combosConfig, defaultOptions, isHappyHour, rupees } from "@/lib/pricing";
 import { hourText } from "@/lib/cafe";
@@ -49,6 +49,18 @@ export default function Menu() {
         (!s || `${m.name} ${m.desc} ${m.badge ?? ""}`.toLowerCase().includes(s))
     ).sort((a, b) => CATEGORY_ORDER.indexOf(a.cat) - CATEGORY_ORDER.indexOf(b.cat));
   }, [menu, cat, diet, avoid, q, onlyFavs, favs, branch]);
+
+  // "Everything" with no search: one block per section, the first few of each, with "Show all"
+  const [openCats, setOpenCats] = useState<string[]>([]);
+  const PER_SECTION = 8;
+  const blocks = useMemo(() => {
+    if (cat !== "all" || q.trim() || onlyFavs) return [{ id: "all", label: null as string | null, shown: items, total: items.length, more: 0 }];
+    return CATEGORY_ORDER.map((c) => {
+      const list = items.filter((m) => m.cat === c);
+      const all = openCats.includes(c);
+      return { id: c as string, label: t(`menu.${c}` as "menu.all").replace(/\s*\p{Extended_Pictographic}\uFE0F?/gu, ""), shown: all ? list : list.slice(0, PER_SECTION), total: list.length, more: all ? 0 : Math.max(0, list.length - PER_SECTION) };
+    }).filter((b) => b.total);
+  }, [items, cat, q, onlyFavs, openCats, t]);
 
   const toggleDiet = (d: Diet) => setDiet((ds) => (ds.includes(d) ? ds.filter((x) => x !== d) : [...ds, d]));
 
@@ -122,8 +134,11 @@ export default function Menu() {
           </>
         );
       })()}
+      {blocks.map((blk) => (
+      <Fragment key={blk.id}>
+      {blk.label && <h3 className="menu-section-title" id={`menu-${blk.id}`}>{blk.label} <span className="muted small">· {blk.total}</span></h3>}
       <div className="menu-grid">
-        {items.map((m, i) => {
+        {blk.shown.map((m, i) => {
           const out = soldOut.has(m.id);
           return (
             <article key={m.id} className="item card" style={{ animationDelay: `${Math.min(i, 10) * 50}ms` }}>
@@ -180,6 +195,9 @@ export default function Menu() {
           );
         })}
       </div>
+      {blk.more > 0 && <button className="btn btn-ghost btn-sm menu-more" onClick={() => setOpenCats((o) => [...o, blk.id])}>Show all {blk.total} {blk.label?.toLowerCase()} ↓</button>}
+      </Fragment>
+      ))}
       {!items.length && <p className="empty-state">{onlyFavs && !favs.size ? "Tap the ♡ on anything you love and it'll live here." : t("menu.empty")}</p>}
     </Reveal>
   );

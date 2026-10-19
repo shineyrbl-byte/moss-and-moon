@@ -658,7 +658,7 @@ body:has(.board) .nav, body:has(.board) .footer, body:has(.board) .table-banner,
 .slots .chip.is-full.on { opacity: 1; }
 
 .kds { padding: 1rem 16px 3rem; max-width: 110rem; margin: 0 auto; }
-body:has(.kds) .footer, body:has(.kds) .chat-fab { display: none; }
+body:has(.kds) .nav, body:has(.kds) .footer, body:has(.kds) .chat-fab, body:has(.kds) .table-banner { display: none; }
 .kds-head { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .kds-head .logo span { color: var(--pink-deep); font-style: italic; }
 .kds-calls { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
@@ -1264,3 +1264,22 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .lang-pick { position: relative; display: inline-grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-weight: 700; cursor: pointer; }
 .lang-pick:focus-within { outline: 2px solid var(--pink); outline-offset: 2px; }
 .lang-pick select { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+.menu-section-title { font-size: 1.6rem; margin: 2rem 0 0.8rem; scroll-margin-top: 6rem; }
+.menu-section-title:first-of-type { margin-top: 0.5rem; }
+.menu-more { display: block; margin: 1rem auto 0; }
+
+/* Small screens: TV boards and the allergen chart */
+.al-wrap { overflow-x: auto; }
+@media (max-width: 760px) {
+  .al-table { min-width: 640px; }
+  .mboard { padding: 4vw; }
+  .mboard-list { columns: 1; font-size: 5vw; }
+  .mboard-slide h1 { font-size: 10vw; }
+  .mboard-head { font-size: 3.5vw; gap: 0.8rem; }
+  .mboard-head .logo { font-size: 6vw; }
+  .mboard-special { grid-template-columns: 1fr; }
+  .mboard-foot { font-size: 3.2vw; gap: 1rem; }
+  .board-head { gap: 0.8rem; flex-wrap: wrap; }
+  .board-clock { font-size: 1.4rem; }
+  .board-cols { grid-template-columns: 1fr; }
+}
