@@ -4,7 +4,7 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, MENU_V6, SEED_MENU } from "./menu";
+import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, MENU_V6, MENU_V7, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
@@ -529,6 +529,14 @@ function open() {
       done_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
+    CREATE TABLE IF NOT EXISTS table_tabs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      table_no INTEGER NOT NULL,
+      branch TEXT NOT NULL DEFAULT 'main',
+      status TEXT NOT NULL DEFAULT 'open',
+      opened_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      closed_at TEXT
+    );
     CREATE TABLE IF NOT EXISTS cashups (
       day TEXT PRIMARY KEY,
       float_start REAL NOT NULL DEFAULT 0,
@@ -680,6 +688,8 @@ function open() {
   addColumn(db, "orders", "company_id", "INTEGER");
   addColumn(db, "orders", "arrived_at", "TEXT");
   addColumn(db, "orders", "delivery_eta", "INTEGER");
+  addColumn(db, "orders", "tab_id", "INTEGER");
+  addColumn(db, "orders", "stations_done", "TEXT"); // JSON list of stations that have finished their part
   addColumn(db, "tickets", "package", "TEXT");
   addColumn(db, "order_payments", "items", "TEXT"); // pay-for-what-I-had: {line index: how many}
   addColumn(db, "orders", "arrived_note", "TEXT");
@@ -793,6 +803,7 @@ function open() {
     for (const p of SEED_POSTS) add.run(p.slug, p.title, p.body, p.cover, p.ago);
   });
   once("seeded_shop", () => addItems(MENU_SHOP));
+  once("seeded_menu_v7", () => addItems(MENU_V7)); // more to take home, and gluten-free bakes
   // Allergens & calories for the starting menu (items an owner already set are left alone)
   once("seeded_nutrition", () => patchItems(null, (d, id) => {
     const n = NUTRITION[id];

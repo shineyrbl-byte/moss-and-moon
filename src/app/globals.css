@@ -1283,3 +1283,9 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
   .board-clock { font-size: 1.4rem; }
   .board-cols { grid-template-columns: 1fr; }
 }
+.guide .post-body h2 { margin-top: 1.6rem; }
+.guide .post-body li { margin: 0.3rem 0; }
+@media print { body:has(.guide) .nav, body:has(.guide) .footer, body:has(.guide) .chat-fab, .guide-print { display: none !important; } }
+.table-tab { padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+.table-tab ul { margin: 0; padding-left: 1.1rem; }
+.table-tab li.me { font-weight: 600; }

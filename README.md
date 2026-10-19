@@ -22,12 +22,14 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 ## Features
 
 **Ordering**
-- ☕ **120+ items** in sections (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes, Kids, **Shop**), with Goan favourites like Bebinca, Kokum Soda, Sol Kadhi and Chorizo Pão, with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
+- ☕ **125 items** in sections (the full menu shows 8 per section with "Show all") (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes, Kids, **Shop**), with Goan favourites like Bebinca, Kokum Soda, Sol Kadhi and Chorizo Pão, with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
 - 🥤 Cold drinks (cold brew, frappés, smoothies, mocktails, juices) and savoury food (toasties, sandwiches, toast, pancakes, pasta, bowls) with add-ons like an egg, extra cheese, gluten-free bread or a coffee combo
 - 🌅 **Order for tomorrow**: saved tonight, made 15 minutes before pickup the next morning
 - ♻️ **Bring your own cup**: ₹10 off each drink
 - 🎁 **Rewards shop**: spend stamps on a cookie, a bake, a drink, a tote or a mug
 - 🧺 **Build a gift hamper** (coffee + treats + a card) and 🍽 **event tickets with food packages**
+- 🪑 **Table tabs**: every round from a table on one bill; pay for the whole table at once
+- 🔥 **Streak bonus**: 2 extra stamps for visiting 3 days in a row
 - 🧾 **Split the bill by item**: everyone pays for what they had
 - 🔁 **"Same again"** button in the receipt email
 - 🍱 **Combo deals** (e.g. any coffee + a bake for ₹299), applied in the tray automatically
@@ -128,6 +130,8 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 🎬 **Demo reset**: back up, clear test activity and fill in a month of sample data
 - 🔔 **Owner phone alerts**: 1–2★ reviews, big orders, catering and cakes, sold-out items, cash-up gaps
 - 📝 **Shift handover notes** on the barista screen
+- 🍳 **Kitchen stations**: the bar and the kitchen each see their own part; the order is ready when both are done
+- 📘 **Barista and owner guides** at `/help/barista` and `/help/owner` (printable)
 - 🧭 **Grouped dashboard** with a "Jump to" search, and a **setup checklist** of what's left to connect
 - 🚦 **Rush mode**: longer ready times when busy (automatic at 12+ orders), or pause online orders for 15/30 min
 - 📡 **Offline-proof barista screen**: taps are saved without Wi-Fi and sent when it's back

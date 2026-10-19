@@ -1906,6 +1906,49 @@ test("seasonal rotation, staff picks and spreadsheet import", async () => {
   assert.equal(await has("jaggery-latte"), false, "imported items start hidden");
 });
 
+test("table tabs: rounds from one table add up and can be paid together", async () => {
+  const a = await s.api("/api/orders", { method: "POST", json: { name: "Round 1", table: 7, lines: [{ itemId: "americano", qty: 2 }] } });
+  const b = await s.api("/api/orders", { method: "POST", json: { name: "Round 2", table: 7, lines: [{ itemId: "cookie", qty: 3 }] } });
+  const tab = (await s.api(`/api/orders/${b.body.code}/tab`)).body as { table_no: number; orders: { code: string }[]; left: number };
+  assert.equal(tab.table_no, 7);
+  assert.ok(tab.orders.some((o) => o.code === a.body.code) && tab.orders.some((o) => o.code === b.body.code));
+  assert.equal(tab.left, a.body.due + b.body.due);
+  const start = await s.api("/api/payments/start", { method: "POST", json: { kind: "tab", code: a.body.code } });
+  assert.equal(start.body.amount, tab.left);
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "tab", code: a.body.code, demo: true } });
+  assert.equal((await s.api(`/api/orders/${b.body.code}`)).body.pay_status, "paid");
+  // The next round starts a new tab
+  const c = await s.api("/api/orders", { method: "POST", json: { name: "New group", table: 7, lines: [{ itemId: "americano", qty: 1 }] } });
+  assert.equal(((await s.api(`/api/orders/${c.body.code}/tab`)).body as { orders: unknown[] }).orders.length, 1);
+});
+
+test("streak bonus: the 3rd day in a row earns 2 extra stamps", async () => {
+  const phone = "9811166666";
+  const { DatabaseSync } = await import("node:sqlite");
+  const path = await import("node:path");
+  const db = new DatabaseSync(path.join(s.dataDir, "cafe.db"));
+  for (const d of [1, 2]) db.prepare(`INSERT INTO orders (code, name, phone, pickup, note, lines, subtotal, discount, total, created_at) VALUES (?, 'Streak', ?, 'asap', '', '[]', 0, 0, 0, datetime('now','localtime','-${d} days'))`).run(`MM-STRK${d}`, phone);
+  db.close();
+  const r = await s.api("/api/orders", { method: "POST", json: { name: "Streak", phone, lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal(r.body.streakBonus, 2);
+  const again = await s.api("/api/orders", { method: "POST", json: { name: "Streak", phone, lines: [{ itemId: "cookie", qty: 1 }] } });
+  assert.equal(again.body.streakBonus, 0, "once a day");
+});
+
+test("kitchen stations: the order is ready when the bar and the kitchen are both done", async () => {
+  await s.login();
+  const o = await s.api("/api/orders", { method: "POST", json: { name: "Both", phone: "9811177711", lines: [{ itemId: "americano", qty: 1 }, { itemId: "cheese-toastie", qty: 1 }] } });
+  const code = o.body.code;
+  await s.api(`/api/orders/${code}`, { method: "PATCH", json: { status: "brewing" } });
+  const bar = await s.api(`/api/orders/${code}/station`, { method: "POST", json: { station: "bar" } });
+  assert.equal(bar.body.ready, false);
+  assert.equal((await s.api(`/api/orders/${code}`)).body.status, "brewing");
+  const kitchen = await s.api(`/api/orders/${code}/station`, { method: "POST", json: { station: "kitchen" } });
+  assert.equal(kitchen.body.ready, true);
+  assert.equal((await s.api(`/api/orders/${code}`)).body.status, "ready");
+  assert.equal((await s.api(`/api/orders/${code}/station`, { method: "POST", json: { station: "moon" } })).status, 400);
+});
+
 // Keep this one last: it clears orders and refills the café with sample data
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();

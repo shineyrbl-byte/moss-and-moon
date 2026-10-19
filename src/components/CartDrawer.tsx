@@ -239,6 +239,7 @@ export default function CartDrawer() {
         toast(d.usedReward ? "Order placed — your free drink is on us! 🎉" : "Order placed! ☕");
       }
       for (const b of (d.newBadges ?? []) as { icon: string; name: string }[]) setTimeout(() => toast(`${b.icon} New badge: ${b.name}!`), 1200);
+      if (d.streakBonus) setTimeout(() => toast(`🔥 ${d.streakBonus} bonus stamps for visiting 3 days in a row!`), 2000);
       router.push(`/order/${d.code}`);
     } catch {
       setError("Couldn't reach the café. Please try again.");

@@ -12,6 +12,7 @@ import InstallButton from "@/components/InstallButton";
 import { useLive } from "@/components/useLive";
 import ImHere from "@/components/ImHere";
 import RateItems from "@/components/RateItems";
+import TableTab from "@/components/TableTab";
 import { MakeRegular } from "@/components/RegularOrders";
 
 type Order = {
@@ -238,6 +239,7 @@ export default function OrderPage() {
           </span>
           <span className="code">{order.code}</span>
         </div>
+        {order.table_no && <TableTab code={order.code} />}
         {(order.status === "ready" || order.status === "collected") && <RateItems code={order.code} lines={order.lines.filter((l) => l.cat !== "shop")} />}
         {!isDelivery && !order.table_no && order.status !== "collected" && <div style={{ marginBottom: "1rem" }}><ImHere code={order.code} arrived={order.arrived_at ?? null} note={order.arrived_note ?? null} onDone={() => setReload((r) => r + 1)} /></div>}
 

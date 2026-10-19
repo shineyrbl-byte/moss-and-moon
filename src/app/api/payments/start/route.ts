@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { startPayment } from "@/lib/payments";
 import { orderDue } from "@/lib/pricing";
 import { currentCustomer } from "@/lib/account";
+import { tabOfOrder, tabSummary } from "@/lib/tabs";
 import { claimedItems, itemsShare, paidShares } from "@/lib/orderMoney";
 import { personShare } from "@/lib/groups";
 import { cleanText } from "@/lib/db";
@@ -83,6 +84,14 @@ export async function POST(req: Request) {
     if (!["quoted", "accepted"].includes(t.status) || !t.amount) return Response.json({ error: t.status === "paid" || t.status === "done" ? "This is already paid ✿" : "There's no quote to pay yet." }, { status: 409 });
     amount = t.amount;
     label = "Catering";
+  } else if (kind === "tab") {
+    // The whole table's tab: everything still unpaid on it
+    const id = tabOfOrder(c);
+    const t = id ? tabSummary(id) : null;
+    if (!t) return Response.json({ error: "This order isn't on a table tab." }, { status: 404 });
+    if (t.left <= 0) return Response.json({ error: "The table's all paid ✿" }, { status: 409 });
+    amount = t.left;
+    label = `Table ${t.table_no}'s tab`;
   } else if (kind === "cake") {
     const t = db.prepare("SELECT price, status FROM cake_orders WHERE code = ?").get(c) as { price: number; status: string } | undefined;
     if (!t) return Response.json({ error: "Cake order not found." }, { status: 404 });

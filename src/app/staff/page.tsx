@@ -10,9 +10,11 @@ import SupportInbox from "@/components/SupportInbox";
 import RecipeBook from "@/components/RecipeBook";
 import RushControl from "@/components/RushControl";
 import HandoverNotes from "@/components/HandoverNotes";
+import { STATIONS, stationOf, stationsFor } from "@/lib/stations";
 import { activeBranches, findBranch } from "@/lib/cafe";
 
 type Order = {
+  stations_done?: string | null;
   arrived_at?: string | null; arrived_note?: string | null;
   vip?: boolean;
   branch?: string;
@@ -128,7 +130,19 @@ export default function StaffScreen() {
   }, [load]);
   useLive(authed ? "/api/live?topic=staff" : null, (e) => { if (e.type === "order" && e.action === "here" && soundRef.current) beep("call"); if (e.type !== "menu") load(); });
 
+  // One tablet per station (bar / kitchen), or everything
+  const [station, setStation] = useState<string>("all");
+  useEffect(() => { try { setStation(localStorage.getItem("mm-kds-station") || "all"); } catch {} }, []);
+  const pickStation = (id: string) => { setStation(id); try { localStorage.setItem("mm-kds-station", id); } catch {} };
+  const doneAt = (o: Order) => JSON.parse(o.stations_done ?? "[]") as string[];
+  async function stationDone(o: Order) {
+    setOrders((os) => os.map((x) => (x.code === o.code ? { ...x, stations_done: JSON.stringify([...doneAt(x), station]) } : x)));
+    try { await fetch(`/api/orders/${o.code}/station`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ station }) }); } catch {}
+    load();
+  }
   async function advance(o: Order) {
+    // At a station, "ready" means our part is ready; the order is ready when every station's part is
+    if (station !== "all" && o.status === "brewing" && stationsFor(o.lines).length > 1) return stationDone(o);
     const next = ORDER_STEPS[ORDER_STEPS.indexOf(o.status) + 1];
     setOrders((os) => os.map((x) => (x.code === o.code ? { ...x, status: next } : x)).filter((x) => x.status !== "collected"));
     try {
@@ -183,6 +197,7 @@ export default function StaffScreen() {
           <RushControl />
           <SupportInbox onNew={() => sound && beep("order")} />
           <button className="chip" onClick={() => setRecipe({ itemId: null })}>📖 Recipes</button>
+          <Link href="/help/barista" className="chip" target="_blank">❔ Help</Link>
           <button className={`chip ${sound ? "on" : ""}`} onClick={() => { setSound(!sound); if (!sound) beep("order"); }}>{sound ? "🔔 Sound on" : "🔕 Sound off"}</button>
           <button className={`chip ${awake ? "on" : ""}`} onClick={toggleAwake}>{awake ? "☀︎ Screen stays on" : "Keep screen on"}</button>
           <Link href="/admin" className="chip">Dashboard</Link>
@@ -197,6 +212,9 @@ export default function StaffScreen() {
           {!offline && <button className="link-btn small" onClick={() => void flush()}>Send now</button>}
         </div>
       )}
+      <div className="chips" style={{ justifyContent: "flex-start", padding: "0 1rem 0.5rem" }} role="radiogroup" aria-label="Station">
+        {[{ id: "all", label: "All orders" }, ...STATIONS].map((st) => <button key={st.id} role="radio" aria-checked={station === st.id} className={`chip ${station === st.id ? "on" : ""}`} onClick={() => pickStation(st.id)}>{st.label}</button>)}
+      </div>
       {branches.length > 1 && (
         <div className="chips" style={{ justifyContent: "flex-start", padding: "0 1rem" }} role="radiogroup" aria-label="Show orders for">
           {[{ id: "all", name: "All branches" }, ...branches].map((b) => <button key={b.id} role="radio" aria-checked={only === b.id} className={`chip ${only === b.id ? "on" : ""}`} onClick={() => pickBranch(b.id)}>{b.name}</button>)}
@@ -214,7 +232,8 @@ export default function StaffScreen() {
 
       <div className="kds-cols">
         {COLUMNS.map((col) => {
-          const list = orders.filter((o) => o.status === col.status && (only === "all" || (o.branch ?? "main") === only)).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)); // gold members first
+          const list = orders.filter((o) => o.status === col.status && (only === "all" || (o.branch ?? "main") === only)
+            && (station === "all" || (o.lines.some((l) => stationOf(l.cat) === station) && !(col.status !== "ready" && doneAt(o).includes(station))))).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)); // gold members first
           return (
             <section key={col.status} className={`kds-col ${col.status}`}>
               <h2>{col.title} <span>{list.length}</span></h2>
@@ -231,17 +250,18 @@ export default function StaffScreen() {
                       <span>{o.name}{o.vip ? <span className="vip-tag" title="A regular the owner starred"> ⭐ VIP</span> : null}{o.priority ? <span className="vip-tag" title="Gold member: make this one first"> 🥇 Gold</span> : null}</span>
                     </div>
                     <ul className="ticket-items">
-                      {o.lines.map((l, i) => (
+                      {o.lines.filter((l) => station === "all" || stationOf(l.cat) === station).map((l, i) => (
                         <li key={i}><b>{l.qty}×</b> <button className="recipe-link" onClick={() => setRecipe({ itemId: l.itemId, note: l.note })} title="How to make it">{l.name}</button>{l.note && <small>{l.note}</small>}</li>
                       ))}
                     </ul>
+                    {station === "all" && o.status === "brewing" && stationsFor(o.lines).length > 1 && <p className="small muted" style={{ margin: "0.2rem 0" }}>{STATIONS.filter((st) => stationsFor(o.lines).includes(st.id)).map((st) => `${st.label} ${doneAt(o).includes(st.id) ? "✓" : "…"}`).join("  ")}</p>}
                     {o.arrived_at && <p className="ticket-here">👋 Here now{o.arrived_note ? `: ${o.arrived_note}` : ""} · bring it out</p>}
                     {o.note && <p className="ticket-note">📝 {o.note}</p>}
                     <div className="ticket-foot">
                       <span className={`status-tag ${o.pay_status}`}>{o.pay_status === "paid" ? "paid" : o.pay_method === "company" ? "company tab" : o.pay_status === "pending" ? "awaiting payment" : `collect ${rupees(orderDue(o))}`}</span>
                       <span className="row" style={{ gap: "0.4rem" }}>
                         <a className="btn btn-ghost" href={`/print/${o.code}`} target="_blank" rel="noreferrer" aria-label={`Print ticket for ${o.code}`}>🖨</a>
-                        <button className="btn btn-pink" onClick={() => advance(o)}>{NEXT_LABEL[o.status]}</button>
+                        <button className="btn btn-pink" onClick={() => advance(o)}>{station !== "all" && o.status === "brewing" && stationsFor(o.lines).length > 1 ? "Our part's ready ✓" : NEXT_LABEL[o.status]}</button>
                       </span>
                     </div>
                   </article>

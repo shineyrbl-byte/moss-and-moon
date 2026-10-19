@@ -44,6 +44,7 @@ import RotationCard from "@/components/admin/RotationCard";
 import MenuTidyCard from "@/components/admin/MenuTidyCard";
 import ImportCard from "@/components/admin/ImportCard";
 import DemoResetCard from "@/components/admin/DemoResetCard";
+import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
 import OwnerAlertsCard from "@/components/admin/OwnerAlertsCard";
 import PriceWhatIf from "@/components/admin/PriceWhatIf";
@@ -414,6 +415,7 @@ export default function AdminPage() {
 
       {tab === "Orders" && (
         <>
+          <OpenTabs />
           <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <label className="small muted" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
               <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} /> Show collected orders too
@@ -501,6 +503,7 @@ export default function AdminPage() {
 
       {tab === "Settings" && me?.role === "owner" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          <p className="small muted" style={{ margin: 0 }}>New here? Read the <a href="/help/owner" target="_blank">owner guide</a>, and print the <a href="/help/barista" target="_blank">barista guide</a> for the counter.</p>
           <HoursEditor />
           <BranchesCard />
           <DeliveryZonesCard />

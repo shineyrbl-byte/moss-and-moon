@@ -4,7 +4,7 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { rupees } from "@/lib/pricing";
 
-type Kind = "order" | "giftcard" | "share" | "pass" | "ticket" | "drinkgift" | "catering" | "wallet" | "booking" | "cake";
+type Kind = "order" | "giftcard" | "share" | "pass" | "ticket" | "drinkgift" | "catering" | "wallet" | "booking" | "cake" | "tab";
 type Start =
   | { mode: "demo"; amount: number; label: string; code: string; kind: Kind; shareId?: number }
   | { mode: "razorpay"; amount: number; label: string; code: string; kind: Kind; keyId: string; orderId: string; shareId?: number };

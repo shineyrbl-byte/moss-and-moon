@@ -8,6 +8,11 @@ import { isLastHour, lastHour } from "./cafe";
 import { recordMissed } from "./missed";
 import { companyFor, spentThisMonth } from "./companies";
 import { rushNow } from "./rush";
+import { openTabFor } from "./tabs";
+
+/** Visit this many days in a row for a bonus */
+export const STREAK_DAYS = 3;
+export const STREAK_BONUS = 2;
 import { STAMPS_FOR_REWARD, TABLE_COUNT, closureOn, findBranch, hoursOn, toDateStr } from "./cafe";
 import { perksFor } from "./perks";
 import { checkStock, consumeStock } from "./stock";
@@ -171,6 +176,8 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
     q.tip, q.creditUsed, q.deliveryFee, deliveryAddress || null, usedPerks || null, branch.id
   );
   if (terms) db.prepare("UPDATE orders SET delivery_eta = ? WHERE code = ?").run(terms.minutes, code);
+  // Table orders go on the table's running tab (one bill for every round)
+  if (table && !opts.prepaid) db.prepare("UPDATE orders SET tab_id = ? WHERE code = ?").run(openTabFor(table, branch.id), code);
   if (company) db.prepare("UPDATE orders SET company_id = ? WHERE code = ?").run(company.id, code);
   if (gift && q.giftUsed) db.prepare("UPDATE giftcards SET balance = balance - ? WHERE code = ?").run(q.giftUsed, gift.code);
   consumeStock(q.lines);
@@ -200,6 +207,19 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
        stamps = stamps + 1 - ?, rewards_used = rewards_used + ?`
   ).run(phone, name, spent, usedReward ? 1 : 0);
 
+  // Streak bonus: the first order of the day, on the 3rd (6th, 9th…) day in a row, earns 2 extra stamps
+  let streakBonus = 0;
+  if (phone) {
+    const days = (db.prepare("SELECT DISTINCT date(created_at) AS d FROM orders WHERE phone = ? AND created_at >= date('now','localtime','-60 days') ORDER BY d DESC").all(phone) as { d: string }[]).map((r) => r.d);
+    const todays = (db.prepare("SELECT COUNT(*) AS n FROM orders WHERE phone = ? AND date(created_at) = date('now','localtime')").get(phone) as { n: number }).n;
+    let run = 0;
+    for (let i = 0; i < days.length; i++) { if (days[i] === toDateStr(new Date(Date.now() - i * 86_400_000))) run++; else break; }
+    if (todays === 1 && run >= STREAK_DAYS && run % STREAK_DAYS === 0) {
+      streakBonus = STREAK_BONUS;
+      db.prepare("UPDATE loyalty SET stamps = stamps + ? WHERE phone = ?").run(STREAK_BONUS, phone);
+    }
+  }
+
   // Online orders get their email after payment goes through
   if (email && payStatus !== "pending")
     sendLater(email, ...orderPlacedEmail({ code, name, lines: q.lines, total: q.due, pickup, paid: payStatus === "paid", ready: readyEstimate({ code, pickup, table_no: table, delivery_address: deliveryAddress || null, delivery_eta: terms?.minutes ?? null }).label, table, delivery: deliveryAddress || null }));
@@ -207,7 +227,7 @@ export async function placeOrder(body: OrderInput, me: Customer, opts: PlaceOpti
   publish({ type: "order", code, action: "new" });
   if (q.due >= 2000) alertOwner("big", `Big order: ${rupees(q.due)}`, `${name} · ${q.lines.reduce((s, l) => s + l.qty, 0)} items · ${code}`, "/admin#Orders");
   const badges = me ? newBadges(me) : [];
-  return Response.json({ code, total: q.total, due: q.due, usedReward, perks: usedPerks, needsPayment: payStatus === "pending", newBadges: badges });
+  return Response.json({ code, total: q.total, due: q.due, usedReward, perks: usedPerks, needsPayment: payStatus === "pending", newBadges: badges, streakBonus });
 }
 
 /** A friend who invited this guest gets their credit when the guest's first order lands */

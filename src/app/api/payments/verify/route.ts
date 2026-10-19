@@ -11,6 +11,7 @@ import { limited, tooMany } from "@/lib/rateLimit";
 import { getCatering, markCateringPaid } from "@/lib/catering";
 import { depositPaid } from "@/lib/deposits";
 import { cakePaid } from "@/lib/cakeOrders";
+import { payTab, tabOfOrder } from "@/lib/tabs";
 import { cateringConfirmedEmail } from "@/lib/email";
 
 type OrderRow = { code: string; name: string; email: string | null; lines: string; total: number; giftcard_used: number; credit_used: number; tip: number; delivery_fee: number; pickup: string; table_no: number | null; delivery_address: string | null; delivery_eta?: number | null };
@@ -80,6 +81,12 @@ export async function POST(req: Request) {
       const ev = findEvent(t.event_id);
       if (ev) sendLater(t.email, ...ticketEmail({ ...t, title: ev.title, date: ev.date, time: ev.time }));
     }
+    return Response.json({ ok: true });
+  }
+
+  if (body.kind === "tab") {
+    const id = tabOfOrder(code);
+    if (id) for (const c of payTab(id, "online", v.ref)) publish({ type: "order", code: c, action: "paid" });
     return Response.json({ ok: true });
   }
 

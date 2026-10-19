@@ -35,7 +35,7 @@ export default function LoyaltyPage() {
     <div className="page">
       <p className="eyebrow">the stamp card</p>
       <h1 style={{ fontSize: "clamp(2.4rem, 6vw, 4rem)" }}>Ten cups, <em>one on us</em></h1>
-      <p className="lead">Every order earns a stamp. Collect {card?.needed ?? 10} and your next drink is free, or spend them in the rewards shop below.</p>
+      <p className="lead">Every order earns a stamp. Collect {card?.needed ?? 10} and your next drink is free, or spend them in the rewards shop below. 🔥 Visit three days in a row for 2 bonus stamps.</p>
 
       <form className="row" style={{ marginTop: "2rem", maxWidth: "30rem" }} onSubmit={(e) => { e.preventDefault(); lookup(); }}>
         <input className="input" style={{ flex: 1 }} inputMode="numeric" placeholder="Your phone number" value={phone} onChange={(e) => setPhone(e.target.value)} />
