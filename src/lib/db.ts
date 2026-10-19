@@ -4,7 +4,7 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, SEED_MENU } from "./menu";
+import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, MENU_V6, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
@@ -789,6 +789,19 @@ function open() {
     const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
     MENU_V5.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
     db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v5', '1')").run();
+  }
+
+  // The seasonal rotation, and staff picks to start with
+  if (!db.prepare("SELECT value FROM settings WHERE key = 'seeded_menu_v6'").get()) {
+    const last = (db.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM menu_items").get() as { s: number }).s;
+    const add = db.prepare("INSERT OR IGNORE INTO menu_items (id, data, sort) VALUES (?, ?, ?)");
+    MENU_V6.forEach((m, i) => add.run(m.id, JSON.stringify(m), last + 10 + i * 10));
+    const upd = db.prepare("UPDATE menu_items SET data = ? WHERE id = ?");
+    for (const id of ["honey-oat-latte", "matcha", "croissant", "bebinca", "chorizo-pao"]) {
+      const r = db.prepare("SELECT data FROM menu_items WHERE id = ?").get(id) as { data: string } | undefined;
+      if (r) { const d = JSON.parse(r.data); if (d.staffPick === undefined) upd.run(JSON.stringify({ ...d, staffPick: true }), id); }
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('seeded_menu_v6', '1')").run();
   }
 
   // More allergens tracked: the prawn dish declares shellfish

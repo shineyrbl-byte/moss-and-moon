@@ -1878,3 +1878,43 @@ test("owner alerts settings, handover notes and the reorder link", async () => {
   const home = await fetch(`${s.url}/?reorder=MM-NOPE`);
   assert.equal(home.status, 200);
 });
+
+test("seasonal rotation, staff picks and spreadsheet import", async () => {
+  await s.login();
+  const menu = async () => ((await (await fetch(`${s.url}/api/menu`)).json()) as { items: { id: string; staffPick?: boolean }[] }).items;
+  const has = async (id: string) => (await menu()).some((m) => m.id === id);
+  for (const r of ["summer", "monsoon", "winter"]) {
+    await s.api("/api/admin/rotation", { method: "PUT", json: { rotation: r } });
+    assert.equal(await has("mango-cold-brew"), r === "summer");
+    assert.equal(await has("pav-bhaji"), r === "monsoon");
+    assert.equal(await has("hot-chocolate"), r === "winter");
+  }
+  assert.equal(await has("rose-cardamom-latte"), true, "all-year items stay");
+  await s.api("/api/admin/rotation", { method: "PUT", json: { rotation: "auto" } });
+  assert.ok((await menu()).some((m) => m.id === "honey-oat-latte" && m.staffPick));
+
+  const guests = [{ name: "Imported Ira", phone: "9800012345", stamps: "4", newsletter: "yes", email: "ira.imp@example.com" }, { name: "No contact" }];
+  const dry = await s.api("/api/admin/import", { method: "POST", json: { kind: "guests", rows: guests, dryRun: true } });
+  assert.equal(dry.body.added, 1);
+  assert.equal(dry.body.skipped, 1);
+  assert.equal(((await s.api("/api/loyalty?phone=9800012345")).body as { stamps: number }).stamps, 0, "a check doesn't save");
+  await s.api("/api/admin/import", { method: "POST", json: { kind: "guests", rows: guests } });
+  assert.equal(((await s.api("/api/loyalty?phone=9800012345")).body as { stamps: number }).stamps, 4);
+  const m = await s.api("/api/admin/import", { method: "POST", json: { kind: "menu", rows: [{ name: "Jaggery Latte", category: "Coffee", price: "₹230", description: "Gud and espresso" }, { name: "Honey Oat Latte", category: "coffee", price: "220" }] } });
+  assert.equal(m.body.added, 1);
+  assert.equal(m.body.skipped, 1, "already on the menu");
+  assert.equal(await has("jaggery-latte"), false, "imported items start hidden");
+});
+
+// Keep this one last: it clears orders and refills the café with sample data
+test("demo reset backs up, clears activity and fills in sample orders", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);
+  const r = await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "RESET" } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.ok(r.body.orders > 50);
+  assert.match(r.body.backup, /before-demo-reset/);
+  const stats = (await s.api("/api/admin/stats")).body as { allTimeOrders: number };
+  assert.equal(stats.allTimeOrders, r.body.orders);
+  assert.ok(((await s.api("/api/reviews")).body as { reviews: unknown[] }).reviews.length >= 8);
+});

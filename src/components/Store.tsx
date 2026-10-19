@@ -171,9 +171,9 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
   useEffect(() => {
     try {
       const l = localStorage.getItem("mm-lang");
-      if (l === "hi") {
-        setLangState("hi");
-        document.documentElement.lang = "hi";
+      if (l === "hi" || l === "mr" || l === "kok") {
+        setLangState(l);
+        document.documentElement.lang = l;
       }
     } catch {}
   }, []);

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LANGS } from "@/lib/i18n";
 import { useStore } from "./Store";
 import ThemeToggle from "./ThemeToggle";
 import AmbientSound from "./AmbientSound";
@@ -30,9 +31,13 @@ export default function Nav() {
 
   const extras = (
     <>
-      <button className="icon-btn lang-btn" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label={t("lang.label")} title={t("lang.label")}>
-        {t("lang.switch")}
-      </button>
+      <label className="lang-pick" title={t("lang.label")}>
+        <span className="sr-only">{t("lang.label")} / Language</span>
+        <span aria-hidden>{lang === "en" ? "अ" : "A"}</span>
+        <select value={lang} onChange={(e) => setLang(e.target.value as typeof lang)} aria-label="Language">
+          {LANGS.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
+        </select>
+      </label>
       <AmbientSound />
     </>
   );

@@ -8,7 +8,8 @@ export default function Reveal({ children, id, className = "" }: { children: Rea
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setShown(true), io.disconnect()), { threshold: 0.08 });
+    // Any part of it on screen counts (a share of a very tall section, like the menu, may never fit on a phone)
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setShown(true), io.disconnect()), { threshold: 0, rootMargin: "0px 0px -60px 0px" });
     io.observe(el);
     return () => io.disconnect();
   }, []);

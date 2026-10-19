@@ -1250,3 +1250,17 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .split-items { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px dashed var(--line); width: 100%; }
 .handover { display: flex; flex-direction: column; gap: 0.35rem; margin: 0 1rem 0.6rem; }
 .handover-note { display: flex; justify-content: space-between; gap: 0.6rem; align-items: center; background: var(--surface-2); border-left: 4px solid var(--caramel); border-radius: 10px; padding: 0.45rem 0.7rem; }
+
+/* Staff picks / new strips above the menu */
+.pick-strip { margin: 0 0 1.4rem; }
+.pick-strip h3 { font-size: 1.25rem; margin: 0 0 0.6rem; }
+.pick-row { display: flex; gap: 0.7rem; overflow-x: auto; padding-bottom: 0.4rem; scroll-snap-type: x proximity; }
+.pick-card { flex: 0 0 140px; display: flex; flex-direction: column; gap: 0.25rem; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 0.45rem 0.45rem 0.7rem; font: inherit; color: inherit; cursor: pointer; scroll-snap-align: start; }
+.pick-card:hover { border-color: var(--pink); }
+.pick-card:disabled { opacity: 0.5; }
+.pick-card b { font-size: 0.9rem; line-height: 1.25; }
+.pick-ph { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; }
+.pick-ph img { object-fit: cover; }
+.lang-pick { position: relative; display: inline-grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-weight: 700; cursor: pointer; }
+.lang-pick:focus-within { outline: 2px solid var(--pink); outline-offset: 2px; }
+.lang-pick select { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }

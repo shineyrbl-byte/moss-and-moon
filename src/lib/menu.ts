@@ -49,6 +49,10 @@ export type MenuItem = {
   half?: boolean;
   /** Shown in the Kids section */
   kids?: boolean;
+  /** Only on the menu in this part of the year (see rotationNow) */
+  rotation?: Rotation;
+  /** Owner's pick, shown first under "Staff picks" */
+  staffPick?: boolean;
   /** Hindi name and description, shown when a guest switches to हिन्दी */
   nameHi?: string;
   descHi?: string;
@@ -63,6 +67,14 @@ export const photo = (img: string, w = 900) =>
 
 /** Menu tabs: every category, plus "all" and "specials" (new, pink picks and festival drinks) */
 export type MenuTab = Category | "all" | "specials" | "kids";
+/** Seasonal rotation, Goa style: summer Mar–May, monsoon Jun–Sep, winter Oct–Feb */
+export type Rotation = "summer" | "monsoon" | "winter";
+export const ROTATIONS: { id: Rotation; label: string; months: number[] }[] = [
+  { id: "summer", label: "Summer (Mar–May)", months: [3, 4, 5] },
+  { id: "monsoon", label: "Monsoon (Jun–Sep)", months: [6, 7, 8, 9] },
+  { id: "winter", label: "Winter (Oct–Feb)", months: [10, 11, 12, 1, 2] },
+];
+export const rotationFor = (d = new Date()): Rotation => ROTATIONS.find((r) => r.months.includes(d.getMonth() + 1))!.id;
 export const CATEGORY_ORDER: Category[] = ["coffee", "tea", "cold", "food", "bakes", "shop"];
 export const inTab = (m: Pick<MenuItem, "cat" | "badge" | "season" | "kids">, tab: MenuTab) =>
   tab === "all" || (tab === "specials" ? m.badge === "new" || m.badge === "pink pick" || !!m.season : tab === "kids" ? !!m.kids : m.cat === tab);
@@ -296,4 +308,17 @@ export const MENU_V5: MenuItem[] = [
     nameHi: "गिफ़्ट हैंपर बनाइए", descHi: "रिबन और हाथ से लिखे कार्ड वाला गुलाबी डिब्बा। कॉफ़ी और तीन तोहफ़े चुनिए।",
   },
   { id: "mystery-beans", cat: "shop", name: "Mystery Bean of the Month · 250 g", desc: "A new single origin every month, picked by our head barista. Tasting notes inside.", price: 720, img: "1442550528053-c431ecb55509", badge: "new", variants: GRINDS, stock: 20, cost: 300, nameHi: "महीने की मिस्ट्री बीन्स (250 ग्राम)", descHi: "हर महीने नई सिंगल ओरिजिन कॉफ़ी, हमारे हेड बरिस्ता की पसंद।" },
+];
+
+// The seasonal rotation (only one season's items show at a time) and two signatures
+export const MENU_V6: MenuItem[] = [
+  { id: "mango-cold-brew", cat: "cold", name: "Mango Cold Brew", desc: "Our 18-hour cold brew over Alphonso mango purée and ice. Tastes like May.", price: 240, img: "1553279768-865429fa0078", rotation: "summer", badge: "new", noMilk: true, diet: ["vegan", "gf"], traits: { energy: 2, sweet: 1, temp: "iced" }, allergens: [], kcal: 90, uses: [{ ingredient: "espresso-beans", amount: 22 }], nameHi: "आम कोल्ड ब्रू", descHi: "18 घंटे का कोल्ड ब्रू, अल्फ़ांसो आम और बर्फ़ पर।" },
+  { id: "kokum-granita", cat: "cold", name: "Kokum Granita", desc: "Spoonable shaved kokum ice with lime and a pinch of chaat masala.", price: 160, img: "1595981267035-7b04ca84a82d", rotation: "summer", noMilk: true, diet: ["vegan", "gf"], traits: { energy: 0, sweet: 1, temp: "iced" }, allergens: [], kcal: 110, cost: 25, nameHi: "कोकम ग्रानीता", descHi: "नींबू और चाट मसाले वाली कोकम की बर्फ़।" },
+  { id: "masala-bhutta", cat: "food", name: "Masala Bhutta", desc: "Charcoal-roasted corn rubbed with lime, chilli and rock salt. Monsoon in one bite.", price: 120, img: "1470119693884-47d3a1d1f180", rotation: "monsoon", diet: ["vegan", "gf"], allergens: [], kcal: 180, cost: 25, nameHi: "मसाला भुट्टा", descHi: "कोयले पर भुना भुट्टा, नींबू, मिर्च और सेंधा नमक के साथ।" },
+  { id: "samosa-plate", cat: "food", name: "Chai & Samosa Plate", desc: "Two hot samosas with green chutney and a cutting masala chai.", price: 180, img: "1601050690597-df0568f70950", rotation: "monsoon", badge: "pink pick", diet: ["vegan"], allergens: ["gluten"], kcal: 520, cost: 40, nameHi: "चाय और समोसा", descHi: "दो गरम समोसे, हरी चटनी और कटिंग मसाला चाय।" },
+  { id: "pav-bhaji", cat: "food", name: "Pav Bhaji", desc: "Buttery spiced mashed vegetables, toasted pav, onion and lime. A Bombay classic.", price: 240, img: "1606491956689-2ea866880c84", rotation: "monsoon", allergens: ["gluten", "milk"], kcal: 620, cost: 55, half: true, nameHi: "पाव भाजी", descHi: "मक्खन वाली मसालेदार भाजी, सिके पाव, प्याज़ और नींबू के साथ।" },
+  { id: "fruit-nut-bark", cat: "bakes", name: "Christmas Fruit & Nut Bark", desc: "Dark chocolate with rum-soaked raisins, orange peel and toasted almonds.", price: 220, img: "1606312619070-d48b4c652a52", rotation: "winter", badge: "new", allergens: ["nuts", "milk", "soy"], kcal: 380, cost: 60, nameHi: "क्रिसमस फ्रूट और नट बार्क", descHi: "डार्क चॉकलेट, किशमिश, संतरे का छिलका और भुने बादाम।" },
+  { id: "hot-chocolate", cat: "tea", name: "Hot Chocolate & Marshmallows", desc: "Thick 70% dark hot chocolate, whipped cream and toasted marshmallows.", price: 240, img: "1557142046-c704a3adf364", rotation: "winter", traits: { energy: 0, sweet: 2, temp: "hot" }, allergens: ["soy"], kcal: 380, uses: [{ ingredient: "milk", amount: 220 }], cost: 35, nameHi: "हॉट चॉकलेट और मार्शमैलो", descHi: "गाढ़ी 70% डार्क हॉट चॉकलेट, क्रीम और भुने मार्शमैलो।" },
+  { id: "rose-cardamom-latte", cat: "coffee", name: "Rose Cardamom Latte", desc: "Espresso, steamed milk, house rose syrup and a whisper of cardamom. Pink, of course.", price: 250, img: "1514066558159-fc8c737ef259", badge: "pink pick", staffPick: true, traits: { energy: 1, sweet: 2, temp: "hot" }, allergens: [], kcal: 230, nameHi: "गुलाब इलायची लाटे", descHi: "एस्प्रेसो, भाप वाला दूध, गुलाब का सिरप और ज़रा सी इलायची।" },
+  { id: "coconut-espresso", cat: "cold", name: "Coconut Espresso", desc: "A double shot poured over tender coconut water and ice. Light, nutty, very Goan.", price: 220, img: "1610889556528-9a770e32642f", badge: "new", noMilk: true, diet: ["vegan", "gf"], traits: { energy: 2, sweet: 1, temp: "iced" }, allergens: [], kcal: 60, uses: [{ ingredient: "espresso-beans", amount: 18 }], nameHi: "कोकोनट एस्प्रेसो", descHi: "नारियल पानी और बर्फ़ पर डबल शॉट। हल्का और गोवा जैसा।" },
 ];

@@ -24,7 +24,7 @@ export default defineConfig({
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: /phone\.spec/ },
-    { name: "phone", use: { ...devices["Pixel 7"] }, testMatch: /phone\.spec/ },
+    { name: "phone", use: { ...devices["Pixel 7"] }, testMatch: /(phone|reveal)\.spec/ },
   ],
   webServer: {
     command: `npx next start -p ${PORT}`,

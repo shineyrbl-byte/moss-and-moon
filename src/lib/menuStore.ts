@@ -1,7 +1,7 @@
 // Reading and editing the menu in the database.
 import "server-only";
-import { db } from "./db";
-import type { MenuItem } from "./menu";
+import { db, getSetting } from "./db";
+import { rotationFor, type MenuItem, type Rotation } from "./menu";
 import { canMake, stockMap } from "./stock";
 import { toDateStr } from "./cafe";
 import { currentSeason } from "./seasonStore";
@@ -14,7 +14,13 @@ function soldOutIds() {
 
 /** Seasonal items only show between their dates */
 export const inSeason = (m: MenuItem, today = toDateStr(new Date()), season: string | null = currentSeason()) =>
-  (!m.from || m.from <= today) && (!m.until || m.until >= today) && (!m.season || m.season === season);
+  (!m.from || m.from <= today) && (!m.until || m.until >= today) && (!m.season || m.season === season) && (!m.rotation || m.rotation === rotationNow());
+
+/** Which part of the year's menu is on: by the calendar, unless the owner picked one */
+export function rotationNow(): Rotation {
+  const o = getSetting("rotation");
+  return o === "summer" || o === "monsoon" || o === "winter" ? o : rotationFor();
+}
 
 /**
  * The menu in display order. Hidden and out-of-season items are left out unless asked for.

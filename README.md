@@ -22,7 +22,7 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 ## Features
 
 **Ordering**
-- ☕ **110+ items** in sections (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes, Kids, **Shop**), with Goan favourites like Bebinca, Kokum Soda, Sol Kadhi and Chorizo Pão, with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
+- ☕ **120+ items** in sections (Specials, Coffee, Tea & matcha, Cold drinks, Food, Bakes, Kids, **Shop**), with Goan favourites like Bebinca, Kokum Soda, Sol Kadhi and Chorizo Pão, with search and vegan / gluten-free / nut-free / egg-free filters, edited live from the admin page
 - 🥤 Cold drinks (cold brew, frappés, smoothies, mocktails, juices) and savoury food (toasties, sandwiches, toast, pancakes, pasta, bowls) with add-ons like an egg, extra cheese, gluten-free bread or a coffee combo
 - 🌅 **Order for tomorrow**: saved tonight, made 15 minutes before pickup the next morning
 - ♻️ **Bring your own cup**: ₹10 off each drink
@@ -43,7 +43,7 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 🎙 **Voice ordering**: say "two iced oat lattes and a croissant" (or "my usual")
 - 🔁 **Regular orders**: "my oat latte every weekday at 8:30", placed by itself 15 minutes before
 - 🎁 **Buy a friend a coffee**: gift a drink as customised, send the link, they claim it from their phone
-- 🥜 **Allergens and calories** on every item, updating as you customise, with nut-free and egg-free filters
+- 🥜 **Allergens (11, incl. shellfish, fish, peanuts, mustard, celery) and calories** on every item, plus a note for each item ("less ice"), updating as you customise, with nut-free and egg-free filters
 - 👯 **Group orders**: share a link, friends add their own drinks from their phones, the host checks out once, everyone pays their own part
 - 🛍 Tray with promo codes (`BLOOM10`, `FIRSTSIP`, `PINKMOON`), gift cards, tips, pickup times and **delivery**
 - 💳 **Pay online** with Razorpay (UPI / cards) or at the counter; **split the bill** with friends
@@ -86,7 +86,7 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 👋 **Talk to a person**: hand the chat over to staff, with live replies (emailed if the guest has left)
 - ⭐ Reviews with photos, 🎁 gift cards, 💌 newsletter, 🔮 "find your drink" quiz, café ambience sounds
 - 🎉 **Seasonal themes**: Diwali, monsoon, Christmas and Valentine's, each with a banner, animation and special drink
-- 🌸 Day and ☾ night themes, English / हिन्दी, installable app that works offline
+- 🌸 Day and ☾ night themes, English / हिन्दी / मराठी / कोंकणी, installable app that works offline
 
 **For staff (`/admin`, `/staff`, `/board`)**
 - Overview, **analytics** (busiest hours, categories, drink options, channels), order queue, bookings, CSV export
@@ -122,6 +122,10 @@ Staff dashboard: http://localhost:3000/admin — passcode **`moonlight`**
 - 💹 **Supplier price tracking**: rises are flagged with what they cost a month
 - 🎓 **Training tracker** with a recipe quiz
 - 📸 **Instagram story images** for menu items, specials and events
+- 🍂 **Seasonal menu**: summer, monsoon and winter items swap in by themselves; ⭐ **Staff picks** and ✨ **New this month** rows
+- ✂️ **Menu tidy-up**: suggests slow, low-margin items to hide
+- 📥 **Import** a guest list or menu from Excel / Google Sheets (CSV)
+- 🎬 **Demo reset**: back up, clear test activity and fill in a month of sample data
 - 🔔 **Owner phone alerts**: 1–2★ reviews, big orders, catering and cakes, sold-out items, cash-up gaps
 - 📝 **Shift handover notes** on the barista screen
 - 🧭 **Grouped dashboard** with a "Jump to" search, and a **setup checklist** of what's left to connect

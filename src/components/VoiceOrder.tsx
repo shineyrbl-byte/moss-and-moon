@@ -57,7 +57,7 @@ export default function VoiceOrder() {
     if (!R) return;
     if (state === "listening") return rec.current?.stop();
     const r = new R();
-    r.lang = lang === "hi" ? "hi-IN" : "en-IN";
+    r.lang = lang === "hi" || lang === "kok" ? "hi-IN" : lang === "mr" ? "mr-IN" : "en-IN";
     r.interimResults = false;
     r.maxAlternatives = 1;
     r.onresult = (e) => handle(e.results[0][0].transcript);

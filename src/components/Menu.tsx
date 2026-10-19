@@ -99,6 +99,29 @@ export default function Menu() {
           <button className="link-btn" onClick={() => { setDiet([]); setAvoid([]); setUsingProfile(false); }}>Show everything</button>
         </p>
       )}
+      {cat === "all" && !q && !onlyFavs && !diet.length && !avoid.length && (() => {
+        const strip = (title: string, list: typeof menu) => list.length > 0 && (
+          <section className="pick-strip" aria-label={title}>
+            <h3>{title}</h3>
+            <div className="pick-row">
+              {list.slice(0, 8).map((m) => (
+                <button key={m.id} className="pick-card" onClick={() => setCustomizing(m)} disabled={soldOut.has(m.id)}>
+                  <span className="pick-ph"><Image src={photo(m.img, 300)} alt="" fill sizes="140px" /></span>
+                  <b>{lang !== "en" && m.nameHi ? m.nameHi : m.name}</b>
+                  <small className="muted">{rupees(m.price)}</small>
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+        const here = (m: (typeof menu)[number]) => !m.branches?.length || m.branches.includes(branch);
+        return (
+          <>
+            {strip("⭐ Staff picks", menu.filter((m) => m.staffPick && here(m)))}
+            {strip("✨ New this month", menu.filter((m) => m.badge === "new" && !m.staffPick && here(m)))}
+          </>
+        );
+      })()}
       <div className="menu-grid">
         {items.map((m, i) => {
           const out = soldOut.has(m.id);
@@ -113,7 +136,7 @@ export default function Menu() {
                 {favs.has(m.id) ? "♥" : "♡"}
               </button>
               <div className="item-body">
-                <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)} lang={lang === "hi" && m.nameHi ? "hi" : undefined}>{lang === "hi" && m.nameHi ? m.nameHi : m.name}</h3>
+                <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)} lang={lang !== "en" && m.nameHi ? lang : undefined}>{lang !== "en" && m.nameHi ? m.nameHi : m.name}</h3>
                 {happy && m.cat === "bakes" && <span className="small" style={{ color: "var(--pink-deep)" }}>golden hour −20%</span>}
                 <p lang={lang === "hi" && m.descHi ? "hi" : undefined}>{lang === "hi" && m.descHi ? m.descHi : m.desc}</p>
                 {m.loved !== undefined && m.loved >= 80 && <span className="loved">❤ Loved by {m.loved}%</span>}

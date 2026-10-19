@@ -40,6 +40,10 @@ import WinbackCard from "@/components/admin/WinbackCard";
 import SpecialsCard from "@/components/admin/SpecialsCard";
 import CombosCard from "@/components/admin/CombosCard";
 import CakesTab from "@/components/admin/CakesTab";
+import RotationCard from "@/components/admin/RotationCard";
+import MenuTidyCard from "@/components/admin/MenuTidyCard";
+import ImportCard from "@/components/admin/ImportCard";
+import DemoResetCard from "@/components/admin/DemoResetCard";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
 import OwnerAlertsCard from "@/components/admin/OwnerAlertsCard";
 import PriceWhatIf from "@/components/admin/PriceWhatIf";
@@ -80,7 +84,7 @@ const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
 ];
 /** Words that find a tab in "Jump to…" */
 const KEYWORDS: Partial<Record<Tab, string>> = {
-  Settings: "alerts notifications push phone hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
+  Settings: "import csv spreadsheet excel demo reset alerts notifications push phone hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
   Analytics: "profit menu engineering missed sales price what if retention coming back visitors insights",
   Stock: "ingredients use-by expiry supplier prices reorder shop stock",
   Checklists: "opening closing fridge temperature equipment repairs maintenance",
@@ -506,11 +510,13 @@ export default function AdminPage() {
           <WifiCard />
           <OwnerAlertsCard />
           <OwnerEmails />
+          <ImportCard />
           <Backups />
           <TwoStep />
+          <DemoResetCard />
         </div>
       )}
-      {tab === "Menu" && <>{me?.role === "owner" && <><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
+      {tab === "Menu" && <>{me?.role === "owner" && <><MenuTidyCard /><RotationCard /><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Stock" && <><UseByCard />{me?.role === "owner" && <PriceWatch />}<StockTab canEdit={me?.role === "owner"} /></>}

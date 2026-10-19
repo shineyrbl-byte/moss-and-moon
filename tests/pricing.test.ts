@@ -398,3 +398,12 @@ test("the wider allergen list: shellfish, fish, peanuts, mustard, celery", async
   assert.deepEqual(allergensFor(prawns), ["gluten", "shellfish"]);
   assert.equal(canAvoid(prawns, "shellfish" as never), false);
 });
+
+test("CSV reading and item notes", async () => {
+  const { parseCsv } = await import("../src/lib/csv.ts");
+  const rows = parseCsv('﻿Name,Phone,Note\r\n"Rao, Meera",98765 43210,"said ""hi"""\r\n\r\nKabir,9123456789,\n');
+  assert.deepEqual(rows, [{ name: "Rao, Meera", phone: "98765 43210", note: 'said "hi"' }, { name: "Kabir", phone: "9123456789", note: "" }]);
+  const o = cleanOptions(latte, { size: "regular", note: "  less   ice please  " });
+  assert.equal(o.note, "less ice please");
+  assert.match(describeOptions(latte, o), /“less ice please”$/);
+});

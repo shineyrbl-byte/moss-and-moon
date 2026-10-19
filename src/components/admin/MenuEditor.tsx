@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { CATEGORIES, inTab, photo, type Addon, type Category, type Diet, type MenuItem, type MenuTab } from "@/lib/menu";
+import { CATEGORIES, ROTATIONS, inTab, photo, type Addon, type Category, type Diet, type MenuItem, type MenuTab } from "@/lib/menu";
 import { rupees } from "@/lib/pricing";
 import { SEASONS } from "@/lib/seasons";
 import { ALLERGENS, type Allergen } from "@/lib/nutrition";
@@ -180,6 +180,16 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
               <button type="button" className={`chip ${f.diet?.includes("vegan") ? "on" : ""}`} onClick={() => toggleDiet("vegan")}>🌱 Vegan</button>
               <button type="button" className={`chip ${f.diet?.includes("gf") ? "on" : ""}`} onClick={() => toggleDiet("gf")}>🌾 Gluten-free</button>
             </div>
+          </div>
+          <div className="row" style={{ alignItems: "flex-end" }}>
+            <label className="field">On the menu
+              <select className="input" value={f.rotation ?? ""} onChange={(e) => set("rotation", (e.target.value || undefined) as MenuItem["rotation"])}>
+                <option value="">All year</option>
+                {ROTATIONS.map((r) => <option key={r.id} value={r.id}>Only in {r.label}</option>)}
+              </select>
+            </label>
+            <label className="row small" style={{ gap: "0.35rem", alignItems: "center", paddingBottom: "0.6rem" }}><input type="checkbox" checked={!!f.staffPick} onChange={(e) => set("staffPick", e.target.checked || undefined)} /> ⭐ Staff pick</label>
+            <label className="row small" style={{ gap: "0.35rem", alignItems: "center", paddingBottom: "0.6rem" }}><input type="checkbox" checked={!!f.kids} onChange={(e) => set("kids", e.target.checked || undefined)} /> 🧸 Kids</label>
           </div>
           {activeBranches().length > 1 && (
             <div className="field">Sold at <span className="muted small">· none picked = every branch</span>
