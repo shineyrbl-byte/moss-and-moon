@@ -16,7 +16,7 @@ export default function Origins() {
     <div className="page" style={{ maxWidth: "62rem" }}>
       <p className="eyebrow">bean to cup</p>
       <h1 className="h2">Where our <em>coffee</em> comes from</h1>
-      <p className="lead">Almost all our beans grow in the hills of South India, a day&apos;s drive from Goa. Tap a place to find out more.</p>
+      <p className="lead">Almost all our beans grow in the hills of South India, a day&apos;s drive from Goa. Tap a place to find out more, and collect a stamp for each one in your <Link href="/passport" className="link-btn">origins passport</Link> 🛂</p>
 
       <div className="origins">
         <svg viewBox={`0 0 ${MAP_SIZE.w} ${MAP_SIZE.h}`} className="origins-map" role="group" aria-label="Map of South India with our coffee regions">

@@ -270,6 +270,8 @@ const en = {
   "footer.origins": "Where our coffee grows",
   "footer.shelf": "Games & books",
   "footer.play": "Barista rush (game)",
+  "footer.passport": "Origins passport",
+  "footer.lab": "Drink lab",
 };
 
 type Key = keyof typeof en;
@@ -540,6 +542,8 @@ const hi: Record<Key, string> = {
   "footer.origins": "हमारी कॉफ़ी कहाँ उगती है",
   "footer.shelf": "गेम और किताबें",
   "footer.play": "बरिस्ता रश (गेम)",
+  "footer.passport": "ओरिजिन्स पासपोर्ट",
+  "footer.lab": "ड्रिंक लैब",
 };
 
 const mr: Record<Key, string> = {
@@ -808,6 +812,8 @@ const mr: Record<Key, string> = {
   "footer.origins": "आमची कॉफी कुठे पिकते",
   "footer.shelf": "खेळ आणि पुस्तके",
   "footer.play": "बरिस्ता रश (खेळ)",
+  "footer.passport": "ओरिजिन्स पासपोर्ट",
+  "footer.lab": "ड्रिंक लॅब",
 };
 
 const kok: Record<Key, string> = {
@@ -1076,6 +1082,8 @@ const kok: Record<Key, string> = {
   "footer.origins": "आमची कॉफी खंय पिकता",
   "footer.shelf": "खेळ आनी पुस्तकां",
   "footer.play": "बरिस्ता रश (खेळ)",
+  "footer.passport": "ओरिजिन्स पासपोर्ट",
+  "footer.lab": "ड्रिंक लॅब",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

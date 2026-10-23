@@ -1368,3 +1368,21 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .shelf-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; }
 .shelf-grid li { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.9rem 1rem; }
 .shelf-grid li.is-out { opacity: 0.6; }
+
+/* Origins passport */
+.passport-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.8rem; margin: 1.2rem 0; }
+.stamp { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.3rem; padding: 1rem; }
+.stamp-ring { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; border: 2px dashed var(--line); color: var(--muted); }
+.stamp.on .stamp-ring { border: 3px solid var(--pink-deep); background: var(--pink-soft); transform: rotate(-8deg); }
+
+/* Drink lab */
+.lab-builder { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.2rem; align-items: start; margin-top: 1rem; }
+.lab-mix { display: flex; flex-direction: column; gap: 0.7rem; padding: 1.1rem 1.25rem; }
+.lab-preview { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; padding: 1.1rem 1.25rem; position: sticky; top: 90px; }
+.lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.9rem; margin-top: 0.8rem; }
+.lab-card { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.lab-card .lab-ph { position: relative; aspect-ratio: 4 / 3; }
+.lab-card.big .lab-ph { aspect-ratio: 16 / 10; }
+.lab-card .lab-ph img { object-fit: cover; }
+.lab-body { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.9rem 1rem 1rem; flex: 1; }
+@media (max-width: 760px) { .lab-builder { grid-template-columns: 1fr; } .lab-preview { position: static; } }

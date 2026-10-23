@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
 import { isDrink, rupees } from "@/lib/pricing";
 import { defaultOptions } from "@/lib/pricing";
+import { FLAVOURS, MAX_NOTES, flavourLabel } from "@/lib/flavours";
 
-type Entry = { id: number; item_id: string | null; name: string; place: string | null; rating: number; note: string | null; caffeine: number | null; created_at: string };
-type Profile = { count: number; avg: number | null; places: number; best: { name: string; place: string | null; rating: number }[]; words: string | null; energy: number | null; sweet: number | null; iced: number | null; tryNext: { id: string; name: string; desc: string; price: number } | null };
+type Entry = { id: number; item_id: string | null; name: string; place: string | null; rating: number; note: string | null; caffeine: number | null; flavours: string[]; created_at: string };
+type Profile = { count: number; avg: number | null; places: number; flavours: string[]; best: { name: string; place: string | null; rating: number }[]; words: string | null; energy: number | null; sweet: number | null; iced: number | null; tryNext: { id: string; name: string; desc: string; price: number } | null };
 type Data = { entries: Entry[]; profile: Profile; toRate: { orderCode: string; itemId: string; name: string; date: string }[]; caffeine: { total: number; limit: number; drinks: { name: string; caffeine: number }[]; nudge: string | null } };
 
 function Stars({ value, onChange, label }: { value: number; onChange: (n: number) => void; label: string }) {
@@ -34,7 +35,7 @@ export default function Diary() {
   const { menu, add, toast, setDrawerOpen } = useStore();
   const [d, setD] = useState<Data | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
-  const [form, setForm] = useState({ where: "here" as "here" | "elsewhere", itemId: "", name: "", place: "", rating: 0, note: "", caffeine: "" });
+  const [form, setForm] = useState({ where: "here" as "here" | "elsewhere", itemId: "", name: "", place: "", rating: 0, note: "", caffeine: "", flavours: [] as string[] });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -57,8 +58,8 @@ export default function Diary() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!form.rating) return setError("Give it some stars first.");
-    const ok = await post(form.where === "here" ? { itemId: form.itemId, rating: form.rating, note: form.note } : { name: form.name, place: form.place, rating: form.rating, note: form.note, caffeine: form.caffeine === "" ? undefined : Number(form.caffeine) });
-    if (ok) { setForm({ ...form, itemId: "", name: "", place: "", rating: 0, note: "", caffeine: "" }); toast("Added to your diary ✿"); }
+    const ok = await post(form.where === "here" ? { itemId: form.itemId, rating: form.rating, note: form.note, flavours: form.flavours } : { name: form.name, place: form.place, rating: form.rating, note: form.note, flavours: form.flavours, caffeine: form.caffeine === "" ? undefined : Number(form.caffeine) });
+    if (ok) { setForm({ ...form, itemId: "", name: "", place: "", rating: 0, note: "", caffeine: "", flavours: [] }); toast("Added to your diary ✿"); }
   }
   async function remove(id: number) {
     await fetch(`/api/account/diary?id=${id}`, { method: "DELETE" });
@@ -82,6 +83,7 @@ export default function Diary() {
     <div className="page narrow">
       <p className="eyebrow">just for you</p>
       <h1 className="h2">Your <em>coffee diary</em></h1>
+      <p className="small"><Link href="/passport">🛂 Your origins passport</Link> · <Link href="/lab">🧪 Drink lab</Link></p>
 
       <section className="card diary-profile">
         <h3 style={{ fontSize: "1.2rem" }}>☕ Your taste</h3>
@@ -93,6 +95,7 @@ export default function Diary() {
             <Lean left="Hot" right="Iced" pct={p.iced!} />
           </>
         ) : <p className="muted small">Rate two or more of our drinks and your taste profile appears here.</p>}
+        {p.flavours.length > 0 && <p className="small" style={{ marginTop: "0.6rem" }}>💛 Flavours you love: <b>{p.flavours.map(flavourLabel).join(" · ")}</b></p>}
         <p className="small muted" style={{ marginTop: "0.6rem" }}>{p.count} entr{p.count === 1 ? "y" : "ies"}{p.avg !== null ? ` · average ${p.avg}★` : ""}{p.places ? ` · ${p.places} place${p.places === 1 ? "" : "s"}` : ""}</p>
         {p.best.length > 0 && <p className="small">🏆 Best so far: {p.best.map((b) => `${b.name}${b.place && b.place !== "Moss & Moon" ? ` (${b.place})` : ""} ${"★".repeat(b.rating)}`).join(" · ")}</p>}
         {p.tryNext && (
@@ -148,6 +151,15 @@ export default function Diary() {
           </div>
         )}
         <Stars value={form.rating} label="Your rating" onChange={(n) => setForm({ ...form, rating: n })} />
+        <div>
+          <span className="small muted">Tasting notes <span className="tiny">· up to {MAX_NOTES}</span></span>
+          <div className="chips" role="group" aria-label="Tasting notes" style={{ justifyContent: "flex-start", marginTop: "0.3rem" }}>
+            {FLAVOURS.map((fl) => {
+              const on = form.flavours.includes(fl.id);
+              return <button key={fl.id} type="button" aria-pressed={on} disabled={!on && form.flavours.length >= MAX_NOTES} className={`chip ${on ? "on" : ""}`} onClick={() => setForm({ ...form, flavours: on ? form.flavours.filter((x) => x !== fl.id) : [...form.flavours, fl.id] })}>{fl.icon} {fl.label}</button>;
+            })}
+          </div>
+        </div>
         <label className="field">Notes <span className="muted small">· optional</span><textarea className="input" rows={2} maxLength={280} placeholder="Nutty, a bit too hot, perfect with the croissant…" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
         {error && <p className="error small">{error}</p>}
         <button className="btn btn-pink" disabled={busy}>{busy ? "Saving…" : "Add to my diary"}</button>
@@ -163,6 +175,7 @@ export default function Diary() {
                 <span><b>{e.name}</b>{e.place && <span className="muted small"> · {e.place}</span>}{e.caffeine ? <span className="muted small"> · {e.caffeine} mg</span> : null}</span>
                 <span className="stars" aria-label={`${e.rating} stars`}>{"★".repeat(e.rating)}{"☆".repeat(5 - e.rating)}</span>
               </div>
+              {e.flavours.length > 0 && <p className="tiny muted" style={{ margin: "0.25rem 0" }}>{e.flavours.map(flavourLabel).join(" · ")}</p>}
               {e.note && <p className="small" style={{ margin: "0.3rem 0" }}>{e.note}</p>}
               <div className="sum-row"><small className="muted">{e.created_at.slice(0, 10)}</small><button className="link-btn tiny" onClick={() => remove(e.id)}>Delete</button></div>
             </li>

@@ -2121,6 +2121,68 @@ test("coffee diary counts today's caffeine", async () => {
   assert.match(d.caffeine.nudge ?? "", /over 400/);
 });
 
+test("coffee diary keeps tasting notes and finds your favourite flavours", async () => {
+  await signIn("flavours@example.com");
+  await s.api("/api/account/diary", { method: "POST", json: { itemId: "hazelnut-latte", rating: 5, flavours: ["nutty", "creamy", "nope"] } });
+  await s.api("/api/account/diary", { method: "POST", json: { itemId: "mocha", rating: 4, flavours: ["chocolatey", "nutty"] } });
+  const d = (await s.api("/api/account/diary")).body as { entries: { flavours: string[] }[]; profile: { flavours: string[] } };
+  assert.deepEqual(d.entries[1].flavours, ["nutty", "creamy"], "unknown notes are dropped");
+  assert.equal(d.profile.flavours[0], "nutty");
+});
+
+test("origins passport: a stamp per region from real orders, then a free drink once", async () => {
+  assert.equal((await fetch(`${s.url}/api/account/passport`)).status, 401);
+  await signIn("passport@example.com");
+  const empty = (await s.api("/api/account/passport")).body as { done: number; total: number; complete: boolean };
+  assert.equal(empty.done, 0);
+  assert.equal(empty.total, 8);
+  assert.equal((await s.api("/api/account/passport", { method: "POST" })).status, 400, "not yet");
+  // Diary entries don't count, orders do
+  await s.api("/api/account/diary", { method: "POST", json: { itemId: "cold-brew", rating: 5 } });
+  assert.equal(((await s.api("/api/account/passport")).body as { done: number }).done, 0);
+  const { ORIGINS } = await import("../src/lib/origins.ts");
+  const items = (await s.api("/api/menu")).body.items as { id: string }[];
+  const ids = new Set(items.map((m) => m.id));
+  const lines = ORIGINS.map((o) => ({ itemId: o.usedIn.find((id) => ids.has(id))!, qty: 1 }));
+  assert.ok(lines.every((l) => l.itemId), "every region has a drink on the menu");
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Traveller", phone: "9877700001", lines } });
+  assert.equal(placed.status, 200);
+  const full = (await s.api("/api/account/passport")).body as { done: number; complete: boolean; stamps: { stamped: boolean; drink: string }[] };
+  assert.equal(full.done, 8);
+  assert.ok(full.complete);
+  const before = (await s.api("/api/account")).body.credit ?? 0;
+  const claim = await s.api("/api/account/passport", { method: "POST" });
+  assert.equal(claim.status, 200);
+  assert.equal(claim.body.credit, before + 250);
+  assert.equal((await s.api("/api/account/passport", { method: "POST" })).status, 409, "only once");
+});
+
+test("drink lab: create, share, vote once, and the owner can take one down", async () => {
+  const mk = (json: Record<string, unknown>) => s.api("/api/lab", { method: "POST", json });
+  assert.equal((await mk({ name: "ok", baseId: "cold-brew" })).status, 400, "name too short");
+  assert.equal((await mk({ name: "Moonbeam", baseId: "croissant" })).status, 400, "drinks only");
+  assert.equal((await mk({ name: "Shit Brew", baseId: "cold-brew" })).status, 400, "friendly names");
+  const made = await mk({ name: "Monsoon Moonbeam", creator: "Asha", baseId: "honey-oat-latte", opts: { size: "large", milk: "oat", syrup: "vanilla", shot: true, note: "sneaky" } });
+  assert.equal(made.status, 200);
+  const c = made.body.creation as { code: string; opts: Record<string, unknown>; price: number; describe: string };
+  assert.equal(c.opts.size, "large");
+  assert.equal(c.opts.note, undefined, "no hidden notes");
+  assert.ok(c.price > 220);
+  assert.equal((await mk({ name: "monsoon moonbeam", baseId: "cold-brew" })).status, 400, "names are unique");
+  const vote = (voter: string) => s.api(`/api/lab/${c.code}`, { method: "POST", json: { voter } });
+  assert.equal((await vote("a".repeat(20))).body.votes, 1);
+  assert.equal((await vote("a".repeat(20))).body.counted, false, "one vote each");
+  assert.equal((await vote("b".repeat(20))).body.votes, 2);
+  assert.equal((await vote("x")).status, 400);
+  const board = (await s.api("/api/lab")).body as { top: { code: string }[]; newest: { code: string }[] };
+  assert.equal(board.top[0].code, c.code);
+  assert.equal((await fetch(`${s.url}/lab/${c.code}`)).status, 200);
+  assert.equal((await fetch(`${s.url}/api/lab/${c.code}`, { method: "DELETE" })).status, 401);
+  await s.login();
+  assert.equal((await s.api(`/api/lab/${c.code}`, { method: "DELETE" })).status, 200);
+  assert.equal((await s.api(`/api/lab/${c.code}`)).status, 404);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

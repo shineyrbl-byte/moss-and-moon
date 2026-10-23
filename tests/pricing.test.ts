@@ -521,3 +521,18 @@ test("brew timer steps and the origins map", async () => {
   }
   assert.match(coastPath(), /^M-?[\d.]+,-?[\d.]+ L.* Z$/);
 });
+
+test("flavour notes: cleaned, read from dishes, and favourites weighted by rating", async () => {
+  const { cleanFlavours, dishFlavours, favouriteFlavours } = await import("../src/lib/flavours.ts");
+  assert.deepEqual(cleanFlavours(["nutty", "nutty", "bogus", "floral", "citrus", "berry", "bold"]), ["nutty", "floral", "citrus", "berry"], "real notes, no repeats, four at most");
+  assert.deepEqual(cleanFlavours("nutty"), []);
+  assert.deepEqual(dishFlavours({ name: "Hazelnut Latte", desc: "Espresso, steamed milk and toasted hazelnut syrup." }).sort(), ["creamy", "nutty"].sort());
+  assert.ok(dishFlavours({ name: "Rose Pistachio Latte", desc: "rose syrup, pistachio cream" }).includes("floral"));
+  const fav = favouriteFlavours([
+    { rating: 5, flavours: ["chocolatey", "nutty"] },
+    { rating: 4, flavours: ["nutty"] },
+    { rating: 2, flavours: ["citrus"] },
+    { rating: 3, flavours: ["floral"] },
+  ]);
+  assert.deepEqual(fav, ["nutty", "chocolatey", "floral"], "a 2★ note doesn't count as a favourite");
+});

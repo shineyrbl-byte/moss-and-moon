@@ -6,11 +6,16 @@ import { getMenu } from "./menuStore";
 import { isDrink } from "./pricing";
 import type { MenuItem } from "./menu";
 import { DAILY_LIMIT, caffeineFor, caffeineNudge, guessCaffeine } from "./caffeine";
+import { cleanFlavours, dishFlavours, favouriteFlavours, type Flavour } from "./flavours";
 
-export type DiaryEntry = { id: number; item_id: string | null; name: string; place: string | null; rating: number; note: string | null; order_code: string | null; caffeine: number | null; created_at: string };
+export type DiaryEntry = { id: number; item_id: string | null; name: string; place: string | null; rating: number; note: string | null; order_code: string | null; caffeine: number | null; flavours: Flavour[]; created_at: string };
+
+type Row = Omit<DiaryEntry, "flavours"> & { flavours: string | null };
+const parse = (r: Row): DiaryEntry => { let f: unknown = []; try { f = JSON.parse(r.flavours ?? "[]"); } catch {} return { ...r, flavours: cleanFlavours(f) }; };
+const COLS = "id, item_id, name, place, rating, note, order_code, caffeine, flavours, created_at";
 
 export function diaryEntries(customerId: number): DiaryEntry[] {
-  return db.prepare("SELECT id, item_id, name, place, rating, note, order_code, caffeine, created_at FROM coffee_diary WHERE customer_id = ? ORDER BY id DESC LIMIT 300").all(customerId) as DiaryEntry[];
+  return (db.prepare(`SELECT ${COLS} FROM coffee_diary WHERE customer_id = ? ORDER BY id DESC LIMIT 300`).all(customerId) as Row[]).map(parse);
 }
 
 /** Add one entry. A drink from our menu (itemId) or anything else (name + place). */
@@ -39,8 +44,9 @@ export function addDiaryEntry(customerId: number, b: Record<string, unknown>): D
   // Caffeine: worked out for our drinks, your number or a guess from the name for anything else
   const given = b.caffeine === undefined || b.caffeine === null || b.caffeine === "" ? NaN : Number(b.caffeine);
   const caffeine = item ? caffeineFor(item, opts as never) : given >= 0 && given <= 1000 ? Math.round(given) : guessCaffeine(name);
-  const r = db.prepare("INSERT INTO coffee_diary (customer_id, item_id, name, place, rating, note, order_code, caffeine) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(customerId, item?.id ?? null, name, place, rating, note, orderCode, caffeine);
-  return db.prepare("SELECT id, item_id, name, place, rating, note, order_code, caffeine, created_at FROM coffee_diary WHERE id = ?").get(r.lastInsertRowid) as DiaryEntry;
+  const flavours = cleanFlavours(b.flavours);
+  const r = db.prepare("INSERT INTO coffee_diary (customer_id, item_id, name, place, rating, note, order_code, caffeine, flavours) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(customerId, item?.id ?? null, name, place, rating, note, orderCode, caffeine, flavours.length ? JSON.stringify(flavours) : null);
+  return parse(db.prepare(`SELECT ${COLS} FROM coffee_diary WHERE id = ?`).get(r.lastInsertRowid) as Row);
 }
 
 export function deleteDiaryEntry(customerId: number, id: number) {
@@ -73,7 +79,8 @@ export function tasteProfile(entries: DiaryEntry[]) {
   const places = new Set(entries.map((e) => e.place ?? "").filter(Boolean)).size;
   const avg = entries.length ? Math.round((entries.reduce((s, e) => s + e.rating, 0) / entries.length) * 10) / 10 : null;
   const best = [...entries].sort((a, b) => b.rating - a.rating || b.id - a.id).slice(0, 3).map((e) => ({ name: e.name, place: e.place, rating: e.rating }));
-  if (withTraits.length < 2) return { count: entries.length, avg, places, best, words: null, energy: null, sweet: null, iced: null, tryNext: null };
+  const loves = favouriteFlavours(entries);
+  if (withTraits.length < 2) return { count: entries.length, avg, places, best, flavours: loves, words: null, energy: null, sweet: null, iced: null, tryNext: null };
   // Weight: 5★ counts 4×, 3★ counts 1×, 1★ pulls away a little
   const w = (r: number) => Math.max(0.2, r - 2);
   const total = withTraits.reduce((s, x) => s + w(x.e.rating), 0);
@@ -83,11 +90,12 @@ export function tasteProfile(entries: DiaryEntry[]) {
   const tried = new Set(entries.map((e) => e.item_id));
   const pick = [...menu.values()]
     .filter((m) => m.traits && !tried.has(m.id) && !m.soldOut && !m.kids)
-    .map((m) => ({ m, d: Math.abs(m.traits!.energy - energy) + Math.abs(m.traits!.sweet - sweet) + Math.abs((m.traits!.temp === "iced" ? 1 : 0) - iced) * 1.5 }))
+    // Closest to your taste, nudged towards the flavours you love
+    .map((m) => ({ m, d: Math.abs(m.traits!.energy - energy) + Math.abs(m.traits!.sweet - sweet) + Math.abs((m.traits!.temp === "iced" ? 1 : 0) - iced) * 1.5 - dishFlavours(m).filter((f) => loves.includes(f)).length * 0.4 }))
     .sort((a, b) => a.d - b.d)[0]?.m;
   const words = `${WORDS.energy[Math.round(energy)]}, ${WORDS.sweet[Math.round(sweet)]}, ${iced >= 0.6 ? "mostly iced" : iced <= 0.4 ? "mostly hot" : "hot or iced"}`;
   return {
-    count: entries.length, avg, places, best, words,
+    count: entries.length, avg, places, best, words, flavours: loves,
     energy: Math.round((energy / 2) * 100), sweet: Math.round((sweet / 2) * 100), iced: Math.round(iced * 100),
     tryNext: pick ? { id: pick.id, name: pick.name, desc: pick.desc, price: pick.price } : null,
   };

@@ -697,6 +697,24 @@ function open() {
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   ); CREATE INDEX IF NOT EXISTS coffee_diary_by_customer ON coffee_diary (customer_id);`);
   addColumn(db, "coffee_diary", "caffeine", "INTEGER"); // mg, estimated
+  addColumn(db, "coffee_diary", "flavours", "TEXT"); // JSON list of tasting notes
+  addColumn(db, "customers", "passport_claimed", "TEXT"); // date the origins passport reward was taken
+  db.exec(`CREATE TABLE IF NOT EXISTS creations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    base_id TEXT NOT NULL,
+    opts TEXT NOT NULL,
+    creator TEXT NOT NULL,
+    customer_id INTEGER,
+    votes INTEGER NOT NULL DEFAULT 0,
+    hidden INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  ); CREATE TABLE IF NOT EXISTS creation_votes (
+    creation_id INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    PRIMARY KEY (creation_id, voter)
+  );`);
   db.exec(`CREATE TABLE IF NOT EXISTS shelf (
     id TEXT PRIMARY KEY,
     kind TEXT NOT NULL,

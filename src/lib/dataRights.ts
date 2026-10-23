@@ -28,7 +28,7 @@ export function exportData(c: Customer) {
     loyalty: c.phone ? all("SELECT phone, name, stamps, rewards_used FROM loyalty WHERE phone = ?", c.phone) : [],
     regularOrders: all("SELECT name, phone, lines, days, time, active, created_at FROM schedules WHERE customer_id = ?", c.id),
     beanSubscriptions: all("SELECT item_id, variant, qty, every_days, method, address, next_date, status, created_at FROM bean_subs WHERE customer_id = ?", c.id),
-    coffeeDiary: all("SELECT name, place, rating, note, created_at FROM coffee_diary WHERE customer_id = ? ORDER BY id", c.id),
+    coffeeDiary: all("SELECT name, place, rating, note, caffeine, flavours, created_at FROM coffee_diary WHERE customer_id = ? ORDER BY id", c.id),
     coffeePasses: all("SELECT starts, ends, price, paid, created_at FROM passes WHERE customer_id = ?", c.id),
     walletTopUps: all("SELECT amount, bonus, paid, created_at FROM wallet_topups WHERE customer_id = ?", c.id),
     giftCardsReceived: all("SELECT code, amount, balance, from_name, message, created_at FROM giftcards WHERE lower(to_email) = ? AND paid = 1", email),
