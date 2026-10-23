@@ -4,7 +4,8 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, MENU_V6, MENU_V7, MENU_V8, MENU_V9, SEED_MENU } from "./menu";
+import { NEARBY_SEED } from "./nearby";
+import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, MENU_V6, MENU_V7, MENU_V8, MENU_V9, MENU_V10, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
@@ -785,6 +786,41 @@ function open() {
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     PRIMARY KEY (date, voter)
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS comeback_votes (
+    month TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    customer_id INTEGER,
+    item_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    PRIMARY KEY (month, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS future_letters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL,
+    body TEXT NOT NULL,
+    ordered TEXT NOT NULL DEFAULT '[]',
+    open_on TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS word_games (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    customer_id INTEGER,
+    guesses TEXT NOT NULL DEFAULT '[]',
+    solved INTEGER NOT NULL DEFAULT 0,
+    done INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (date, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS nearby_spots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    blurb TEXT NOT NULL DEFAULT '',
+    walk_min INTEGER NOT NULL DEFAULT 5,
+    dog INTEGER NOT NULL DEFAULT 0,
+    map_url TEXT NOT NULL DEFAULT '',
+    sort INTEGER NOT NULL DEFAULT 0
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
@@ -915,6 +951,11 @@ function open() {
   once("seeded_menu_v7", () => addItems(MENU_V7)); // more to take home, and gluten-free bakes
   once("seeded_menu_v8", () => addItems(MENU_V8)); // dalgona and dirty chai, mango and berry treats, bakes, Goan bar snacks
   once("seeded_menu_v9", () => addItems(MENU_V9)); // the pup menu and the full-moon cortado
+  once("seeded_menu_v10", () => addItems(MENU_V10)); // the secret menu
+  once("seeded_nearby", () => {
+    const add = db.prepare("INSERT INTO nearby_spots (name, kind, blurb, walk_min, dog, map_url, sort) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    NEARBY_SEED.forEach((s, i) => add.run(s.name, s.kind, s.blurb, s.walk_min, s.dog ? 1 : 0, s.map_url, i));
+  });
   // Allergens & calories for the starting menu (items an owner already set are left alone)
   // Hindi and Marathi dish names, only where the owner hasn't written one
   once("menu_names_v1", () => patchItems(null, (d, id) => {

@@ -3,6 +3,7 @@
 // ordering from, and which item is being customised.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { MenuItem } from "@/lib/menu";
+import { MOONS_KEY, allFound } from "@/lib/secret";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
 import { TABLE_COUNT, activeBranches, applyConfig, type CafeConfig } from "@/lib/cafe";
 import { DICT, type Lang, type TKey } from "@/lib/i18n";
@@ -26,6 +27,9 @@ type Store = {
   me: Me | null;
   refreshMe: () => Promise<void>;
   menu: MenuItem[];
+  /** Secret menu items, once the guest has found all the hidden moons */
+  secret: MenuItem[];
+  setSecret: (items: MenuItem[]) => void;
   find: (id: string) => MenuItem | undefined;
   table: number | null;
   setTable: (n: number | null) => void;
@@ -115,8 +119,17 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
     const t = setInterval(refreshSoldOut, 60_000);
     return () => clearInterval(t);
   }, [refreshSoldOut]);
-  const soldOut = useMemo(() => new Set(menu.filter((m) => m.soldOut).map((m) => m.id)), [menu]);
-  const find = useCallback((id: string) => menu.find((m) => m.id === id), [menu]);
+  // The secret menu: loaded once all five moons have been found on this device
+  const [secret, setSecret] = useState<MenuItem[]>([]);
+  useEffect(() => {
+    let found: unknown = [];
+    try { found = JSON.parse(localStorage.getItem(MOONS_KEY) ?? "[]"); } catch {}
+    if (!allFound(found)) return;
+    fetch("/api/secret", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ found }) })
+      .then((r) => (r.ok ? r.json() : { items: [] })).then((d) => Array.isArray(d.items) && setSecret(d.items)).catch(() => {});
+  }, []);
+  const soldOut = useMemo(() => new Set([...menu, ...secret].filter((m) => m.soldOut).map((m) => m.id)), [menu, secret]);
+  const find = useCallback((id: string) => menu.find((m) => m.id === id) ?? secret.find((m) => m.id === id), [menu, secret]);
 
   // Ordering from a table: the QR code opens /?table=5 — remember it for this visit
   useEffect(() => {
@@ -228,6 +241,8 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
       me,
       refreshMe,
       menu,
+      secret,
+      setSecret,
       find,
       table,
       setTable,
@@ -249,7 +264,7 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
       favs,
       toggleFav,
     }),
-    [group, setGroup, lang, setLang, t, me, refreshMe, menu, find, table, setTable, branch, setBranch, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
+    [group, setGroup, lang, setLang, t, me, refreshMe, menu, secret, find, table, setTable, branch, setBranch, lines, add, setQty, drawerOpen, customizing, soldOut, refreshSoldOut, toast, bumpKey, favs, toggleFav]
   );
 
   return (

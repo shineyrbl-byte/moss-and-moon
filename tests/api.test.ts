@@ -2,6 +2,8 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { startServer, type TestServer } from "./server.ts";
+import { MOONS } from "../src/lib/secret.ts";
+import { ANSWERS, score, wordFor } from "../src/lib/wordGame.ts";
 
 let s: TestServer;
 before(async () => {
@@ -2473,6 +2475,107 @@ test("your year: needs signing in, then counts your last 12 months", async () =>
   assert.ok(y.busiestMonth);
   assert.ok(y.badges >= 1);
   assert.equal((await fetch(`${s.url}/year`)).status, 200);
+});
+
+test("secret menu: off the public menu, opens with all five moons, and can be ordered", async () => {
+  const items = (await s.api("/api/menu")).body.items as { id: string }[];
+  assert.ok(!items.some((m) => m.id === "blue-moon-spritz" || m.id === "midnight-mocha"), "not on the public menu");
+  const ids = MOONS.map((m) => m.id);
+  const post = (found: unknown) => fetch(`${s.url}/api/secret`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ found }) });
+  assert.equal((await post(ids.slice(0, 4))).status, 403);
+  assert.equal((await post([...ids.slice(0, 4), "made-up"])).status, 403);
+  const open = (await (await post(ids)).json()) as { items: { id: string; secret: boolean }[] };
+  assert.deepEqual(open.items.map((m) => m.id).sort(), ["blue-moon-spritz", "midnight-mocha"]);
+  const o = await order({ name: "Sky", phone: "9876500011", lines: [{ itemId: "blue-moon-spritz", qty: 1 }] });
+  assert.equal(o.status, 200, JSON.stringify(o.body));
+  assert.equal(o.body.total, 210);
+  for (const p of ["/secret", "/fortune"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("café word: guesses checked on the server, the word only shows when you're done", async () => {
+  const voter = "wordvoter0123456789a";
+  const answer = wordFor(new Date().toLocaleDateString("en-CA"));
+  const post = (guess: string) => fetch(`${s.url}/api/word`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ guess, voter }) });
+  const start = (await (await fetch(`${s.url}/api/word?voter=${voter}`)).json()) as { rows: unknown[]; done: boolean; answer?: string };
+  assert.equal(start.rows.length, 0);
+  assert.equal(start.answer, undefined);
+  assert.ok(!JSON.stringify(start).includes(`"${answer}"`), "the word isn't sent early");
+  assert.equal((await post("abc")).status, 400);
+  assert.equal((await post("qzxjv")).status, 400, "not a word");
+  const wrong = ANSWERS.filter((w) => w !== answer).slice(0, 6);
+  const one = (await (await post(wrong[0])).json()) as { rows: { word: string; marks: string[] }[]; done: boolean; answer?: string };
+  assert.equal(one.rows.length, 1);
+  assert.deepEqual(one.rows[0].marks, score(wrong[0], answer));
+  assert.equal(one.answer, undefined);
+  for (const w of wrong.slice(1)) await post(w);
+  const end = (await (await fetch(`${s.url}/api/word?voter=${voter}`)).json()) as { rows: unknown[]; done: boolean; solved: boolean; answer?: string };
+  assert.equal(end.rows.length, 6);
+  assert.ok(end.done && !end.solved);
+  assert.equal(end.answer, answer);
+  const extra = (await (await post(answer)).json()) as { rows: unknown[] };
+  assert.equal(extra.rows.length, 6, "no more guesses once it's over");
+  const win = (await (await fetch(`${s.url}/api/word`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ guess: answer, voter: "wordwinner0123456789" }) })).json()) as { solved: boolean; streak: number };
+  assert.ok(win.solved);
+  assert.equal(win.streak, 1);
+  assert.equal((await fetch(`${s.url}/word`)).status, 200);
+});
+
+test("letters to future you: sealed until the day, with what you ordered", async () => {
+  assert.equal((await fetch(`${s.url}/api/account/letters`)).status, 401);
+  await signIn("letters@example.com");
+  await s.api("/api/orders", { method: "POST", json: { name: "Lena", phone: "9877700021", lines: [{ itemId: "cappuccino", qty: 1 }] } });
+  assert.equal((await s.api("/api/account/letters", { method: "POST", json: { body: "Hi future me", months: 5 } })).status, 400);
+  assert.equal((await s.api("/api/account/letters", { method: "POST", json: { body: "x", months: 3 } })).status, 400);
+  const r = await s.api("/api/account/letters", { method: "POST", json: { body: "Dear me, I hope the garden grew.", months: 3 } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.ok(r.body.ordered.includes("Classic Cappuccino"), JSON.stringify(r.body.ordered));
+  const list = (await s.api("/api/account/letters")).body.letters as { open: boolean; body?: string; days?: number }[];
+  assert.equal(list.length, 1);
+  assert.equal(list[0].open, false);
+  assert.equal(list[0].body, undefined, "a sealed letter's words aren't sent");
+  assert.ok(list[0].days! >= 89);
+  assert.equal((await fetch(`${s.url}/letters`)).status, 200);
+});
+
+test("bring it back: guests vote for a retired item, staff can pick, and it shows on the menu", async () => {
+  const voter = "comebackvoter0123456";
+  const st = (await (await fetch(`${s.url}/api/comeback?voter=${voter}`)).json()) as { month: string; next: string; candidates: { id: string; votes: number }[]; mine: string | null };
+  assert.ok(st.candidates.length >= 2, "items off the menu can be voted for");
+  const pub = (await s.api("/api/menu")).body.items as { id: string }[];
+  assert.ok(!st.candidates.some((c) => pub.some((m) => m.id === c.id)), "only items that aren't on now");
+  const post = (itemId: string, v = voter) => fetch(`${s.url}/api/comeback`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ itemId, voter: v }) });
+  assert.equal((await post("cappuccino")).status, 400, "items on the menu aren't up for a vote");
+  const [a, b] = st.candidates;
+  const v1 = (await (await post(a.id)).json()) as { mine: string; candidates: { id: string; votes: number }[] };
+  assert.equal(v1.mine, a.id);
+  const v2 = (await (await post(b.id)).json()) as { mine: string; candidates: { id: string; votes: number }[] };
+  assert.equal(v2.mine, b.id, "you can change your vote");
+  assert.equal(v2.candidates.find((c) => c.id === a.id)!.votes, a.votes);
+  assert.equal((await fetch(`${s.url}/api/comeback`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ month: st.month, pick: a.id }) })).status, 401);
+  await s.login();
+  assert.equal((await s.api("/api/comeback", { method: "PUT", json: { month: st.month, pick: a.id } })).status, 200);
+  const menu = (await s.api("/api/menu")).body.items as { id: string; comeback?: boolean }[];
+  assert.equal(menu.find((m) => m.id === a.id)?.comeback, true, "back on the menu this month");
+  const staff = (await s.api("/api/comeback?staff=1")).body as { back: { id: string } };
+  assert.equal(staff.back.id, a.id);
+  await s.api("/api/comeback", { method: "PUT", json: { month: st.month, pick: "auto" } });
+  assert.ok(!((await s.api("/api/menu")).body.items as { id: string }[]).some((m) => m.id === a.id));
+  assert.equal((await fetch(`${s.url}/bring-it-back`)).status, 200);
+});
+
+test("around the corner: a starter list, edited by the owner", async () => {
+  const spots = (await (await fetch(`${s.url}/api/nearby`)).json()).spots as { id: number; name: string; dog: boolean }[];
+  assert.ok(spots.length >= 6);
+  assert.equal((await fetch(`${s.url}/api/nearby`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "X" }) })).status, 401);
+  await s.login();
+  const add = await s.api("/api/nearby", { method: "POST", json: { name: "Tiny gelato cart", kind: "food", blurb: "Kokum sorbet!", walk_min: 4, dog: true, map_url: "javascript:alert(1)" } });
+  assert.equal(add.status, 200);
+  const g = (add.body.spots as { id: number; name: string; dog: boolean; map_url: string }[]).find((x) => x.name === "Tiny gelato cart")!;
+  assert.ok(g.dog);
+  assert.equal(g.map_url, "", "only https links");
+  const del = await s.api(`/api/nearby?id=${g.id}`, { method: "DELETE" });
+  assert.ok(!(del.body.spots as { id: number }[]).some((x) => x.id === g.id));
+  assert.equal((await fetch(`${s.url}/nearby`)).status, 200);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

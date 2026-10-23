@@ -50,6 +50,8 @@ import PhotosCard from "@/components/admin/PhotosCard";
 import SongsCard from "@/components/admin/SongsCard";
 import ForwardCard from "@/components/admin/ForwardCard";
 import TableTagsCard from "@/components/admin/TableTagsCard";
+import ComebackCard from "@/components/admin/ComebackCard";
+import NearbyCard from "@/components/admin/NearbyCard";
 import TeamProfiles from "@/components/admin/TeamProfiles";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
@@ -100,7 +102,8 @@ const KEYWORDS: Partial<Record<Tab, string>> = {
   Checklists: "opening closing fridge temperature equipment repairs maintenance",
   "Cash-up": "till cash float upi card",
   "P&L": "expenses rent wages profit loss",
-  Menu: "special of the day printable menu poster recipes story instagram combos combo deals allergen chart tv",
+  Menu: "special of the day printable menu poster recipes story instagram combos combo deals allergen chart tv bring it back vote comeback secret menu",
+  Notices: "lost found noticeboard around the corner nearby places guide",
   Rota: "shifts swaps staffing",
   Training: "quiz stations",
   Guests: "we miss you vip regulars birthdays",
@@ -533,7 +536,7 @@ export default function AdminPage() {
           <DemoResetCard />
         </div>
       )}
-      {tab === "Menu" && <>{me?.role === "owner" && <><MenuTidyCard /><RotationCard /><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
+      {tab === "Menu" && <><ComebackCard canEdit={me?.role === "owner"} />{me?.role === "owner" && <><MenuTidyCard /><RotationCard /><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Team" && me?.role === "owner" && <TeamProfiles />}
@@ -547,7 +550,7 @@ export default function AdminPage() {
       {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "Companies" && me?.role === "owner" && <CompaniesTab />}
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
-      {tab === "Notices" && <NoticesTab />}
+      {tab === "Notices" && <><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
       {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
       {tab === "Journal" && me?.role === "owner" && <JournalTab />}

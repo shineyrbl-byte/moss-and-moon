@@ -6,6 +6,8 @@ import { canMake, stockMap } from "./stock";
 import { toDateStr } from "./cafe";
 import { currentSeason } from "./seasonStore";
 import { isFullMoonNight } from "./moon";
+import { comebackFor } from "./comebackPick";
+import { monthOf } from "./comeback";
 
 type Row = { id: string; data: string; sort: number };
 
@@ -27,18 +29,21 @@ export function rotationNow(): Rotation {
  * The menu in display order. Hidden and out-of-season items are left out unless asked for.
  * An item is sold out if staff said so, or if an ingredient it needs has run out.
  */
-export function getMenu({ includeHidden = false } = {}): MenuItem[] {
+export function getMenu({ includeHidden = false, includeSecret }: { includeHidden?: boolean; includeSecret?: boolean } = {}): MenuItem[] {
+  const withSecret = includeSecret ?? includeHidden;
   const out = soldOutIds();
   const today = toDateStr(new Date());
+  const back = comebackFor(monthOf(today));
   const season = currentSeason();
   const have = stockMap();
   const loved = lovedScores();
   return (db.prepare("SELECT id, data, sort FROM menu_items ORDER BY sort, rowid").all() as Row[])
     .map((r) => {
-      const m = { ...(JSON.parse(r.data) as MenuItem), id: r.id, ...(loved.has(r.id) ? { loved: loved.get(r.id) } : {}) };
+      const m = { ...(JSON.parse(r.data) as MenuItem), id: r.id, ...(loved.has(r.id) ? { loved: loved.get(r.id) } : {}), ...(r.id === back ? { comeback: true } : {}) };
       return { ...m, soldOut: out.has(r.id) || !canMake(m, have) || (m.stock !== undefined && m.stock <= 0) };
     })
-    .filter((m) => includeHidden || (!m.hidden && inSeason(m, today, season)));
+    // Secret items stay off the public menu, but can still be priced and ordered once unlocked
+    .filter((m) => includeHidden || ((m.comeback || (!m.hidden && inSeason(m, today, season))) && (withSecret || !m.secret)));
 }
 
 /** Thumbs-up share per item over the last 6 months, for items with at least 10 ratings */
@@ -53,12 +58,13 @@ export function findOrderable(id: string): MenuItem | undefined {
   const r = db.prepare("SELECT id, data FROM menu_items WHERE id = ?").get(id) as Row | undefined;
   if (!r) return undefined;
   const item = { ...(JSON.parse(r.data) as MenuItem), id: r.id };
+  if (item.id === comebackFor(monthOf(toDateStr(new Date())))) return item; // back this month by vote
   return item.hidden || !inSeason(item) ? undefined : item;
 }
 
 /** A lookup function for pricing, loaded once per request */
 export function menuLookup() {
-  const map = new Map(getMenu().map((m) => [m.id, m]));
+  const map = new Map(getMenu({ includeSecret: true }).map((m) => [m.id, m]));
   return (id: string) => map.get(id);
 }
 

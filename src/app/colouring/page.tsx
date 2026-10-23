@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { COLOUR_PAGES, CRAYONS } from "@/lib/colouring";
+import HiddenMoon from "@/components/HiddenMoon";
 
 const KEY = "mm-colouring";
 
@@ -25,12 +26,15 @@ export default function Colouring() {
       <div className="crayons no-print" role="radiogroup" aria-label="Colour">
         {CRAYONS.map((c) => <button key={c} role="radio" aria-checked={crayon === c} aria-label={c === "#ffffff" ? "White (rubber)" : `Colour ${c}`} className={`crayon ${crayon === c ? "on" : ""}`} style={{ background: c }} onClick={() => setCrayon(c)} />)}
       </div>
+      <div className="colour-wrap">
       <svg className="colour-svg" viewBox="0 0 200 200" role="img" aria-label={`Colouring page: ${page.title}`}>
         {page.areas.map((a) => (
           <path key={a.id} d={a.d} fill={mine[a.id] ?? "#ffffff"} className="colour-area" onClick={() => paint(a.id)} />
         ))}
         {page.lines?.map((d, i) => <path key={i} d={d} className="colour-line" />)}
       </svg>
+      {pageId === "moon" && <HiddenMoon id="m-colour-2q" style={{ position: "absolute", right: "0.6rem", bottom: "0.4rem" }} />}
+      </div>
       <p className="print-only center">Moss &amp; Moon · {page.title}</p>
       <div className="row no-print" style={{ justifyContent: "center", gap: "0.5rem", marginTop: "0.8rem" }}>
         <button className="btn btn-ghost btn-sm" onClick={() => save({ ...fills, [pageId]: {} })}>Start again</button>

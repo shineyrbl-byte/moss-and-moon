@@ -164,6 +164,7 @@ export default function Menu() {
                 <h3 style={{ cursor: "pointer" }} onClick={() => setCustomizing(m)} lang={itemName(m, lang) !== m.name ? lang : undefined}>{itemName(m, lang)}</h3>
                 {happy && m.cat === "bakes" && <span className="small" style={{ color: "var(--pink-deep)" }}>golden hour −20%</span>}
                 <p lang={itemDesc(m, lang) !== m.desc ? lang : undefined}>{itemDesc(m, lang)}</p>
+                {m.comeback && <a className="loved" href="/bring-it-back">🗳 Back by your vote</a>}
                 {m.loved !== undefined && m.loved >= 80 && <span className="loved">❤ Loved by {m.loved}%</span>}
                 {m.cat === "shop" && m.stock !== undefined && m.stock > 0 && m.stock <= 5 && <span className="item-facts" style={{ color: "var(--pink-ink)" }}>Only {m.stock} left</span>}
                 {(() => {

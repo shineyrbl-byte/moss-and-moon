@@ -201,6 +201,7 @@ function ItemForm({ item, onClose, onSaved }: { item: MenuItem; onClose: () => v
             <label className="row small" style={{ gap: "0.35rem", alignItems: "center", paddingBottom: "0.6rem" }}><input type="checkbox" checked={!!f.kids} onChange={(e) => set("kids", e.target.checked || undefined)} /> 🧸 Kids</label>
             <label className="row small" style={{ gap: "0.35rem", alignItems: "center", paddingBottom: "0.6rem" }}><input type="checkbox" checked={!!f.pup} onChange={(e) => set("pup", e.target.checked || undefined)} /> 🐾 For dogs</label>
             <label className="row small" style={{ gap: "0.35rem", alignItems: "center", paddingBottom: "0.6rem" }} title="Only on the menu the night before, of and after each full moon"><input type="checkbox" checked={!!f.fullMoon} onChange={(e) => set("fullMoon", e.target.checked || undefined)} /> 🌕 Full-moon nights only</label>
+            <label className="row small" style={{ gap: "0.35rem", alignItems: "center", paddingBottom: "0.6rem" }} title="Off the menu; only guests who find all five hidden moons can order it (/secret)"><input type="checkbox" checked={!!f.secret} onChange={(e) => set("secret", e.target.checked || undefined)} /> 🤫 Secret menu</label>
           </div>
           {activeBranches().length > 1 && (
             <div className="field">Sold at <span className="muted small">· none picked = every branch</span>

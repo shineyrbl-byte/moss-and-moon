@@ -2,6 +2,7 @@ import Image from "next/image";
 import { PLANTS } from "@/lib/plants";
 import { photo } from "@/lib/menu";
 import Noticeboard from "@/components/Noticeboard";
+import HiddenMoon from "@/components/HiddenMoon";
 
 export default function Plants() {
   return (
@@ -22,6 +23,7 @@ export default function Plants() {
                 <li>💧 {p.water}</li>
                 <li>{p.petSafe ? "🐾 Safe for cats and dogs" : "⚠️ Keep away from pets"}</li>
                 {p.cuttings && <li>✂️ Grows from cuttings: ask us for one</li>}
+                {p.id === "fiddle-leaf" && <li><HiddenMoon id="m-plants-4f" /></li>}
               </ul>
               <p className="small" style={{ margin: "0.5rem 0 0" }}>{p.tip}</p>
             </div>

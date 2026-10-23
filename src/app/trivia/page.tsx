@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { voterId } from "@/components/LabCard";
+import HiddenMoon from "@/components/HiddenMoon";
 
 type T = { date: string; q: string; choices: string[]; mine?: { choice: number; correct: boolean; answer: number; why: string }; answered: number; right: number; streak: number; best: number };
 
@@ -39,7 +40,7 @@ export default function Trivia() {
         </div>
         {t.mine && (
           <div className="trivia-after">
-            <b>{t.mine.correct ? "Spot on! 🎉" : "Not quite ✿"}</b>
+            <b>{t.mine.correct ? "Spot on! 🎉" : "Not quite ✿"}</b> <HiddenMoon id="m-trivia-9x" />
             <p className="small" style={{ margin: "0.3rem 0" }}>{t.mine.why}</p>
             <p className="small muted" style={{ margin: 0 }}>{pct}% of {t.answered} {t.answered === 1 ? "person" : "people"} got it today · come back tomorrow for a new one</p>
             <button className="btn btn-ghost btn-sm" style={{ marginTop: "0.6rem" }} onClick={share}>Share</button>

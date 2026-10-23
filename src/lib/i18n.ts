@@ -306,6 +306,12 @@ const en = {
   "footer.year": "Your year with us",
   "forward.one": "1 coffee waiting for whoever needs one",
   "forward.many": "{n} coffees waiting for whoever needs one",
+  "footer.word": "The café word",
+  "footer.fortune": "Read your cup",
+  "footer.letters": "Letters to future you",
+  "footer.comeback": "Bring it back",
+  "footer.nearby": "Around the corner",
+  "footer.secret": "Secret menu",
 };
 
 type Key = keyof typeof en;
@@ -612,6 +618,12 @@ const hi: Record<Key, string> = {
   "footer.year": "हमारे साथ आपका साल",
   "forward.one": "किसी ज़रूरतमंद के लिए 1 कॉफ़ी रखी है",
   "forward.many": "किसी ज़रूरतमंद के लिए {n} कॉफ़ी रखी हैं",
+  "footer.word": "कैफ़े का शब्द",
+  "footer.fortune": "अपना कप पढ़िए",
+  "footer.letters": "भविष्य के लिए चिट्ठी",
+  "footer.comeback": "इसे वापस लाओ",
+  "footer.nearby": "आस-पास",
+  "footer.secret": "सीक्रेट मेन्यू",
 };
 
 const mr: Record<Key, string> = {
@@ -916,6 +928,12 @@ const mr: Record<Key, string> = {
   "footer.year": "आमच्यासोबत तुमचे वर्ष",
   "forward.one": "गरज असलेल्या कोणासाठी 1 कॉफी वाट पाहत आहे",
   "forward.many": "गरज असलेल्या कोणासाठी {n} कॉफी वाट पाहत आहेत",
+  "footer.word": "कॅफेचा शब्द",
+  "footer.fortune": "तुमचा कप वाचा",
+  "footer.letters": "भविष्यातील स्वतःला पत्र",
+  "footer.comeback": "परत आणा",
+  "footer.nearby": "जवळपास",
+  "footer.secret": "गुप्त मेन्यू",
 };
 
 const kok: Record<Key, string> = {
@@ -1220,6 +1238,12 @@ const kok: Record<Key, string> = {
   "footer.year": "आमचे वांगडा तुमचें वर्स",
   "forward.one": "गरज आशिल्ल्या कोणाखातीर 1 कॉफी वाट पळयता",
   "forward.many": "गरज आशिल्ल्या कोणाखातीर {n} कॉफी वाट पळयतात",
+  "footer.word": "कॅफेचो शब्द",
+  "footer.fortune": "तुमचो कप वाचात",
+  "footer.letters": "फुडल्या स्वताक पत्र",
+  "footer.comeback": "परत हाडात",
+  "footer.nearby": "लागसार",
+  "footer.secret": "गुपीत मेन्यू",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

@@ -656,3 +656,62 @@ test("seat tags and colouring pages are well formed", async () => {
   }
   assert.ok(CRAYONS.includes("#ffffff"), "has a rubber");
 });
+
+test("read your cup: the same reading all day, coloured by the moon", async () => {
+  const { readCup, moonGroup, FORTUNES } = await import("../src/lib/fortune.ts");
+  const a = readCup("2026-10-24", "voter1", "waxing-gibbous");
+  assert.deepEqual(readCup("2026-10-24", "voter1", "waxing-gibbous"), a);
+  assert.equal(a.group, "waxing");
+  assert.ok(FORTUNES.waxing.includes(a.text));
+  assert.ok(a.luckyNumber >= 1 && a.luckyNumber <= 9);
+  assert.equal(moonGroup("full"), "full");
+  assert.equal(moonGroup("new"), "new");
+  assert.equal(moonGroup("first-quarter"), "waxing");
+  assert.equal(moonGroup("last-quarter"), "waning");
+  assert.equal(moonGroup("waning-crescent"), "waning");
+  const days = new Set(Array.from({ length: 10 }, (_, i) => readCup(`2026-11-${String(i + 1).padStart(2, "0")}`, "voter1", "full").text + readCup(`2026-11-${String(i + 1).padStart(2, "0")}`, "voter1", "full").symbol.name));
+  assert.ok(days.size > 3, "changes day to day");
+});
+
+test("letters: open dates land on the same day a few months on", async () => {
+  const { openOn, isOpen, daysUntil } = await import("../src/lib/letters.ts");
+  assert.equal(openOn("2026-10-24", 3), "2027-01-24");
+  assert.equal(openOn("2026-10-24", 12), "2027-10-24");
+  assert.equal(openOn("2026-08-31", 6), "2027-02-28");
+  assert.equal(openOn("2027-08-31", 6), "2028-02-29");
+  assert.ok(isOpen("2026-10-24", "2026-10-24"));
+  assert.ok(!isOpen("2026-10-25", "2026-10-24"));
+  assert.equal(daysUntil("2026-11-03", "2026-10-24"), 10);
+});
+
+test("café word: answers are real five-letter words, scoring handles repeated letters", async () => {
+  const { ANSWERS, score, wordFor, shareGrid } = await import("../src/lib/wordGame.ts");
+  const { WORDS5 } = await import("../src/lib/data/words5.ts");
+  assert.ok(ANSWERS.length >= 60);
+  assert.equal(new Set(ANSWERS).size, ANSWERS.length, "no repeats");
+  for (const w of ANSWERS) assert.match(w, /^[a-z]{5}$/);
+  const dict = new Set(WORDS5.split(" "));
+  assert.ok(dict.size > 10000);
+  assert.ok(dict.has("beans") && dict.has("toast"), "plurals and common words");
+  assert.deepEqual(score("cocoa", "crema"), ["g", "b", "b", "b", "g"]);
+  assert.deepEqual(score("tatty", "latte"), ["b", "g", "g", "g", "b"]);
+  assert.deepEqual(score("eerie", "there"), ["y", "b", "y", "b", "g"]);
+  assert.deepEqual(score("latte", "latte"), ["g", "g", "g", "g", "g"]);
+  assert.equal(wordFor("2026-10-24"), wordFor("2026-10-24"));
+  const month = new Set(Array.from({ length: 30 }, (_, i) => wordFor(new Date(Date.UTC(2026, 9, 1 + i)).toISOString().slice(0, 10))));
+  assert.equal(month.size, 30, "no repeats within a month");
+  assert.equal(shareGrid([["g", "y", "b", "b", "g"]]), "🟩🟨⬜⬜🟩");
+});
+
+test("bring it back months and the secret moons", async () => {
+  const { shiftMonth, monthOf } = await import("../src/lib/comeback.ts");
+  assert.equal(shiftMonth("2026-12", 1), "2027-01");
+  assert.equal(shiftMonth("2026-01", -1), "2025-12");
+  assert.equal(monthOf("2026-10-24"), "2026-10");
+  const { MOONS, allFound, cleanFound } = await import("../src/lib/secret.ts");
+  assert.equal(MOONS.length, 5);
+  assert.deepEqual(cleanFound(["nope", MOONS[0].id, MOONS[0].id]), [MOONS[0].id]);
+  assert.ok(!allFound(MOONS.slice(1).map((m) => m.id)));
+  assert.ok(allFound(MOONS.map((m) => m.id).reverse()));
+  assert.ok(!allFound("all"));
+});

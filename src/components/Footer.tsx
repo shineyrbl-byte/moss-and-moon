@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { hoursLabel, whatsappUrl } from "@/lib/cafe";
 import InstallButton from "./InstallButton";
+import HiddenMoon from "./HiddenMoon";
 import { useStore } from "./Store";
 
 export default function Footer() {
@@ -15,7 +16,7 @@ export default function Footer() {
             A slow-coffee corner with pink lattes, warm bakes and a sunny window seat. Made with oat milk & love.
           </p>
         </div>
-        <div>
+        <div className="footer-explore">
           <h2>{t("footer.explore")}</h2>
           <ul>
             <li><Link href="/#menu">{t("nav.menu")}</Link></li>
@@ -45,6 +46,12 @@ export default function Footer() {
             <li><Link href="/colouring">{t("footer.colouring")}</Link></li>
             <li><Link href="/pay-it-forward">{t("footer.forward")}</Link></li>
             <li><Link href="/year">{t("footer.year")}</Link></li>
+            <li><Link href="/word">{t("footer.word")}</Link></li>
+            <li><Link href="/fortune">{t("footer.fortune")}</Link></li>
+            <li><Link href="/letters">{t("footer.letters")}</Link></li>
+            <li><Link href="/bring-it-back">{t("footer.comeback")}</Link></li>
+            <li><Link href="/nearby">{t("footer.nearby")}</Link></li>
+            <li><Link href="/secret">{t("footer.secret")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>
@@ -73,7 +80,7 @@ export default function Footer() {
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} Moss & Moon</span>
-        <span>{t("footer.photos")}</span>
+        <span>{t("footer.photos")} <HiddenMoon id="m-footer-7k" /></span>
       </div>
     </footer>
   );

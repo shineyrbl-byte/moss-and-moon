@@ -241,6 +241,7 @@ export default function OrderPage() {
         </div>
         {order.table_no && <TableTab code={order.code} />}
         {(order.status === "ready" || order.status === "collected") && <RateItems code={order.code} lines={order.lines.filter((l) => l.cat !== "shop")} />}
+        {(order.status === "ready" || order.status === "collected") && order.lines.some((l) => l.cat === "coffee") && <p className="small center" style={{ margin: "0 0 1rem" }}><Link href="/fortune">🔮 Finished your coffee? Read your cup →</Link></p>}
         {!isDelivery && !order.table_no && order.status !== "collected" && <div style={{ marginBottom: "1rem" }}><ImHere code={order.code} arrived={order.arrived_at ?? null} note={order.arrived_note ?? null} onDone={() => setReload((r) => r + 1)} /></div>}
 
         {order.lines.map((l, i) => (

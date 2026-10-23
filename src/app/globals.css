@@ -1450,7 +1450,7 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 
 /* Moon line in the hero */
 .moon-line { font-size: 0.9rem; color: var(--muted); margin: 0.3rem 0 0; }
-.moon-line .link-btn { margin: 0; font-size: inherit; color: var(--pink-deep); }
+.moon-line .link-btn { margin: 0; font-size: inherit; color: var(--pink-ink); }
 
 /* Add to calendar */
 .add-cal { display: inline-flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
@@ -1552,3 +1552,79 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
   .print-only { display: block; }
   .colour-svg { width: 100%; box-shadow: none; }
 }
+
+/* Hidden moons (the secret menu hunt) */
+.hidden-moon { background: none; border: none; padding: 0 0.15rem; font-size: 0.95rem; line-height: 1; color: inherit; opacity: 0.35; cursor: pointer; vertical-align: middle; min-width: 24px; min-height: 24px; }
+.hidden-moon:hover, .hidden-moon:focus-visible { opacity: 0.9; }
+.hidden-moon.found { opacity: 0.6; color: var(--caramel); }
+.colour-wrap { position: relative; width: min(100%, 520px); margin: 0 auto; }
+.colour-wrap .colour-svg { width: 100%; }
+.colour-wrap .hidden-moon { color: #3b2a24; }
+.moon-hunt { display: flex; justify-content: center; gap: 0.6rem; font-size: 2rem; margin: 1rem 0 0.3rem; }
+.moon-hints { padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+.moon-hints .done { color: var(--muted); text-decoration: line-through; }
+.secret-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 1rem; margin-top: 1rem; }
+.secret-item { overflow: hidden; padding: 0; }
+.secret-photo { position: relative; aspect-ratio: 4 / 3; }
+
+/* Read your cup */
+.cup-read { margin-top: 1rem; padding: 1.6rem 1.2rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
+.cup-art { width: 8.5rem; height: 8.5rem; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 50%, var(--latte) 0 52%, var(--surface-2) 53% 62%, var(--line) 63%); box-shadow: var(--shadow); }
+.cup-symbol { font-size: 3.2rem; }
+.cup-read.shown .cup-symbol { animation: cup-in 0.6s ease-out; }
+@keyframes cup-in { from { transform: rotate(-120deg) scale(0.3); opacity: 0; } to { transform: none; opacity: 1; } }
+.cup-text { font-family: var(--serif, Georgia, serif); font-size: 1.2rem; margin: 0.3rem 0; }
+@media (prefers-reduced-motion: reduce) { .cup-read.shown .cup-symbol { animation: none; } }
+
+/* Letters to future you */
+.letter-form { padding: 1.2rem; margin-top: 1rem; display: grid; gap: 0.7rem; }
+.letter-paper { font-family: var(--serif, Georgia, serif); line-height: 1.6; background: repeating-linear-gradient(var(--surface), var(--surface) 1.55rem, var(--line) 1.6rem); resize: vertical; }
+.letters { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.letter { padding: 0.8rem 1rem; }
+.letter.sealed { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.3rem 1rem; }
+.letter-head { all: unset; cursor: pointer; display: flex; justify-content: space-between; gap: 1rem; width: 100%; }
+.letter-head:focus-visible { outline: 2px solid var(--pink-deep); outline-offset: 4px; border-radius: 4px; }
+.letter-body { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px dashed var(--line); font-family: var(--serif, Georgia, serif); }
+
+/* Bring it back */
+.comeback-now { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 1rem; margin: 0.8rem 0; background: var(--pink-soft); }
+.comeback-list { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.comeback-list li { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0.8rem; }
+.comeback-list li.mine { outline: 2px solid var(--pink-deep); }
+.comeback-thumb { position: relative; width: 64px; height: 64px; border-radius: 12px; overflow: hidden; flex: none; }
+.comeback-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.comeback-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.comeback-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.comeback-bar span { display: block; height: 100%; background: var(--pink-deep); border-radius: 3px; transition: width 0.3s; }
+.comeback-act { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; flex: none; }
+
+/* The café word */
+.word-grid { display: grid; gap: 6px; justify-content: center; margin: 1rem 0; }
+.word-row { display: grid; grid-template-columns: repeat(5, min(15vw, 3.4rem)); gap: 6px; }
+.word-row.shake { animation: word-shake 0.35s; }
+@keyframes word-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.word-tile { aspect-ratio: 1; display: grid; place-items: center; border: 2px solid var(--line); border-radius: 8px; font-size: 1.6rem; font-weight: 700; text-transform: uppercase; background: var(--surface); }
+.word-tile.typed { border-color: var(--muted); }
+.word-tile.g, .word-key.g { background: var(--moss); border-color: var(--moss); color: #fff; }
+.word-tile.y, .word-key.y { background: var(--butter); border-color: var(--butter); color: #3b2720; }
+.word-tile.b { background: var(--surface-2); border-color: var(--surface-2); color: var(--muted); }
+.word-key.b { opacity: 0.4; }
+.word-keys { display: grid; gap: 6px; margin-top: 0.5rem; }
+.word-key-row { display: flex; justify-content: center; gap: 4px; }
+.word-key { flex: 1; max-width: 2.6rem; min-height: 3.2rem; padding: 0; border: none; border-radius: 6px; background: var(--surface-2); color: var(--text); font-weight: 700; text-transform: uppercase; cursor: pointer; font-size: 0.95rem; }
+.word-key.wide { flex: 1.6; max-width: 4.2rem; font-size: 0.72rem; }
+.word-after { padding: 1rem; text-align: center; }
+.word-answer { text-transform: uppercase; letter-spacing: 0.1em; }
+@media (prefers-reduced-motion: reduce) { .word-row.shake { animation: none; } }
+
+/* Around the corner */
+.spots { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 0.8rem; }
+.spot { display: flex; gap: 0.8rem; padding: 0.9rem 1rem; }
+.spot-icon { font-size: 1.8rem; line-height: 1; }
+.nearby-form { display: grid; gap: 0.5rem; margin: 0.6rem 0 1rem; padding: 0.8rem; border: 1px dashed var(--line); border-radius: 12px; }
+
+/* Footer: the long list of pages flows into columns */
+.footer-grid { grid-template-columns: 1.3fr 2.4fr 1fr 1fr; }
+.footer-explore ul { display: block; columns: 3 9.5rem; column-gap: 1.2rem; }
+.footer-explore li { break-inside: avoid; margin-bottom: 0.4rem; }
+@media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-grid > div:first-child, .footer-explore { grid-column: 1 / -1; } .footer-explore ul { columns: 2 8rem; } }

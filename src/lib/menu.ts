@@ -54,6 +54,10 @@ export type MenuItem = {
   pup?: boolean;
   /** Only on the menu around full-moon nights (see lib/moon.ts) */
   fullMoon?: boolean;
+  /** Secret menu: only for guests who've found all the hidden moons (see /secret) */
+  secret?: boolean;
+  /** Filled in: back this month by guest vote (see lib/comeback.ts) */
+  comeback?: boolean;
   /** Only on the menu in this part of the year (see rotationNow) */
   rotation?: Rotation;
   /** Owner's pick, shown first under "Staff picks" */
@@ -374,6 +378,14 @@ export const MENU_V9: MenuItem[] = [
     nameHi: "केला पप्सिकल", descHi: "जमी हुई दही, केला और थोड़ा पीनट बटर। गर्मी में डॉगी के लिए ठंडक।", nameMr: "केळी पप्सिकल", descMr: "गोठवलेले दही, केळे आणि थोडे पीनट बटर. उन्हाळ्यात कुत्र्यांसाठी थंडावा." },
   { id: "moon-cortado", cat: "coffee", name: "Full Moon Cortado", desc: "Only on full-moon nights: a ristretto cortado with wild honey, vanilla bean and a pinch of sea salt.", price: 230, img: "1572286258217-40142c1c6a70", fullMoon: true, traits: { energy: 2, sweet: 1, temp: "hot" }, allergens: ["milk"], kcal: 140, cost: 35, caffeine: 130,
     nameHi: "फ़ुल मून कोर्टाडो", descHi: "सिर्फ़ पूर्णिमा की रातों में: जंगली शहद, वनीला और चुटकी भर नमक वाला कोर्टाडो।", nameMr: "पौर्णिमा कोर्टाडो", descMr: "फक्त पौर्णिमेच्या रात्री: रानमध, व्हॅनिला आणि चिमूटभर मीठ घातलेला कोर्टाडो." },
+];
+
+/** The secret menu, unlocked by finding the five hidden moons */
+export const MENU_V10: MenuItem[] = [
+  { id: "blue-moon-spritz", cat: "cold", name: "Blue Moon Spritz", desc: "Butterfly pea flower, lemongrass and tonic. Squeeze the lime in and watch it turn from blue to violet.", price: 210, img: "1587888637140-849b25d80ef9", secret: true, diet: ["vegan", "gf"], noMilk: true, traits: { energy: 0, sweet: 1, temp: "iced" }, allergens: [], kcal: 90, cost: 30,
+    nameHi: "ब्लू मून स्प्रिट्ज़", descHi: "अपराजिता फूल, लेमनग्रास और टॉनिक। नींबू निचोड़िए और रंग नीले से बैंगनी होता देखिए।", nameMr: "ब्लू मून स्प्रिट्झ", descMr: "गोकर्णाचे फूल, गवती चहा आणि टॉनिक. लिंबू पिळा आणि रंग निळ्यातून जांभळा होताना पहा." },
+  { id: "midnight-mocha", cat: "coffee", name: "Midnight Mocha Shake", desc: "Cold espresso, 70% dark chocolate and malted milk, shaken thick and dusted with cocoa nibs.", price: 260, img: "1586195831800-24f14c992cea", secret: true, traits: { energy: 2, sweet: 2, temp: "iced" }, allergens: ["milk", "gluten", "soy"], kcal: 380, cost: 48, caffeine: 130,
+    nameHi: "मिडनाइट मोका शेक", descHi: "ठंडा एस्प्रेसो, 70% डार्क चॉकलेट और माल्टेड दूध, गाढ़ा शेक, ऊपर कोको निब्स।", nameMr: "मिडनाइट मोका शेक", descMr: "थंड एस्प्रेसो, 70% डार्क चॉकलेट आणि माल्टेड दूध, घट्ट शेक, वर कोको निब्स." },
 ];
 
 export const MENU_V8: MenuItem[] = [
