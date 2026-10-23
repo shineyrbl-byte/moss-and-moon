@@ -547,3 +547,81 @@ test("daily challenge: the same orders for everyone on a day, and streaks", asyn
   assert.equal(playStreak(["2026-10-20", "2026-10-22", "2026-10-23"], "2026-10-23"), 2);
   assert.equal(playStreak(["2026-10-22"], "2026-10-23"), 0, "today not played yet");
 });
+
+test("moon: full-moon times match the almanac, and nights are counted in India", async () => {
+  const { fullMoonsFrom, fullMoonNight, isFullMoonNight, moonNow } = await import("../src/lib/moon.ts");
+  // Known 2026 full moons (UTC): the 3 March total eclipse, 28 Aug, 26 Oct
+  const near = (iso: string) => {
+    const want = Date.parse(iso);
+    const got = fullMoonsFrom(new Date(want - 5 * 86400_000), 1)[0].getTime();
+    assert.ok(Math.abs(got - want) < 20 * 60_000, `${iso}: off by ${Math.round((got - want) / 60_000)} min`);
+  };
+  near("2026-03-03T11:38:00Z");
+  near("2026-08-28T04:18:00Z");
+  near("2026-10-26T04:12:00Z");
+  near("2026-12-24T01:28:00Z");
+  // 26 Oct 09:42 India time belongs to the night of the 25th
+  assert.equal(fullMoonNight(new Date("2026-10-26T04:12:00Z")), "2026-10-25");
+  assert.equal(isFullMoonNight("2026-10-25"), true);
+  assert.equal(isFullMoonNight("2026-10-24"), false);
+  assert.equal(isFullMoonNight("2026-10-24", 1), true, "the night before counts with spread 1");
+  assert.equal(isFullMoonNight("2026-10-20", 1), false);
+  const before = moonNow(new Date("2026-10-23T12:00:00+05:30"));
+  assert.equal(before.phase.id, "waxing-gibbous");
+  assert.equal(before.nextFull, "2026-10-25");
+  assert.equal(before.daysToFull, 2);
+  const on = moonNow(new Date("2026-10-25T21:00:00+05:30"));
+  assert.equal(on.fullTonight, true);
+  assert.equal(on.phase.id, "full");
+  assert.equal(on.nextFull, "2026-11-24");
+  const dark = moonNow(new Date("2026-11-09T22:00:00+05:30"));
+  assert.ok(dark.lit < 5, "new moon is dark");
+});
+
+test("bingo: a fair, repeatable card and the right lines", async () => {
+  const { pickCard, doneLines, BINGO_LINES } = await import("../src/lib/bingo.ts");
+  const pool = [...Array(40).keys()].map((i) => ({ id: `item-${i}`, name: `Item ${i}`, cat: ["coffee", "tea", "cold", "food", "bakes"][i % 5] }));
+  const a = pickCard(pool, "2026-10"), b = pickCard([...pool].reverse(), "2026-10"), c = pickCard(pool, "2026-11");
+  assert.equal(a.length, 16);
+  assert.deepEqual(a.map((x) => x.id), b.map((x) => x.id), "same month, same card, whatever the menu order");
+  assert.notDeepEqual(a.map((x) => x.id), c.map((x) => x.id), "a new card next month");
+  const per = new Map<string, number>();
+  for (const x of a) per.set(x.cat, (per.get(x.cat) ?? 0) + 1);
+  assert.ok([...per.values()].every((n) => n <= 5));
+  assert.equal(pickCard(pool.slice(0, 10), "2026-10").length, 10, "a small menu gives a smaller card");
+  assert.equal(BINGO_LINES.length, 10);
+  const st = Array(16).fill(false);
+  assert.equal(doneLines(st).length, 0);
+  [0, 5, 10, 15].forEach((i) => (st[i] = true));
+  assert.deepEqual(doneLines(st), [[0, 5, 10, 15]], "a diagonal");
+  [4, 6, 7].forEach((i) => (st[i] = true));
+  assert.equal(doneLines(st).length, 2, "and the second row");
+});
+
+test("calendar files: India times, escaped text and a reminder", async () => {
+  const { icsText, googleCalUrl } = await import("../src/lib/ics.ts");
+  const e = { uid: "TB1234", title: "Table for 2, by the window", date: "2026-12-31", time: "23:00", minutes: 90, details: "Line one\nline two; ok", alarmMinutes: 60 };
+  const ics = icsText(e, new Date("2026-10-01T00:00:00Z"));
+  assert.match(ics, /DTSTART;TZID=Asia\/Kolkata:20261231T230000/);
+  assert.match(ics, /DTEND;TZID=Asia\/Kolkata:20270101T003000/, "runs past midnight into the new year");
+  assert.match(ics, /SUMMARY:Table for 2\\, by the window/);
+  assert.match(ics, /DESCRIPTION:Line one\\nline two\\; ok/);
+  assert.match(ics, /TRIGGER:-PT60M/);
+  assert.ok(ics.split("\r\n").length > 10);
+  const g = new URL(googleCalUrl(e));
+  assert.equal(g.searchParams.get("dates"), "20261231T230000/20270101T003000");
+  assert.equal(g.searchParams.get("ctz"), "Asia/Kolkata");
+});
+
+test("focus timer: breaks, a long one every fourth round, and the clock", async () => {
+  const { nextPhase, phaseMinutes, clock, PLANS } = await import("../src/lib/focus.ts");
+  assert.equal(nextPhase("work", 1), "short");
+  assert.equal(nextPhase("work", 3), "short");
+  assert.equal(nextPhase("work", 4), "long");
+  assert.equal(nextPhase("short", 2), "work");
+  assert.equal(nextPhase("long", 4), "work");
+  assert.equal(phaseMinutes(PLANS[0], "work"), 25);
+  assert.equal(clock(1500), "25:00");
+  assert.equal(clock(61), "1:01");
+  assert.equal(clock(-5), "0:00");
+});

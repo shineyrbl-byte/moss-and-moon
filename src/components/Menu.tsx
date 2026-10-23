@@ -60,8 +60,9 @@ export default function Menu() {
   const PER_SECTION = 8;
   const blocks = useMemo(() => {
     if (cat !== "all" || q.trim() || onlyFavs) return [{ id: "all", label: null as string | null, shown: items, total: items.length, more: 0 }];
-    return CATEGORY_ORDER.map((c) => {
-      const list = items.filter((m) => m.cat === c);
+    // Pup treats get their own block, after bakes
+    return [...CATEGORY_ORDER.slice(0, 5), "pups" as const, ...CATEGORY_ORDER.slice(5)].map((c) => {
+      const list = items.filter((m) => (c === "pups" ? !!m.pup : m.cat === c && !m.pup));
       const all = openCats.includes(c);
       return { id: c as string, label: t(`menu.${c}` as "menu.all").replace(/\s*\p{Extended_Pictographic}\uFE0F?/gu, ""), shown: all ? list : list.slice(0, PER_SECTION), total: list.length, more: all ? 0 : Math.max(0, list.length - PER_SECTION) };
     }).filter((b) => b.total);

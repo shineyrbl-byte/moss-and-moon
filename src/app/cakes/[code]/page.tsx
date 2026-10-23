@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { rupees } from "@/lib/pricing";
+import AddToCalendar from "@/components/AddToCalendar";
 
 type C = { code: string; cake: string; size: string; message: string | null; date: string; time: string; name: string; price: number; status: string };
 
@@ -26,6 +27,7 @@ export default function CakeStatus() {
         <p>{c.status === "unpaid" ? "To pay" : "Paid"}: <b>{rupees(c.price)}</b></p>
         <p className="small muted">Show code <b style={{ fontFamily: "monospace" }}>{c.code}</b> at the counter.</p>
       </div>
+      {(c.status === "paid" || c.status === "unpaid" || c.status === "ready") && <p style={{ marginTop: "1rem" }}><AddToCalendar event={{ uid: c.code, title: `Pick up cake: ${c.cake}`, date: c.date, time: c.time, minutes: 15, details: `Cake order ${c.code}. Show this code at the counter.`, alarmMinutes: 120 }} /></p>}
     </div>
   );
 }

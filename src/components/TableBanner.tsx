@@ -38,6 +38,7 @@ export default function TableBanner() {
             {CALLS.map((c) => (
               <button key={c.reason} role="menuitem" onClick={() => call(c.reason)}>{c.label}</button>
             ))}
+            <a role="menuitem" href="/songs" onClick={() => setOpen(false)}>🎵 Request a song</a>
           </span>
         )}
       </span>

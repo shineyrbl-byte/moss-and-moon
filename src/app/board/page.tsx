@@ -6,6 +6,7 @@ import TodayLine from "@/components/TodayLine";
 
 type Entry = { code: string; name: string; table: number | null };
 type Board = { preparing: Entry[]; ready: Entry[] };
+type Song = { id: number; title: string; artist: string; name: string };
 
 // Two soft notes when an order turns ready
 function ding() {
@@ -33,6 +34,7 @@ export default function BoardPage() {
   useLive("/api/live?topic=board", () => setKick((k) => k + 1));
   const [now, setNow] = useState<Date | null>(null);
   const [wait, setWait] = useState<number | null>(null);
+  const [songs, setSongs] = useState<{ playing: Song | null; next: Song[] }>({ playing: null, next: [] });
   const [sound, setSound] = useState(false);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const seenReady = useRef<Set<string> | null>(null);
@@ -45,6 +47,7 @@ export default function BoardPage() {
       try {
         const [b, q] = await Promise.all([fetch("/api/board").then((r) => r.json()), fetch("/api/queue").then((r) => r.json())]);
         if (!alive) return;
+        fetch("/api/songs").then((r) => r.json()).then((d) => alive && setSongs(d)).catch(() => {});
         // Highlight orders that just became ready
         const ids = new Set<string>(b.ready.map((e: Entry) => e.code));
         if (seenReady.current) {
@@ -104,6 +107,13 @@ export default function BoardPage() {
         </section>
       </div>
 
+      {(songs.playing || songs.next.length > 0) && (
+        <div className="board-songs" aria-live="polite">
+          {songs.playing && <span>🎵 <b>{songs.playing.title}</b>{songs.playing.artist ? ` · ${songs.playing.artist}` : ""} <span className="muted">for {songs.playing.name}</span></span>}
+          {songs.next.length > 0 && <span className="muted">Up next: {songs.next.slice(0, 3).map((x) => x.title).join(" · ")}</span>}
+          <span className="muted">Request one: table QR → 🔔 → 🎵</span>
+        </div>
+      )}
       <footer className="board-foot">
         <span>{happy ? `✨ It's golden hour! ${HAPPY_HOUR.label}` : `☀︎ ${HAPPY_HOUR.label}`}</span>
         <span>⏱ Current wait ~{wait ?? "…"} min</span>

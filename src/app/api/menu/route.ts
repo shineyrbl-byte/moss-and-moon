@@ -80,6 +80,8 @@ function cleanItem(b: Record<string, unknown>): MenuItem | string {
     ...(Array.isArray(b.groups) && b.groups.length && cat !== "shop" ? { groups: cleanGroups(b.groups) } : {}),
     ...(b.half && (cat === "food") ? { half: true } : {}),
     ...(b.kids ? { kids: true } : {}),
+    ...(b.pup ? { pup: true } : {}),
+    ...(b.fullMoon ? { fullMoon: true } : {}),
     ...(b.rotation === "summer" || b.rotation === "monsoon" || b.rotation === "winter" ? { rotation: b.rotation } : {}),
     ...(b.staffPick ? { staffPick: true } : {}),
     ...(cleanText(b.descHi, 200) ? { descHi: cleanText(b.descHi, 200) } : {}),

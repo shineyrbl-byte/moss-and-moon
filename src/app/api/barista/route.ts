@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Say something to the barista first ✿" }, { status: 400 });
 
   // Only recommend things guests can actually order right now
-  const menu = getMenu().filter((m) => !m.soldOut);
+  const menu = getMenu().filter((m) => !m.soldOut && !m.pup); // dog treats are never suggested to people
   const lastText = String(messages[messages.length - 1].content);
   let result: Reply | { error: string };
   if (process.env.ANTHROPIC_API_KEY) result = await askClaude(messages, menu);

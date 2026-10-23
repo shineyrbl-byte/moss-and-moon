@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../Store";
 
-type P = { id: number; url: string; caption: string; name: string; status: "pending" | "approved"; created_at: string };
+type P = { id: number; url: string; caption: string; name: string; status: "pending" | "approved"; kind?: "cafe" | "pup"; created_at: string };
 
 /** Reviews tab: photos guests shared, waiting ones first */
 export default function PhotosCard() {
@@ -16,7 +16,7 @@ export default function PhotosCard() {
     load();
   }
   const waiting = list.filter((p) => p.status === "pending").length;
-  if (!list.length) return <section className="card" style={{ padding: "1rem", marginBottom: "1rem" }}><h3 style={{ fontSize: "1.1rem" }}>📸 Guest photos</h3><p className="small muted">None yet. Guests can share one from the &ldquo;Life at Moss &amp; Moon&rdquo; section on the home page.</p></section>;
+  if (!list.length) return <section className="card" style={{ padding: "1rem", marginBottom: "1rem" }}><h3 style={{ fontSize: "1.1rem" }}>📸 Guest photos</h3><p className="small muted">None yet. Guests can share one from the &ldquo;Life at Moss &amp; Moon&rdquo; section on the home page, or their dog on the <a href="/pups">pups page</a>.</p></section>;
   return (
     <section className="card" style={{ padding: "1rem", marginBottom: "1rem" }}>
       <h3 style={{ fontSize: "1.1rem" }}>📸 Guest photos {waiting > 0 && <span className="branch-tag">{waiting} waiting</span>}</h3>
@@ -25,7 +25,7 @@ export default function PhotosCard() {
           <li key={p.id} className={p.status}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <a href={p.url} target="_blank" rel="noreferrer"><img src={p.url} alt={p.caption || `Photo by ${p.name}`} loading="lazy" /></a>
-            <span className="small"><b>{p.name}</b>{p.caption ? `: ${p.caption}` : ""}<br /><span className="tiny muted">{p.created_at.slice(0, 10)} · {p.status === "pending" ? "waiting" : "on the wall"}</span></span>
+            <span className="small">{p.kind === "pup" && <span className="branch-tag">🐾 pup wall</span>} <b>{p.name}</b>{p.caption ? `: ${p.caption}` : ""}<br /><span className="tiny muted">{p.created_at.slice(0, 10)} · {p.status === "pending" ? "waiting" : "on the wall"}</span></span>
             <span className="row" style={{ gap: "0.3rem" }}>
               {p.status === "pending" && <button className="chip on" onClick={() => review(p, true)}>Approve</button>}
               <button className="chip" onClick={() => review(p, false)}>Remove</button>

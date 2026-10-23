@@ -6,6 +6,7 @@ import { photo } from "@/lib/menu";
 import { openStatus } from "@/lib/cafe";
 import { BusyBadge } from "./BusyMeter";
 import TodayLine from "./TodayLine";
+import MoonLine from "./MoonLine";
 import { useStore } from "./Store";
 
 export default function Hero() {
@@ -32,6 +33,7 @@ export default function Hero() {
           <BusyBadge />
         </div>
         <TodayLine />
+        <MoonLine />
         <h1>
           {t("hero.title1")} <br />
           <em>{t("hero.title2")}</em>

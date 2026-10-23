@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { rupees } from "@/lib/pricing";
 import { useStore } from "@/components/Store";
 import type { CafeEvent } from "@/lib/cafe";
+import AddToCalendar from "@/components/AddToCalendar";
 
 type Ticket = { code: string; name: string; qty: number; amount: number; package?: string | null; paid: boolean; checkedIn: boolean; checkedInAt: string | null; event: CafeEvent | null };
 
@@ -74,6 +75,7 @@ export default function TicketPage() {
           )}
         </div>
       </div>
+      {ev && t.paid && !t.checkedIn && <p className="center" style={{ marginTop: "1rem" }}><AddToCalendar event={{ uid: `ticket-${t.code}`, title: `${ev.title} · Moss & Moon`, date: ev.date, time: ev.time, minutes: 120, details: `Ticket ${t.code}. Show the QR code at the door.`, alarmMinutes: 120 }} /></p>}
       {staff && t.paid && !t.checkedIn && (
         <button className="btn btn-pink full" style={{ marginTop: "1rem" }} onClick={checkIn}>✓ Check in at the door</button>
       )}

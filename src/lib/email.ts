@@ -11,6 +11,7 @@ import { connectedAddress, gmailApiReady, sendRaw } from "./gmailApi";
 import { db } from "./db";
 import { rupees, type QuoteLine } from "./pricing";
 import { reportError } from "./errors";
+import { icsText } from "./ics";
 
 const SITE = () => process.env.SITE_URL || "http://localhost:3000";
 const FROM = () => process.env.EMAIL_FROM || "Moss & Moon <onboarding@resend.dev>";
@@ -214,24 +215,7 @@ export function bookingReminderEmail(b: { code: string; name: string; time: stri
 
 /** A calendar invite (.ics) for a booking, so it shows up in Google/Apple/Outlook calendars */
 export function bookingInvite(b: { code: string; name: string; date: string; time: string; guests: number }) {
-  const start = `${b.date.replace(/-/g, "")}T${b.time.replace(":", "")}00`;
-  const endD = new Date(`${b.date}T${b.time}:00`);
-  endD.setMinutes(endD.getMinutes() + 90);
-  const p = (n: number) => String(n).padStart(2, "0");
-  const end = `${endD.getFullYear()}${p(endD.getMonth() + 1)}${p(endD.getDate())}T${p(endD.getHours())}${p(endD.getMinutes())}00`;
-  const ics = [
-    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Moss & Moon//Bookings//EN", "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    `UID:${b.code}@mossandmoon`,
-    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
-    `DTSTART;TZID=Asia/Kolkata:${start}`,
-    `DTEND;TZID=Asia/Kolkata:${end}`,
-    `SUMMARY:Table for ${b.guests} at Moss & Moon`,
-    "LOCATION:Moss & Moon\\, 14 Willow Lane",
-    `DESCRIPTION:Booking ${b.code}. Show this code when you arrive.`,
-    "BEGIN:VALARM", "TRIGGER:-PT1H", "ACTION:DISPLAY", "DESCRIPTION:Moss & Moon in an hour", "END:VALARM",
-    "END:VEVENT", "END:VCALENDAR",
-  ].join("\r\n");
+  const ics = icsText({ uid: b.code, title: `Table for ${b.guests} at Moss & Moon`, date: b.date, time: b.time, minutes: 90, details: `Booking ${b.code}. Show this code when you arrive.`, alarmMinutes: 60 });
   return { filename: `moss-and-moon-${b.code}.ics`, content: new TextEncoder().encode(ics) };
 }
 

@@ -9,7 +9,8 @@ export type LiveEvent =
   | { type: "call"; table: number; action: "new" | "done" }
   | { type: "group"; code: string }
   | { type: "notice" }
-  | { type: "support"; code: string };
+  | { type: "support"; code: string }
+  | { type: "song" };
 
 const g = globalThis as unknown as { __mmLive?: EventEmitter };
 const bus = g.__mmLive ?? (g.__mmLive = new EventEmitter().setMaxListeners(1000));

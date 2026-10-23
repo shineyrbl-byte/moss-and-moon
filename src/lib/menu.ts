@@ -50,6 +50,10 @@ export type MenuItem = {
   half?: boolean;
   /** Shown in the Kids section */
   kids?: boolean;
+  /** For dogs: shown in the Pups section, never suggested to people */
+  pup?: boolean;
+  /** Only on the menu around full-moon nights (see lib/moon.ts) */
+  fullMoon?: boolean;
   /** Only on the menu in this part of the year (see rotationNow) */
   rotation?: Rotation;
   /** Owner's pick, shown first under "Staff picks" */
@@ -74,7 +78,7 @@ export const photo = (img: string, w = 900) =>
   img.startsWith("/") || img.startsWith("http") ? img : `https://images.unsplash.com/photo-${img}?auto=format&fit=crop&q=75&w=${w}`;
 
 /** Menu tabs: every category, plus "all" and "specials" (new, pink picks and festival drinks) */
-export type MenuTab = Category | "all" | "specials" | "kids";
+export type MenuTab = Category | "all" | "specials" | "kids" | "pups";
 /** Seasonal rotation, Goa style: summer Mar–May, monsoon Jun–Sep, winter Oct–Feb */
 export type Rotation = "summer" | "monsoon" | "winter";
 export const ROTATIONS: { id: Rotation; label: string; months: number[] }[] = [
@@ -84,8 +88,8 @@ export const ROTATIONS: { id: Rotation; label: string; months: number[] }[] = [
 ];
 export const rotationFor = (d = new Date()): Rotation => ROTATIONS.find((r) => r.months.includes(d.getMonth() + 1))!.id;
 export const CATEGORY_ORDER: Category[] = ["coffee", "tea", "cold", "food", "bakes", "shop"];
-export const inTab = (m: Pick<MenuItem, "cat" | "badge" | "season" | "kids">, tab: MenuTab) =>
-  tab === "all" || (tab === "specials" ? m.badge === "new" || m.badge === "pink pick" || !!m.season : tab === "kids" ? !!m.kids : m.cat === tab);
+export const inTab = (m: Pick<MenuItem, "cat" | "badge" | "season" | "kids" | "pup" | "fullMoon">, tab: MenuTab) =>
+  tab === "all" || (tab === "specials" ? m.badge === "new" || m.badge === "pink pick" || !!m.season || !!m.fullMoon : tab === "kids" ? !!m.kids : tab === "pups" ? !!m.pup : m.cat === tab && !m.pup);
 
 export const CATEGORIES: { id: MenuTab; label: string }[] = [
   { id: "all", label: "Everything" },
@@ -96,6 +100,7 @@ export const CATEGORIES: { id: MenuTab; label: string }[] = [
   { id: "food", label: "Food" },
   { id: "bakes", label: "Bakes & sweets" },
   { id: "kids", label: "Kids" },
+  { id: "pups", label: "Pups" },
   { id: "shop", label: "Shop" },
 ];
 
@@ -357,6 +362,20 @@ export function itemDesc(m: Pick<MenuItem, "desc" | "descHi" | "descMr" | "descK
 }
 
 /** October 2026: whipped and spiced coffees, a mango and berry corner, more bakes, Goan bar snacks */
+// The pup menu (for dogs, made without salt, sugar, onion, chocolate or xylitol) and the full-moon special
+export const MENU_V9: MenuItem[] = [
+  { id: "pup-cup", cat: "bakes", name: "Pup Cup", desc: "A little cup of lactose-free curd with a peanut butter biscuit on top. For your dog, on the house with any drink.", price: 60, img: "1543466835-00a7907e9de1", badge: "new", pup: true, allergens: [], cost: 12,
+    nameHi: "पप कप", descHi: "आपके डॉगी के लिए लैक्टोज़-फ़्री दही का छोटा कप, ऊपर पीनट बटर बिस्किट।", nameMr: "पप कप", descMr: "तुमच्या कुत्र्यासाठी लॅक्टोज-फ्री दह्याचा छोटा कप, वर पीनट बटर बिस्किट." },
+  { id: "pup-biscuits", cat: "bakes", name: "Peanut Butter Pup Bones", desc: "A bag of six crunchy oat and peanut butter bones, baked here. Dog-safe, no salt or sugar.", price: 120, img: "1568640347023-a616a30bc3bd", badge: "new", pup: true, allergens: [], cost: 25,
+    nameHi: "पीनट बटर पप बोन्स", descHi: "ओट्स और पीनट बटर की छह कुरकुरी हड्डियाँ, यहीं बनी। बिना नमक या चीनी।", nameMr: "पीनट बटर पप बोन्स", descMr: "ओट्स आणि पीनट बटरची सहा कुरकुरीत हाडे, इथेच भाजलेली. मीठ किंवा साखर नाही." },
+  { id: "pupcake", cat: "bakes", name: "Pupcake", desc: "A carrot and banana mini cake with curd frosting and a biscuit bone. Birthday candles for dogs on request.", price: 150, img: "1582798358481-d199fb7347bb", badge: "new", pup: true, allergens: [], cost: 30,
+    nameHi: "पपकेक", descHi: "गाजर और केले का छोटा केक, दही की फ़्रॉस्टिंग और बिस्किट की हड्डी के साथ।", nameMr: "पपकेक", descMr: "गाजर आणि केळ्याचा छोटा केक, दह्याचे फ्रॉस्टिंग आणि बिस्किटाचे हाड." },
+  { id: "pupsicle", cat: "bakes", name: "Banana Pupsicle", desc: "Frozen curd, banana and a little peanut butter. A cool-down for hot dogs after a Goan walk.", price: 90, img: "1596492784531-6e6eb5ea9993", badge: "new", pup: true, allergens: [], cost: 15,
+    nameHi: "केला पप्सिकल", descHi: "जमी हुई दही, केला और थोड़ा पीनट बटर। गर्मी में डॉगी के लिए ठंडक।", nameMr: "केळी पप्सिकल", descMr: "गोठवलेले दही, केळे आणि थोडे पीनट बटर. उन्हाळ्यात कुत्र्यांसाठी थंडावा." },
+  { id: "moon-cortado", cat: "coffee", name: "Full Moon Cortado", desc: "Only on full-moon nights: a ristretto cortado with wild honey, vanilla bean and a pinch of sea salt.", price: 230, img: "1572286258217-40142c1c6a70", fullMoon: true, traits: { energy: 2, sweet: 1, temp: "hot" }, allergens: ["milk"], kcal: 140, cost: 35, caffeine: 130,
+    nameHi: "फ़ुल मून कोर्टाडो", descHi: "सिर्फ़ पूर्णिमा की रातों में: जंगली शहद, वनीला और चुटकी भर नमक वाला कोर्टाडो।", nameMr: "पौर्णिमा कोर्टाडो", descMr: "फक्त पौर्णिमेच्या रात्री: रानमध, व्हॅनिला आणि चिमूटभर मीठ घातलेला कोर्टाडो." },
+];
+
 export const MENU_V8: MenuItem[] = [
   { id: "dalgona", cat: "coffee", name: "Dalgona Coffee", desc: "Whipped coffee, sugar and water, piled thick over cold milk. Stir it in.", price: 220, img: "1585494156145-1c60a4fe952b", badge: "new", traits: { energy: 2, sweet: 2, temp: "iced" }, allergens: ["milk"], kcal: 210, cost: 38, caffeine: 120,
     nameHi: "डालगोना कॉफ़ी", descHi: "फेंटी हुई कॉफ़ी, ठंडे दूध पर मोटी परत। मिलाकर पिएँ।", nameMr: "डालगोना कॉफी", descMr: "घोटलेली कॉफी, थंड दुधावर जाड थर. ढवळून प्या." },

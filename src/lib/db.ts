@@ -4,7 +4,7 @@ import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, MENU_V6, MENU_V7, MENU_V8, SEED_MENU } from "./menu";
+import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, MENU_V6, MENU_V7, MENU_V8, MENU_V9, SEED_MENU } from "./menu";
 import { SEASONAL_ITEMS } from "./seasons";
 import { DEFAULT_PROMOS } from "./pricing";
 import { NUTRITION } from "./nutrition";
@@ -754,6 +754,28 @@ function open() {
     status TEXT NOT NULL DEFAULT 'pending',
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   );`);
+  addColumn(db, "guest_photos", "kind", "TEXT NOT NULL DEFAULT 'cafe'"); // 'cafe' or 'pup' (the regular pups wall)
+  db.exec(`CREATE TABLE IF NOT EXISTS bingo_cards (
+    month TEXT PRIMARY KEY,
+    items TEXT NOT NULL
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS bingo_claims (
+    customer_id INTEGER NOT NULL,
+    month TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    PRIMARY KEY (customer_id, month)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS song_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    artist TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL,
+    table_no INTEGER,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    played_at TEXT
+  );`);
+  addColumn(db, "bookings", "dog", "INTEGER NOT NULL DEFAULT 0");
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
   addColumn(db, "customers", "student_email", "TEXT");
@@ -882,6 +904,7 @@ function open() {
   once("seeded_shop", () => addItems(MENU_SHOP));
   once("seeded_menu_v7", () => addItems(MENU_V7)); // more to take home, and gluten-free bakes
   once("seeded_menu_v8", () => addItems(MENU_V8)); // dalgona and dirty chai, mango and berry treats, bakes, Goan bar snacks
+  once("seeded_menu_v9", () => addItems(MENU_V9)); // the pup menu and the full-moon cortado
   // Allergens & calories for the starting menu (items an owner already set are left alone)
   // Hindi and Marathi dish names, only where the owner hasn't written one
   once("menu_names_v1", () => patchItems(null, (d, id) => {

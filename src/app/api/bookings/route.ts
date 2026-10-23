@@ -28,6 +28,7 @@ export async function POST(req: Request) {
   const guests = Math.floor(Number(b.guests));
   const note = cleanText(b.note, 200);
   const highChairs = Math.min(3, Math.max(0, Math.floor(Number(b.highChairs) || 0)));
+  const dog = b.dog === true || b.dog === 1 ? 1 : 0; // bringing a dog: seat them somewhere dog-friendly
   const email = cleanEmail(b.email);
   const branch = findBranch(b.branch);
   if (b.branch && branch.id !== b.branch) return Response.json({ error: "That branch isn't taking bookings right now." }, { status: 400 });
@@ -61,15 +62,16 @@ export async function POST(req: Request) {
   // Big groups hold the table with a deposit, paid next
   const deposit = depositFor(guests);
   if (deposit && !email) return Response.json({ error: "For groups this size we need an email for the deposit receipt." }, { status: 400 });
-  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder, branch, status, deposit, deposit_status, high_chairs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+  db.prepare("INSERT INTO bookings (code, name, phone, email, date, time, guests, note, table_no, preorder, branch, status, deposit, deposit_status, high_chairs, dog) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
     code, name, phone, email || null, date, time, guests, note, table, pre.lines.length ? JSON.stringify(pre.lines) : null, branch.id,
-    deposit ? "pending" : "confirmed", deposit, deposit ? "due" : null, highChairs,
+    deposit ? "pending" : "confirmed", deposit, deposit ? "due" : null, highChairs, dog,
   );
   if (game) db.prepare("UPDATE bookings SET game = ?, note = CASE WHEN COALESCE(note, '') = '' THEN ? ELSE ? || ' · ' || note END WHERE code = ?").run(game.id, `🎲 ${game.title}`, `🎲 ${game.title}`, code);
-  if (deposit) return Response.json({ code, name, date, time, guests, table, needsDeposit: true, deposit, game: game?.title ?? null });
+  if (dog) db.prepare("UPDATE bookings SET note = CASE WHEN COALESCE(note, '') = '' THEN '🐾 Bringing a dog' ELSE '🐾 Bringing a dog · ' || note END WHERE code = ?").run(code);
+  if (deposit) return Response.json({ code, name, date, time, guests, table, needsDeposit: true, deposit, game: game?.title ?? null, dog: !!dog });
   const extra = { table, preorder: pre.items, preorderTotal: pre.total, ...(activeBranches().length > 1 ? { branch: branch.name, address: branch.address } : {}) };
   if (email) sendLater(email, ...bookingEmail({ code, name, date, time, guests, ...extra }), [bookingInvite({ code, name, date, time, guests })]);
-  return Response.json({ code, name, date, time, guests, ...extra, game: game?.title ?? null, preorderText: pre.items.length ? `${pre.items.join(", ")} · about ${rupees(pre.total)}, pay at the café` : null });
+  return Response.json({ code, name, date, time, guests, ...extra, game: game?.title ?? null, dog: !!dog, preorderText: pre.items.length ? `${pre.items.join(", ")} · about ${rupees(pre.total)}, pay at the café` : null });
 }
 
 // Staff: upcoming bookings

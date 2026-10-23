@@ -5,6 +5,7 @@ import { rotationFor, type MenuItem, type Rotation } from "./menu";
 import { canMake, stockMap } from "./stock";
 import { toDateStr } from "./cafe";
 import { currentSeason } from "./seasonStore";
+import { isFullMoonNight } from "./moon";
 
 type Row = { id: string; data: string; sort: number };
 
@@ -14,7 +15,7 @@ function soldOutIds() {
 
 /** Seasonal items only show between their dates */
 export const inSeason = (m: MenuItem, today = toDateStr(new Date()), season: string | null = currentSeason()) =>
-  (!m.from || m.from <= today) && (!m.until || m.until >= today) && (!m.season || m.season === season) && (!m.rotation || m.rotation === rotationNow());
+  (!m.from || m.from <= today) && (!m.until || m.until >= today) && (!m.season || m.season === season) && (!m.rotation || m.rotation === rotationNow()) && (!m.fullMoon || isFullMoonNight(today, 1));
 
 /** Which part of the year's menu is on: by the calendar, unless the owner picked one */
 export function rotationNow(): Rotation {

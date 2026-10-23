@@ -16,7 +16,7 @@ let cache: { at: number; map: Record<string, string> } | null = null;
 export function pairings() {
   if (cache && Date.now() - cache.at < 10 * 60_000) return cache.map;
   const menu = getMenu().filter((m) => !m.soldOut);
-  const ok = new Set(menu.filter((m) => FOOD.has(m.cat)).map((m) => m.id));
+  const ok = new Set(menu.filter((m) => FOOD.has(m.cat) && !m.pup).map((m) => m.id));
   const counts = new Map<string, Map<string, number>>();
   for (const o of db.prepare("SELECT lines FROM orders WHERE created_at >= datetime('now','localtime','-90 days') AND status != 'cancelled'").all() as { lines: string }[]) {
     const lines = JSON.parse(o.lines) as QuoteLine[];

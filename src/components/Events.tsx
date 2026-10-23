@@ -8,6 +8,7 @@ import type { CafeEvent } from "@/lib/cafe";
 import { photo } from "@/lib/menu";
 import { useStore } from "./Store";
 import Reveal from "./Reveal";
+import AddToCalendar from "./AddToCalendar";
 
 type Ev = CafeEvent & { spotsLeft: number };
 
@@ -93,7 +94,10 @@ export default function Events() {
                   {ev.spotsLeft === 0 ? "Fully booked" : `${ev.spotsLeft} of ${ev.capacity} spots left`}
                 </span>
                 {isGoing ? (
-                  <button className="btn btn-ghost btn-sm" disabled>✓ You&apos;re going</button>
+                  <span className="row" style={{ gap: "0.4rem", flexWrap: "wrap" }}>
+                    <button className="btn btn-ghost btn-sm" disabled>✓ You&apos;re going</button>
+                    <AddToCalendar event={{ uid: `event-${ev.id}`, title: `${ev.title} · Moss & Moon`, date: ev.date, time: ev.time, minutes: 120, details: ev.desc, alarmMinutes: 120 }} />
+                  </span>
                 ) : openId === ev.id ? (
                   <form className="rsvp-form" onSubmit={(e) => rsvp(e, ev)}>
                     <input className="input" required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />

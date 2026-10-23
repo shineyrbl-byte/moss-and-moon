@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
   const wants = (e: LiveEvent) =>
     topic === "staff" ? e.type !== "group"
-    : topic === "board" ? e.type === "order"
+    : topic === "board" ? e.type === "order" || e.type === "song"
     : topic === "group" ? e.type === "group" && e.code === code
     : topic === "support" ? e.type === "support" && e.code === code
     : e.type === "order" && e.code === code;

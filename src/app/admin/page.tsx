@@ -47,6 +47,7 @@ import DemoResetCard from "@/components/admin/DemoResetCard";
 import SimCard from "@/components/admin/SimCard";
 import ShelfCard from "@/components/admin/ShelfCard";
 import PhotosCard from "@/components/admin/PhotosCard";
+import SongsCard from "@/components/admin/SongsCard";
 import TeamProfiles from "@/components/admin/TeamProfiles";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
@@ -90,7 +91,7 @@ const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
 ];
 /** Words that find a tab in "Jump to…" */
 const KEYWORDS: Partial<Record<Tab, string>> = {
-  Orders: "swiggy zomato aggregator delivery apps",
+  Orders: "swiggy zomato aggregator delivery apps songs music requests playlist",
   Settings: "simulate simulation day in the life fake orders import csv spreadsheet excel demo reset alerts notifications push phone hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
   Analytics: "profit menu engineering missed sales price what if retention coming back visitors insights",
   Stock: "ingredients use-by expiry supplier prices reorder shop stock",
@@ -422,6 +423,7 @@ export default function AdminPage() {
       {tab === "Orders" && (
         <>
           <OpenTabs />
+          <SongsCard />
           <AggregatorsCard />
           <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <label className="small muted" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>

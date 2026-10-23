@@ -2284,6 +2284,107 @@ test("postcards: write one, open it by link, and only real gifts ride along", as
   assert.equal((await fetch(`${s.url}/api/postcards/nope`)).status, 404);
 });
 
+test("coffee bingo: one card a month, stamps from real orders, a treat for a full line once", async () => {
+  const out = (await (await fetch(`${s.url}/api/account/bingo`)).json()) as { signedIn: boolean; squares: { id: string }[] };
+  assert.equal(out.signedIn, false);
+  assert.equal(out.squares.length, 16);
+  assert.equal(new Set(out.squares.map((q) => q.id)).size, 16, "no repeats");
+  assert.equal((await fetch(`${s.url}/api/account/bingo`, { method: "POST" })).status, 401);
+  await signIn("bingo@example.com");
+  const card = (await s.api("/api/account/bingo")).body as { signedIn: boolean; month: string; squares: { id: string; stamped: boolean; orderable: boolean }[]; lines: number[][] };
+  assert.equal(card.signedIn, true);
+  assert.deepEqual(card.squares.map((q) => q.id), out.squares.map((q) => q.id), "the same card for everyone");
+  assert.equal((await s.api("/api/account/bingo", { method: "POST" })).status, 400, "no line yet");
+  const menu = (await s.api("/api/menu")).body.items as { id: string; pup?: boolean; cat: string }[];
+  const onCard = new Set(card.squares.map((q) => q.id));
+  assert.ok(!menu.some((m) => onCard.has(m.id) && (m.pup || m.cat === "shop")), "no dog treats or shop items");
+  // Order the first row
+  const row = card.squares.slice(0, 4);
+  assert.ok(row.every((q) => q.orderable));
+  const placed = await s.api("/api/orders", { method: "POST", json: { name: "Bingo Bea", phone: "9877700002", lines: row.map((q) => ({ itemId: q.id, qty: 1 })) } });
+  assert.equal(placed.status, 200, JSON.stringify(placed.body));
+  const after = (await s.api("/api/account/bingo")).body as { stamped: number; lines: number[][] };
+  assert.ok(after.stamped >= 4);
+  assert.ok(after.lines.some((l) => l.join() === "0,1,2,3"));
+  const before = (await s.api("/api/account")).body.credit ?? 0;
+  const claim = await s.api("/api/account/bingo", { method: "POST" });
+  assert.equal(claim.status, 200);
+  assert.equal(claim.body.credit, before + 150);
+  assert.equal((await s.api("/api/account/bingo", { method: "POST" })).status, 409, "once a month");
+  assert.equal((await fetch(`${s.url}/bingo`)).status, 200);
+});
+
+test("song requests: guests ask, staff approve and play, the board shows it", async () => {
+  const ask = (json: Record<string, unknown>) => fetch(`${s.url}/api/songs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(json) });
+  assert.equal((await ask({ title: "" })).status, 400);
+  assert.equal((await ask({ title: "Shit song" })).status, 400, "kept kind");
+  assert.equal((await ask({ title: "Tum Se Hi", artist: "Mohit Chauhan", name: "Kabir", table: 4 })).status, 200);
+  assert.equal((await ask({ title: "tum se hi" })).status, 400, "already asked for");
+  const pub = async () => (await (await fetch(`${s.url}/api/songs`)).json()) as { playing: { title: string; name: string } | null; next: { title: string }[] };
+  assert.ok(!(await pub()).next.some((x) => x.title === "Tum Se Hi"), "waits for a yes");
+  assert.equal((await fetch(`${s.url}/api/songs?all=1`)).status, 401);
+  assert.equal((await fetch(`${s.url}/api/songs`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: "{}" })).status, 401);
+  await s.login();
+  const list = (await s.api("/api/songs?all=1")).body.songs as { id: number; title: string; status: string; table_no: number }[];
+  const mine = list.find((x) => x.title === "Tum Se Hi")!;
+  assert.equal(mine.status, "pending");
+  assert.equal(mine.table_no, 4);
+  await s.api("/api/songs", { method: "PATCH", json: { id: mine.id, action: "approve" } });
+  assert.ok((await pub()).next.some((x) => x.title === "Tum Se Hi"));
+  await s.api("/api/songs", { method: "PATCH", json: { id: mine.id, action: "play" } });
+  const now = await pub();
+  assert.equal(now.playing?.title, "Tum Se Hi");
+  assert.equal(now.playing?.name, "Kabir");
+  assert.ok(!JSON.stringify(now).includes("table"), "no table numbers in public");
+  await s.api("/api/songs", { method: "PATCH", json: { id: mine.id, action: "done" } });
+  assert.equal((await pub()).playing, null);
+  assert.equal((await s.api("/api/songs", { method: "PATCH", json: { id: mine.id, action: "explode" } })).status, 400);
+  assert.equal((await fetch(`${s.url}/songs`)).status, 200);
+});
+
+test("pups: dog treats have their own section, a pup photo wall, and dog-friendly bookings", async () => {
+  const menu = (await s.api("/api/menu")).body.items as { id: string; pup?: boolean; cat: string }[];
+  const pups = menu.filter((m) => m.pup);
+  assert.ok(pups.length >= 4);
+  assert.ok(pups.every((m) => m.cat === "bakes"));
+  const { inTab } = await import("../src/lib/menu.ts");
+  assert.ok(pups.every((m) => inTab(m as never, "pups") && !inTab(m as never, "bakes")), "not mixed in with people's bakes");
+  // A pup photo goes on the pup wall, not the café wall
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  const fd = new FormData();
+  fd.append("file", new Blob([png], { type: "image/png" }), "dog.png");
+  fd.append("name", "Biscuit");
+  fd.append("kind", "pup");
+  assert.equal((await fetch(`${s.url}/api/photos`, { method: "POST", body: fd })).status, 200);
+  await s.login();
+  const all = (await s.api("/api/photos?all=1")).body.photos as { id: number; name: string; kind: string }[];
+  const dog = all.find((p) => p.name === "Biscuit")!;
+  assert.equal(dog.kind, "pup");
+  await s.api("/api/photos", { method: "PATCH", json: { id: dog.id, approve: true } });
+  const names = async (q: string) => ((await (await fetch(`${s.url}/api/photos${q}`)).json()) as { photos: { name: string }[] }).photos.map((p) => p.name);
+  assert.ok((await names("?kind=pup")).includes("Biscuit"));
+  assert.ok(!(await names("")).includes("Biscuit"), "not on the café wall");
+  // Booking with a dog
+  const date = tomorrow();
+  const slots = (await s.api(`/api/bookings/availability?date=${date}`)).body as { time: string }[];
+  const b = await s.api("/api/bookings", { method: "POST", json: { name: "Dog Owner", phone: "9444444999", date, time: slots[slots.length - 1].time, guests: 2, dog: true } });
+  assert.equal(b.status, 200, JSON.stringify(b.body));
+  assert.equal(b.body.dog, true);
+  const saved = ((await s.api("/api/bookings")).body as { code: string; dog: number; note: string }[]).find((x) => x.code === b.body.code)!;
+  assert.equal(saved.dog, 1);
+  assert.match(saved.note, /🐾/);
+  assert.equal((await fetch(`${s.url}/pups`)).status, 200);
+});
+
+test("full-moon special only shows around full-moon nights; focus corner opens", async () => {
+  const { isFullMoonNight } = await import("../src/lib/moon.ts");
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const menu = (await s.api("/api/menu")).body.items as { id: string }[];
+  assert.equal(menu.some((m) => m.id === "moon-cortado"), isFullMoonNight(today, 1));
+  assert.equal((await fetch(`${s.url}/focus`)).status, 200);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

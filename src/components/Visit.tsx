@@ -10,9 +10,10 @@ import TablePicker from "./TablePicker";
 import { unitPrice, rupees } from "@/lib/pricing";
 import { usePay } from "./Payment";
 import { DEPOSIT } from "@/lib/cafe";
+import AddToCalendar from "./AddToCalendar";
 
 type Slot = { time: string; left: number };
-type Booked = { code: string; name: string; date: string; time: string; guests: number; table: number | null; preorderText: string | null ; game?: string | null };
+type Booked = { code: string; name: string; date: string; time: string; guests: number; table: number | null; preorderText: string | null ; game?: string | null; dog?: boolean };
 
 export default function Visit() {
   const { toast, t, lines, find, clear, branch, lang } = useStore();
@@ -23,7 +24,7 @@ export default function Visit() {
   const [preorder, setPreorder] = useState(false);
   const [today, setToday] = useState("");
   const [status, setStatus] = useState<{ open: boolean; text: string } | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "", highChairs: 0, game: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, note: "", highChairs: 0, game: "", dog: false });
   // Board games from the shelf (taken ones are marked once a time is picked); ?game=… from the shelf page picks one
   const [games, setGames] = useState<{ id: string; title: string; detail: string; out: number; taken: boolean }[]>([]);
   useEffect(() => { const g = new URLSearchParams(location.search).get("game"); if (g) setForm((f) => ({ ...f, game: g })); }, []);
@@ -143,9 +144,11 @@ export default function Visit() {
             </p>
             {booked.preorderText && <p className="small">🍽 Ready when you arrive: {booked.preorderText}</p>}
             {booked.game && <p className="small">🎲 {fill(t("visit.gameKept"), { game: booked.game })}</p>}
+            {booked.dog && <p className="small">🐾 {t("visit.dogKept")}</p>}
             <span className="code">{booked.code}</span>
             <p className="small muted">Show this code when you arrive.</p>
-            <button className="btn btn-ghost btn-sm" onClick={() => { setBooked(null); setForm((f) => ({ ...f, time: "", note: "" })); }}>Book another</button>
+            <AddToCalendar event={{ uid: booked.code, title: `Table for ${booked.guests} at Moss & Moon`, date: booked.date, time: booked.time, minutes: 90, details: `Booking ${booked.code}. Show this code when you arrive.`, alarmMinutes: 60 }} />
+            <button className="btn btn-ghost btn-sm" onClick={() => { setBooked(null); setForm((f) => ({ ...f, time: "", note: "", dog: false })); }}>Book another</button>
           </div>
         ) : (
           <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -193,6 +196,9 @@ export default function Visit() {
             <label className="row small" style={{ alignItems: "center", gap: "0.5rem" }}>
               <input type="checkbox" checked={form.highChairs > 0} onChange={(e) => setForm({ ...form, highChairs: e.target.checked ? 1 : 0 })} /> {t("visit.highChair")}
               {form.highChairs > 0 && <select className="input" style={{ width: "auto" }} value={form.highChairs} onChange={(e) => setForm({ ...form, highChairs: Number(e.target.value) })} aria-label="How many high chairs">{[1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}</select>}
+            </label>
+            <label className="row small" style={{ alignItems: "center", gap: "0.5rem" }}>
+              <input type="checkbox" checked={form.dog} onChange={(e) => setForm({ ...form, dog: e.target.checked })} /> {t("visit.dog")}
             </label>
             {!full && games.length > 0 && (
               <div className="field">

@@ -49,7 +49,7 @@ const schema: JsonSchema = {
 };
 
 export async function suggestSpecials(): Promise<{ ideas: SpecialIdea[]; provider: string | null; inputs: ReturnType<typeof specialInputs> }> {
-  const menu = getMenu({ includeHidden: false }).filter((m) => m.cat !== "shop");
+  const menu = getMenu({ includeHidden: false }).filter((m) => m.cat !== "shop" && !m.pup);
   const inputs = specialInputs();
   const ai = await askJSON<{ ideas: SpecialIdea[] }>(
     "You're the head barista of Moss & Moon, a cosy pink café in Goa, India. Suggest specials of the day that use up overstocked ingredients or bakes that keep getting thrown away. Each special is a twist on an existing menu item (give its exact id as baseItemId) that the team can make with what's in stock. Names under 32 characters, descriptions one short sentence, prices in whole rupees close to the base item's. 'why' says in plain words what it uses up.",
