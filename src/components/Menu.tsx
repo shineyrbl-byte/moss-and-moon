@@ -99,6 +99,8 @@ export default function Menu() {
             <button key={c.id} className={`chip ${cat === c.id ? "on" : ""}`} onClick={() => setCat(c.id)}>{t(`menu.${c.id}` as "menu.all")}</button>
           ))}
         </div>
+        {cat === "kids" && <p className="small center" style={{ margin: "0.2rem 0 0.6rem" }}>🖍 <a href="/colouring">{t("footer.colouring")}</a></p>}
+        {cat === "pups" && <p className="small center" style={{ margin: "0.2rem 0 0.6rem" }}>🐾 <a href="/pups">{t("footer.pups")}</a></p>}
         <div className="chips">
           <button className={`chip ${diet.includes("vegan") ? "on" : ""}`} onClick={() => toggleDiet("vegan")}>{t("menu.vegan")}</button>
           <button className={`chip ${diet.includes("gf") ? "on" : ""}`} onClick={() => toggleDiet("gf")}>{t("menu.gf")}</button>

@@ -2385,6 +2385,96 @@ test("full-moon special only shows around full-moon nights; focus corner opens",
   assert.equal((await fetch(`${s.url}/focus`)).status, 200);
 });
 
+test("daily trivia: one question for everyone, the answer only after you answer, first answer counts", async () => {
+  const voter = "abcdef0123456789abcd";
+  const q = (await (await fetch(`${s.url}/api/trivia?voter=${voter}`)).json()) as { q: string; choices: string[]; mine?: unknown; streak: number };
+  assert.ok(q.q.length > 10);
+  assert.equal(q.choices.length, 4);
+  assert.equal(q.mine, undefined);
+  assert.ok(!/"answer"|"why"/.test(JSON.stringify(q)), "the answer isn't sent before you answer");
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/trivia`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(json) });
+  assert.equal((await post({ voter, choice: 9 })).status, 400);
+  assert.equal((await post({ voter: "x", choice: 0 })).status, 400, "needs a proper id");
+  const a = (await (await post({ voter, choice: 0 })).json()) as { mine: { choice: number; correct: boolean; answer: number; why: string }; streak: number; answered: number };
+  assert.equal(a.mine.choice, 0);
+  assert.ok(a.mine.why.length > 10);
+  assert.equal(a.streak, 1);
+  const again = (await (await post({ voter, choice: 1 })).json()) as { mine: { choice: number }; answered: number };
+  assert.equal(again.mine.choice, 0, "can't change your answer");
+  assert.equal(again.answered, a.answered);
+  const other = (await (await fetch(`${s.url}/api/trivia?voter=zzzzzzzzzzzzzzzzzzzz`)).json()) as { q: string; mine?: unknown };
+  assert.equal(other.q, q.q, "same question for everyone");
+  assert.equal(other.mine, undefined);
+  assert.equal((await fetch(`${s.url}/trivia`)).status, 200);
+});
+
+test("pay it forward: buy a coffee for a stranger; only staff can hand it out", async () => {
+  const before = (await (await fetch(`${s.url}/api/pay-forward`)).json()) as { waiting: number; given: number };
+  const r = await s.api("/api/drink-gifts", { method: "POST", json: { itemId: "cappuccino", forward: true, message: "Have a good one" } });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  const code = r.body.code as string;
+  const g = (await s.api(`/api/drink-gifts/${code}`)).body as { toName: string; fromName: string };
+  assert.equal(g.toName, "Someone who needs it");
+  assert.equal(g.fromName, "A kind stranger");
+  assert.equal((await (await fetch(`${s.url}/api/pay-forward`)).json()).waiting, before.waiting, "not counted until paid");
+  await s.api("/api/payments/start", { method: "POST", json: { kind: "drinkgift", code } });
+  await s.api("/api/payments/verify", { method: "POST", json: { kind: "drinkgift", code, demo: true } });
+  assert.equal((await (await fetch(`${s.url}/api/pay-forward`)).json()).waiting, before.waiting + 1);
+  assert.equal((await fetch(`${s.url}/api/drink-gifts/${code}/redeem`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })).status, 403, "the buyer can't claim it by link");
+  assert.equal((await fetch(`${s.url}/api/pay-forward`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })).status, 401);
+  await s.login();
+  const give = await s.api("/api/pay-forward", { method: "POST", json: { name: "Friend" } });
+  assert.equal(give.status, 200, JSON.stringify(give.body));
+  assert.ok(give.body.orderCode);
+  const after = (await (await fetch(`${s.url}/api/pay-forward`)).json()) as { waiting: number; given: number };
+  assert.equal(after.waiting, before.waiting);
+  assert.equal(after.given, before.given + 1);
+  if (after.waiting === 0) assert.equal((await s.api("/api/pay-forward", { method: "POST", json: {} })).status, 404);
+  assert.equal((await fetch(`${s.url}/pay-it-forward`)).status, 200);
+});
+
+test("seat finder: tables carry tags the owner can change", async () => {
+  const date = tomorrow();
+  const slots = (await s.api(`/api/bookings/availability?date=${date}`)).body as { time: string }[];
+  const url = `/api/bookings/tables?date=${date}&time=${slots[0].time}&guests=2`;
+  const t = (await s.api(url)).body.tables as { no: number; tags: string[] }[];
+  assert.ok(t.find((x) => x.no === 8)!.tags.includes("quiet"));
+  assert.equal((await fetch(`${s.url}/api/admin/table-tags`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: "{}" })).status, 401);
+  await s.login();
+  const cur = (await s.api("/api/admin/table-tags")).body.tags as Record<string, string[]>;
+  const saved = await s.api("/api/admin/table-tags", { method: "PUT", json: { tags: { ...cur, 6: ["socket", "dog", "nonsense"], 99: ["window"] } } });
+  assert.deepEqual(saved.body.tags["6"], ["socket", "dog"], "unknown tags dropped");
+  assert.equal(saved.body.tags["99"], undefined, "unknown tables dropped");
+  assert.deepEqual(((await s.api(url)).body.tables as { no: number; tags: string[] }[]).find((x) => x.no === 6)!.tags, ["socket", "dog"]);
+  await s.api("/api/admin/table-tags", { method: "PUT", json: { tags: cur } });
+});
+
+test("plant corner: plant swap notes, and the colouring and plant pages open", async () => {
+  const r = await fetch(`${s.url}/api/notices`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ kind: "plant", name: "Mira", text: "Spare monstera cuttings, would love a fern" }) });
+  assert.equal(r.status, 200);
+  await s.login();
+  const all = (await s.api("/api/notices?all=1")).body as { kind: string; text: string }[];
+  assert.equal(all.find((n) => n.text.includes("monstera cuttings"))!.kind, "plant");
+  for (const p of ["/plants", "/colouring"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("your year: needs signing in, then counts your last 12 months", async () => {
+  assert.equal((await fetch(`${s.url}/api/account/year`)).status, 401);
+  await signIn("year@example.com");
+  const empty = (await s.api("/api/account/year")).body as { visits: number };
+  assert.equal(empty.visits, 0);
+  await s.api("/api/orders", { method: "POST", json: { name: "Yara", phone: "9877700003", lines: [{ itemId: "rose-latte", qty: 2 }, { itemId: "cookie", qty: 1 }] } });
+  await s.api("/api/orders", { method: "POST", json: { name: "Yara", phone: "9877700003", lines: [{ itemId: "rose-latte", qty: 1 }] } });
+  const y = (await s.api("/api/account/year")).body as { visits: number; cups: number; tried: number; top: { name: string; times: number }[]; busiestMonth: { month: string } | null; badges: number };
+  assert.equal(y.visits, 2);
+  assert.equal(y.cups, 3);
+  assert.equal(y.tried, 2);
+  assert.equal(y.top[0].times, 3);
+  assert.ok(y.busiestMonth);
+  assert.ok(y.badges >= 1);
+  assert.equal((await fetch(`${s.url}/year`)).status, 200);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

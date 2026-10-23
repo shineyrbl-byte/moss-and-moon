@@ -2,7 +2,7 @@
 // (No imports, so the browser, the server and the tests can all use it.)
 
 export type BadgeOrder = { created_at: string; lines: { itemId: string; name: string; cat?: string; qty: number; opts?: { temp?: string } }[]; tip: number; hosted?: boolean };
-export type BadgeExtras = { reviews: number; tickets: number; giftsSent: number };
+export type BadgeExtras = { reviews: number; tickets: number; giftsSent: number; triviaBest?: number; forwardGiven?: number };
 export type Badge = { id: string; icon: string; name: string; desc: string; earned: boolean; progress?: { have: number; need: number } };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -60,6 +60,8 @@ export function computeBadges(orders: BadgeOrder[], extras: BadgeExtras, today: 
     make("critic", "✍️", "Critic", "Left a review", extras.reviews, 1),
     make("night-out", "🎟", "Night out", "Came to a ticketed event", extras.tickets, 1),
     make("kind-soul", "🎁", "Kind soul", "Bought a friend a coffee", extras.giftsSent, 1),
+    make("quiz-whiz", "🧠", "Quiz whiz", "Daily trivia 7 days in a row", extras.triviaBest ?? 0, 7),
+    make("pay-it-forward", "☕", "Paid it forward", "Bought a coffee for a stranger", extras.forwardGiven ?? 0, 1),
   ];
   return { badges, streak };
 }

@@ -3,6 +3,7 @@ import "server-only";
 import { db } from "./db";
 import { computeBadges, type BadgeOrder } from "./badges";
 import { toDateStr } from "./cafe";
+import { triviaBest } from "./triviaStore";
 import type { QuoteLine } from "./pricing";
 
 export function badgesFor(customer: { id: number; email: string }) {
@@ -12,7 +13,9 @@ export function badgesFor(customer: { id: number; email: string }) {
   const extras = {
     reviews: one("SELECT COUNT(*) AS n FROM reviews r JOIN orders o ON o.code = r.order_code WHERE o.customer_id = ?", customer.id),
     tickets: one("SELECT COUNT(*) AS n FROM tickets WHERE email = ? AND paid = 1", customer.email),
-    giftsSent: one("SELECT COUNT(*) AS n FROM drink_gifts WHERE from_email = ? AND paid = 1", customer.email),
+    giftsSent: one("SELECT COUNT(*) AS n FROM drink_gifts WHERE from_email = ? AND paid = 1 AND forward = 0", customer.email),
+    forwardGiven: one("SELECT COUNT(*) AS n FROM drink_gifts WHERE from_email = ? AND paid = 1 AND forward = 1", customer.email),
+    triviaBest: triviaBest(customer.id),
   };
   return computeBadges(orders, extras, toDateStr(new Date()));
 }

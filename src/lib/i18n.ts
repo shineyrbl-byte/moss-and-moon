@@ -299,6 +299,13 @@ const en = {
   "moon.waning-gibbous": "Waning gibbous",
   "moon.last-quarter": "Last quarter",
   "moon.waning-crescent": "Waning crescent",
+  "footer.trivia": "Daily trivia",
+  "footer.plants": "Plant corner",
+  "footer.colouring": "Colouring pages",
+  "footer.forward": "Pay it forward",
+  "footer.year": "Your year with us",
+  "forward.one": "1 coffee waiting for whoever needs one",
+  "forward.many": "{n} coffees waiting for whoever needs one",
 };
 
 type Key = keyof typeof en;
@@ -598,6 +605,13 @@ const hi: Record<Key, string> = {
   "moon.waning-gibbous": "घटता चाँद",
   "moon.last-quarter": "कृष्ण अष्टमी",
   "moon.waning-crescent": "घटती कला",
+  "footer.trivia": "आज का सवाल",
+  "footer.plants": "पौधों का कोना",
+  "footer.colouring": "रंग भरो",
+  "footer.forward": "किसी अजनबी के लिए कॉफ़ी",
+  "footer.year": "हमारे साथ आपका साल",
+  "forward.one": "किसी ज़रूरतमंद के लिए 1 कॉफ़ी रखी है",
+  "forward.many": "किसी ज़रूरतमंद के लिए {n} कॉफ़ी रखी हैं",
 };
 
 const mr: Record<Key, string> = {
@@ -895,6 +909,13 @@ const mr: Record<Key, string> = {
   "moon.waning-gibbous": "कमी होणारा चंद्र",
   "moon.last-quarter": "वद्य अष्टमी",
   "moon.waning-crescent": "घटती कोर",
+  "footer.trivia": "आजचा प्रश्न",
+  "footer.plants": "रोपांचा कोपरा",
+  "footer.colouring": "रंग भरा",
+  "footer.forward": "अनोळखी व्यक्तीसाठी कॉफी",
+  "footer.year": "आमच्यासोबत तुमचे वर्ष",
+  "forward.one": "गरज असलेल्या कोणासाठी 1 कॉफी वाट पाहत आहे",
+  "forward.many": "गरज असलेल्या कोणासाठी {n} कॉफी वाट पाहत आहेत",
 };
 
 const kok: Record<Key, string> = {
@@ -1192,6 +1213,13 @@ const kok: Record<Key, string> = {
   "moon.waning-gibbous": "उणो जावपी चंद्र",
   "moon.last-quarter": "वद्य आठवी",
   "moon.waning-crescent": "उणी जावपी कोर",
+  "footer.trivia": "आयचो प्रस्न",
+  "footer.plants": "झाडांचो कोनो",
+  "footer.colouring": "रंग भरात",
+  "footer.forward": "अनवळखी मनशाक कॉफी",
+  "footer.year": "आमचे वांगडा तुमचें वर्स",
+  "forward.one": "गरज आशिल्ल्या कोणाखातीर 1 कॉफी वाट पळयता",
+  "forward.many": "गरज आशिल्ल्या कोणाखातीर {n} कॉफी वाट पळयतात",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

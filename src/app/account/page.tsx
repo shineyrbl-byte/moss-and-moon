@@ -189,6 +189,7 @@ function Profile({ acc, reload }: { acc: Account; reload: () => Promise<void> })
       <CompanyCard />
       <MyDataCard onDeleted={logout} />
       <BadgesCard />
+      <p className="small center" style={{ margin: "0.6rem 0 1rem" }}><a href="/year">🗓 See your year at Moss &amp; Moon →</a></p>
       <RegularOrders />
       <Suspense fallback={null}><BeanSubs /></Suspense>
 

@@ -776,6 +776,16 @@ function open() {
     played_at TEXT
   );`);
   addColumn(db, "bookings", "dog", "INTEGER NOT NULL DEFAULT 0");
+  db.exec(`CREATE TABLE IF NOT EXISTS trivia_answers (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    customer_id INTEGER,
+    choice INTEGER NOT NULL,
+    correct INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    PRIMARY KEY (date, voter)
+  );`);
+  addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
   addColumn(db, "customers", "student_email", "TEXT");

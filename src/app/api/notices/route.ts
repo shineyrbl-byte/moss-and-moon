@@ -5,7 +5,7 @@ import { toDateStr } from "@/lib/cafe";
 import { publish } from "@/lib/live";
 import { clientIp } from "@/lib/site";
 
-const NOTICE_KINDS = ["lost", "study", "swap", "event", "other"] as const;
+const NOTICE_KINDS = ["lost", "study", "swap", "plant", "event", "other"] as const;
 const DAYS = 14;
 const hash = (ip: string) => crypto.createHash("sha256").update(`notice:${ip}`).digest("hex").slice(0, 16);
 

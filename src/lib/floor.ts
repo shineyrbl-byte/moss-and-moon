@@ -19,3 +19,26 @@ export const floorTable = (no: number) => FLOOR.find((t) => t.no === no);
 /** Bookings this many minutes apart or closer can't share a table */
 export const TABLE_GAP = 90;
 export const PREORDER_LEAD = 15;
+
+/** What a table is good for. Staff can change these in Admin → Tables & QR. */
+export const SEAT_TAGS = [
+  { id: "socket", icon: "🔌", label: "Power socket" },
+  { id: "window", icon: "🪟", label: "Window" },
+  { id: "quiet", icon: "🤫", label: "Quiet" },
+  { id: "dog", icon: "🐾", label: "Dog-friendly" },
+] as const;
+export type SeatTag = (typeof SEAT_TAGS)[number]["id"];
+export const DEFAULT_TAGS: Record<number, SeatTag[]> = {
+  1: ["window", "socket"], 2: ["window"], 3: ["window", "socket"], 4: ["dog"],
+  5: ["socket"], 6: [], 7: ["dog"], 8: ["quiet", "socket"],
+};
+const TAG_IDS = new Set<string>(SEAT_TAGS.map((t) => t.id));
+/** Keep only real tables and tags */
+export function cleanTags(v: unknown): Record<number, SeatTag[]> {
+  const out: Record<number, SeatTag[]> = {};
+  for (const t of FLOOR) {
+    const raw = v && typeof v === "object" ? (v as Record<string, unknown>)[t.no] : undefined;
+    out[t.no] = Array.isArray(raw) ? ([...new Set(raw.map(String))].filter((x) => TAG_IDS.has(x)) as SeatTag[]) : [];
+  }
+  return out;
+}

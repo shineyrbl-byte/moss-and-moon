@@ -7,6 +7,7 @@ import { openStatus } from "@/lib/cafe";
 import { BusyBadge } from "./BusyMeter";
 import TodayLine from "./TodayLine";
 import MoonLine from "./MoonLine";
+import ForwardLine from "./ForwardLine";
 import { useStore } from "./Store";
 
 export default function Hero() {
@@ -34,6 +35,7 @@ export default function Hero() {
         </div>
         <TodayLine />
         <MoonLine />
+        <ForwardLine />
         <h1>
           {t("hero.title1")} <br />
           <em>{t("hero.title2")}</em>

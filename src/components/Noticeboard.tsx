@@ -8,17 +8,19 @@ export const KINDS: Record<string, { icon: string; label: string }> = {
   lost: { icon: "🧤", label: "Lost & found" },
   study: { icon: "📚", label: "Study buddy" },
   swap: { icon: "🔁", label: "Book & swap" },
+  plant: { icon: "🌿", label: "Plant swap" },
   event: { icon: "🎶", label: "Happening" },
   other: { icon: "📌", label: "Other" },
 };
 
 /** Pinned notes, like paper on a cork board. compact = the home page teaser. */
-export default function Noticeboard({ compact = false }: { compact?: boolean }) {
+/** only = show and pin just one kind (the plant corner uses "plant") */
+export default function Noticeboard({ compact = false, only }: { compact?: boolean; only?: string }) {
   const { toast } = useStore();
   const [notes, setNotes] = useState<Note[] | null>(null);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>(only ?? "all");
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ kind: "study", name: "", text: "", contact: "" });
+  const [f, setF] = useState({ kind: only ?? "study", name: "", text: "", contact: "" });
   const [error, setError] = useState("");
 
   const load = useCallback(() => fetch("/api/notices").then((r) => r.json()).then(setNotes).catch(() => setNotes([])), []);
@@ -38,7 +40,7 @@ export default function Noticeboard({ compact = false }: { compact?: boolean }) 
   const shown = (notes ?? []).filter((n) => filter === "all" || n.kind === filter).slice(0, compact ? 4 : 40);
   return (
     <div>
-      {!compact && (
+      {!compact && !only && (
         <div className="chips" style={{ marginBottom: "1rem" }}>
           {["all", ...Object.keys(KINDS)].map((k) => (
             <button key={k} className={`chip ${filter === k ? "on" : ""}`} onClick={() => setFilter(k)}>{k === "all" ? "Everything" : `${KINDS[k].icon} ${KINDS[k].label}`}</button>
@@ -59,16 +61,16 @@ export default function Noticeboard({ compact = false }: { compact?: boolean }) 
       </div>
       <div className="row" style={{ justifyContent: "center", marginTop: "1.2rem" }}>
         {compact ? <Link href="/noticeboard" className="btn btn-ghost">See the whole board</Link> : null}
-        <button className="btn btn-pink" onClick={() => setOpen((o) => !o)}>📌 Pin a note</button>
+        <button className="btn btn-pink" onClick={() => setOpen((o) => !o)}>{only === "plant" ? "🌿 Offer or ask for a cutting" : "📌 Pin a note"}</button>
       </div>
       {open && (
         <form className="card booking" onSubmit={pin} style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.8rem", maxWidth: "34rem", marginInline: "auto" }}>
-          <div className="chips" style={{ justifyContent: "flex-start" }} role="radiogroup" aria-label="What kind of note">
+          {!only && <div className="chips" style={{ justifyContent: "flex-start" }} role="radiogroup" aria-label="What kind of note">
             {Object.entries(KINDS).map(([k, v]) => (
               <button type="button" key={k} role="radio" aria-checked={f.kind === k} className={`chip ${f.kind === k ? "on" : ""}`} onClick={() => setF({ ...f, kind: k })}>{v.icon} {v.label}</button>
             ))}
-          </div>
-          <label className="field">Your note<textarea className="input" rows={3} required minLength={10} maxLength={280} placeholder="Found a blue umbrella by the window seat on Tuesday…" value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })} /></label>
+          </div>}
+          <label className="field">Your note<textarea className="input" rows={3} required minLength={10} maxLength={280} placeholder={only === "plant" ? "Got spare monstera cuttings, looking for a fern or a pothos…" : "Found a blue umbrella by the window seat on Tuesday…"} value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })} /></label>
           <div className="row">
             <label className="field">Your name<input className="input" required maxLength={30} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
             <label className="field">How to reach you (optional)<input className="input" maxLength={60} placeholder="Instagram handle, or “ask at the counter”" value={f.contact} onChange={(e) => setF({ ...f, contact: e.target.value })} /></label>

@@ -625,3 +625,34 @@ test("focus timer: breaks, a long one every fourth round, and the clock", async 
   assert.equal(clock(61), "1:01");
   assert.equal(clock(-5), "0:00");
 });
+
+test("trivia: every question is sound, and days rotate through them", async () => {
+  const { QUESTIONS, questionIndex, bestRun } = await import("../src/lib/trivia.ts");
+  assert.ok(QUESTIONS.length >= 30);
+  for (const q of QUESTIONS) {
+    assert.equal(q.choices.length, 4, q.q);
+    assert.ok(q.answer >= 0 && q.answer < 4, q.q);
+    assert.equal(new Set(q.choices).size, 4, `no repeated choices: ${q.q}`);
+  }
+  assert.equal(new Set(QUESTIONS.map((q) => q.q)).size, QUESTIONS.length, "no repeated questions");
+  const day = (n: number) => new Date(Date.UTC(2026, 0, 1 + n)).toISOString().slice(0, 10);
+  const run = [...Array(QUESTIONS.length).keys()].map((i) => questionIndex(day(i)));
+  assert.equal(new Set(run).size, QUESTIONS.length, "no repeats until every question has had a turn");
+  assert.equal(questionIndex("2026-10-23"), questionIndex("2026-10-23"));
+  assert.equal(bestRun([]), 0);
+  assert.equal(bestRun(["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-05", "2026-10-02"]), 3);
+  assert.equal(bestRun(["2026-12-31", "2027-01-01"]), 2, "across the new year");
+});
+
+test("seat tags and colouring pages are well formed", async () => {
+  const { cleanTags, FLOOR, DEFAULT_TAGS } = await import("../src/lib/floor.ts");
+  assert.deepEqual(cleanTags(null)[1], []);
+  assert.deepEqual(cleanTags({ 1: ["window", "window", "bogus"] })[1], ["window"]);
+  assert.ok(FLOOR.every((t) => Array.isArray(DEFAULT_TAGS[t.no])));
+  const { COLOUR_PAGES, CRAYONS } = await import("../src/lib/colouring.ts");
+  for (const p of COLOUR_PAGES) {
+    assert.equal(new Set(p.areas.map((a) => a.id)).size, p.areas.length, `${p.id}: unique areas`);
+    for (const a of p.areas) assert.match(a.d, /^M[-\d.,]+[\s\S]*Z$/, `${p.id}/${a.id} is a closed shape`);
+  }
+  assert.ok(CRAYONS.includes("#ffffff"), "has a rubber");
+});

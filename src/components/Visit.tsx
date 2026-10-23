@@ -182,7 +182,7 @@ export default function Visit() {
                 </div>
               )}
             </div>
-            {!full && branch === "main" && <TablePicker date={form.date} time={form.time} guests={form.guests} value={table} onChange={setTable} />}
+            {!full && branch === "main" && <TablePicker date={form.date} time={form.time} guests={form.guests} value={table} onChange={setTable} prefer={form.dog ? ["dog"] : []} />}
             {!full && form.time && foodLines.length > 0 && (
               <label className="addon" style={{ alignItems: "flex-start" }}>
                 <input type="checkbox" checked={preorder} onChange={(e) => setPreorder(e.target.checked)} />

@@ -1,0 +1,15 @@
+// The plants around the café, with how to keep them happy at home.
+// petSafe follows the ASPCA lists (cats and dogs): worth knowing now that pups visit.
+export type Plant = { id: string; name: string; also?: string; img: string; where: string; light: string; water: string; tip: string; petSafe: boolean; cuttings: boolean };
+
+export const PLANTS: Plant[] = [
+  { id: "monstera", name: "Monstera", also: "Swiss cheese plant", img: "1614594975525-e45190c55d0b", where: "By the sofa corner", light: "Bright, indirect light", water: "When the top 5 cm of soil is dry, about weekly", tip: "The holes in the leaves come with age and good light. Give it a moss pole to climb.", petSafe: false, cuttings: true },
+  { id: "snake-plant", name: "Snake plant", also: "Sansevieria", img: "1593482892290-f54927ae1bb6", where: "Next to the counter", light: "Anything from shade to sun", water: "Every 2–3 weeks; less in the monsoon", tip: "The easiest plant there is. Overwatering is the only way to hurt it.", petSafe: false, cuttings: true },
+  { id: "philodendron", name: "Heartleaf philodendron", also: "Often sold as money plant", img: "1600411833196-7c1f6b1a8b90", where: "Hanging in the window", light: "Medium, indirect light", water: "When the soil feels dry", tip: "Snip a vine just below a leaf node and stand it in water. Roots in two weeks.", petSafe: false, cuttings: true },
+  { id: "zz", name: "ZZ plant", img: "1632207691143-643e2a9a9361", where: "The books corner", light: "Low to bright, indirect", water: "Every 2–3 weeks", tip: "Glossy leaves that look fake. It stores water in its roots, so forget it a little.", petSafe: false, cuttings: false },
+  { id: "spider-plant", name: "Spider plant", img: "1611527664689-d430dd2a6774", where: "On the shelf by the door", light: "Bright, indirect light", water: "Keep lightly moist", tip: "It sends out baby plants on runners. Pot one up and you have a new plant.", petSafe: true, cuttings: true },
+  { id: "fiddle-leaf", name: "Fiddle-leaf fig", img: "1453904300235-0f2f60b15b5d", where: "Window table 3", light: "Lots of bright light", water: "When the top few cm are dry", tip: "It hates being moved. Find it a sunny spot and leave it there.", petSafe: false, cuttings: false },
+  { id: "haworthia", name: "Zebra haworthia", img: "1509423350716-97f9360b4e09", where: "On every window table", light: "Bright light, some direct sun", water: "Every 2–3 weeks; let it dry out fully", tip: "A tiny succulent for a desk. The white stripes are bumps you can feel.", petSafe: true, cuttings: true },
+  { id: "ficus-bonsai", name: "Ginseng ficus bonsai", img: "1512428813834-c702c7702b78", where: "At the till", light: "Bright, indirect light", water: "When the surface dries; mist in dry weather", tip: "Trim new shoots back to two leaves to keep its little tree shape.", petSafe: false, cuttings: false },
+  { id: "boston-fern", name: "Boston fern", img: "1497250681960-ef046c08a56e", where: "The terrace", light: "Shade or soft light", water: "Keep the soil damp", tip: "Loves Goa's humidity. In dry months, stand it on a tray of wet pebbles.", petSafe: true, cuttings: false },
+];
