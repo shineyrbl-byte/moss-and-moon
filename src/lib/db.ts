@@ -856,6 +856,30 @@ function open() {
     status TEXT NOT NULL DEFAULT 'pending',
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS polls (
+    week TEXT PRIMARY KEY,
+    question TEXT NOT NULL,
+    choices TEXT NOT NULL
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS poll_votes (
+    week TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    choice INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    PRIMARY KEY (week, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS stories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS story_hearts (
+    story_id INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    PRIMARY KEY (story_id, voter)
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD

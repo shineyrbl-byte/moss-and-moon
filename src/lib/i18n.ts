@@ -317,6 +317,14 @@ const en = {
   "footer.konkani": "Konkani word of the day",
   "footer.memory": "Memory match",
   "footer.wishTree": "Wish tree",
+  "footer.sunset": "Sunset tracker",
+  "footer.cups": "Cups saved",
+  "footer.moon": "Moon calendar",
+  "footer.blindDate": "Blind date with a book",
+  "footer.poll": "This week's poll",
+  "footer.stories": "Six-word stories",
+  "cups.one": "{n} cup saved this month by a guest who brought their own",
+  "cups.many": "{n} cups saved this month by guests who brought their own",
 };
 
 type Key = keyof typeof en;
@@ -634,6 +642,14 @@ const hi: Record<Key, string> = {
   "footer.konkani": "आज का कोंकणी शब्द",
   "footer.memory": "मेमोरी मैच",
   "footer.wishTree": "इच्छाओं का पेड़",
+  "footer.sunset": "सूर्यास्त",
+  "footer.cups": "बचाए गए कप",
+  "footer.moon": "चाँद का कैलेंडर",
+  "footer.blindDate": "किताब के साथ ब्लाइंड डेट",
+  "footer.poll": "इस हफ़्ते का सवाल",
+  "footer.stories": "छह शब्दों की कहानियाँ",
+  "cups.one": "इस महीने {n} कप बचा, अपना कप लाने वाले मेहमान की वजह से",
+  "cups.many": "इस महीने {n} कप बचे, अपना कप लाने वाले मेहमानों की वजह से",
 };
 
 const mr: Record<Key, string> = {
@@ -949,6 +965,14 @@ const mr: Record<Key, string> = {
   "footer.konkani": "आजचा कोंकणी शब्द",
   "footer.memory": "मेमरी मॅच",
   "footer.wishTree": "इच्छांचे झाड",
+  "footer.sunset": "सूर्यास्त",
+  "footer.cups": "वाचवलेले कप",
+  "footer.moon": "चंद्र दिनदर्शिका",
+  "footer.blindDate": "पुस्तकासोबत ब्लाइंड डेट",
+  "footer.poll": "या आठवड्याचा प्रश्न",
+  "footer.stories": "सहा शब्दांच्या गोष्टी",
+  "cups.one": "या महिन्यात {n} कप वाचला, स्वतःचा कप आणणाऱ्या पाहुण्यामुळे",
+  "cups.many": "या महिन्यात {n} कप वाचले, स्वतःचा कप आणणाऱ्या पाहुण्यांमुळे",
 };
 
 const kok: Record<Key, string> = {
@@ -1264,6 +1288,14 @@ const kok: Record<Key, string> = {
   "footer.konkani": "आयचें कोंकणी उतर",
   "footer.memory": "मेमरी मॅच",
   "footer.wishTree": "इत्सेचें झाड",
+  "footer.sunset": "सुर्यास्त",
+  "footer.cups": "वाटायल्ले कप",
+  "footer.moon": "चंद्राचें कॅलेंडर",
+  "footer.blindDate": "पुस्तकावांगडा ब्लाइंड डेट",
+  "footer.poll": "ह्या सप्तकाचो प्रस्न",
+  "footer.stories": "स उतरांच्यो कथा",
+  "cups.one": "ह्या म्हयन्यांत {n} कप वाटायलो",
+  "cups.many": "ह्या म्हयन्यांत {n} कप वाटायले",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

@@ -55,6 +55,7 @@ import NearbyCard from "@/components/admin/NearbyCard";
 import ThanksNotes from "@/components/ThanksNotes";
 import BookClubCard from "@/components/admin/BookClubCard";
 import WishesCard from "@/components/admin/WishesCard";
+import { BlindDateCard, CupsCard, PollCard, StoriesCard } from "@/components/admin/CommunityCards";
 import TeamProfiles from "@/components/admin/TeamProfiles";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
@@ -98,7 +99,7 @@ const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
 ];
 /** Words that find a tab in "Jump to…" */
 const KEYWORDS: Partial<Record<Tab, string>> = {
-  Orders: "swiggy zomato aggregator delivery apps songs music requests playlist pay it forward suspended coffee",
+  Orders: "swiggy zomato aggregator delivery apps songs music requests playlist pay it forward suspended coffee cups saved own cup reusable",
   Settings: "simulate simulation day in the life fake orders import csv spreadsheet excel demo reset alerts notifications push phone hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
   Analytics: "profit menu engineering missed sales price what if retention coming back visitors insights",
   Stock: "ingredients use-by expiry supplier prices reorder shop stock",
@@ -106,14 +107,14 @@ const KEYWORDS: Partial<Record<Tab, string>> = {
   "Cash-up": "till cash float upi card",
   "P&L": "expenses rent wages profit loss",
   Menu: "special of the day printable menu poster recipes story instagram combos combo deals allergen chart tv bring it back vote comeback secret menu",
-  Notices: "lost found noticeboard around the corner nearby places guide wish tree wishes",
+  Notices: "lost found noticeboard around the corner nearby places guide wish tree wishes poll six-word stories",
   Events: "book club reading",
   Team: "thank you notes kind words",
   Reviews: "guest photos doodles doodle wall pup wall",
   Rota: "shifts swaps staffing",
   Training: "quiz stations",
   Guests: "we miss you vip regulars birthdays",
-  Bookings: "deposits no-show waitlist tables high chair",
+  Bookings: "deposits no-show waitlist tables high chair shelf blind date books hints",
   Cakes: "whole cake birthday",
   Health: "errors security uptime",
   Emails: "sent emails preview",
@@ -436,6 +437,7 @@ export default function AdminPage() {
           <OpenTabs />
           <SongsCard />
           <ForwardCard />
+          <CupsCard canEdit={me?.role === "owner"} />
           <AggregatorsCard />
           <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <label className="small muted" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -521,7 +523,7 @@ export default function AdminPage() {
           )}
         </div>
       )}
-      {tab === "Bookings" && <ShelfCard />}
+      {tab === "Bookings" && <><ShelfCard />{me?.role === "owner" && <BlindDateCard />}</>}
 
       {tab === "Settings" && me?.role === "owner" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -556,7 +558,7 @@ export default function AdminPage() {
       {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "Companies" && me?.role === "owner" && <CompaniesTab />}
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
-      {tab === "Notices" && <><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
+      {tab === "Notices" && <><PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
       {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
       {tab === "Journal" && me?.role === "owner" && <JournalTab />}

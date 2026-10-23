@@ -2686,6 +2686,85 @@ test("wish tree: a wish hangs straight away, its words show once staff approve",
   assert.equal((await fetch(`${s.url}/wish-tree`)).status, 200);
 });
 
+test("cups saved: counts drinks from own-cup orders; the owner sets the goal", async () => {
+  const before = (await (await fetch(`${s.url}/api/cups`)).json()) as { thisMonth: number; total: number; goal: number };
+  const o = await order({ name: "Cup", phone: "9876500031", ownCup: true, lines: [{ itemId: "cappuccino", qty: 2 }, { itemId: "cookie", qty: 1 }] });
+  assert.equal(o.status, 200, JSON.stringify(o.body));
+  assert.ok(String(o.body.perks).includes("own cup"));
+  const after = (await (await fetch(`${s.url}/api/cups`)).json()) as { thisMonth: number; total: number };
+  assert.equal(after.thisMonth, before.thisMonth + 2, "two drinks, the cookie doesn't count");
+  assert.equal(after.total, before.total + 2);
+  assert.equal((await fetch(`${s.url}/api/cups`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal: 50 }) })).status, 401);
+  await s.login();
+  assert.equal((await s.api("/api/cups", { method: "PUT", json: { goal: 0 } })).status, 400);
+  assert.equal((await s.api("/api/cups", { method: "PUT", json: { goal: 250 } })).body.goal, 250);
+  assert.equal((await (await fetch(`${s.url}/api/cups`)).json()).goal, 250);
+  for (const p of ["/cups-saved", "/sunset", "/moon"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("weekly poll: staff can set it before anyone votes; results only after you vote", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/poll", { method: "PUT", json: { q: "Tea time?", choices: ["Morning"] } })).status, 400, "needs 2+ answers");
+  const set = await s.api("/api/poll", { method: "PUT", json: { q: "Best rainy-day drink?", choices: ["Masala chai", "Hot chocolate", "Filter coffee", ""] } });
+  assert.equal(set.status, 200, JSON.stringify(set.body));
+  assert.deepEqual(set.body.choices, ["Masala chai", "Hot chocolate", "Filter coffee"]);
+  const voter = "pollvoter01234567890";
+  const p = (await (await fetch(`${s.url}/api/poll?voter=${voter}`)).json()) as { q: string; counts?: number[]; mine: number | null };
+  assert.equal(p.q, "Best rainy-day drink?");
+  assert.equal(p.counts, undefined, "no results before voting");
+  const post = (choice: number, v = voter) => fetch(`${s.url}/api/poll`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ choice, voter: v }) });
+  assert.equal((await post(7)).status, 400);
+  const v = (await (await post(1)).json()) as { mine: number; counts: number[]; total: number };
+  assert.equal(v.mine, 1);
+  assert.equal(v.counts[1], 1);
+  const again = (await (await post(0)).json()) as { mine: number; total: number };
+  assert.equal(again.mine, 1, "one vote each");
+  assert.equal(again.total, v.total);
+  assert.equal((await s.api("/api/poll", { method: "PUT", json: { q: "Changed?", choices: ["a", "b"] } })).status, 400, "locked once people vote");
+  assert.equal((await fetch(`${s.url}/poll`)).status, 200);
+});
+
+test("six-word stories: exactly six words, approved by staff, hearted by guests", async () => {
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/stories`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.4.4.4" }, body: JSON.stringify(json) });
+  assert.equal((await post({ text: "Far too short a story" })).status, 400);
+  assert.equal((await post({ text: "Ordered decaf. Regretted it. Ordered espresso.", name: "Rui" })).status, 200);
+  const list = async (voter = "") => ((await (await fetch(`${s.url}/api/stories?voter=${voter}`)).json()).stories as { id: number; text: string; hearts: number; mine: boolean }[]);
+  assert.ok(!(await list()).some((x) => x.text.startsWith("Ordered decaf")), "waits for a look");
+  assert.equal((await fetch(`${s.url}/api/stories?all=1`)).status, 401);
+  await s.login();
+  const mine = ((await s.api("/api/stories?all=1")).body.stories as { id: number; text: string }[]).find((x) => x.text.startsWith("Ordered decaf"))!;
+  await s.api("/api/stories", { method: "PATCH", json: { id: mine.id, approve: true } });
+  const voter = "storyvoter0123456789";
+  const heart = (on: boolean) => fetch(`${s.url}/api/stories`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: mine.id, voter, on }) }).then((r) => r.json());
+  assert.equal((await heart(true)).hearts, 1);
+  assert.equal((await heart(true)).hearts, 1, "one heart each");
+  const shown = (await list(voter)).find((x) => x.id === mine.id)!;
+  assert.ok(shown.mine);
+  const week = (await (await fetch(`${s.url}/api/stories?week=1`)).json()).week as { id: number };
+  assert.equal(week.id, mine.id, "story of the week");
+  assert.equal((await heart(false)).hearts, 0);
+  assert.equal((await fetch(`${s.url}/stories`)).status, 200);
+});
+
+test("blind date with a book: hints without titles, unwrap to see it, owners write the hints", async () => {
+  const parcels = (await (await fetch(`${s.url}/api/blind-date`)).json()).parcels as { id: string; hints: string[] }[];
+  const malgudi = parcels.find((p) => p.id === "book-malgudi")!;
+  assert.equal(malgudi.hints.length, 3);
+  assert.ok(!JSON.stringify(parcels).includes("Malgudi Days"), "titles stay wrapped");
+  const open = (await (await fetch(`${s.url}/api/blind-date`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: "book-malgudi" }) })).json()) as { title: string };
+  assert.equal(open.title, "Malgudi Days");
+  assert.equal((await fetch(`${s.url}/api/blind-date`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: "book-tagore", hints: [] }) })).status, 401);
+  await s.login();
+  assert.equal((await s.api("/api/blind-date", { method: "PUT", json: { id: "catan", hints: ["a"] } })).status, 400, "books only");
+  await s.api("/api/blind-date", { method: "PUT", json: { id: "book-tagore", hints: [] } });
+  assert.ok(!((await (await fetch(`${s.url}/api/blind-date`)).json()).parcels as { id: string }[]).some((p) => p.id === "book-tagore"), "unwrapped books leave the shelf");
+  assert.equal((await fetch(`${s.url}/api/blind-date`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: "book-tagore" }) })).status, 404);
+  await s.api("/api/blind-date", { method: "PUT", json: { id: "book-tagore", hints: ["Poems, not a story", "Won a Nobel Prize in 1913", "Songs of offering", "a fourth is dropped"] } });
+  const back = ((await s.api("/api/blind-date?owner=1")).body.books as { id: string; hints: string[] }[]).find((b) => b.id === "book-tagore")!;
+  assert.equal(back.hints.length, 3);
+  assert.equal((await fetch(`${s.url}/blind-date`)).status, 200);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

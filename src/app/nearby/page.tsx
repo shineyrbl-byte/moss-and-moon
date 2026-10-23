@@ -17,6 +17,7 @@ export default function Nearby() {
       <p className="eyebrow">after your coffee</p>
       <h1 className="h2">Around the <em>corner</em></h1>
       <p className="lead">The places our team loves near the café, with how long it takes to walk there<HiddenMoon id="m-nearby-6w" style={{ marginLeft: "0.25rem" }} />.</p>
+      <p className="small" style={{ margin: "0.4rem 0 0" }}><Link href="/sunset">🌅 Tonight&apos;s sunset and golden hour →</Link></p>
       <div className="row" style={{ gap: "0.4rem", flexWrap: "wrap", margin: "0.6rem 0 1rem" }}>
         <button className={`chip ${kind === "all" ? "on" : ""}`} aria-pressed={kind === "all"} onClick={() => setKind("all")}>All</button>
         {kinds.map((k) => <button key={k.id} className={`chip ${kind === k.id ? "on" : ""}`} aria-pressed={kind === k.id} onClick={() => setKind(k.id)}>{k.icon} {k.label}</button>)}

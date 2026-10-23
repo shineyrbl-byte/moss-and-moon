@@ -8,6 +8,7 @@ import { BusyBadge } from "./BusyMeter";
 import TodayLine from "./TodayLine";
 import MoonLine from "./MoonLine";
 import ForwardLine from "./ForwardLine";
+import CupsLine from "./CupsLine";
 import { useStore } from "./Store";
 
 export default function Hero() {
@@ -36,6 +37,7 @@ export default function Hero() {
         <TodayLine />
         <MoonLine />
         <ForwardLine />
+        <CupsLine />
         <h1>
           {t("hero.title1")} <br />
           <em>{t("hero.title2")}</em>

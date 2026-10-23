@@ -3,7 +3,7 @@
 import "server-only";
 import type { Weather } from "./weatherPicks";
 
-const CAFE = { lat: 15.4989, lon: 73.8278 };
+import { CAFE_COORDS as CAFE } from "./sun";
 const KEEP_MS = 20 * 60_000;
 const g = globalThis as { __mmWeather?: { at: number; w: Weather | null } };
 

@@ -1699,3 +1699,72 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .wish-read { padding: 0.8rem 1rem; margin: 0.8rem 0 0; }
 .wish-form { padding: 1rem; display: grid; gap: 0.5rem; margin-top: 1rem; }
 .ribbon-pick { display: flex; gap: 0.35rem; padding-bottom: 0.6rem; }
+
+/* Sunset tracker */
+.sunset-card { margin-top: 1rem; padding: 1.6rem 1.2rem; text-align: center; display: grid; gap: 0.5rem; justify-items: center; background: linear-gradient(170deg, var(--surface), var(--pink-soft)); }
+.sunset-card.golden { background: linear-gradient(170deg, var(--butter), var(--pink-soft)); color: #3b2720; }
+.sunset-card.golden .small, .sunset-card.golden dt { color: #6b4433; }
+.sunset-sun { font-size: 3rem; line-height: 1; }
+.sunset-time { margin: 0; display: grid; }
+.sunset-time b { font-family: var(--serif, Georgia, serif); font-size: clamp(2.4rem, 9vw, 3.4rem); line-height: 1.1; }
+.sunset-status { margin: 0; }
+.sunset-facts { display: flex; gap: 1.4rem; margin: 0.3rem 0; flex-wrap: wrap; justify-content: center; }
+.sunset-facts div { display: grid; }
+.sunset-facts dt { font-size: 0.78rem; color: var(--muted); }
+.sunset-facts dd { margin: 0; font-weight: 600; }
+.sunset-spots { padding-left: 1.2rem; display: grid; gap: 0.3rem; }
+.sunset-week { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.sunset-week th, .sunset-week td { text-align: left; padding: 0.4rem 0.3rem; border-bottom: 1px solid var(--line); }
+.sunset-week thead th { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+
+/* Cups saved */
+.cups-card { margin-top: 1rem; padding: 1.4rem 1.2rem; display: grid; gap: 0.6rem; }
+.cups-big { margin: 0; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.cups-big b { font-family: var(--serif, Georgia, serif); font-size: clamp(2.6rem, 10vw, 3.6rem); line-height: 1; color: var(--moss); }
+.cups-bar { height: 12px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.cups-bar span { display: block; height: 100%; background: var(--moss); border-radius: 6px; transition: width 0.4s; }
+.cups-how { padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+
+/* Moon calendar */
+.moon-month-head { display: flex; align-items: center; justify-content: space-between; margin: 1.2rem 0 0.6rem; }
+.moon-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.moon-wd { font-size: 0.72rem; color: var(--muted); text-align: center; padding-bottom: 0.2rem; }
+.moon-day { aspect-ratio: 1; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; position: relative; }
+.moon-num { position: absolute; top: 3px; left: 5px; font-size: 0.68rem; color: var(--muted); }
+.moon-ic { font-size: clamp(1rem, 4vw, 1.5rem); }
+.moon-day.cortado, .moon-key.cortado { background: var(--butter); border-color: var(--caramel); }
+.moon-day.cortado .moon-num { color: #6b4433; }
+.moon-day.today { outline: 2px solid var(--pink-deep); outline-offset: -2px; }
+.moon-key { display: inline-block; width: 0.9em; height: 0.9em; border-radius: 3px; border: 1px solid; vertical-align: -0.1em; }
+.moon-list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.moon-list li { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap; padding: 0.7rem 1rem; }
+
+/* Blind date with a book */
+.parcels { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 1.2rem; margin-top: 1rem; }
+.parcel { position: relative; padding: 1.4rem 1.1rem 1.1rem; border-radius: 6px; color: #3b2720; transform: rotate(var(--tilt, 0deg)); box-shadow: var(--shadow);
+  background: linear-gradient(90deg, transparent 46%, #b0834f 46%, #b0834f 49%, transparent 49%), linear-gradient(0deg, transparent 58%, #b0834f 58%, #b0834f 61%, transparent 61%), #d9b98f; display: grid; gap: 0.5rem; align-content: start; min-height: 14rem; }
+.parcel ul { margin: 0; padding: 0.7rem 0.8rem 0.7rem 1.6rem; background: #fffaf1; border-radius: 4px; display: grid; gap: 0.25rem; font-size: 0.92rem; }
+.parcel .btn { justify-self: start; background: #fffaf1; color: #3b2720; border-color: #3b2720; }
+.parcel-tag { justify-self: start; background: #fffaf1; padding: 0.15rem 0.6rem; border-radius: 3px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; }
+.parcel.open { background: #fffaf1; transform: none; }
+
+/* Weekly poll */
+.poll-card { margin-top: 1rem; padding: 1.3rem 1.2rem; }
+.poll-results { list-style: none; padding: 0; display: grid; gap: 0.7rem; }
+.poll-label { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.95rem; }
+.poll-bar { display: block; height: 10px; margin-top: 0.25rem; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.poll-bar span { display: block; height: 100%; border-radius: 5px; background: var(--caramel); }
+.poll-results .mine .poll-bar span { background: var(--pink-deep); }
+
+/* Six-word stories */
+.story-week { margin: 1rem 0 0; padding: 1rem 1.2rem; background: var(--pink-soft); }
+.story-week p { font-family: var(--serif, Georgia, serif); font-size: 1.4rem; margin: 0.2rem 0; }
+.story-form { padding: 1rem; display: grid; gap: 0.4rem; margin-top: 1rem; }
+.story-count { font-size: 0.85rem; color: var(--muted); margin-top: -0.3rem; }
+.story-count.ok { color: var(--moss); font-weight: 600; }
+.story-list { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.story-list li { padding: 0.8rem 1rem; }
+.story-text { font-family: var(--serif, Georgia, serif); font-size: 1.2rem; margin: 0 0 0.3rem; }
+.story-heart.on { color: var(--on-pink); }
+.board-story { margin: 0; font-size: clamp(1rem, 1.8vw, 1.8rem); color: #f5e9e1; font-family: var(--font-serif), serif; }
+.board-story .muted { color: #c6aa9c; font-family: var(--font-sans), sans-serif; font-size: 0.7em; }

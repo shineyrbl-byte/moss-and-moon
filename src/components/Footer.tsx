@@ -57,6 +57,12 @@ export default function Footer() {
             <li><Link href="/konkani">{t("footer.konkani")}</Link></li>
             <li><Link href="/memory">{t("footer.memory")}</Link></li>
             <li><Link href="/wish-tree">{t("footer.wishTree")}</Link></li>
+            <li><Link href="/sunset">{t("footer.sunset")}</Link></li>
+            <li><Link href="/cups-saved">{t("footer.cups")}</Link></li>
+            <li><Link href="/moon">{t("footer.moon")}</Link></li>
+            <li><Link href="/blind-date">{t("footer.blindDate")}</Link></li>
+            <li><Link href="/poll">{t("footer.poll")}</Link></li>
+            <li><Link href="/stories">{t("footer.stories")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

@@ -756,3 +756,38 @@ test("wish tree: ribbons stay on the tree, and the tree knows its full moons", a
   assert.ok(prev < now.getTime() && now.getTime() < next);
   assert.equal(new Date(next).toISOString().slice(0, 13), "2026-10-26T04");
 });
+
+test("sunset: Panjim's evenings in the right order and at the right times", async () => {
+  const { sunDay, istClock } = await import("../src/lib/sun.ts");
+  const oct = sunDay("2026-10-24");
+  assert.ok(oct.goldenStart < oct.sunset && oct.sunset < oct.dusk);
+  const mins = (ms: number) => { const [h, m] = istClock(ms).split(":").map(Number); return h * 60 + m; };
+  assert.ok(mins(oct.sunset) >= 18 * 60 + 5 && mins(oct.sunset) <= 18 * 60 + 15, istClock(oct.sunset));
+  assert.ok(mins(oct.sunrise) >= 6 * 60 + 20 && mins(oct.sunrise) <= 6 * 60 + 35, istClock(oct.sunrise));
+  const jun = sunDay("2026-06-21");
+  assert.ok(mins(jun.sunset) >= 19 * 60 && mins(jun.sunset) <= 19 * 60 + 15, istClock(jun.sunset));
+  assert.ok(mins(oct.sunset) - mins(oct.goldenStart) >= 20 && mins(oct.sunset) - mins(oct.goldenStart) <= 40, "golden hour is about half an hour this far south");
+});
+
+test("moon calendar, weekly poll, six-word stories and blind-date hints", async () => {
+  const { monthNights, nextFullMoons } = await import("../src/lib/moonCalendar.ts");
+  const oct = monthNights("2026-10");
+  assert.equal(oct.length, 31);
+  assert.deepEqual(oct.filter((n) => n.cortado).map((n) => n.date), ["2026-10-24", "2026-10-25", "2026-10-26"]);
+  assert.equal(oct.find((n) => n.date === "2026-10-25")!.phase, "full");
+  assert.equal(nextFullMoons(new Date("2026-10-01T00:00:00Z"), 2)[0].night, "2026-10-25");
+  const { weekOf, ideaFor, POLL_IDEAS } = await import("../src/lib/polls.ts");
+  assert.equal(weekOf("2026-10-24"), "2026-10-19");
+  assert.equal(weekOf("2026-10-19"), "2026-10-19");
+  assert.equal(weekOf("2026-10-25"), "2026-10-19", "Sunday ends the week");
+  assert.deepEqual(ideaFor("2026-10-19"), ideaFor("2026-10-19"));
+  for (const p of POLL_IDEAS) assert.ok(p.choices.length >= 2 && p.choices.length <= 5 && new Set(p.choices).size === p.choices.length, p.q);
+  const { isSixWords, storyWords } = await import("../src/lib/stories.ts");
+  assert.ok(isSixWords("Ordered decaf. Regretted it. Ordered espresso."));
+  assert.ok(isSixWords("Strong coffee — weak excuses, better mornings"), "a dash isn't a word");
+  assert.equal(storyWords("Twenty-two cups later, finally awake. Yay!").length, 6, "hyphenated words count once");
+  assert.ok(!isSixWords("Too short to be one"));
+  const { cleanHints, DEFAULT_HINTS } = await import("../src/lib/blindDate.ts");
+  assert.deepEqual(cleanHints(["a", " ", "b", "c", "d"]), ["a", "b"], "first three, blanks dropped");
+  for (const h of Object.values(DEFAULT_HINTS)) assert.equal(h.length, 3);
+});

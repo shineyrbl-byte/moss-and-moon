@@ -38,6 +38,7 @@ export default function BoardPage() {
   const [sound, setSound] = useState(false);
   const [doodles, setDoodles] = useState<{ id: number; url: string; name: string; caption: string }[]>([]);
   const [doodleAt, setDoodleAt] = useState(0);
+  const [story, setStory] = useState<{ text: string; name: string } | null>(null);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const seenReady = useRef<Set<string> | null>(null);
   const soundRef = useRef(false);
@@ -50,6 +51,7 @@ export default function BoardPage() {
         const [b, q] = await Promise.all([fetch("/api/board").then((r) => r.json()), fetch("/api/queue").then((r) => r.json())]);
         if (!alive) return;
         fetch("/api/songs").then((r) => r.json()).then((d) => alive && setSongs(d)).catch(() => {});
+        fetch("/api/stories?week=1").then((r) => r.json()).then((d) => alive && setStory(d.week)).catch(() => {});
         fetch("/api/photos?kind=doodle").then((r) => r.json()).then((d) => { if (alive && Array.isArray(d.photos)) { setDoodles(d.photos.slice(0, 12)); setDoodleAt((i) => i + 1); } }).catch(() => {});
         // Highlight orders that just became ready
         const ids = new Set<string>(b.ready.map((e: Entry) => e.code));
@@ -117,6 +119,7 @@ export default function BoardPage() {
           <span className="muted">Request one: table QR → 🔔 → 🎵</span>
         </div>
       )}
+      {story && <p className="board-story">✍️ <q>{story.text}</q> <span className="muted">· six-word story of the week{story.name ? ` by ${story.name}` : ""}</span></p>}
       {doodles.length > 0 && (() => {
         const d = doodles[doodleAt % doodles.length];
         return (
