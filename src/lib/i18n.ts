@@ -272,6 +272,12 @@ const en = {
   "footer.play": "Barista rush (game)",
   "footer.passport": "Origins passport",
   "footer.lab": "Drink lab",
+  "today.cups": "{n} cups poured today",
+  "today.cup": "{n} cup poured today",
+  "today.top": "most loved: {name}",
+  "footer.team": "Meet the team",
+  "footer.postcard": "Send a postcard",
+  "footer.advent": "Advent calendar",
 };
 
 type Key = keyof typeof en;
@@ -544,6 +550,12 @@ const hi: Record<Key, string> = {
   "footer.play": "बरिस्ता रश (गेम)",
   "footer.passport": "ओरिजिन्स पासपोर्ट",
   "footer.lab": "ड्रिंक लैब",
+  "today.cups": "आज {n} कप परोसे गए",
+  "today.cup": "आज {n} कप परोसा गया",
+  "today.top": "सबसे पसंदीदा: {name}",
+  "footer.team": "हमारी टीम",
+  "footer.postcard": "पोस्टकार्ड भेजें",
+  "footer.advent": "एडवेंट कैलेंडर",
 };
 
 const mr: Record<Key, string> = {
@@ -814,6 +826,12 @@ const mr: Record<Key, string> = {
   "footer.play": "बरिस्ता रश (खेळ)",
   "footer.passport": "ओरिजिन्स पासपोर्ट",
   "footer.lab": "ड्रिंक लॅब",
+  "today.cups": "आज {n} कप दिले",
+  "today.cup": "आज {n} कप दिला",
+  "today.top": "सर्वात आवडते: {name}",
+  "footer.team": "आमची टीम",
+  "footer.postcard": "पोस्टकार्ड पाठवा",
+  "footer.advent": "ॲडव्हेंट कॅलेंडर",
 };
 
 const kok: Record<Key, string> = {
@@ -1084,6 +1102,12 @@ const kok: Record<Key, string> = {
   "footer.play": "बरिस्ता रश (खेळ)",
   "footer.passport": "ओरिजिन्स पासपोर्ट",
   "footer.lab": "ड्रिंक लॅब",
+  "today.cups": "आयज {n} कप दिले",
+  "today.cup": "आयज {n} कप दिलो",
+  "today.top": "सगळ्यांत आवडटा: {name}",
+  "footer.team": "आमची टीम",
+  "footer.postcard": "पोस्टकार्ड धाडात",
+  "footer.advent": "ॲडव्हेंट कॅलेंडर",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

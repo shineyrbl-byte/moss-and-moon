@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { photo } from "@/lib/menu";
 import { openStatus } from "@/lib/cafe";
 import { BusyBadge } from "./BusyMeter";
+import TodayLine from "./TodayLine";
 import { useStore } from "./Store";
 
 export default function Hero() {
@@ -30,6 +31,7 @@ export default function Hero() {
           </div>
           <BusyBadge />
         </div>
+        <TodayLine />
         <h1>
           {t("hero.title1")} <br />
           <em>{t("hero.title2")}</em>

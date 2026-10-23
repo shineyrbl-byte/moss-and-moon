@@ -536,3 +536,14 @@ test("flavour notes: cleaned, read from dishes, and favourites weighted by ratin
   ]);
   assert.deepEqual(fav, ["nutty", "chocolatey", "floral"], "a 2★ note doesn't count as a favourite");
 });
+
+test("daily challenge: the same orders for everyone on a day, and streaks", async () => {
+  const { seededRand, newOrder, playStreak } = await import("../src/lib/gameOrders.ts");
+  const drinks = [{ id: "a", cat: "coffee", name: "A" }, { id: "b", cat: "tea", name: "B" }, { id: "c", cat: "cold", name: "C" }];
+  const run = (seed: string) => { const r = seededRand(seed); return Array.from({ length: 8 }, () => newOrder(drinks, r)); };
+  assert.deepEqual(run("moss-moon-2026-10-23"), run("moss-moon-2026-10-23"), "same day, same orders");
+  assert.notDeepEqual(run("moss-moon-2026-10-23"), run("moss-moon-2026-10-24"), "a new day, new orders");
+  assert.equal(playStreak(["2026-10-21", "2026-10-22", "2026-10-23"], "2026-10-23"), 3);
+  assert.equal(playStreak(["2026-10-20", "2026-10-22", "2026-10-23"], "2026-10-23"), 2);
+  assert.equal(playStreak(["2026-10-22"], "2026-10-23"), 0, "today not played yet");
+});

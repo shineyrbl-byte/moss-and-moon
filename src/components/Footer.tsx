@@ -33,6 +33,9 @@ export default function Footer() {
             <li><Link href="/passport">{t("footer.passport")}</Link></li>
             <li><Link href="/lab">{t("footer.lab")}</Link></li>
             <li><Link href="/shelf">{t("footer.shelf")}</Link></li>
+            <li><Link href="/team">{t("footer.team")}</Link></li>
+            <li><Link href="/postcard">{t("footer.postcard")}</Link></li>
+            <li><Link href="/advent">{t("footer.advent")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

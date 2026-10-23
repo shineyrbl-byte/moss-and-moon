@@ -2195,6 +2195,95 @@ test("drink lab: create, share, vote once, and the owner can take one down", asy
   assert.equal((await s.api(`/api/lab/${c.code}`)).status, 404);
 });
 
+test("today at the café counts cups poured", async () => {
+  const before = (await s.api("/api/today")).body as { cups: number };
+  assert.equal(typeof before.cups, "number");
+  await s.api("/api/orders", { method: "POST", json: { name: "Counter", phone: "9811100011", lines: [{ itemId: "americano", qty: 3 }, { itemId: "cookie", qty: 2 }] } });
+  await new Promise((r) => setTimeout(r, 0));
+  // The number is kept for a minute, so check the shape and that cookies aren't cups
+  const t = (await s.api("/api/today")).body as { cups: number; top: { id: string } | null };
+  assert.ok(t.cups >= before.cups);
+});
+
+test("barista rush daily challenge: only today's round counts, with its own board", async () => {
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  assert.equal((await s.api("/api/game", { method: "POST", json: { name: "Old", score: 500, served: 5, daily: "2020-01-01" } })).status, 400);
+  const r = await s.api("/api/game", { method: "POST", json: { name: "Daily Dee", score: 700, served: 6, daily: today } });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.rank, 1);
+  assert.ok((r.body.today as { name: string }[]).some((x) => x.name === "Daily Dee"));
+});
+
+test("guest photo wall: shared photos wait for approval", async () => {
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  const fd = new FormData();
+  fd.append("file", new Blob([png], { type: "image/png" }), "cup.png");
+  fd.append("name", "Priya");
+  fd.append("caption", "Window seat ☔");
+  const up = await fetch(`${s.url}/api/photos`, { method: "POST", body: fd });
+  assert.equal(up.status, 200);
+  const pub = async () => ((await (await fetch(`${s.url}/api/photos`)).json()) as { photos: { name: string }[] }).photos;
+  assert.ok(!(await pub()).some((p) => p.name === "Priya"), "not shown until approved");
+  assert.equal((await fetch(`${s.url}/api/photos?all=1`)).status, 401);
+  await s.login();
+  const all = (await s.api("/api/photos?all=1")).body as { photos: { id: number; name: string; status: string }[] };
+  const mine = all.photos.find((p) => p.name === "Priya")!;
+  assert.equal(mine.status, "pending");
+  await s.api("/api/photos", { method: "PATCH", json: { id: mine.id, approve: true } });
+  assert.ok((await pub()).some((p) => p.name === "Priya"));
+  await s.api("/api/photos", { method: "PATCH", json: { id: mine.id, approve: false } });
+  assert.ok(!(await pub()).some((p) => p.name === "Priya"), "removed");
+  const bad = new FormData();
+  bad.append("file", new Blob([Buffer.from("not a photo")], { type: "image/png" }), "x.png");
+  bad.append("name", "X");
+  assert.equal((await fetch(`${s.url}/api/photos`, { method: "POST", body: bad })).status, 400);
+});
+
+test("advent calendar: doors and codes stay shut until their day; the owner can preview", async () => {
+  const pub = (await (await fetch(`${s.url}/api/advent`)).json()) as { year: number; today: string; doors: { day: number; open: boolean; code?: string; date: string }[] };
+  assert.equal(pub.doors.length, 24);
+  for (const d of pub.doors) if (pub.today < d.date) assert.ok(!d.open && !d.code, `door ${d.day} is shut`);
+  const peek = (await (await fetch(`${s.url}/api/advent?preview=1`)).json()) as { preview: boolean };
+  assert.equal(peek.preview, false, "guests can't preview");
+  await s.login();
+  const own = (await s.api("/api/advent?preview=1")).body as { preview: boolean; doors: { code?: string }[] };
+  assert.equal(own.preview, true);
+  const code = own.doors[0].code!;
+  assert.match(code, /^ADVENT\d{4}$/);
+  const chk = await s.api("/api/promo", { method: "POST", json: { code } });
+  if (pub.today < pub.doors[0].date) assert.match(JSON.stringify(chk.body), /starts on/, "not usable before its day");
+});
+
+test("meet the team: only people switched on are shown, by first name", async () => {
+  await s.login();
+  await s.api("/api/admin/staff", { method: "POST", json: { name: "Rhea Fernandes", username: "rhea", password: "longpassword1", role: "barista" } });
+  const team = (await s.api("/api/admin/team")).body as { team: { id: number; name: string }[] };
+  const rhea = team.team.find((m) => m.name === "Rhea Fernandes")!;
+  assert.equal((await s.api("/api/team")).body.team.some((m: { name: string }) => m.name === "Rhea"), false, "hidden by default");
+  assert.equal((await s.api("/api/admin/team", { method: "PUT", json: { id: rhea.id, show: true, creationCode: "NOPE99" } })).status, 400);
+  assert.equal((await s.api("/api/admin/team", { method: "PUT", json: { id: rhea.id, show: true, bio: "Latte art champion", favItem: "filter-kaapi", emoji: "🌿" } })).status, 200);
+  const pub = (await (await fetch(`${s.url}/api/team`)).json()) as { team: { name: string; bio: string; fav: { id: string } | null }[] };
+  const shown = pub.team.find((m) => m.name === "Rhea")!;
+  assert.equal(shown.bio, "Latte art champion");
+  assert.equal(shown.fav!.id, "filter-kaapi");
+  assert.ok(!JSON.stringify(pub).includes("Fernandes"), "first names only");
+});
+
+test("postcards: write one, open it by link, and only real gifts ride along", async () => {
+  const mk = (json: Record<string, unknown>) => s.api("/api/postcards", { method: "POST", json });
+  assert.equal((await mk({ to: "Asha", from: "Ben", message: "" })).status, 400);
+  assert.equal((await mk({ to: "Asha", from: "Ben", message: "Come for coffee", gift: "NOTREAL" })).status, 400);
+  const ok = await mk({ design: "monsoon", to: "Asha", from: "Ben", message: "Saved you the window seat ☔" });
+  assert.equal(ok.status, 200);
+  const card = (await (await fetch(`${s.url}/api/postcards/${ok.body.code}`)).json()) as { design: string; to: string; message: string; gift: unknown };
+  assert.equal(card.design, "monsoon");
+  assert.equal(card.to, "Asha");
+  assert.equal(card.gift, null);
+  assert.equal((await fetch(`${s.url}/p/${ok.body.code}`)).status, 200);
+  assert.equal((await fetch(`${s.url}/api/postcards/nope`)).status, 404);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

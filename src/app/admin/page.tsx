@@ -46,6 +46,8 @@ import ImportCard from "@/components/admin/ImportCard";
 import DemoResetCard from "@/components/admin/DemoResetCard";
 import SimCard from "@/components/admin/SimCard";
 import ShelfCard from "@/components/admin/ShelfCard";
+import PhotosCard from "@/components/admin/PhotosCard";
+import TeamProfiles from "@/components/admin/TeamProfiles";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
 import OwnerAlertsCard from "@/components/admin/OwnerAlertsCard";
@@ -529,6 +531,7 @@ export default function AdminPage() {
       {tab === "Menu" && <>{me?.role === "owner" && <><MenuTidyCard /><RotationCard /><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
+      {tab === "Team" && me?.role === "owner" && <TeamProfiles />}
       {tab === "Stock" && <><UseByCard />{me?.role === "owner" && <PriceWatch />}<StockTab canEdit={me?.role === "owner"} /></>}
       {tab === "Tables & QR" && <TablesQR />}
       {tab === "Events" && <EventsTab canEdit={me?.role === "owner"} />}
@@ -547,6 +550,7 @@ export default function AdminPage() {
       {tab === "Training" && <TrainingTab canEdit={me?.role === "owner"} />}
       {tab === "Health" && me?.role === "owner" && <HealthTab />}
       {tab === "Promos" && me?.role === "owner" && <PromosTab />}
+      {tab === "Promos" && me?.role === "owner" && <p className="small muted" style={{ marginTop: "0.8rem" }}>🎄 The advent calendar makes 24 one-day codes (ADVENT + year + day) automatically. <a href="/advent?preview=1" target="_blank" rel="noreferrer">Preview every door ↗</a></p>}
 
       {tab === "Gift cards" && (
         <div className="card table-wrap" style={{ padding: "1rem" }}>
@@ -595,6 +599,7 @@ export default function AdminPage() {
         </>
       )}
 
+      {tab === "Reviews" && <PhotosCard />}
       {tab === "Reviews" && <InsightsCard kind="reviews" />}
       {tab === "Reviews" && (
         <div className="reviews" style={{ marginTop: 0 }}>

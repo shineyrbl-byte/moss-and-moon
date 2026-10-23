@@ -726,11 +726,32 @@ function open() {
     sort INTEGER NOT NULL DEFAULT 0
   );`);
   addColumn(db, "bookings", "game", "TEXT"); // a board game reserved with the table
-  db.exec(`CREATE TABLE IF NOT EXISTS game_scores (
+  db.exec(`CREATE TABLE IF NOT EXISTS game_scores (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, score INTEGER NOT NULL, served INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')));`);
+  addColumn(db, "game_scores", "daily", "TEXT"); // the date, for daily challenge rounds
+  db.exec(`CREATE TABLE IF NOT EXISTS postcards (
+    code TEXT PRIMARY KEY,
+    design TEXT NOT NULL,
+    from_name TEXT NOT NULL,
+    to_name TEXT NOT NULL,
+    message TEXT NOT NULL,
+    gift_code TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS team_profiles (
+    staff_id INTEGER PRIMARY KEY,
+    show INTEGER NOT NULL DEFAULT 0,
+    bio TEXT NOT NULL DEFAULT '',
+    fav_item TEXT,
+    creation_code TEXT,
+    photo TEXT,
+    emoji TEXT NOT NULL DEFAULT '☕'
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS guest_photos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL,
+    caption TEXT NOT NULL DEFAULT '',
     name TEXT NOT NULL,
-    score INTEGER NOT NULL,
-    served INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   );`);
   addColumn(db, "orders", "email", "TEXT");

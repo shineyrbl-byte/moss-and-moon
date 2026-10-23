@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HAPPY_HOUR, isHappyHour } from "@/lib/pricing";
 import { useLive } from "@/components/useLive";
+import TodayLine from "@/components/TodayLine";
 
 type Entry = { code: string; name: string; table: number | null };
 type Board = { preparing: Entry[]; ready: Entry[] };
@@ -81,6 +82,7 @@ export default function BoardPage() {
       </header>
 
       <h1 className="sr-only">Now serving</h1>
+      <TodayLine big />
       <div className="board-cols">
         <section>
           <h2>☕ Brewing</h2>
