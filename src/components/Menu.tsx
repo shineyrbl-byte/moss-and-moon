@@ -137,7 +137,7 @@ export default function Menu() {
           <>
             {wx && wx.items.length >= 2 && strip(fill(t(`weather.${wx.mood}`), { temp: weather!.temp }), wx.items)}
             {strip(t("menu.staffPicks"), menu.filter((m) => m.staffPick && here(m)))}
-            {strip(t("menu.newThisMonth"), menu.filter((m) => m.badge === "new" && !m.staffPick && here(m)))}
+            {strip(t("menu.newThisMonth"), menu.filter((m) => m.badge === "new" && !m.staffPick && here(m)).reverse())} {/* newest additions first */}
           </>
         );
       })()}

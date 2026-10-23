@@ -30,6 +30,18 @@ test("menu is seeded and public", async () => {
   assert.ok(r.body.items.length >= 20);
 });
 
+test("the October dishes are on the menu, and no two dishes share a photo", async () => {
+  const items = (await s.api("/api/menu")).body.items as { id: string; img: string; nameMr?: string; badge?: string }[];
+  for (const id of ["dalgona", "dirty-chai", "aam-panna", "mango-sorbet", "banana-bread", "biscoff-jar", "jamun-popsicles", "funfetti-cookie", "crispy-bars", "oreo-cupcake", "recheado-wings", "chilli-prawns"])
+    assert.ok(items.some((m) => m.id === id), `${id} is on the menu`);
+  const SHARED_OK = new Set(["1564890369478-c89ca6d9cde9"]); // the oolong pot and the tea set: both teapots
+  const seen = new Map<string, string>();
+  for (const m of items) {
+    if (seen.has(m.img) && !SHARED_OK.has(m.img)) assert.fail(`${m.id} uses the same photo as ${seen.get(m.img)}`);
+    seen.set(m.img, m.id);
+  }
+});
+
 test("every dish has a Hindi and a Marathi name", async () => {
   const items = (await s.api("/api/menu")).body.items as { id: string; nameHi?: string; nameMr?: string }[];
   const missing = items.filter((m) => !m.nameHi || !m.nameMr).map((m) => m.id);
