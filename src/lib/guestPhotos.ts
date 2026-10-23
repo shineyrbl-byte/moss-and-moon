@@ -5,8 +5,8 @@ import { deletePhoto, isOurPhoto } from "./uploads";
 
 export type GuestPhoto = { id: number; url: string; caption: string; name: string; status: "pending" | "approved"; kind: PhotoKind; created_at: string };
 /** cafe = "Life at Moss & Moon" on the home page · pup = the regular pups wall on /pups */
-export type PhotoKind = "cafe" | "pup";
-export const photoKind = (v: unknown): PhotoKind => (v === "pup" ? "pup" : "cafe");
+export type PhotoKind = "cafe" | "pup" | "doodle";
+export const photoKind = (v: unknown): PhotoKind => (v === "pup" || v === "doodle" ? v : "cafe");
 
 export function addGuestPhoto(url: string, b: Record<string, unknown>) {
   if (!isOurPhoto(url)) return { error: "That photo didn't upload properly." };

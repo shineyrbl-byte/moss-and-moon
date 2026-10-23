@@ -821,6 +821,41 @@ function open() {
     map_url TEXT NOT NULL DEFAULT '',
     sort INTEGER NOT NULL DEFAULT 0
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS team_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    staff_id INTEGER NOT NULL,
+    from_name TEXT NOT NULL,
+    text TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS book_thoughts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    month TEXT NOT NULL,
+    book_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    stars INTEGER NOT NULL,
+    text TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS memory_scores (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    name TEXT NOT NULL,
+    ms INTEGER NOT NULL,
+    moves INTEGER NOT NULL,
+    PRIMARY KEY (date, voter, mode)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS wishes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    colour INTEGER NOT NULL DEFAULT 0,
+    created_ms INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD

@@ -4,14 +4,15 @@ import { savePhoto } from "@/lib/uploads";
 import { limited, tooMany } from "@/lib/rateLimit";
 import { alertOwner } from "@/lib/push";
 
-// The photo wall (?kind=pup for the regular pups; ?all=1 for staff: every photo, waiting ones first)
+// The photo wall (?kind=pup for the regular pups, ?kind=doodle for the doodle wall; ?all=1 for staff: every photo, waiting ones first)
 export async function GET(req: Request) {
   const q = new URL(req.url).searchParams;
   if (q.get("all") === "1") {
     if (!(await isAdmin())) return unauthorized();
     return Response.json({ photos: allPhotos() });
   }
-  return Response.json({ photos: approvedPhotos(q.get("kind") === "pup" ? 48 : 24, photoKind(q.get("kind"))) });
+  const kind = photoKind(q.get("kind"));
+  return Response.json({ photos: approvedPhotos(kind === "cafe" ? 24 : 48, kind) });
 }
 
 // Guests: share a photo (form fields: file, caption, name, kind = cafe | pup). It waits for a staff member to approve it.
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   const kind = photoKind(form.get("kind"));
   const r = addGuestPhoto(saved.url, { name: form.get("name"), caption: form.get("caption"), kind });
   if ("error" in r) return Response.json(r, { status: 400 });
-  alertOwner("review", kind === "pup" ? "🐾 A guest shared their dog" : "📸 A guest shared a photo", "Have a look and approve it", "/admin#Reviews");
+  alertOwner("review", kind === "pup" ? "🐾 A guest shared their dog" : kind === "doodle" ? "🎨 A guest drew a doodle" : "📸 A guest shared a photo", "Have a look and approve it", "/admin#Reviews");
   return Response.json({ ok: true });
 }
 

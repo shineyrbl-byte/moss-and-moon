@@ -52,6 +52,11 @@ export default function Footer() {
             <li><Link href="/bring-it-back">{t("footer.comeback")}</Link></li>
             <li><Link href="/nearby">{t("footer.nearby")}</Link></li>
             <li><Link href="/secret">{t("footer.secret")}</Link></li>
+            <li><Link href="/doodles">{t("footer.doodles")}</Link></li>
+            <li><Link href="/book-club">{t("footer.bookClub")}</Link></li>
+            <li><Link href="/konkani">{t("footer.konkani")}</Link></li>
+            <li><Link href="/memory">{t("footer.memory")}</Link></li>
+            <li><Link href="/wish-tree">{t("footer.wishTree")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

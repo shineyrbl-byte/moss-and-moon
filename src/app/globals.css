@@ -1628,3 +1628,74 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .footer-explore ul { display: block; columns: 3 9.5rem; column-gap: 1.2rem; }
 .footer-explore li { break-inside: avoid; margin-bottom: 0.4rem; }
 @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-grid > div:first-child, .footer-explore { grid-column: 1 / -1; } .footer-explore ul { columns: 2 8rem; } }
+
+/* Doodle wall */
+.doodle-layout { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.4rem; align-items: start; margin-top: 1rem; }
+@media (max-width: 760px) { .doodle-layout { grid-template-columns: 1fr; } }
+.doodle-pad { padding: 1rem; display: grid; gap: 0.7rem; }
+.doodle-canvas { width: 100%; aspect-ratio: 1; border-radius: 14px; border: 1px solid var(--line); background: #fffaf6; touch-action: none; cursor: crosshair; }
+.doodle-wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap: 1rem; }
+.doodle-pin { margin: 0; background: #fffaf6; padding: 0.5rem 0.5rem 0.4rem; border-radius: 6px; box-shadow: var(--shadow); color: #3b2720; }
+.doodle-pin img { width: 100%; aspect-ratio: 1; display: block; border-radius: 3px; }
+.doodle-pin figcaption { margin-top: 0.3rem; overflow-wrap: anywhere; }
+.board-doodle { display: flex; align-items: center; gap: 1rem; background: #261a15; border-radius: 20px; padding: 0.8rem 1.2rem; font-size: clamp(0.9rem, 1.4vw, 1.4rem); color: #f5e9e1; }
+.board-doodle img { width: clamp(70px, 9vw, 140px); aspect-ratio: 1; border-radius: 10px; background: #fffaf6; }
+.board-doodle .muted { color: #c6aa9c; }
+
+/* Thank the team */
+.thank-form { display: grid; gap: 0.5rem; padding-top: 0.6rem; border-top: 1px dashed var(--line); }
+.thanks-card { padding: 1rem 1.2rem; margin: 0 0 1rem; }
+.thanks-list { list-style: none; padding: 0; display: grid; gap: 0.7rem; margin: 0.5rem 0; }
+.thanks-list li { border-left: 3px solid var(--pink); padding-left: 0.7rem; }
+
+/* Book club */
+.book-now { display: flex; gap: 1rem; padding: 1.2rem; margin-top: 1rem; align-items: flex-start; }
+.book-spine { font-size: 2.6rem; line-height: 1; }
+.book-stars { color: var(--caramel-ink); letter-spacing: 0.05em; }
+.book-thoughts { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.book-thoughts li { padding: 0.8rem 1rem; }
+.book-form { padding: 1rem; display: grid; gap: 0.6rem; margin-top: 1rem; }
+.star-pick { display: flex; gap: 0.2rem; }
+.star-pick button { background: none; border: none; font-size: 1.8rem; line-height: 1; color: var(--line); cursor: pointer; padding: 0 0.1rem; min-width: 32px; min-height: 32px; }
+.star-pick button.on { color: var(--caramel-ink); }
+
+/* Konkani word of the day */
+.konkani-card { margin-top: 1rem; padding: 1.6rem 1.2rem; text-align: center; }
+.konkani-word { font-family: var(--serif, Georgia, serif); font-size: clamp(2rem, 7vw, 3rem); margin: 0; color: var(--pink-ink); overflow-wrap: anywhere; }
+.konkani-means { font-size: 1.15rem; margin: 0.6rem 0 0; }
+.konkani-eg { margin: 0.8rem 0 0; padding-top: 0.8rem; border-top: 1px dashed var(--line); }
+.konkani-quiz { margin-top: 1.2rem; padding: 1.2rem; }
+.konkani-quiz ol { padding-left: 1.2rem; display: grid; gap: 1rem; }
+.konkani-week ul { padding-left: 1.2rem; display: grid; gap: 0.3rem; }
+
+/* Memory match */
+.memory-stats { margin-left: auto; display: flex; gap: 0.8rem; font-variant-numeric: tabular-nums; }
+.memory-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; margin: 1rem 0; }
+.memory-card { position: relative; aspect-ratio: 1; border: none; padding: 0; background: none; cursor: pointer; perspective: 600px; border-radius: 12px; }
+.memory-face { position: absolute; inset: 0; border-radius: 12px; overflow: hidden; backface-visibility: hidden; transition: transform 0.35s; display: grid; place-items: center; }
+.memory-face.back { background: var(--brown); color: var(--butter); font-size: 1.8rem; box-shadow: var(--shadow); }
+.memory-face.front { transform: rotateY(180deg); background: var(--surface-2); }
+.memory-card.up .back { transform: rotateY(180deg); }
+.memory-card.up .front { transform: rotateY(360deg); }
+.memory-card.got .front { outline: 3px solid var(--moss); outline-offset: -3px; }
+.memory-card:focus-visible { outline: 2px solid var(--pink-deep); outline-offset: 2px; }
+.memory-done { padding: 1rem; display: grid; gap: 0.5rem; justify-items: center; text-align: center; }
+.memory-board { padding-left: 1.4rem; display: grid; gap: 0.3rem; }
+.memory-board li > * { margin-right: 0.6rem; }
+.memory-board b { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .memory-face { transition: none; } }
+
+/* Wish tree */
+.wish-tree { margin: 1rem 0 0; padding: 0.8rem; }
+.wish-tree svg { display: block; width: 100%; }
+.wish-trunk { fill: var(--brown); }
+.wish-branches path { fill: none; stroke: var(--brown); stroke-width: 6; stroke-linecap: round; }
+.wish-leaves circle { fill: var(--sage); opacity: 0.55; }
+.wish-ribbon { cursor: pointer; transform-box: fill-box; }
+.wish-ribbon path { stroke: rgba(59, 42, 36, 0.35); stroke-width: 0.6; }
+.wish-ribbon.on path { stroke: var(--pink-deep); stroke-width: 1.6; }
+.wish-ribbon:focus-visible { outline: none; }
+.wish-ribbon:focus-visible path { stroke: var(--pink-deep); stroke-width: 2; }
+.wish-read { padding: 0.8rem 1rem; margin: 0.8rem 0 0; }
+.wish-form { padding: 1rem; display: grid; gap: 0.5rem; margin-top: 1rem; }
+.ribbon-pick { display: flex; gap: 0.35rem; padding-bottom: 0.6rem; }

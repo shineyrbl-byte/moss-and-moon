@@ -34,6 +34,9 @@ function around(ms: number) {
   return { prev: jdToMs(fullMoonJd(k)), next: jdToMs(fullMoonJd(k + 1)), k };
 }
 
+/** The full moons just before and after a moment (ms) */
+export const fullMoonAround = (at: Date) => { const { prev, next } = around(at.getTime()); return { prev, next }; };
+
 /** The next few full moons from a moment, as exact times */
 export function fullMoonsFrom(from: Date, n = 1): Date[] {
   const { k } = around(from.getTime());

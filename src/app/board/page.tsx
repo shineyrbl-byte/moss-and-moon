@@ -36,6 +36,8 @@ export default function BoardPage() {
   const [wait, setWait] = useState<number | null>(null);
   const [songs, setSongs] = useState<{ playing: Song | null; next: Song[] }>({ playing: null, next: [] });
   const [sound, setSound] = useState(false);
+  const [doodles, setDoodles] = useState<{ id: number; url: string; name: string; caption: string }[]>([]);
+  const [doodleAt, setDoodleAt] = useState(0);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const seenReady = useRef<Set<string> | null>(null);
   const soundRef = useRef(false);
@@ -48,6 +50,7 @@ export default function BoardPage() {
         const [b, q] = await Promise.all([fetch("/api/board").then((r) => r.json()), fetch("/api/queue").then((r) => r.json())]);
         if (!alive) return;
         fetch("/api/songs").then((r) => r.json()).then((d) => alive && setSongs(d)).catch(() => {});
+        fetch("/api/photos?kind=doodle").then((r) => r.json()).then((d) => { if (alive && Array.isArray(d.photos)) { setDoodles(d.photos.slice(0, 12)); setDoodleAt((i) => i + 1); } }).catch(() => {});
         // Highlight orders that just became ready
         const ids = new Set<string>(b.ready.map((e: Entry) => e.code));
         if (seenReady.current) {
@@ -114,6 +117,16 @@ export default function BoardPage() {
           <span className="muted">Request one: table QR → 🔔 → 🎵</span>
         </div>
       )}
+      {doodles.length > 0 && (() => {
+        const d = doodles[doodleAt % doodles.length];
+        return (
+          <aside className="board-doodle" aria-label="A guest doodle">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={d.url} alt="" />
+            <span>🎨 {d.caption || "A doodle"} <span className="muted">by {d.name}</span><br /><span className="muted">Draw one: mossandmoon → Doodle wall</span></span>
+          </aside>
+        );
+      })()}
       <footer className="board-foot">
         <span>{happy ? `✨ It's golden hour! ${HAPPY_HOUR.label}` : `☀︎ ${HAPPY_HOUR.label}`}</span>
         <span>⏱ Current wait ~{wait ?? "…"} min</span>

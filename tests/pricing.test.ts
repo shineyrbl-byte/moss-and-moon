@@ -715,3 +715,44 @@ test("bring it back months and the secret moons", async () => {
   assert.ok(allFound(MOONS.map((m) => m.id).reverse()));
   assert.ok(!allFound("all"));
 });
+
+test("konkani: a word a day, and a fair Sunday quiz on the week before", async () => {
+  const { KONKANI, konkaniFor, quizFor, weekBefore } = await import("../src/lib/konkani.ts");
+  assert.ok(KONKANI.length >= 30);
+  assert.equal(new Set(KONKANI.map((w) => w.word)).size, KONKANI.length, "no repeats");
+  assert.equal(new Set(KONKANI.map((w) => w.means)).size, KONKANI.length, "meanings are distinct, so the quiz has one right answer");
+  assert.deepEqual(konkaniFor("2026-10-24"), konkaniFor("2026-10-24"));
+  assert.deepEqual(weekBefore("2026-10-25"), ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24"]);
+  const quiz = quizFor("2026-10-25");
+  assert.equal(quiz.length, 6);
+  for (const [i, q] of quiz.entries()) {
+    assert.equal(q.choices.length, 4);
+    assert.equal(new Set(q.choices).size, 4);
+    assert.equal(q.choices[q.answer], konkaniFor(weekBefore("2026-10-25")[i]).means);
+  }
+});
+
+test("memory match: the same cards all day, every card has a pair", async () => {
+  const { pickItems, deal, minMs, memoryMode, clock } = await import("../src/lib/memory.ts");
+  const items = Array.from({ length: 20 }, (_, i) => ({ id: `i${i}` }));
+  const a = pickItems(items, "2026-10-24", "full");
+  assert.equal(a.length, 8);
+  assert.deepEqual(pickItems([...items].reverse(), "2026-10-24", "full"), a, "menu order doesn't matter");
+  assert.equal(pickItems(items, "2026-10-24", "easy").length, 6);
+  const cards = deal(a);
+  assert.equal(cards.length, 16);
+  for (const it of a) assert.equal(cards.filter((c) => c.item.id === it.id).length, 2);
+  assert.equal(memoryMode("nope"), "full");
+  assert.equal(minMs("easy"), 7200);
+  assert.equal(clock(65400), "1:05.4");
+});
+
+test("wish tree: ribbons stay on the tree, and the tree knows its full moons", async () => {
+  const { ribbonSpot } = await import("../src/lib/wishes.ts");
+  for (let i = 0; i < 300; i++) { const { x, y } = ribbonSpot(i); assert.ok(x > 50 && x < 350 && y > 40 && y < 180, `${i}: ${x},${y}`); }
+  const { fullMoonAround } = await import("../src/lib/moon.ts");
+  const now = new Date("2026-10-24T12:00:00Z");
+  const { prev, next } = fullMoonAround(now);
+  assert.ok(prev < now.getTime() && now.getTime() < next);
+  assert.equal(new Date(next).toISOString().slice(0, 13), "2026-10-26T04");
+});

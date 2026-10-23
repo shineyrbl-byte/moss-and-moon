@@ -2578,6 +2578,114 @@ test("around the corner: a starter list, edited by the owner", async () => {
   assert.equal((await fetch(`${s.url}/nearby`)).status, 200);
 });
 
+test("doodle wall: a drawing waits for staff, then shows on its own wall", async () => {
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  const f = new FormData();
+  f.set("file", new File([png], "doodle.png", { type: "image/png" }));
+  f.set("kind", "doodle"); f.set("name", "Dia"); f.set("caption", "My cat on the sofa");
+  const r = await fetch(`${s.url}/api/photos`, { method: "POST", body: f, headers: { Origin: s.url } });
+  assert.equal(r.status, 200, await r.text());
+  const wall = async (kind: string) => ((await (await fetch(`${s.url}/api/photos?kind=${kind}`)).json()).photos as { id: number; caption: string }[]);
+  assert.ok(!(await wall("doodle")).some((p) => p.caption === "My cat on the sofa"), "waits for a look");
+  await s.login();
+  const mine = ((await s.api("/api/photos?all=1")).body.photos as { id: number; caption: string; kind: string }[]).find((p) => p.caption === "My cat on the sofa")!;
+  assert.equal(mine.kind, "doodle");
+  await s.api("/api/photos", { method: "PATCH", json: { id: mine.id, approve: true } });
+  assert.ok((await wall("doodle")).some((p) => p.id === mine.id));
+  assert.ok(!(await wall("cafe")).some((p) => p.id === mine.id), "not on the photo wall");
+  for (const p of ["/doodles", "/board"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("thank the team: guests leave a note; only that person and the owner see it", async () => {
+  await s.login();
+  await s.api("/api/admin/staff", { method: "POST", json: { name: "Kavya Gomes", username: "kavya", password: "longpassword2", role: "barista" } });
+  const team = (await s.api("/api/admin/team")).body.team as { id: number; name: string }[];
+  const kavya = team.find((m) => m.name === "Kavya Gomes")!;
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/team/notes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(json) });
+  assert.equal((await post({ staffId: kavya.id, text: "Lovely chai!" })).status, 400, "hidden from the team page, so no notes");
+  await s.api("/api/admin/team", { method: "PUT", json: { id: kavya.id, show: true, bio: "Chai person", emoji: "🍵" } });
+  const pub = (await (await fetch(`${s.url}/api/team`)).json()).team as { id: number; name: string }[];
+  assert.equal(pub.find((m) => m.name === "Kavya")!.id, kavya.id);
+  assert.equal((await post({ staffId: kavya.id, text: "x" })).status, 400);
+  assert.equal((await post({ staffId: kavya.id, name: "Ivo", text: "Your chai made my rainy day" })).status, 200);
+  assert.equal((await fetch(`${s.url}/api/team/notes`)).status, 401);
+  const owner = (await s.api("/api/team/notes")).body as { notes: { id: number; text: string; to_name: string }[]; all: boolean };
+  assert.ok(owner.all);
+  assert.ok(owner.notes.some((n) => n.text === "Your chai made my rainy day" && n.to_name === "Kavya Gomes"));
+  await s.api("/api/admin/staff", { method: "POST", json: { name: "Omar Shaikh", username: "omar", password: "longpassword3", role: "barista" } });
+  const login = await s.api("/api/admin/login", { method: "POST", json: { username: "omar", password: "longpassword3" } });
+  assert.equal(login.status, 200, JSON.stringify(login.body));
+  const other = (await s.api("/api/team/notes")).body as { notes: { text: string }[]; all: boolean };
+  assert.equal(other.all, false);
+  assert.ok(!other.notes.some((n) => n.text === "Your chai made my rainy day"), "not someone else's notes");
+  await s.api("/api/admin/login", { method: "POST", json: { username: "kavya", password: "longpassword2" } });
+  assert.ok(((await s.api("/api/team/notes")).body.notes as { text: string }[]).some((n) => n.text === "Your chai made my rainy day"));
+  await s.login();
+});
+
+test("book club: the owner picks a shelf book and a meet-up; guests' thoughts wait for staff", async () => {
+  await s.login();
+  const st = (await s.api("/api/book-club?staff=1")).body as { month: string; books: { id: string }[] };
+  assert.ok(st.books.some((b) => b.id === "book-malgudi"));
+  assert.equal((await s.api("/api/book-club", { method: "PUT", json: { month: st.month, bookId: "catan" } })).status, 400, "books only");
+  assert.equal((await s.api("/api/book-club", { method: "PUT", json: { month: st.month, bookId: "book-malgudi", date: "2020-01-05", time: "18:30" } })).status, 400, "date must be in that month");
+  const set = await s.api("/api/book-club", { method: "PUT", json: { month: st.month, bookId: "book-malgudi", date: `${st.month}-28`, time: "18:30" } });
+  assert.equal(set.status, 200, JSON.stringify(set.body));
+  const eventId = set.body.pick.eventId as string;
+  assert.ok(eventId);
+  const pub = (await (await fetch(`${s.url}/api/book-club`)).json()) as { pick: { title: string; date: string; eventId: string } };
+  assert.equal(pub.pick.title, "Malgudi Days");
+  assert.equal(pub.pick.eventId, eventId);
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/book-club`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.7.7.7" }, body: JSON.stringify(json) });
+  assert.equal((await post({ name: "Neel", stars: 9 })).status, 400);
+  assert.equal((await post({ name: "Neel", stars: 4, text: "Swami and his friends!" })).status, 200);
+  assert.equal(((await (await fetch(`${s.url}/api/book-club`)).json()).thoughts as unknown[]).length, 0, "waits for a look");
+  const t = ((await s.api("/api/book-club?staff=1")).body.waiting as { id: number; name: string }[]).find((x) => x.name === "Neel")!;
+  await s.api("/api/book-club", { method: "PATCH", json: { id: t.id, approve: true } });
+  const after = (await (await fetch(`${s.url}/api/book-club`)).json()) as { thoughts: { name: string }[]; stars: number };
+  assert.equal(after.thoughts[0].name, "Neel");
+  assert.equal(after.stars, 4);
+  const unset = await s.api("/api/book-club", { method: "PUT", json: { month: st.month, bookId: "book-malgudi" } });
+  assert.equal(unset.body.pick.eventId, null, "no meet-up, no event");
+  assert.equal((await fetch(`${s.url}/book-club`)).status, 200);
+});
+
+test("memory match: today's quickest times, and silly-fast scores are refused", async () => {
+  const voter = "memoryvoter012345678";
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/memory`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voter, mode: "easy", ...json }) });
+  assert.equal((await post({ ms: 500, moves: 6 })).status, 400, "too fast");
+  assert.equal((await post({ ms: 20000, moves: 2 })).status, 400, "too few moves");
+  const a = (await (await post({ ms: 30000, moves: 10, name: "Mina" })).json()) as { top: { name: string; ms: number }[]; mine: { ms: number } };
+  assert.equal(a.mine.ms, 30000);
+  const b = (await (await post({ ms: 45000, moves: 9, name: "Mina" })).json()) as { mine: { ms: number } };
+  assert.equal(b.mine.ms, 30000, "keeps your best");
+  const c = (await (await post({ ms: 25000, moves: 9, name: "Mina" })).json()) as { top: { name: string; ms: number }[]; mine: { ms: number } };
+  assert.equal(c.mine.ms, 25000);
+  assert.ok(c.top.some((x) => x.name === "Mina" && x.ms === 25000));
+  const full = (await (await fetch(`${s.url}/api/memory?mode=full&voter=${voter}`)).json()) as { mine: unknown };
+  assert.equal(full.mine, null, "modes are separate");
+  for (const p of ["/memory", "/konkani"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("wish tree: a wish hangs straight away, its words show once staff approve", async () => {
+  const before = (await (await fetch(`${s.url}/api/wishes`)).json()) as { wishes: unknown[]; total: number; nextFull: number };
+  assert.ok(before.nextFull > Date.now());
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/wishes`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.6.6.6" }, body: JSON.stringify(json) });
+  assert.equal((await post({ text: "hi" })).status, 400);
+  const r = (await (await post({ text: "More beach mornings", name: "Ana", colour: 3 })).json()) as { id: number; tree: { wishes: { id: number; colour: number; text?: string }[]; total: number } };
+  const w = r.tree.wishes.find((x) => x.id === r.id)!;
+  assert.equal(w.colour, 3);
+  assert.equal(w.text, undefined, "words hidden until approved");
+  assert.equal(r.tree.total, before.total + 1);
+  assert.equal((await fetch(`${s.url}/api/wishes?all=1`)).status, 401);
+  await s.login();
+  assert.ok(((await s.api("/api/wishes?all=1")).body.wishes as { id: number }[]).some((x) => x.id === r.id));
+  await s.api("/api/wishes", { method: "PATCH", json: { id: r.id, approve: true } });
+  const after = (await (await fetch(`${s.url}/api/wishes`)).json()) as { wishes: { id: number; text?: string; name?: string }[] };
+  assert.equal(after.wishes.find((x) => x.id === r.id)!.text, "More beach mornings");
+  assert.equal((await fetch(`${s.url}/wish-tree`)).status, 200);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

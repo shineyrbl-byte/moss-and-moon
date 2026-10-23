@@ -52,6 +52,9 @@ import ForwardCard from "@/components/admin/ForwardCard";
 import TableTagsCard from "@/components/admin/TableTagsCard";
 import ComebackCard from "@/components/admin/ComebackCard";
 import NearbyCard from "@/components/admin/NearbyCard";
+import ThanksNotes from "@/components/ThanksNotes";
+import BookClubCard from "@/components/admin/BookClubCard";
+import WishesCard from "@/components/admin/WishesCard";
 import TeamProfiles from "@/components/admin/TeamProfiles";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
@@ -103,7 +106,10 @@ const KEYWORDS: Partial<Record<Tab, string>> = {
   "Cash-up": "till cash float upi card",
   "P&L": "expenses rent wages profit loss",
   Menu: "special of the day printable menu poster recipes story instagram combos combo deals allergen chart tv bring it back vote comeback secret menu",
-  Notices: "lost found noticeboard around the corner nearby places guide",
+  Notices: "lost found noticeboard around the corner nearby places guide wish tree wishes",
+  Events: "book club reading",
+  Team: "thank you notes kind words",
+  Reviews: "guest photos doodles doodle wall pup wall",
   Rota: "shifts swaps staffing",
   Training: "quiz stations",
   Guests: "we miss you vip regulars birthdays",
@@ -539,10 +545,10 @@ export default function AdminPage() {
       {tab === "Menu" && <><ComebackCard canEdit={me?.role === "owner"} />{me?.role === "owner" && <><MenuTidyCard /><RotationCard /><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
-      {tab === "Team" && me?.role === "owner" && <TeamProfiles />}
+      {tab === "Team" && me?.role === "owner" && <><ThanksNotes showEmpty /><TeamProfiles /></>}
       {tab === "Stock" && <><UseByCard />{me?.role === "owner" && <PriceWatch />}<StockTab canEdit={me?.role === "owner"} /></>}
       {tab === "Tables & QR" && <><TableTagsCard canEdit={me?.role === "owner"} /><TablesQR /></>}
-      {tab === "Events" && <EventsTab canEdit={me?.role === "owner"} />}
+      {tab === "Events" && <><BookClubCard canEdit={me?.role === "owner"} /><EventsTab canEdit={me?.role === "owner"} /></>}
       {tab === "Waste" && <WasteTab />}
       {tab === "Cash-up" && <CashupTab />}
       {tab === "Cakes" && <CakesTab />}
@@ -550,7 +556,7 @@ export default function AdminPage() {
       {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "Companies" && me?.role === "owner" && <CompaniesTab />}
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
-      {tab === "Notices" && <><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
+      {tab === "Notices" && <><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
       {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
       {tab === "Journal" && me?.role === "owner" && <JournalTab />}

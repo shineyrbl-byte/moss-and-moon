@@ -312,6 +312,11 @@ const en = {
   "footer.comeback": "Bring it back",
   "footer.nearby": "Around the corner",
   "footer.secret": "Secret menu",
+  "footer.doodles": "Doodle wall",
+  "footer.bookClub": "Book club",
+  "footer.konkani": "Konkani word of the day",
+  "footer.memory": "Memory match",
+  "footer.wishTree": "Wish tree",
 };
 
 type Key = keyof typeof en;
@@ -624,6 +629,11 @@ const hi: Record<Key, string> = {
   "footer.comeback": "इसे वापस लाओ",
   "footer.nearby": "आस-पास",
   "footer.secret": "सीक्रेट मेन्यू",
+  "footer.doodles": "डूडल दीवार",
+  "footer.bookClub": "बुक क्लब",
+  "footer.konkani": "आज का कोंकणी शब्द",
+  "footer.memory": "मेमोरी मैच",
+  "footer.wishTree": "इच्छाओं का पेड़",
 };
 
 const mr: Record<Key, string> = {
@@ -934,6 +944,11 @@ const mr: Record<Key, string> = {
   "footer.comeback": "परत आणा",
   "footer.nearby": "जवळपास",
   "footer.secret": "गुप्त मेन्यू",
+  "footer.doodles": "डूडल भिंत",
+  "footer.bookClub": "बुक क्लब",
+  "footer.konkani": "आजचा कोंकणी शब्द",
+  "footer.memory": "मेमरी मॅच",
+  "footer.wishTree": "इच्छांचे झाड",
 };
 
 const kok: Record<Key, string> = {
@@ -1244,6 +1259,11 @@ const kok: Record<Key, string> = {
   "footer.comeback": "परत हाडात",
   "footer.nearby": "लागसार",
   "footer.secret": "गुपीत मेन्यू",
+  "footer.doodles": "डूडल वण्टी",
+  "footer.bookClub": "बुक क्लब",
+  "footer.konkani": "आयचें कोंकणी उतर",
+  "footer.memory": "मेमरी मॅच",
+  "footer.wishTree": "इत्सेचें झाड",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

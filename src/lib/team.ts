@@ -41,7 +41,7 @@ export function publicTeam() {
     const fav = r.fav_item ? menu.get(r.fav_item) : undefined;
     const c = r.creation_code ? getCreation(r.creation_code) : null;
     return {
-      name: firstName(r.name), role: r.role === "owner" ? "Owner" : "Barista", bio: r.bio, photo: r.photo, emoji: r.emoji,
+      id: r.staff_id, name: firstName(r.name), role: r.role === "owner" ? "Owner" : "Barista", bio: r.bio, photo: r.photo, emoji: r.emoji,
       fav: fav ? { id: fav.id, name: fav.name, price: fav.price, img: fav.img, soldOut: !!fav.soldOut } : null,
       creation: c,
     };

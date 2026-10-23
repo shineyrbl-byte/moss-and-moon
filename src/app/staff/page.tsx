@@ -10,6 +10,7 @@ import SupportInbox from "@/components/SupportInbox";
 import RecipeBook from "@/components/RecipeBook";
 import RushControl from "@/components/RushControl";
 import HandoverNotes from "@/components/HandoverNotes";
+import ThanksNotes from "@/components/ThanksNotes";
 import { STATIONS, stationOf, stationsFor } from "@/lib/stations";
 import { activeBranches, findBranch } from "@/lib/cafe";
 
@@ -205,6 +206,7 @@ export default function StaffScreen() {
       </header>
 
       <HandoverNotes />
+      <ThanksNotes />
       {(offline || Object.keys(pending).length > 0) && (
         <div className="kds-offline" role="status">
           {offline ? "📡 No connection. Keep tapping: changes are saved on this tablet" : "↻ Sending saved changes"}

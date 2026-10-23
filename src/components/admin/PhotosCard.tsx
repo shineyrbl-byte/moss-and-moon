@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../Store";
 
-type P = { id: number; url: string; caption: string; name: string; status: "pending" | "approved"; kind?: "cafe" | "pup"; created_at: string };
+type P = { id: number; url: string; caption: string; name: string; status: "pending" | "approved"; kind?: "cafe" | "pup" | "doodle"; created_at: string };
 
 /** Reviews tab: photos guests shared, waiting ones first */
 export default function PhotosCard() {
@@ -25,7 +25,7 @@ export default function PhotosCard() {
           <li key={p.id} className={p.status}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <a href={p.url} target="_blank" rel="noreferrer"><img src={p.url} alt={p.caption || `Photo by ${p.name}`} loading="lazy" /></a>
-            <span className="small">{p.kind === "pup" && <span className="branch-tag">🐾 pup wall</span>} <b>{p.name}</b>{p.caption ? `: ${p.caption}` : ""}<br /><span className="tiny muted">{p.created_at.slice(0, 10)} · {p.status === "pending" ? "waiting" : "on the wall"}</span></span>
+            <span className="small">{p.kind === "pup" && <span className="branch-tag">🐾 pup wall</span>}{p.kind === "doodle" && <span className="branch-tag">🎨 doodle</span>} <b>{p.name}</b>{p.caption ? `: ${p.caption}` : ""}<br /><span className="tiny muted">{p.created_at.slice(0, 10)} · {p.status === "pending" ? "waiting" : "on the wall"}</span></span>
             <span className="row" style={{ gap: "0.3rem" }}>
               {p.status === "pending" && <button className="chip on" onClick={() => review(p, true)}>Approve</button>}
               <button className="chip" onClick={() => review(p, false)}>Remove</button>

@@ -26,6 +26,7 @@ export default function Shelf() {
       <p className="eyebrow">stay a while</p>
       <h1 className="h2">Games <em>&amp;</em> books</h1>
       <p className="lead">Borrow anything from the shelf while you&apos;re here. Want a game kept for you? Pick it when you <Link href="/#visit" className="link-btn">book a table</Link>.</p>
+      <p className="small"><Link href="/book-club">📚 This month&apos;s book club pick →</Link></p>
       <div className="row" style={{ gap: "0.8rem", alignItems: "flex-end", flexWrap: "wrap", margin: "1rem 0" }}>
         <label className="field small" style={{ maxWidth: 260 }}>Search<input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Catan, Ruskin Bond…" /></label>
         <div className="chips" role="radiogroup" aria-label="How many of you?" style={{ justifyContent: "flex-start" }}>
