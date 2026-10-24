@@ -882,3 +882,56 @@ test("word search: eight words, each hidden exactly once, found either way round
   assert.deepEqual(cleanSpy(["  a plant ", "", "<b>"]), ["a plant", "b"]);
   assert.ok(ISPY_DEFAULT.length >= 8);
 });
+
+test("connect four: drops, wins, and a barista who takes a win and blocks one", async () => {
+  const { empty, drop, winner, botMove, topVote, openCols, COLS } = await import("../src/lib/connect4.ts");
+  let b = empty();
+  for (let i = 0; i < 6; i++) b = drop(b, 0, 1)!;
+  assert.equal(drop(b, 0, 2), null, "a full column takes no more");
+  assert.ok(!openCols(b).includes(0));
+  b = empty();
+  for (const c of [0, 1, 2, 3]) b = drop(b, c, 1)!;
+  assert.equal(winner(b)?.who, 1);
+  // Barista takes its own win
+  b = empty();
+  for (const c of [0, 1, 2]) b = drop(drop(b, c, 2)!, c, 1)!;
+  b = drop(b, 6, 1)!;
+  assert.equal(botMove(b), 3, "wins along the bottom row");
+  // ...and blocks the guests' three in a row
+  b = empty();
+  for (const c of [0, 1, 2]) b = drop(b, c, 1)!;
+  b = drop(b, 0, 2)!; b = drop(b, 1, 2)!;
+  assert.equal(botMove(b), 3, "blocks the guests' only way to four");
+  const counts = Array(COLS).fill(0);
+  assert.equal(topVote(counts, empty()), null, "no votes, no move");
+  counts[1] = 2; counts[4] = 2;
+  assert.equal(topVote(counts, empty()), 4, "a tie goes to the column nearer the middle");
+});
+
+test("guess the dish, the recipe scaler, story chain lines and places", async () => {
+  const { DISH_PUZZLES, isRight, dishesFor, dishGrid } = await import("../src/lib/emojiDish.ts");
+  assert.equal(new Set(DISH_PUZZLES.map((p) => p.id)).size, DISH_PUZZLES.length, "one puzzle per dish");
+  assert.equal(new Set(DISH_PUZZLES.map((p) => p.emoji)).size, DISH_PUZZLES.length, "no two puzzles look the same");
+  assert.ok(isRight("Cinamon roll", "Cinnamon Roll", []), "small typos are fine");
+  assert.ok(isRight("chai & samosa", "Chai & Samosa Plate", ["chai and samosa"]));
+  assert.ok(!isRight("latte", "Spanish Latte", ["spanish latte"]), "too vague");
+  const ids = new Set(DISH_PUZZLES.map((p) => p.id));
+  assert.equal(dishesFor("2026-10-25", ids).length, 5);
+  assert.deepEqual(dishesFor("2026-10-25", ids), dishesFor("2026-10-25", ids));
+  assert.equal(dishGrid([{ ok: true, n: 1 }, { ok: true, n: 3 }, { ok: false, n: 3 }]), "🟩🟧⬛");
+  const { scaleLine, scaleMakes } = await import("../src/lib/scale.ts");
+  assert.equal(scaleLine("200 ml milk", 2), "400 ml milk");
+  assert.equal(scaleLine("½ lime", 3), "1½ lime");
+  assert.equal(scaleLine("1 to 2 tsp honey", 0.5), "½ to 1 tsp honey");
+  assert.equal(scaleLine("A pinch of salt", 4), "A pinch of salt");
+  assert.equal(scaleLine("8 ice cubes", 3), "24 ice cubes");
+  assert.equal(scaleMakes("1 mug", 2), "2 mugs");
+  assert.equal(scaleMakes("2 cups", 0.5), "1 cup");
+  const { lineProblem } = await import("../src/lib/storyChain.ts");
+  assert.equal(lineProblem("She opened the cupboard anyway."), null);
+  assert.ok(lineProblem("One. Two. Three. Four."), "one sentence only");
+  const { placeFor, STATES } = await import("../src/lib/places.ts");
+  assert.equal(STATES.length, 36, "28 states and 8 union territories");
+  assert.deepEqual(placeFor("Goa"), { name: "Goa", kind: "state" });
+  assert.equal(placeFor("Atlantis"), null);
+});

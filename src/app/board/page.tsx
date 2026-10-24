@@ -40,6 +40,8 @@ export default function BoardPage() {
   const [doodleAt, setDoodleAt] = useState(0);
   const [story, setStory] = useState<{ text: string; name: string } | null>(null);
   const [latte, setLatte] = useState<{ img: string; staff_name: string; final: boolean } | null>(null);
+  const [c4, setC4] = useState<{ board: number[]; status: string; score: { guests: number; barista: number } } | null>(null);
+  const [chain, setChain] = useState<{ text: string; name: string; count: number } | null>(null);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const seenReady = useRef<Set<string> | null>(null);
   const soundRef = useRef(false);
@@ -54,6 +56,8 @@ export default function BoardPage() {
         fetch("/api/songs").then((r) => r.json()).then((d) => alive && setSongs(d)).catch(() => {});
         fetch("/api/stories?week=1").then((r) => r.json()).then((d) => alive && setStory(d.week)).catch(() => {});
         fetch("/api/latte-art?board=1").then((r) => r.json()).then((d) => alive && setLatte(d.art)).catch(() => {});
+        fetch("/api/connect4").then((r) => r.json()).then((d) => alive && setC4(d)).catch(() => {});
+        fetch("/api/story-chain?board=1").then((r) => r.json()).then((d) => alive && setChain(d)).catch(() => {});
         fetch("/api/photos?kind=doodle").then((r) => r.json()).then((d) => { if (alive && Array.isArray(d.photos)) { setDoodles(d.photos.slice(0, 12)); setDoodleAt((i) => i + 1); } }).catch(() => {});
         // Highlight orders that just became ready
         const ids = new Set<string>(b.ready.map((e: Entry) => e.code));
@@ -122,6 +126,17 @@ export default function BoardPage() {
         </div>
       )}
       {story && <p className="board-story">✍️ <q>{story.text}</q> <span className="muted">· six-word story of the week{story.name ? ` by ${story.name}` : ""}</span></p>}
+      {(c4 || chain) && (
+        <div className="board-extras">
+          {c4 && (
+            <div className="board-c4">
+              <span className="board-c4-grid" aria-hidden="true">{c4.board.map((v, i) => <i key={i} className={v === 1 ? "r" : v === 2 ? "y" : ""} />)}</span>
+              <span>🔴 Guests vs the barista 🟡<br /><span className="muted">{c4.status === "playing" ? "Vote for the next move: mossandmoon → Connect Four" : c4.status === "guests" ? "The guests won!" : c4.status === "barista" ? "The barista won this one" : "A draw!"} · {c4.score.guests}–{c4.score.barista}</span></span>
+            </div>
+          )}
+          {chain && <p className="board-story">📜 <q>{chain.text}</q> <span className="muted">· story chain, line {chain.count}. What happens next?</span></p>}
+        </div>
+      )}
       {latte && (
         <p className="board-latte">
           {/* eslint-disable-next-line @next/next/no-img-element */}

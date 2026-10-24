@@ -6,6 +6,7 @@ import { photo } from "@/lib/menu";
 import { getMenu } from "@/lib/menuStore";
 import { HOME_RECIPES, NO_MACHINE, findHomeRecipe } from "@/lib/homeRecipes";
 import { rupees } from "@/lib/pricing";
+import RecipeScaler from "@/components/RecipeScaler";
 
 export const dynamic = "force-dynamic";
 
@@ -29,8 +30,7 @@ export default async function Recipe({ params }: { params: Promise<{ id: string 
       {m && <div className="recipe-photo"><Image src={photo(m.img, 1000)} alt={r.title} fill sizes="(max-width: 700px) 100vw, 40rem" priority /></div>}
       <div className="recipe-cols">
         <section>
-          <h2 className="h3">You&apos;ll need</h2>
-          <ul>{r.ingredients.map((i) => <li key={i}>{i}</li>)}</ul>
+          <RecipeScaler id={r.id} makes={r.makes} ingredients={r.ingredients} />
           <h3 className="small" style={{ marginTop: "0.8rem" }}>Kit</h3>
           <ul className="small">{r.kit.map((k) => <li key={k}>{k}</li>)}</ul>
         </section>

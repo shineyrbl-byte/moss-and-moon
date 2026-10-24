@@ -75,6 +75,11 @@ export default function Footer() {
             <li><Link href="/sudoku">{t("footer.sudoku")}</Link></li>
             <li><Link href="/i-spy">{t("footer.ispy")}</Link></li>
             <li><Link href="/recipe-swap">{t("footer.recipeSwap")}</Link></li>
+            <li><Link href="/connect-four">{t("footer.connect4")}</Link></li>
+            <li><Link href="/story-chain">{t("footer.storyChain")}</Link></li>
+            <li><Link href="/guess-the-dish">{t("footer.guessDish")}</Link></li>
+            <li><Link href="/artist-wall">{t("footer.artWall")}</Link></li>
+            <li><Link href="/visiting-from">{t("footer.visitingFrom")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

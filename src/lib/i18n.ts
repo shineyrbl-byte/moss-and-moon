@@ -337,6 +337,11 @@ const en = {
   "footer.sudoku": "Mini sudoku",
   "footer.ispy": "I spy (for kids)",
   "footer.recipeSwap": "Recipe swap",
+  "footer.connect4": "Guests vs the barista",
+  "footer.storyChain": "Story chain",
+  "footer.guessDish": "Guess the dish",
+  "footer.artWall": "Artist wall",
+  "footer.visitingFrom": "Where are you from?",
 };
 
 type Key = keyof typeof en;
@@ -674,6 +679,11 @@ const hi: Record<Key, string> = {
   "footer.sudoku": "मिनी सुडोकू",
   "footer.ispy": "आई स्पाई (बच्चों के लिए)",
   "footer.recipeSwap": "रेसिपी अदला-बदली",
+  "footer.connect4": "मेहमान बनाम बरिस्ता",
+  "footer.storyChain": "कहानी की कड़ी",
+  "footer.guessDish": "डिश पहचानो",
+  "footer.artWall": "कलाकार की दीवार",
+  "footer.visitingFrom": "आप कहाँ से हैं?",
 };
 
 const mr: Record<Key, string> = {
@@ -1009,6 +1019,11 @@ const mr: Record<Key, string> = {
   "footer.sudoku": "मिनी सुडोकू",
   "footer.ispy": "आय स्पाय (मुलांसाठी)",
   "footer.recipeSwap": "रेसिपी अदलाबदल",
+  "footer.connect4": "पाहुणे विरुद्ध बरिस्ता",
+  "footer.storyChain": "गोष्टीची साखळी",
+  "footer.guessDish": "पदार्थ ओळखा",
+  "footer.artWall": "कलाकाराची भिंत",
+  "footer.visitingFrom": "तुम्ही कुठून आलात?",
 };
 
 const kok: Record<Key, string> = {
@@ -1344,6 +1359,11 @@ const kok: Record<Key, string> = {
   "footer.sudoku": "मिनी सुडोकू",
   "footer.ispy": "आय स्पाय (भुरग्यांखातीर)",
   "footer.recipeSwap": "रेसिपी अदलाबदल",
+  "footer.connect4": "सोयरे आनी बरिस्ता",
+  "footer.storyChain": "कथेची साखळी",
+  "footer.guessDish": "खाण वळख",
+  "footer.artWall": "कलाकाराची वण्टी",
+  "footer.visitingFrom": "तुमी खंयच्यान आयल्यात?",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

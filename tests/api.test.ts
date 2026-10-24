@@ -2945,6 +2945,102 @@ test("recipe swap: staff read them first, guests heart them, the best show on th
   assert.ok(back.body.items.length >= 8, "an empty list puts the café's back");
 });
 
+test("guests vs the barista: votes pick the move, the barista replies, owners can reset", async () => {
+  const vote = (col: number, voter: string) => fetch(`${s.url}/api/connect4`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.8.8.1" }, body: JSON.stringify({ col, voter }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  const start = await (await fetch(`${s.url}/api/connect4`)).json();
+  assert.equal(start.status, "playing");
+  assert.equal(start.roundEnds, null, "a round only starts with its first vote");
+  const v = (n: number) => "m".repeat(16) + "c4voter" + n;
+  assert.equal((await vote(9, v(1))).status, 400);
+  await vote(2, v(1));
+  await vote(3, v(2));
+  const r = await vote(3, v(3));
+  assert.equal(r.body.counts[3], 2);
+  assert.ok(r.body.roundEnds > Date.now());
+  const changed = await vote(3, v(1));
+  assert.equal(changed.body.counts[2], 0, "changing your vote moves it");
+  await new Promise((ok) => setTimeout(ok, 1400));
+  const after = await (await fetch(`${s.url}/api/connect4`)).json();
+  assert.equal(after.moves, start.moves + 1);
+  assert.equal(after.lastGuest, 3, "the most popular column was played");
+  assert.equal(after.board.filter((x: number) => x === 1).length - start.board.filter((x: number) => x === 1).length, 1);
+  assert.equal(after.board.filter((x: number) => x === 2).length - start.board.filter((x: number) => x === 2).length, 1, "and the barista replied");
+  assert.equal(after.roundEnds, null);
+  assert.equal((await fetch(`${s.url}/api/connect4`, { method: "DELETE" })).status, 401);
+  const fresh = (await s.api("/api/connect4", { method: "DELETE" })).body;
+  assert.equal(fresh.moves, 0);
+  assert.ok(fresh.board.every((x: number) => x === 0));
+  assert.equal((await fetch(`${s.url}/connect-four`)).status, 200);
+});
+
+test("story chain: one sentence at a time, staff read each one, no two in a row", async () => {
+  const add = (text: string, voter: string) => fetch(`${s.url}/api/story-chain`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.8.8.2" }, body: JSON.stringify({ text, voter, name: "Ana" }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  const a = "n".repeat(16) + "chain1", b = "n".repeat(16) + "chain2";
+  const start = await (await fetch(`${s.url}/api/story-chain?voter=${a}`)).json();
+  assert.ok(start.story.opener.length > 10);
+  assert.equal((await add("No.", a)).status, 400);
+  assert.equal((await add("She tiptoed to the third cupboard and listened.", a)).status, 200);
+  assert.equal((await add("Something inside was humming.", a)).status, 400, "one waiting line at a time");
+  assert.equal((await fetch(`${s.url}/api/story-chain?all=1`)).status, 401);
+  const waiting = (await s.api("/api/story-chain?all=1")).body.lines as { id: number; text: string }[];
+  const mine = waiting.find((l) => l.text.startsWith("She tiptoed"))!;
+  await s.api("/api/story-chain", { method: "PATCH", json: { id: mine.id, approve: true } });
+  const now = await (await fetch(`${s.url}/api/story-chain?voter=${a}`)).json();
+  assert.equal(now.story.lines.at(-1).text, "She tiptoed to the third cupboard and listened.");
+  assert.ok(now.lastIsMine);
+  assert.equal((await add("Then it went quiet again.", a)).status, 400, "someone else goes next");
+  assert.equal((await add("Something inside the cupboard was humming a song.", b)).status, 200);
+  assert.equal((await (await fetch(`${s.url}/api/story-chain?board=1`)).json()).text, "She tiptoed to the third cupboard and listened.");
+  assert.equal((await fetch(`${s.url}/story-chain`)).status, 200);
+});
+
+test("guess the dish: answers stay hidden, hints after a miss, right answers count", async () => {
+  const { dishesFor } = await import("../src/lib/emojiDish.ts");
+  const { toDateStr } = await import("../src/lib/cafe.ts");
+  const menu = (await s.api("/api/menu")).body.items as { id: string; name: string }[];
+  const today = dishesFor(toDateStr(new Date()), new Set(menu.map((m) => m.id)));
+  const voter = "o".repeat(16) + "dish1";
+  const guess = (i: number, g: string) => fetch(`${s.url}/api/guess-dish`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.8.8.3" }, body: JSON.stringify({ i, guess: g, voter }) }).then((r) => r.json());
+  const start = await (await fetch(`${s.url}/api/guess-dish?voter=${voter}`)).json();
+  assert.equal(start.puzzles.length, 5);
+  assert.ok(start.puzzles.every((p: { answer?: string }) => p.answer === undefined), "no answers before you guess");
+  const right = await guess(0, menu.find((m) => m.id === today[0].id)!.name);
+  assert.ok(right.puzzles[0].ok);
+  const miss = await guess(1, "definitely not this");
+  assert.equal(miss.puzzles[1].hints.length, 1, "a hint after a miss");
+  await guess(1, "still not right");
+  const out = await guess(1, "nope again");
+  assert.ok(out.puzzles[1].over && !out.puzzles[1].ok && out.puzzles[1].answer, "the answer shows after three misses");
+  assert.equal(out.score, 1);
+  assert.equal((await fetch(`${s.url}/guess-the-dish`)).status, 200);
+});
+
+test("artist wall and where guests are visiting from", async () => {
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  const fd = () => { const f = new FormData(); f.append("file", new Blob([png], { type: "image/png" }), "art.png"); f.append("title", "Monsoon over Mandovi"); f.append("medium", "Watercolour"); f.append("price", "4500"); return f; };
+  assert.equal((await fetch(`${s.url}/api/art`, { method: "POST", body: fd() })).status, 401);
+  assert.equal((await fetch(`${s.url}/api/art`, { method: "POST", headers: { cookie: s.cookie() }, body: fd() })).status, 200);
+  await s.api("/api/art", { method: "PUT", json: { artist: { name: "Rhea D'Souza", bio: "Paints the Panjim rain.", link: "javascript:alert(1)" } } });
+  const art = await (await fetch(`${s.url}/api/art`)).json();
+  assert.equal(art.artist.name, "Rhea D'Souza");
+  assert.equal(art.artist.link, "", "only https links");
+  const w = art.works.find((x: { title: string }) => x.title === "Monsoon over Mandovi");
+  assert.equal(w.price, 4500);
+  await s.api("/api/art", { method: "PUT", json: { id: w.id, sold: true } });
+  assert.equal((await (await fetch(`${s.url}/api/art`)).json()).works.find((x: { id: number }) => x.id === w.id).sold, 1);
+
+  const say = (place: string, voter: string) => fetch(`${s.url}/api/visiting-from`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.8.8.4" }, body: JSON.stringify({ place, voter }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  assert.equal((await say("Atlantis", "p".repeat(20))).status, 400);
+  await say("Goa", "p".repeat(20));
+  await say("Kerala", "q".repeat(20));
+  const changed = await say("Portugal", "p".repeat(20));
+  assert.equal(changed.body.mine, "Portugal", "you can change today's answer");
+  assert.equal(changed.body.people, 2, "still one each");
+  assert.equal(changed.body.states, 1);
+  assert.equal(changed.body.countries, 1);
+  for (const p of ["/artist-wall", "/visiting-from", "/recipes/rose-latte", "/board"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

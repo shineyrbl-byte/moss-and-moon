@@ -969,6 +969,65 @@ function open() {
     voter TEXT NOT NULL,
     PRIMARY KEY (recipe_id, voter)
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS c4_games (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    board TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'playing',
+    round_ends_ms INTEGER,
+    moves INTEGER NOT NULL DEFAULT 0,
+    last_guest INTEGER,
+    last_bot INTEGER,
+    ended_ms INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS c4_votes (
+    game_id INTEGER NOT NULL,
+    round INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    col INTEGER NOT NULL,
+    PRIMARY KEY (game_id, round, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS chain_stories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    opener TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'open',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    done_at TEXT
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS chain_lines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    story_id INTEGER NOT NULL,
+    text TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    voter TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS dish_games (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    guesses TEXT NOT NULL DEFAULT '[]',
+    done INTEGER NOT NULL DEFAULT 0,
+    score INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (date, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS artworks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    medium TEXT NOT NULL DEFAULT '',
+    size TEXT NOT NULL DEFAULT '',
+    price INTEGER,
+    img TEXT NOT NULL,
+    sold INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS visit_origins (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    place TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    PRIMARY KEY (date, voter)
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
