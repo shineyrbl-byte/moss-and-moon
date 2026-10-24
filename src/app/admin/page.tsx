@@ -56,6 +56,7 @@ import ThanksNotes from "@/components/ThanksNotes";
 import BookClubCard from "@/components/admin/BookClubCard";
 import WishesCard from "@/components/admin/WishesCard";
 import { BlindDateCard, CupsCard, PollCard, StoriesCard } from "@/components/admin/CommunityCards";
+import { KindNotesCard, LostFoundCard, ScoreboardCard } from "@/components/admin/FrontDeskCards";
 import TeamProfiles from "@/components/admin/TeamProfiles";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
@@ -107,14 +108,14 @@ const KEYWORDS: Partial<Record<Tab, string>> = {
   "Cash-up": "till cash float upi card",
   "P&L": "expenses rent wages profit loss",
   Menu: "special of the day printable menu poster recipes story instagram combos combo deals allergen chart tv bring it back vote comeback secret menu",
-  Notices: "lost found noticeboard around the corner nearby places guide wish tree wishes poll six-word stories",
+  Notices: "lost found lost property left behind notes for a stranger kind notes noticeboard around the corner nearby places guide wish tree wishes poll six-word stories",
   Events: "book club reading",
   Team: "thank you notes kind words",
   Reviews: "guest photos doodles doodle wall pup wall",
   Rota: "shifts swaps staffing",
   Training: "quiz stations",
   Guests: "we miss you vip regulars birthdays",
-  Bookings: "deposits no-show waitlist tables high chair shelf blind date books hints",
+  Bookings: "deposits no-show waitlist tables high chair shelf blind date books hints scoreboard board game wins",
   Cakes: "whole cake birthday",
   Health: "errors security uptime",
   Emails: "sent emails preview",
@@ -523,7 +524,7 @@ export default function AdminPage() {
           )}
         </div>
       )}
-      {tab === "Bookings" && <><ShelfCard />{me?.role === "owner" && <BlindDateCard />}</>}
+      {tab === "Bookings" && <><ShelfCard /><ScoreboardCard />{me?.role === "owner" && <BlindDateCard />}</>}
 
       {tab === "Settings" && me?.role === "owner" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -558,7 +559,7 @@ export default function AdminPage() {
       {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "Companies" && me?.role === "owner" && <CompaniesTab />}
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
-      {tab === "Notices" && <><PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
+      {tab === "Notices" && <><LostFoundCard /><KindNotesCard /><PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
       {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
       {tab === "Journal" && me?.role === "owner" && <JournalTab />}

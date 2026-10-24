@@ -880,6 +880,56 @@ function open() {
     voter TEXT NOT NULL,
     PRIMARY KEY (story_id, voter)
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS lost_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    what TEXT NOT NULL,
+    where_found TEXT NOT NULL DEFAULT '',
+    found_on TEXT NOT NULL,
+    img TEXT,
+    status TEXT NOT NULL DEFAULT 'open',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS lost_claims (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL,
+    code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    detail TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS kind_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    given INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS connections_games (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    guesses TEXT NOT NULL DEFAULT '[]',
+    solved INTEGER NOT NULL DEFAULT 0,
+    done INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (date, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS slide_scores (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    name TEXT NOT NULL,
+    ms INTEGER NOT NULL,
+    moves INTEGER NOT NULL,
+    PRIMARY KEY (date, voter, mode)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS game_plays (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id TEXT NOT NULL,
+    winner TEXT NOT NULL,
+    players INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD

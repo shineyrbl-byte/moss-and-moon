@@ -791,3 +791,56 @@ test("moon calendar, weekly poll, six-word stories and blind-date hints", async 
   assert.deepEqual(cleanHints(["a", " ", "b", "c", "d"]), ["a", "b"], "first three, blanks dropped");
   for (const h of Object.values(DEFAULT_HINTS)) assert.equal(h.length, 3);
 });
+
+test("café connections: every puzzle has 16 different words, and guesses are checked fairly", async () => {
+  const { PUZZLES, puzzleFor, tilesFor, checkGuess, connectionsGrid } = await import("../src/lib/connections.ts");
+  for (const p of PUZZLES) {
+    const words = p.flatMap((g) => g.words);
+    assert.equal(words.length, 16, p[0].name);
+    assert.equal(new Set(words).size, 16, `${p[0].name}: no word in two groups`);
+    for (const w of words) assert.match(w, /^[A-Z]+$/, w);
+  }
+  const p = puzzleFor("2026-10-24");
+  assert.deepEqual(puzzleFor("2026-10-24"), p, "same puzzle all day");
+  assert.notDeepEqual(puzzleFor("2026-10-25"), p, "a new one tomorrow");
+  assert.deepEqual([...tilesFor("2026-10-24")].sort(), p.flatMap((g) => g.words).sort());
+  assert.deepEqual(checkGuess(p, [...p[2].words]), { level: 2, away: 0 });
+  assert.deepEqual(checkGuess(p, [...p[1].words.slice(0, 3), p[0].words[0]]), { level: null, away: 1 }, "one away");
+  assert.equal(connectionsGrid(p, [[...p[0].words]]), "🟨🟨🟨🟨");
+});
+
+test("slide puzzle: scrambles can always be solved and never start nearly done", async () => {
+  const { scramble, isSolved, solved, slide, movable, distance } = await import("../src/lib/slide.ts");
+  assert.ok(isSolved(solved(3)));
+  // Only half of all tile orders can be solved: count inversions to check every scramble is a solvable one
+  const solvable = (b: number[]) => {
+    const n = Math.sqrt(b.length), t = b.filter(Boolean);
+    let inv = 0;
+    for (let i = 0; i < t.length; i++) for (let j = i + 1; j < t.length; j++) if (t[i] > t[j]) inv++;
+    const gapRowFromBottom = n - Math.floor(b.indexOf(0) / n);
+    return n % 2 ? inv % 2 === 0 : (inv + gapRowFromBottom) % 2 === 1;
+  };
+  for (let i = 0; i < 50; i++) for (const n of [3, 4]) {
+    const b = scramble(n);
+    assert.ok(!isSolved(b) && solvable(b) && distance(b) >= n * n);
+  }
+  const b = solved(3);
+  assert.deepEqual(movable(b).sort(), [5, 7]);
+  assert.deepEqual(slide(b, 0), b, "a tile away from the gap doesn't move");
+  assert.equal(slide(b, 7).indexOf(0), 7);
+});
+
+test("fruit calendar: months are real, and dishes are matched by name", async () => {
+  const { FRUITS, inSeason, comingNext, dishesWith } = await import("../src/lib/fruits.ts");
+  for (const f of FRUITS) assert.ok(f.months.length && f.months.every((m) => m >= 1 && m <= 12), f.id);
+  assert.ok(inSeason(5).some((f) => f.id === "mango"));
+  assert.ok(!inSeason(10).some((f) => f.id === "mango"));
+  assert.equal(inSeason(10).at(-1)!.months.length, 12, "year-round fruit goes last");
+  assert.ok(comingNext(2).some((f) => f.id === "mango"));
+  const mango = FRUITS.find((f) => f.id === "mango")!;
+  assert.deepEqual(dishesWith(mango, [{ name: "Mango Cold Brew" }, { name: "Alphonso Mango Sorbet" }, { name: "Latte" }]).length, 2);
+  const { noteProblem } = await import("../src/lib/kindNotes.ts");
+  assert.equal(noteProblem("You're doing better than you think."), null);
+  assert.ok(noteProblem("follow me at www.example.com"));
+  assert.ok(noteProblem("call me on 98765 43210 anytime"));
+});

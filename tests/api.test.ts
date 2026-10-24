@@ -2765,6 +2765,110 @@ test("blind date with a book: hints without titles, unwrap to see it, owners wri
   assert.equal((await fetch(`${s.url}/blind-date`)).status, 200);
 });
 
+test("lost & found: staff post it, guests claim it with a code, staff hand it back", async () => {
+  assert.equal((await fetch(`${s.url}/api/lost-found`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: "Hat" }) })).status, 401);
+  assert.equal((await s.api("/api/lost-found", { method: "POST", json: { what: " " } })).status, 400);
+  const posted = await s.api("/api/lost-found", { method: "POST", json: { what: "Blue umbrella", where: "Window seat" } });
+  assert.equal(posted.status, 200);
+  const form = new FormData();
+  form.set("what", "Grey scarf");
+  const r2 = await fetch(`${s.url}/api/lost-found`, { method: "POST", headers: { cookie: s.cookie() }, body: form });
+  assert.equal(r2.status, 200, "a form without a photo is fine");
+  const items = (await (await fetch(`${s.url}/api/lost-found`)).json()).items as { id: number; what: string; img: string | null }[];
+  assert.ok(items.some((i) => i.what === "Grey scarf" && i.img === null));
+  const claim = (json: Record<string, unknown>) => fetch(`${s.url}/api/lost-found`, { method: "PUT", headers: { "Content-Type": "application/json", "X-Real-IP": "10.5.5.1" }, body: JSON.stringify(json) });
+  assert.equal((await claim({ id: posted.body.id, name: "Asha", detail: "blue" })).status, 400, "needs a real description");
+  const c = await (await claim({ id: posted.body.id, name: "Asha", detail: "Navy with a broken spoke and a cat sticker" })).json();
+  assert.match(c.code, /^LF-\d{4}$/);
+  const staff = (await s.api("/api/lost-found?staff=1")).body.items as { id: number; claims: { code: string; detail: string }[] }[];
+  assert.equal(staff.find((i) => i.id === posted.body.id)!.claims[0].code, c.code);
+  assert.equal((await fetch(`${s.url}/api/lost-found?staff=1`)).status, 401);
+  assert.equal((await s.api("/api/lost-found", { method: "PATCH", json: { id: posted.body.id, status: "returned" } })).status, 200);
+  assert.ok(!((await (await fetch(`${s.url}/api/lost-found`)).json()).items as { id: number }[]).some((i) => i.id === posted.body.id), "gone once it's home");
+  assert.equal((await claim({ id: posted.body.id, name: "Asha", detail: "Navy with a broken spoke" })).status, 400);
+  assert.equal((await fetch(`${s.url}/lost-found`)).status, 200);
+});
+
+test("notes for a stranger: never your own back, and staff read them first", async () => {
+  const send = (voter: string, text: string) => fetch(`${s.url}/api/kind-notes`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.5.5.2" }, body: JSON.stringify({ voter, text }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  const a = "a".repeat(16) + "kindnotes1", b = "b".repeat(16) + "kindnotes2";
+  const first = await send(a, "Your laugh is someone's favourite sound.");
+  assert.equal(first.status, 200);
+  assert.ok(first.body.house, "nothing approved yet, so one of ours");
+  assert.equal((await send(a, "visit www.example.com")).status, 400);
+  assert.equal((await fetch(`${s.url}/api/kind-notes?all=1`)).status, 401);
+  const notes = (await s.api("/api/kind-notes?all=1")).body.notes as { id: number; text: string }[];
+  await s.api("/api/kind-notes", { method: "PATCH", json: { id: notes.find((n) => n.text.startsWith("Your laugh"))!.id, approve: true } });
+  const again = await send(a, "Drink some water and stretch your shoulders.");
+  assert.ok(again.body.house, "your own note never comes back to you");
+  const other = await send(b, "Today is a good day to start something.");
+  assert.equal(other.body.note, "Your laugh is someone's favourite sound.");
+  assert.equal(other.body.house, false);
+  assert.equal((await (await fetch(`${s.url}/api/kind-notes`)).json()).given, 1);
+});
+
+test("café connections: groups only show once found, four mistakes and you're out", async () => {
+  const { puzzleFor } = await import("../src/lib/connections.ts");
+  const { toDateStr } = await import("../src/lib/cafe.ts");
+  const p = puzzleFor(toDateStr(new Date()));
+  const voter = "c".repeat(16) + "connect1";
+  const guess = (words: string[], v = voter) => fetch(`${s.url}/api/connections`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.5.5.3" }, body: JSON.stringify({ words, voter: v }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  const start = await (await fetch(`${s.url}/api/connections?voter=${voter}`)).json();
+  assert.equal(start.tiles.length, 16);
+  assert.deepEqual(start.groups, [], "no answers on the page before you find them");
+  assert.ok(!JSON.stringify(start).includes(p[0].name));
+  assert.equal((await guess(["NOPE", "A", "B", "C"])).status, 400);
+  const got = await guess([...p[1].words]);
+  assert.equal(got.body.groups[0].name, p[1].name);
+  assert.equal(got.body.tiles.length, 12);
+  assert.equal((await guess([...p[1].words])).status, 400, "already tried");
+  const wrong = [p[0].words[0], p[0].words[1], p[0].words[2], p[2].words[0]];
+  const miss = await guess(wrong);
+  assert.equal(miss.body.mistakes, 1);
+  assert.equal(miss.body.away, 1);
+  assert.equal((await guess(wrong)).status, 400, "the same wrong guess doesn't count twice");
+  await guess([p[0].words[0], p[0].words[1], p[2].words[1], p[3].words[0]]);
+  await guess([p[0].words[0], p[2].words[2], p[2].words[1], p[3].words[0]]);
+  const out = await guess([p[0].words[3], p[2].words[2], p[3].words[1], p[3].words[0]]);
+  assert.ok(out.body.done && !out.body.solved);
+  assert.equal(out.body.groups.length, 4, "all shown when it's over");
+  assert.equal(out.body.grid.split("\n").length, 5);
+  // A clean solve
+  const v2 = "d".repeat(16) + "connect2";
+  for (const g of p) await guess([...g.words], v2);
+  const win = await (await fetch(`${s.url}/api/connections?voter=${v2}`)).json();
+  assert.ok(win.solved && win.streak === 1 && win.mistakes === 0);
+  assert.equal((await fetch(`${s.url}/connections`)).status, 200);
+});
+
+test("slide puzzle and board game scoreboard keep honest scores", async () => {
+  const voter = "e".repeat(16) + "slide1";
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.5.5.4" }, body: JSON.stringify(json) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  assert.equal((await post({ mode: "easy", ms: 500, moves: 30, voter })).status, 400, "too quick to be real");
+  assert.equal((await post({ mode: "hard", ms: 60000, moves: 10, voter })).status, 400, "too few moves for 4×4");
+  await post({ mode: "easy", ms: 50000, moves: 40, name: "Mira", voter });
+  const best = await post({ mode: "easy", ms: 30000, moves: 50, name: "Mira", voter });
+  await post({ mode: "easy", ms: 90000, moves: 30, name: "Mira", voter });
+  assert.equal(best.body.mine.ms, 30000);
+  assert.equal(((await (await fetch(`${s.url}/api/slide?mode=easy&voter=${voter}`)).json()).mine).ms, 30000, "keeps the best");
+
+  const log = (json: Record<string, unknown>, ip = "10.5.5.5") => fetch(`${s.url}/api/game-plays`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": ip }, body: JSON.stringify(json) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  const g1 = "f".repeat(16) + "games1", g2 = "f".repeat(16) + "games2";
+  assert.equal((await log({ game: "book-god-small-things", winner: "Ravi", players: 2, voter: g1 })).status, 400);
+  assert.equal((await log({ game: "catan", winner: "", players: 3, voter: g1 })).status, 400);
+  const first = await log({ game: "catan", winner: "Ravi", players: 3, voter: g1 });
+  assert.equal(first.status, 200);
+  assert.equal((await log({ game: "catan", winner: "Ravi", players: 3, voter: g1 })).status, 400, "no double taps");
+  await log({ game: "catan", winner: "ravi", players: 4, voter: g2 });
+  const board = (await (await fetch(`${s.url}/api/game-plays?game=catan`)).json()) as { month: { name: string; wins: number }[] };
+  assert.equal(board.month[0].wins, 2, "names match ignoring case");
+  const all = await (await fetch(`${s.url}/api/game-plays`)).json();
+  assert.equal(all.top[0].id, "catan");
+  assert.equal((await fetch(`${s.url}/api/game-plays?id=${all.recent[0].id}`, { method: "DELETE" })).status, 401);
+  assert.equal((await s.api(`/api/game-plays?id=${all.recent[0].id}`, { method: "DELETE" })).status, 200);
+  for (const pg of ["/slide", "/scoreboard", "/fruit-calendar", "/kind-notes", "/shelf"]) assert.equal((await fetch(s.url + pg)).status, 200, pg);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

@@ -63,6 +63,12 @@ export default function Footer() {
             <li><Link href="/blind-date">{t("footer.blindDate")}</Link></li>
             <li><Link href="/poll">{t("footer.poll")}</Link></li>
             <li><Link href="/stories">{t("footer.stories")}</Link></li>
+            <li><Link href="/connections">{t("footer.connections")}</Link></li>
+            <li><Link href="/slide">{t("footer.slide")}</Link></li>
+            <li><Link href="/scoreboard">{t("footer.scoreboard")}</Link></li>
+            <li><Link href="/fruit-calendar">{t("footer.fruit")}</Link></li>
+            <li><Link href="/kind-notes">{t("footer.kindNotes")}</Link></li>
+            <li><Link href="/lost-found">{t("footer.lostFound")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

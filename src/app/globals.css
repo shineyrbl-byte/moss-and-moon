@@ -1768,3 +1768,71 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .story-heart.on { color: var(--on-pink); }
 .board-story { margin: 0; font-size: clamp(1rem, 1.8vw, 1.8rem); color: #f5e9e1; font-family: var(--font-serif), serif; }
 .board-story .muted { color: #c6aa9c; font-family: var(--font-sans), sans-serif; font-size: 0.7em; }
+
+/* Lost & found */
+.lost-grid { list-style: none; padding: 0; display: grid; align-items: start; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: 0.8rem; margin-top: 1rem; }
+.lost-card { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.8rem; }
+.lost-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; background: var(--surface-2); }
+.lost-blank { display: grid; place-items: center; font-size: 2.4rem; }
+.lost-code { margin: 0; display: grid; gap: 0.2rem; padding: 0.6rem; border-radius: 10px; background: var(--pink-fill); }
+.lost-code b { font-size: 1.3rem; letter-spacing: 0.06em; }
+.lost-claim { width: 100%; padding-left: 0.8rem; border-left: 3px solid var(--pink); margin-top: 0.2rem; }
+
+/* Notes for a stranger */
+.kind-form { padding: 1rem 1.2rem; display: grid; gap: 0.4rem; }
+.kind-got { display: grid; gap: 0.6rem; justify-items: center; text-align: center; padding: 1.6rem 1.4rem; margin-top: 1rem; background: var(--butter); color: #3b2720; border-radius: 4px; box-shadow: var(--shadow); transform: rotate(-1.2deg); }
+.kind-got p { font-family: var(--font-display, serif); font-size: 1.3rem; line-height: 1.45; margin: 0; }
+.kind-got .muted { color: #5a463c; }
+.kind-got .btn-ghost { color: #3b2720; border-color: #3b2720; }
+
+/* Café connections */
+.conn-groups { display: grid; gap: 0.5rem; margin: 1rem 0 0.5rem; }
+.conn-group { display: grid; gap: 0.1rem; text-align: center; padding: 0.7rem; border-radius: 10px; color: #2b1d18; }
+.conn-group b { text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.95rem; }
+.conn-group span { font-size: 0.9rem; }
+.conn-group.missed { opacity: 0.75; }
+.lvl-0 { background: #f3d77c; } .lvl-1 { background: #aed294; } .lvl-2 { background: #a5c8e8; } .lvl-3 { background: #c9b0e2; }
+.conn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; margin: 0.5rem 0; }
+.conn-tile { min-height: 4rem; padding: 0.3rem; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--text); font-weight: 700; font-size: 0.85rem; overflow-wrap: anywhere; cursor: pointer; }
+.conn-tile.long { font-size: 0.7rem; }
+.conn-tile.on { background: var(--brown); color: var(--surface); }
+.conn-grid.shake { animation: conn-shake 0.4s; }
+@keyframes conn-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.conn-dots { display: inline-flex; gap: 0.3rem; vertical-align: middle; margin-left: 0.3rem; }
+.conn-dots span { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--line); }
+.conn-dots span.on { background: var(--brown); }
+.conn-share { font-size: 1.2rem; line-height: 1.25; margin: 0.6rem 0; }
+@media (prefers-reduced-motion: reduce) { .conn-grid.shake { animation: none; } }
+
+/* Slide puzzle */
+.slide-board { position: relative; display: grid; gap: 3px; width: min(100%, 26rem); aspect-ratio: 1; margin: 1rem auto 0; padding: 3px; border-radius: 12px; background: var(--brown-deep); }
+.slide-tile { position: relative; border: 0; padding: 0; border-radius: 6px; background-repeat: no-repeat; cursor: pointer; }
+.slide-tile:disabled { cursor: default; opacity: 1; }
+.slide-tile:not(:disabled):hover { filter: brightness(1.08); }
+.slide-num { position: absolute; left: 4px; top: 3px; font-size: 0.7rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000a; }
+.slide-gap { border-radius: 6px; background: var(--brown-deep); }
+.slide-full { position: absolute; inset: 3px; z-index: 2; border-radius: 10px; background-size: cover; background-position: center; pointer-events: none; }
+.slide-board.done .slide-full { animation: slide-reveal 0.5s; }
+@keyframes slide-reveal { from { opacity: 0; } }
+
+/* Fruit calendar */
+.fruit-months { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 1rem 0; }
+.fruit-list { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.fruit-card { display: flex; gap: 0.9rem; align-items: flex-start; padding: 0.8rem 1rem; }
+.fruit-emoji { font-size: 2rem; line-height: 1; }
+.fruit-dishes { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.fruit-table-wrap { overflow-x: auto; position: relative; }
+.fruit-table { border-collapse: separate; border-spacing: 2px; font-size: 0.85rem; min-width: 30rem; width: 100%; }
+.fruit-table th { font-weight: 600; text-align: center; padding: 0.2rem; }
+.fruit-table th[scope="row"] { text-align: left; white-space: nowrap; padding-right: 0.6rem; }
+.fruit-table td { height: 1.4rem; border-radius: 4px; background: var(--surface-2); }
+.fruit-table td.in { background: var(--sage); }
+.fruit-table td.on, .fruit-table th.on { outline: 2px solid var(--brown); outline-offset: -1px; }
+
+/* Board game scoreboard */
+.score-form { padding: 1rem 1.2rem; display: grid; gap: 0.3rem; }
+.score-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem; }
+.score-recent { list-style: none; padding: 0; display: grid; gap: 0.3rem; }
+.score-cols h3 { margin: 0.6rem 0 0.3rem; font-family: inherit; }
+.fruit-table thead th:first-child { text-align: left; }
+.fruit-list + p { margin-top: 0.8rem; }

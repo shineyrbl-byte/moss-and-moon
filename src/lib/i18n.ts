@@ -325,6 +325,12 @@ const en = {
   "footer.stories": "Six-word stories",
   "cups.one": "{n} cup saved this month by a guest who brought their own",
   "cups.many": "{n} cups saved this month by guests who brought their own",
+  "footer.connections": "Café connections",
+  "footer.slide": "Slide puzzle",
+  "footer.scoreboard": "Board game scoreboard",
+  "footer.fruit": "Goa fruit calendar",
+  "footer.kindNotes": "Notes for a stranger",
+  "footer.lostFound": "Lost & found",
 };
 
 type Key = keyof typeof en;
@@ -650,6 +656,12 @@ const hi: Record<Key, string> = {
   "footer.stories": "छह शब्दों की कहानियाँ",
   "cups.one": "इस महीने {n} कप बचा, अपना कप लाने वाले मेहमान की वजह से",
   "cups.many": "इस महीने {n} कप बचे, अपना कप लाने वाले मेहमानों की वजह से",
+  "footer.connections": "कैफ़े कनेक्शन्स",
+  "footer.slide": "स्लाइड पहेली",
+  "footer.scoreboard": "बोर्ड गेम स्कोरबोर्ड",
+  "footer.fruit": "गोवा फलों का कैलेंडर",
+  "footer.kindNotes": "किसी अजनबी के लिए नोट",
+  "footer.lostFound": "खोया-पाया",
 };
 
 const mr: Record<Key, string> = {
@@ -973,6 +985,12 @@ const mr: Record<Key, string> = {
   "footer.stories": "सहा शब्दांच्या गोष्टी",
   "cups.one": "या महिन्यात {n} कप वाचला, स्वतःचा कप आणणाऱ्या पाहुण्यामुळे",
   "cups.many": "या महिन्यात {n} कप वाचले, स्वतःचा कप आणणाऱ्या पाहुण्यांमुळे",
+  "footer.connections": "कॅफे कनेक्शन्स",
+  "footer.slide": "स्लाइड कोडे",
+  "footer.scoreboard": "बोर्ड गेम स्कोअरबोर्ड",
+  "footer.fruit": "गोव्याचे फळ कॅलेंडर",
+  "footer.kindNotes": "अनोळखी व्यक्तीसाठी चिठ्ठी",
+  "footer.lostFound": "हरवले-सापडले",
 };
 
 const kok: Record<Key, string> = {
@@ -1296,6 +1314,12 @@ const kok: Record<Key, string> = {
   "footer.stories": "स उतरांच्यो कथा",
   "cups.one": "ह्या म्हयन्यांत {n} कप वाटायलो",
   "cups.many": "ह्या म्हयन्यांत {n} कप वाटायले",
+  "footer.connections": "कॅफे कनेक्शन्स",
+  "footer.slide": "स्लायड कोडें",
+  "footer.scoreboard": "बोर्ड गेम स्कोअरबोर्ड",
+  "footer.fruit": "गोंयच्या फळांचें कॅलेंडर",
+  "footer.kindNotes": "अनवळखी मनशाक चिठी",
+  "footer.lostFound": "हारयल्लें-मेळ्ळें",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };
