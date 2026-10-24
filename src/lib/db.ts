@@ -930,6 +930,45 @@ function open() {
     voter TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS latte_art (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    staff_id INTEGER NOT NULL,
+    staff_name TEXT NOT NULL,
+    img TEXT NOT NULL,
+    caption TEXT NOT NULL DEFAULT '',
+    week TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS latte_votes (
+    week TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    art_id INTEGER NOT NULL,
+    PRIMARY KEY (week, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS daily_scores (
+    game TEXT NOT NULL,
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    name TEXT NOT NULL,
+    ms INTEGER NOT NULL,
+    PRIMARY KEY (game, date, voter, mode)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS guest_recipes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    intro TEXT NOT NULL DEFAULT '',
+    ingredients TEXT NOT NULL,
+    steps TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS recipe_hearts (
+    recipe_id INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    PRIMARY KEY (recipe_id, voter)
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD

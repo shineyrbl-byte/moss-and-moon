@@ -39,6 +39,7 @@ export default function BoardPage() {
   const [doodles, setDoodles] = useState<{ id: number; url: string; name: string; caption: string }[]>([]);
   const [doodleAt, setDoodleAt] = useState(0);
   const [story, setStory] = useState<{ text: string; name: string } | null>(null);
+  const [latte, setLatte] = useState<{ img: string; staff_name: string; final: boolean } | null>(null);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const seenReady = useRef<Set<string> | null>(null);
   const soundRef = useRef(false);
@@ -52,6 +53,7 @@ export default function BoardPage() {
         if (!alive) return;
         fetch("/api/songs").then((r) => r.json()).then((d) => alive && setSongs(d)).catch(() => {});
         fetch("/api/stories?week=1").then((r) => r.json()).then((d) => alive && setStory(d.week)).catch(() => {});
+        fetch("/api/latte-art?board=1").then((r) => r.json()).then((d) => alive && setLatte(d.art)).catch(() => {});
         fetch("/api/photos?kind=doodle").then((r) => r.json()).then((d) => { if (alive && Array.isArray(d.photos)) { setDoodles(d.photos.slice(0, 12)); setDoodleAt((i) => i + 1); } }).catch(() => {});
         // Highlight orders that just became ready
         const ids = new Set<string>(b.ready.map((e: Entry) => e.code));
@@ -120,6 +122,13 @@ export default function BoardPage() {
         </div>
       )}
       {story && <p className="board-story">✍️ <q>{story.text}</q> <span className="muted">· six-word story of the week{story.name ? ` by ${story.name}` : ""}</span></p>}
+      {latte && (
+        <p className="board-latte">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={latte.img} alt="" />
+          <span>☕ Latte art {latte.final ? "of the week" : "leading this week"}: <b>{latte.staff_name}</b> <span className="muted">· vote at mossandmoon → Latte art</span></span>
+        </p>
+      )}
       {doodles.length > 0 && (() => {
         const d = doodles[doodleAt % doodles.length];
         return (

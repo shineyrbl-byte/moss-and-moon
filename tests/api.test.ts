@@ -2869,6 +2869,82 @@ test("slide puzzle and board game scoreboard keep honest scores", async () => {
   for (const pg of ["/slide", "/scoreboard", "/fruit-calendar", "/kind-notes", "/shelf"]) assert.equal((await fetch(s.url + pg)).status, 200, pg);
 });
 
+test("menu explorer: what you've tried, from your own orders", async () => {
+  assert.equal((await fetch(`${s.url}/api/account/explorer`)).status, 401);
+  await signIn("explorer@example.com");
+  const before = (await s.api("/api/account/explorer")).body;
+  assert.equal(before.tried, 0);
+  assert.ok(before.total > 20 && before.next);
+  await s.api("/api/orders", { method: "POST", json: { name: "Esha", phone: "9877700051", lines: [{ itemId: "cappuccino", qty: 2 }] } });
+  const after = (await s.api("/api/account/explorer")).body as { tried: number; cats: { id: string; tried: number; items: { id: string; tried: string | null; times: number }[] }[] };
+  assert.equal(after.tried, 1);
+  const cap = after.cats.find((c) => c.id === "coffee")!.items.find((i) => i.id === "cappuccino")!;
+  assert.ok(cap.tried && cap.times === 2);
+  assert.ok(!after.cats.some((c) => c.items.some((i) => i.id === "blue-moon-spritz")), "secret dishes don't count");
+  assert.equal((await fetch(`${s.url}/menu-explorer`)).status, 200);
+});
+
+test("latte art of the week: staff post, guests vote once a week, the leader shows on the board", async () => {
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  const post = (caption: string, cookie = s.cookie()) => { const fd = new FormData(); fd.append("file", new Blob([png], { type: "image/png" }), "art.png"); fd.append("caption", caption); return fetch(`${s.url}/api/latte-art`, { method: "POST", headers: { cookie }, body: fd }); };
+  assert.equal((await post("Swan", "")).status, 401, "staff only");
+  assert.equal((await post("Swan")).status, 200);
+  assert.equal((await post("Tulip")).status, 200);
+  const week = (await (await fetch(`${s.url}/api/latte-art`)).json()) as { entries: { id: number; caption: string; votes: number }[] };
+  assert.equal(week.entries.length, 2);
+  const tulip = week.entries.find((e) => e.caption === "Tulip")!, swan = week.entries.find((e) => e.caption === "Swan")!;
+  const vote = (id: number, voter: string) => fetch(`${s.url}/api/latte-art`, { method: "PUT", headers: { "Content-Type": "application/json", "X-Real-IP": "10.6.6.1" }, body: JSON.stringify({ id, voter }) }).then((r) => r.json());
+  const v1 = "g".repeat(16) + "latte1";
+  await vote(swan.id, v1);
+  const changed = await vote(tulip.id, v1);
+  assert.equal(changed.mine, tulip.id, "you can change your vote");
+  assert.equal(changed.entries.find((e: { id: number }) => e.id === swan.id).votes, 0, "but only one counts");
+  await vote(tulip.id, "g".repeat(16) + "latte2");
+  const board = (await (await fetch(`${s.url}/api/latte-art?board=1`)).json()).art;
+  assert.equal(board.id, tulip.id);
+  assert.equal(board.final, false, "this week's leader until the week ends");
+  assert.equal((await s.api(`/api/latte-art?id=${swan.id}`, { method: "DELETE" })).status, 200);
+  for (const p of ["/latte-art", "/team", "/board"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+});
+
+test("word search and mini sudoku keep each guest's best time today", async () => {
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.6.6.2" }, body: JSON.stringify(json) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  const voter = "h".repeat(16) + "daily1";
+  assert.equal((await post({ game: "chess", ms: 50000, voter })).status, 400);
+  assert.equal((await post({ game: "wordsearch", ms: 2000, voter })).status, 400, "too quick to be real");
+  await post({ game: "wordsearch", ms: 90000, name: "Noor", voter });
+  const best = await post({ game: "wordsearch", ms: 60000, name: "Noor", voter });
+  await post({ game: "wordsearch", ms: 120000, name: "Noor", voter });
+  assert.equal(best.body.mine.ms, 60000);
+  assert.equal((await (await fetch(`${s.url}/api/daily-scores?game=wordsearch&voter=${voter}`)).json()).mine.ms, 60000);
+  await post({ game: "sudoku", mode: "hard", ms: 80000, name: "Noor", voter });
+  const easy = await (await fetch(`${s.url}/api/daily-scores?game=sudoku&mode=easy&voter=${voter}`)).json();
+  assert.equal(easy.mine, null, "easy and hard have separate boards");
+  assert.equal((await (await fetch(`${s.url}/api/daily-scores?game=sudoku&mode=hard`)).json()).top[0].name, "Noor");
+  for (const p of ["/word-search", "/sudoku", "/i-spy"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+});
+
+test("recipe swap: staff read them first, guests heart them, the best show on the recipes page", async () => {
+  const send = (json: Record<string, unknown>) => fetch(`${s.url}/api/guest-recipes`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.6.6.3" }, body: JSON.stringify(json) });
+  assert.equal((await send({ title: "Chai", ingredients: "tea", steps: "boil" })).status, 400, "needs two ingredients");
+  assert.equal((await send({ title: "Aaji's monsoon chai", name: "Kiran", ingredients: "2 cups water\n1 cup milk\n2 tsp tea", steps: "Boil the water\nAdd tea, then milk" })).status, 200);
+  assert.deepEqual((await (await fetch(`${s.url}/api/guest-recipes`)).json()).recipes, [], "not shown before staff read it");
+  assert.equal((await fetch(`${s.url}/api/guest-recipes?all=1`)).status, 401);
+  const r = ((await s.api("/api/guest-recipes?all=1")).body.recipes as { id: number; title: string; ingredients: string[] }[]).find((x) => x.title === "Aaji's monsoon chai")!;
+  assert.deepEqual(r.ingredients, ["2 cups water", "1 cup milk", "2 tsp tea"]);
+  await s.api("/api/guest-recipes", { method: "PATCH", json: { id: r.id, approve: true } });
+  const h = await (await fetch(`${s.url}/api/guest-recipes`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: r.id, voter: "i".repeat(20), on: true }) })).json();
+  assert.equal(h.hearts, 1);
+  assert.ok((await (await fetch(`${s.url}/recipes`)).text()).includes("Aaji&#x27;s monsoon chai"));
+  assert.equal((await fetch(`${s.url}/recipe-swap`)).status, 200);
+
+  assert.equal((await fetch(`${s.url}/api/ispy`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: ["x"] }) })).status, 401);
+  const saved = await s.api("/api/ispy", { method: "PUT", json: { items: ["🌿 The big fern", " ", "☕ A blue mug"] } });
+  assert.deepEqual(saved.body.items, ["🌿 The big fern", "☕ A blue mug"]);
+  const back = await s.api("/api/ispy", { method: "PUT", json: { items: [] } });
+  assert.ok(back.body.items.length >= 8, "an empty list puts the café's back");
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

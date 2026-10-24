@@ -1,5 +1,6 @@
 // "Meet the team": public profiles for staff who choose to be shown (first name only).
 import "server-only";
+import { latteWins } from "./latteStore";
 import { db, cleanText } from "./db";
 import { isOurPhoto } from "./uploads";
 import { getMenu } from "./menuStore";
@@ -37,6 +38,7 @@ export function saveProfile(b: Record<string, unknown>) {
 export function publicTeam() {
   const rows = db.prepare("SELECT s.name, s.role, p.* FROM team_profiles p JOIN staff s ON s.id = p.staff_id WHERE p.show = 1 AND s.active = 1 ORDER BY s.role = 'owner' DESC, s.name").all() as (Profile & { name: string; role: string })[];
   const menu = new Map(getMenu().map((m) => [m.id, m]));
+  const latte = latteWins();
   return rows.map((r) => {
     const fav = r.fav_item ? menu.get(r.fav_item) : undefined;
     const c = r.creation_code ? getCreation(r.creation_code) : null;
@@ -44,6 +46,7 @@ export function publicTeam() {
       id: r.staff_id, name: firstName(r.name), role: r.role === "owner" ? "Owner" : "Barista", bio: r.bio, photo: r.photo, emoji: r.emoji,
       fav: fav ? { id: fav.id, name: fav.name, price: fav.price, img: fav.img, soldOut: !!fav.soldOut } : null,
       creation: c,
+      latte: latte.get(r.staff_id) ?? null,
     };
   });
 }

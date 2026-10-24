@@ -7,7 +7,7 @@ import LabCard, { type LabCreation } from "@/components/LabCard";
 import { photo } from "@/lib/menu";
 import { defaultOptions, rupees } from "@/lib/pricing";
 
-type Member = { id: number; name: string; role: string; bio: string; photo: string | null; emoji: string; fav: { id: string; name: string; price: number; img: string; soldOut: boolean } | null; creation: LabCreation | null };
+type Member = { id: number; name: string; role: string; bio: string; photo: string | null; emoji: string; fav: { id: string; name: string; price: number; img: string; soldOut: boolean } | null; creation: LabCreation | null; latte: { wins: number; img: string } | null };
 
 export default function Team() {
   const { menu, add, toast, setDrawerOpen } = useStore();
@@ -48,6 +48,7 @@ export default function Team() {
                 <button className="btn btn-ghost btn-sm" disabled={m.fav.soldOut} onClick={() => order(m.fav!.id)}>+ Add</button>
               </div>
             )}
+            {m.latte && <span className="small team-latte">🏆 Latte art of the week ×{m.latte.wins} · <a href="/latte-art">see this week&apos;s</a></span>}
             {m.creation && <><span className="small muted">Their drink lab creation</span><LabCard c={m.creation} /></>}
             {thanking !== m.id ? (
               <button className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => { setThanking(m.id); setNote({ name: note.name, text: "" }); }}>💌 Say thanks to {m.name}</button>

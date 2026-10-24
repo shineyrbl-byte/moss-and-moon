@@ -331,6 +331,12 @@ const en = {
   "footer.fruit": "Goa fruit calendar",
   "footer.kindNotes": "Notes for a stranger",
   "footer.lostFound": "Lost & found",
+  "footer.explorer": "Menu explorer",
+  "footer.latteArt": "Latte art of the week",
+  "footer.wordSearch": "Word search",
+  "footer.sudoku": "Mini sudoku",
+  "footer.ispy": "I spy (for kids)",
+  "footer.recipeSwap": "Recipe swap",
 };
 
 type Key = keyof typeof en;
@@ -662,6 +668,12 @@ const hi: Record<Key, string> = {
   "footer.fruit": "गोवा फलों का कैलेंडर",
   "footer.kindNotes": "किसी अजनबी के लिए नोट",
   "footer.lostFound": "खोया-पाया",
+  "footer.explorer": "मेन्यू एक्सप्लोरर",
+  "footer.latteArt": "हफ़्ते की लाटे आर्ट",
+  "footer.wordSearch": "शब्द खोज",
+  "footer.sudoku": "मिनी सुडोकू",
+  "footer.ispy": "आई स्पाई (बच्चों के लिए)",
+  "footer.recipeSwap": "रेसिपी अदला-बदली",
 };
 
 const mr: Record<Key, string> = {
@@ -991,6 +1003,12 @@ const mr: Record<Key, string> = {
   "footer.fruit": "गोव्याचे फळ कॅलेंडर",
   "footer.kindNotes": "अनोळखी व्यक्तीसाठी चिठ्ठी",
   "footer.lostFound": "हरवले-सापडले",
+  "footer.explorer": "मेन्यू एक्सप्लोरर",
+  "footer.latteArt": "आठवड्याची लाटे आर्ट",
+  "footer.wordSearch": "शब्दकोडे शोध",
+  "footer.sudoku": "मिनी सुडोकू",
+  "footer.ispy": "आय स्पाय (मुलांसाठी)",
+  "footer.recipeSwap": "रेसिपी अदलाबदल",
 };
 
 const kok: Record<Key, string> = {
@@ -1320,6 +1338,12 @@ const kok: Record<Key, string> = {
   "footer.fruit": "गोंयच्या फळांचें कॅलेंडर",
   "footer.kindNotes": "अनवळखी मनशाक चिठी",
   "footer.lostFound": "हारयल्लें-मेळ्ळें",
+  "footer.explorer": "मेन्यू एक्सप्लोरर",
+  "footer.latteArt": "सप्तकाची लाटे आर्ट",
+  "footer.wordSearch": "उतर सोद",
+  "footer.sudoku": "मिनी सुडोकू",
+  "footer.ispy": "आय स्पाय (भुरग्यांखातीर)",
+  "footer.recipeSwap": "रेसिपी अदलाबदल",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

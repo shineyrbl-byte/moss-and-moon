@@ -69,6 +69,12 @@ export default function Footer() {
             <li><Link href="/fruit-calendar">{t("footer.fruit")}</Link></li>
             <li><Link href="/kind-notes">{t("footer.kindNotes")}</Link></li>
             <li><Link href="/lost-found">{t("footer.lostFound")}</Link></li>
+            <li><Link href="/menu-explorer">{t("footer.explorer")}</Link></li>
+            <li><Link href="/latte-art">{t("footer.latteArt")}</Link></li>
+            <li><Link href="/word-search">{t("footer.wordSearch")}</Link></li>
+            <li><Link href="/sudoku">{t("footer.sudoku")}</Link></li>
+            <li><Link href="/i-spy">{t("footer.ispy")}</Link></li>
+            <li><Link href="/recipe-swap">{t("footer.recipeSwap")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

@@ -844,3 +844,41 @@ test("fruit calendar: months are real, and dishes are matched by name", async ()
   assert.ok(noteProblem("follow me at www.example.com"));
   assert.ok(noteProblem("call me on 98765 43210 anytime"));
 });
+
+test("mini sudoku: every daily grid is fair, with exactly one answer", async () => {
+  const { sudokuFor, isComplete, countSolutions, clashes, SUDOKU_MODES } = await import("../src/lib/sudoku.ts");
+  for (const date of ["2026-10-25", "2026-10-26", "2027-01-01", "2027-02-28"]) for (const mode of ["easy", "hard"] as const) {
+    const { puzzle, answer } = sudokuFor(date, mode);
+    assert.ok(isComplete(answer), `${date} ${mode}: the answer follows the rules`);
+    assert.ok(puzzle.every((v, i) => !v || v === answer[i]), "the clues match the answer");
+    assert.equal(countSolutions([...puzzle]), 1, `${date} ${mode}: only one answer`);
+    assert.ok(puzzle.filter(Boolean).length <= SUDOKU_MODES[mode] + 2);
+  }
+  assert.deepEqual(sudokuFor("2026-10-25", "easy"), sudokuFor("2026-10-25", "easy"), "the same grid all day");
+  const b = sudokuFor("2026-10-25", "easy").answer.slice();
+  [b[0], b[1]] = [b[1], b[0]];
+  assert.ok(!isComplete(b) && clashes(b).size > 0, "swapping two pictures breaks it");
+});
+
+test("word search: eight words, each hidden exactly once, found either way round", async () => {
+  const { wordSearchFor, lineBetween, wordAt, SIZE, HIDDEN } = await import("../src/lib/wordSearch.ts");
+  for (const date of ["2026-10-25", "2026-10-26", "2026-12-31"]) {
+    const { grid, words } = wordSearchFor(date);
+    assert.equal(grid.length, SIZE * SIZE);
+    assert.equal(words.length, HIDDEN);
+    for (const w of words) assert.equal(w.cells.map((c) => grid[c]).join(""), w.word, `${date} ${w.word}`);
+    const dirs = new Set(words.map((w) => w.cells[1] - w.cells[0]));
+    assert.ok(dirs.size >= 3, "a mix of across, down and diagonal");
+  }
+  const { words } = wordSearchFor("2026-10-25");
+  const w = words[0];
+  assert.equal(wordAt(words, lineBetween(w.cells[0], w.cells.at(-1)!)!), w.word);
+  assert.equal(wordAt(words, lineBetween(w.cells.at(-1)!, w.cells[0])!), w.word, "dragging backwards counts");
+  assert.equal(lineBetween(0, 12), null, "not a straight line");
+  const { recipeLines, recipeProblem } = await import("../src/lib/guestRecipes.ts");
+  assert.deepEqual(recipeLines("- 2 cups water\n\n1. Boil it\n• <b>sugar</b>", 10), ["2 cups water", "Boil it", "bsugar/b"]);
+  assert.ok(recipeProblem({ title: "Chai", ingredients: ["tea"], steps: ["boil"] }));
+  const { cleanSpy, ISPY_DEFAULT } = await import("../src/lib/ispy.ts");
+  assert.deepEqual(cleanSpy(["  a plant ", "", "<b>"]), ["a plant", "b"]);
+  assert.ok(ISPY_DEFAULT.length >= 8);
+});

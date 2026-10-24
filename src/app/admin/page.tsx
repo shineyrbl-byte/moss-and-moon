@@ -57,6 +57,7 @@ import BookClubCard from "@/components/admin/BookClubCard";
 import WishesCard from "@/components/admin/WishesCard";
 import { BlindDateCard, CupsCard, PollCard, StoriesCard } from "@/components/admin/CommunityCards";
 import { KindNotesCard, LostFoundCard, ScoreboardCard } from "@/components/admin/FrontDeskCards";
+import { GuestRecipesCard, ISpyCard, LatteArtCard } from "@/components/admin/FunCards";
 import TeamProfiles from "@/components/admin/TeamProfiles";
 import OpenTabs from "@/components/admin/OpenTabs";
 import DeliveryZonesCard from "@/components/admin/DeliveryZonesCard";
@@ -108,7 +109,7 @@ const KEYWORDS: Partial<Record<Tab, string>> = {
   "Cash-up": "till cash float upi card",
   "P&L": "expenses rent wages profit loss",
   Menu: "special of the day printable menu poster recipes story instagram combos combo deals allergen chart tv bring it back vote comeback secret menu",
-  Notices: "lost found lost property left behind notes for a stranger kind notes noticeboard around the corner nearby places guide wish tree wishes poll six-word stories",
+  Notices: "latte art pour recipe swap guest recipes i spy kids lost found lost property left behind notes for a stranger kind notes noticeboard around the corner nearby places guide wish tree wishes poll six-word stories",
   Events: "book club reading",
   Team: "thank you notes kind words",
   Reviews: "guest photos doodles doodle wall pup wall",
@@ -559,7 +560,7 @@ export default function AdminPage() {
       {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "Companies" && me?.role === "owner" && <CompaniesTab />}
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
-      {tab === "Notices" && <><LostFoundCard /><KindNotesCard /><PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
+      {tab === "Notices" && <><LostFoundCard /><LatteArtCard me={me ?? null} /><KindNotesCard /><GuestRecipesCard />{me?.role === "owner" && <ISpyCard />}<PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
       {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
       {tab === "Journal" && me?.role === "owner" && <JournalTab />}
