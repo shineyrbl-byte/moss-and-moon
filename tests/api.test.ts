@@ -3044,7 +3044,7 @@ test("artist wall and where guests are visiting from", async () => {
 test("games corner: knows which daily games you've played today", async () => {
   const voter = "r".repeat(16) + "games1";
   const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
-  assert.equal(before.games.length, 21);
+  assert.equal(before.games.length, 22);
   assert.equal(before.done, 0);
   await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
   await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
@@ -3287,6 +3287,40 @@ test("more boards: cryptogram and lamp times, flood moves first, cake stacker sc
   const games = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
   for (const id of ["cipher", "flood", "lamps"]) assert.ok(games.games.find((g) => g.id === id)!.done, id);
   for (const p of ["/cryptogram", "/cake-stacker", "/reversi", "/flood", "/lamp-switch", "/sink-the-saucers"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("games corner: today's five, trophies data, the all-rounder board and jumble times", async () => {
+  const voter = "r".repeat(16) + "allrnd1", other = "r".repeat(16) + "allrnd2";
+  const post = (p: string, json: Record<string, unknown>, v = voter) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.34" }, body: JSON.stringify({ voter: v, name: "Ali", ...json }) });
+  const { todaysFive } = await import("../src/lib/todaysFive.ts");
+  assert.equal((await post("/api/daily-scores", { game: "jumble", ms: 3000 })).status, 400);
+  assert.equal((await post("/api/daily-scores", { game: "jumble", ms: 41000 })).status, 200);
+  const g = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { date: string; five: { ids: string[]; done: number; streak: number } };
+  assert.deepEqual(g.five.ids, todaysFive(g.date));
+  // Finish the five (the time-based ones are enough to count)
+  const timed: Record<string, number> = { wordsearch: 60000, sudoku: 60000, crossword: 60000, nonogram: 60000, sweeper: 60000, ladder: 60000, jigsaw: 60000, paths: 60000, tiles: 60000, spot: 60000, cipher: 60000, lamps: 60000, jumble: 60000, flood: 25_000_000 };
+  const easy = g.five.ids.filter((id) => id in timed);
+  for (const id of easy) assert.equal((await post("/api/daily-scores", { game: id, ms: timed[id], mode: "easy" })).status, 200, id);
+  const g2 = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { five: { done: number; streak: number } };
+  assert.equal(g2.five.done, easy.length);
+  const t = (await (await fetch(`${s.url}/api/trophies?voter=${voter}`)).json()) as { played: Record<string, string[]>; arcade: Record<string, number | null> };
+  assert.equal(t.played.jumble.length, 1);
+  assert.ok("stacker" in t.arcade);
+  // The all-rounder board: only people who join are on it
+  let b = (await (await fetch(`${s.url}/api/all-rounder?voter=${voter}`)).json()) as { top: { name: string; games: number }[]; joined: string | null; mine: number };
+  assert.equal(b.joined, null); assert.ok(b.mine >= 1);
+  assert.ok(!b.top.some((x) => x.name === "Ali"));
+  assert.equal((await post("/api/all-rounder", { name: "" })).status, 400);
+  b = (await (await post("/api/all-rounder", { name: "Ali" })).json()) as typeof b;
+  assert.equal(b.joined, "Ali");
+  assert.equal(b.top.find((x) => x.name === "Ali")!.games, b.mine);
+  await post("/api/daily-scores", { game: "jumble", ms: 50000 }, other);
+  await post("/api/all-rounder", { name: "Bo" }, other);
+  b = (await (await fetch(`${s.url}/api/all-rounder?voter=${voter}`)).json()) as typeof b;
+  assert.deepEqual(b.top.map((x) => x.name).slice(0, 2), b.mine > 1 ? ["Ali", "Bo"] : ["Ali", "Bo"].sort());
+  b = (await (await post("/api/all-rounder", { leave: true })).json()) as typeof b;
+  assert.equal(b.joined, null); assert.ok(!b.top.some((x) => x.name === "Ali"));
+  for (const p of ["/bean-jumble", "/bean-counting", "/draughts", "/trophies"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

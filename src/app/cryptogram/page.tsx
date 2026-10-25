@@ -5,6 +5,7 @@ import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { ALPHABET, HINT_MS, cipherFor, codeLetters, decode, guess, hintLetter, isFilled, isSolved } from "@/lib/cryptogram";
 import { toDateStr } from "@/lib/cafe";
+import { addFlag } from "@/lib/trophyFlags";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-cipher";
@@ -56,7 +57,7 @@ export default function Cryptogram() {
     if (lock) setLocked(nextLocked);
     setGuesses(next);
     if (isFilled(p, next)) {
-      if (isSolved(p, next)) { setDoneMs(Date.now() - t + extra + (lock ? HINT_MS : 0)); setSel(null); toast("Cracked it! 🔓🎉"); }
+      if (isSolved(p, next)) { setDoneMs(Date.now() - t + extra + (lock ? HINT_MS : 0)); if (!lock && extra === 0) addFlag("cipher-no-hints"); setSel(null); toast("Cracked it! 🔓🎉"); }
       else if (!lock) toast("Every letter's filled, but something's not right yet.");
     }
     // Move on to the next empty letter, in reading order

@@ -3,6 +3,7 @@ import "server-only";
 import { db } from "./db";
 import { toDateStr } from "./cafe";
 import { playStreak } from "./gameOrders";
+import { fiveDays, todaysFive } from "./todaysFive";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
 
@@ -28,13 +29,13 @@ export const DAILY_GAMES = [
   { id: "cipher", title: "Café cryptogram", emoji: "🔏", href: "/cryptogram", blurb: "Crack the coded saying" },
   { id: "flood", title: "Flood the cup", emoji: "🎨", href: "/flood", blurb: "One colour, fewest moves" },
   { id: "lamps", title: "Lamp switch", emoji: "💡", href: "/lamp-switch", blurb: "Turn every lamp off" },
+  { id: "jumble", title: "Bean jumble", emoji: "🔀", href: "/bean-jumble", blurb: "Five scrambled café words" },
 ] as const;
 
-/** Signed-in games count you by account; the rest by the id kept in your browser */
-export function gamesFor(customerId: number | null, voter: unknown, now = new Date()) {
+/** The days you played each daily game. Signed-in games count you by account; the rest by the id kept in your browser. */
+export function playedMap(customerId: number | null, voter: unknown): Record<string, string[]> {
   const anon = cleanVoter(voter);
   const me = customerId ? `c${customerId}` : anon;
-  const today = toDateStr(now);
   const days = (sql: string, v: string | null) => (v ? (db.prepare(sql).all(v) as { date: string }[]).map((r) => r.date) : []);
   const played: Record<string, string[]> = {
     word: days("SELECT date FROM word_games WHERE voter = ? AND done = 1", me),
@@ -58,9 +59,18 @@ export function gamesFor(customerId: number | null, voter: unknown, now = new Da
     cipher: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'cipher' AND voter = ?", anon),
     flood: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'flood' AND voter = ?", anon),
     lamps: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'lamps' AND voter = ?", anon),
+    jumble: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'jumble' AND voter = ?", anon),
   };
+  return played;
+}
+
+export function gamesFor(customerId: number | null, voter: unknown, now = new Date()) {
+  const today = toDateStr(now);
+  const played = playedMap(customerId, voter);
   const games = DAILY_GAMES.map((g) => ({ ...g, done: played[g.id].includes(today), streak: playStreak(played[g.id], today) }));
   // Days you finished every one of them
   const all = [...new Set(Object.values(played).flat())].filter((d) => DAILY_GAMES.every((g) => played[g.id].includes(d)));
-  return { date: today, games, done: games.filter((g) => g.done).length, allStreak: playStreak(all, today) };
+  const ids = todaysFive(today);
+  const five = { ids, done: ids.filter((id) => played[id].includes(today)).length, streak: playStreak(fiveDays(played), today) };
+  return { date: today, games, done: games.filter((g) => g.done).length, allStreak: playStreak(all, today), five };
 }

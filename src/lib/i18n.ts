@@ -370,6 +370,10 @@ const en = {
   "footer.flood": "Flood the cup",
   "footer.lamps": "Lamp switch",
   "footer.saucers": "Sink the saucers",
+  "footer.jumble": "Bean jumble",
+  "footer.mancala": "Bean counting",
+  "footer.draughts": "Café draughts",
+  "footer.trophies": "Trophy shelf",
 };
 
 type Key = keyof typeof en;
@@ -740,6 +744,10 @@ const hi: Record<Key, string> = {
   "footer.flood": "कप भरो",
   "footer.lamps": "बत्ती बुझाओ",
   "footer.saucers": "तश्तरियाँ डुबाओ",
+  "footer.jumble": "शब्दों की खिचड़ी",
+  "footer.mancala": "बीन गिनती",
+  "footer.draughts": "कैफ़े चेकर्स",
+  "footer.trophies": "ट्रॉफ़ी शेल्फ़",
 };
 
 const mr: Record<Key, string> = {
@@ -1108,6 +1116,10 @@ const mr: Record<Key, string> = {
   "footer.flood": "कप भरा",
   "footer.lamps": "दिवे बंद करा",
   "footer.saucers": "बशा बुडवा",
+  "footer.jumble": "शब्दांची खिचडी",
+  "footer.mancala": "बीन मोजणी",
+  "footer.draughts": "कॅफे चेकर्स",
+  "footer.trophies": "ट्रॉफी शेल्फ",
 };
 
 const kok: Record<Key, string> = {
@@ -1476,6 +1488,10 @@ const kok: Record<Key, string> = {
   "footer.flood": "कप भर",
   "footer.lamps": "दिवे बंद कर",
   "footer.saucers": "बशयो बुडय",
+  "footer.jumble": "उतरांची खिचडी",
+  "footer.mancala": "बीन मेजणी",
+  "footer.draughts": "कॅफे चेकर्स",
+  "footer.trophies": "ट्रॉफी शेल्फ",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

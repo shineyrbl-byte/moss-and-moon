@@ -2,13 +2,42 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { voterId } from "@/components/LabCard";
+import { useStore } from "@/components/Store";
+import { TROPHIES, earned, type TrophyCtx } from "@/lib/trophies";
+import { localTrophyStats } from "@/lib/trophyFlags";
 
 type G = { id: string; title: string; emoji: string; href: string; blurb: string; done: boolean; streak: number };
-type S = { date: string; games: G[]; done: number; allStreak: number };
+type S = { date: string; games: G[]; done: number; allStreak: number; five: { ids: string[]; done: number; streak: number } };
+type AR = { week: string; top: { name: string; games: number }[]; joined: string | null; mine: number; rank: number | null };
 
 export default function Games() {
+  const { toast } = useStore();
   const [s, setS] = useState<S | null>(null);
-  useEffect(() => { fetch(`/api/games?voter=${voterId()}`).then((r) => r.json()).then(setS).catch(() => {}); }, []);
+  const [trophies, setTrophies] = useState<number | null>(null);
+  const [ar, setAr] = useState<AR | null>(null);
+  const [arName, setArName] = useState("");
+  useEffect(() => {
+    const v = voterId();
+    fetch(`/api/games?voter=${v}`).then((r) => r.json()).then(setS).catch(() => {});
+    fetch(`/api/trophies?voter=${v}`).then((r) => r.json()).then((d: Omit<TrophyCtx, "local">) => setTrophies(earned({ ...d, local: localTrophyStats() }).length)).catch(() => {});
+    fetch(`/api/all-rounder?voter=${v}`).then((r) => r.json()).then(setAr).catch(() => {});
+    try { setArName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
+  }, []);
+  async function allRounder(body: Record<string, unknown>) {
+    if (body.name) try { localStorage.setItem("mm-game-name", String(body.name)); } catch {}
+    const r = await fetch("/api/all-rounder", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voter: voterId(), ...body }) });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error);
+    setAr(d); toast(body.leave ? "You're off the board." : "You're on the all-rounder board 🥇");
+  }
+  async function shareFive() {
+    if (!s) return;
+    const marks = s.five.ids.map((id) => (s.games.find((g) => g.id === id)?.done ? "✅" : "⬜")).join("");
+    const text = `Moss & Moon · Today's five · ${s.date}\n${marks}${s.five.streak > 1 ? ` 🔥${s.five.streak}` : ""}`;
+    try {
+      if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast("Copied. Paste it anywhere 📋"); }
+    } catch {}
+  }
   if (!s) return <div className="page"><p className="muted">Setting out the games…</p></div>;
   const pct = Math.round((s.done / s.games.length) * 100);
   return (
@@ -21,6 +50,21 @@ export default function Games() {
         <div className="explore-bar" role="progressbar" aria-valuemin={0} aria-valuemax={s.games.length} aria-valuenow={s.done} aria-label="Today's games played"><span style={{ width: `${pct}%` }} /></div>
         {s.allStreak > 0 && <span className="small">🔥 {s.allStreak} day{s.allStreak === 1 ? "" : "s"} in a row with the full set</span>}
       </section>
+      <section className="card five" aria-labelledby="five-h">
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "0.4rem" }}>
+          <h2 className="h3" id="five-h" style={{ margin: 0 }}>🎲 Today&apos;s five</h2>
+          <span className="small">{s.five.done}/5{s.five.streak > 0 ? ` · 🔥 ${s.five.streak} day${s.five.streak === 1 ? "" : "s"} in a row` : ""}</span>
+        </div>
+        <p className="tiny muted" style={{ margin: "0.2rem 0 0.6rem" }}>Not sure where to start? Two word games, two puzzles and a quick one, picked fresh every day.</p>
+        <ol className="five-list">
+          {s.five.ids.map((id) => { const g = s.games.find((x) => x.id === id); return g && (
+            <li key={id}><Link href={g.href} className={g.done ? "done" : ""}><span aria-hidden="true">{g.done ? "✅" : g.emoji}</span> {g.title}</Link></li>
+          ); })}
+        </ol>
+        {s.five.done === 5 ? <p className="small" style={{ margin: "0.6rem 0 0" }}>All five done! 🎉 <button className="btn btn-ghost btn-sm" onClick={shareFive}>Share</button></p>
+          : s.five.done > 0 && <p className="tiny" style={{ margin: "0.6rem 0 0" }}><button className="btn btn-ghost btn-sm" onClick={shareFive}>Share so far</button></p>}
+      </section>
+      <p className="small center" style={{ margin: "0.8rem 0" }}><Link href="/trophies">🏆 Trophy shelf{trophies !== null ? `: ${trophies} of ${TROPHIES.length}` : ""} →</Link></p>
       <ul className="games-grid">
         {s.games.map((g) => (
           <li key={g.id}>
@@ -42,6 +86,8 @@ export default function Games() {
         <li><Link href="/cake-stacker">🎂 Cake stacker</Link><span className="tiny muted"> · how tall can you build it?</span></li>
         <li><Link href="/reversi">⚫ Bean reversi</Link><span className="tiny muted"> · coffee vs milk, against the computer</span></li>
         <li><Link href="/sink-the-saucers">🛸 Sink the saucers</Link><span className="tiny muted"> · battleship with tableware</span></li>
+        <li><Link href="/bean-counting">🫘 Bean counting</Link><span className="tiny muted"> · mancala against the computer</span></li>
+        <li><Link href="/draughts">⚪ Café draughts</Link><span className="tiny muted"> · checkers against the computer</span></li>
         <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>
         <li><Link href="/higher-or-lower">💸 Higher or lower</Link><span className="tiny muted"> · which costs more?</span></li>
         <li><Link href="/brew-merge">🌙 Brew merge</Link><span className="tiny muted"> · beans all the way to the moon brew</span></li>
@@ -50,6 +96,21 @@ export default function Games() {
         <li><Link href="/story-chain">📜 Story chain</Link><span className="tiny muted"> · add the next line</span></li>
         <li><Link href="/scoreboard">🏆 Board game scoreboard</Link><span className="tiny muted"> · for the games on our shelf</span></li>
       </ul>
+      {ar && (
+        <section style={{ marginTop: "1.6rem" }}>
+          <h2 className="h3">🥇 This week&apos;s all-rounders</h2>
+          <p className="tiny muted" style={{ marginTop: 0 }}>One point for each daily game you finish, each day, Monday to Sunday. It&apos;s about playing a bit of everything, not speed. You&apos;ve finished <b>{ar.mine}</b> this week{ar.rank ? `, ${ar.rank === 1 ? "top of the board" : `number ${ar.rank} on the board`}` : ""}.</p>
+          {ar.top.length ? <ol className="memory-board">{ar.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{t.games}</b></li>)}</ol> : <p className="small muted">Nobody on the board yet this week.</p>}
+          {ar.joined ? (
+            <p className="tiny muted">You&apos;re on the board as <b>{ar.joined}</b>. <button className="link-btn" onClick={() => allRounder({ leave: true })}>Take me off</button></p>
+          ) : (
+            <div className="row" style={{ alignItems: "end", gap: "0.5rem" }}>
+              <label className="field" style={{ maxWidth: "12rem", marginBottom: 0 }}>Name for the board<input className="input" maxLength={20} value={arName} onChange={(e) => setArName(e.target.value)} placeholder="Your name" /></label>
+              <button className="btn btn-pink btn-sm" onClick={() => allRounder({ name: arName })}>Join the board</button>
+            </div>
+          )}
+        </section>
+      )}
       <p className="tiny muted" style={{ marginTop: "1rem" }}>Signed in? The word, connections, guess the dish, trivia, crack the order and bean hive follow your account. The others are kept in this browser.</p>
     </div>
   );

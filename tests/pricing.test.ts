@@ -1349,3 +1349,107 @@ test("sink the saucers: fleets never touch, shots sink ships, the hard computer 
   };
   assert.ok(avg("hard") < avg("easy") - 10);
 });
+
+test("today's five: two word games, two puzzles and a quick one, the same all day", async () => {
+  const { todaysFive, fiveDays, KINDS } = await import("../src/lib/todaysFive.ts");
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(Date.UTC(2026, 9, 1 + i)).toISOString().slice(0, 10);
+    const f = todaysFive(d);
+    assert.equal(new Set(f).size, 5);
+    assert.equal(f.filter((id) => (KINDS.word as readonly string[]).includes(id)).length, 2);
+    assert.equal(f.filter((id) => (KINDS.logic as readonly string[]).includes(id)).length, 2);
+    assert.equal(f.filter((id) => (KINDS.quick as readonly string[]).includes(id)).length, 1);
+    assert.deepEqual(todaysFive(d), f);
+  }
+  const d = "2026-10-25", played: Record<string, string[]> = {};
+  for (const id of todaysFive(d).slice(0, 4)) played[id] = [d];
+  assert.deepEqual(fiveDays(played), []);
+  played[todaysFive(d)[4]] = [d];
+  assert.deepEqual(fiveDays(played), [d]);
+});
+
+test("trophies: earned from plays, arcade bests, local wins and one-off moments", async () => {
+  const { TROPHIES, earned, longestRun } = await import("../src/lib/trophies.ts");
+  assert.equal(new Set(TROPHIES.map((t) => t.id)).size, TROPHIES.length);
+  assert.ok(TROPHIES.length >= 30);
+  assert.equal(longestRun(["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-05", "2026-10-02"]), 3);
+  const none = earned({ played: { word: [], sudoku: [] }, five: [], arcade: {}, local: {} });
+  assert.deepEqual(none, []);
+  const got = earned({
+    played: { word: ["2026-10-01", "2026-10-02", "2026-10-03"], sudoku: ["2026-10-02"], hive: [] }, five: ["2026-10-02"],
+    arcade: { stacker: 16, typing: 3 }, local: { reversi: { easy: { won: 1 }, hard: { won: 0 } }, patience: { won: 2, streak: 0, bestStreak: 3 }, flags: ["flood-under-par"] },
+  });
+  for (const id of ["first", "streak3", "five", "stack15", "reversi", "patience", "patience3", "underpar"]) assert.ok(got.includes(id), id);
+  for (const id of ["streak7", "stack40", "typing", "reversiHard", "everything"]) assert.ok(!got.includes(id), id);
+  // Tried them all / full house: every game, and all on one day
+  const all = earned({ played: { word: ["2026-10-01"], sudoku: ["2026-10-01"] }, five: [], arcade: {}, local: {} });
+  assert.ok(all.includes("everything") && all.includes("fullhouse"));
+});
+
+test("bean counting: sowing skips the other jar, extra turns, captures and the end sweep", async () => {
+  const { start, sow, legal, bestPit, MY_STORE, AI_STORE } = await import("../src/lib/mancala.ts");
+  const b = start();
+  // 4 beans from cup 2 land in 3, 4, 5 and the jar: go again
+  const r = sow(b, 2, 0)!;
+  assert.equal(r.board[MY_STORE], 1); assert.ok(r.again); assert.equal(r.next, 0);
+  assert.equal(sow(b, 8, 0), null, "not your cup");
+  // Capture: last bean in your empty cup takes the beans opposite
+  const c = Array(14).fill(0); c[0] = 1; c[1] = 0; c[11] = 5; c[9] = 2;
+  const cap = sow(c, 0, 0)!;
+  assert.equal(cap.captured, 6); assert.equal(cap.board[MY_STORE], 6); assert.equal(cap.board[11], 0);
+  // Your sowing never drops a bean in the computer's jar
+  const big = Array(14).fill(0); big[5] = 13; big[9] = 1;
+  const lap = sow(big, 5, 0)!;
+  assert.equal(lap.board[AI_STORE], 0);
+  assert.equal(lap.board.reduce((a, x) => a + x, 0), 14);
+  // When one side's empty, the game ends and the rest is swept up
+  const end = Array(14).fill(0); end[5] = 1; end[7] = 3;
+  const e = sow(end, 5, 0)!;
+  assert.ok(e.over); assert.equal(e.board[AI_STORE], 3); assert.equal(e.board[MY_STORE], 1);
+  assert.ok(legal(start(), 1).length === 6);
+  assert.notEqual(bestPit(start(), "hard", () => 0.5), null);
+});
+
+test("café draughts: forced captures, multi-jumps, crowning and kings going backwards", async () => {
+  const { start, moves, apply, bestMove, count } = await import("../src/lib/draughts.ts");
+  const b = start();
+  assert.equal(count(b, 1), 12); assert.equal(count(b, -1), 12);
+  assert.equal(moves(b, 1).length, 7);
+  // A capture is compulsory
+  const c = Array(64).fill(0); c[5 * 8 + 2] = 1; c[4 * 8 + 3] = -1; c[5 * 8 + 6] = 1;
+  const cm = moves(c, 1);
+  assert.equal(cm.length, 1); assert.deepEqual(cm[0].caps, [4 * 8 + 3]);
+  // A double jump takes both
+  const d = Array(64).fill(0); d[6 * 8 + 1] = 1; d[5 * 8 + 2] = -1; d[3 * 8 + 4] = -1;
+  const dm = moves(d, 1);
+  assert.equal(dm[0].caps.length, 2); assert.equal(dm[0].path.length, 2);
+  assert.equal(count(apply(d, dm[0]), -1), 0);
+  // Reaching the far row crowns you
+  const k = Array(64).fill(0); k[1 * 8 + 2] = 1;
+  const km = moves(k, 1)[0];
+  assert.equal(apply(k, km)[km.path[0]], 2);
+  // Kings move backwards too
+  const kb = Array(64).fill(0); kb[3 * 8 + 3] = 2;
+  assert.equal(moves(kb, 1).length, 4);
+  // Hard takes a free piece
+  const f = Array(64).fill(0); f[2 * 8 + 3] = -1; f[3 * 8 + 4] = 1; f[7 * 8 + 0] = 1;
+  assert.equal(bestMove(f, "hard", () => 0.5)!.caps.length, 1);
+});
+
+test("bean jumble: five words, five to nine letters, scrambled differently, no repeats for 20 days", async () => {
+  const { jumbleFor, scramble, WORDS, LENGTHS, isAnswer } = await import("../src/lib/jumble.ts");
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  for (const n of LENGTHS) { assert.equal(WORDS[n].length, 20); assert.ok(WORDS[n].every((w) => w.length === n && /^[a-z]+$/.test(w)), String(n)); }
+  const all = Object.values(WORDS).flat();
+  assert.equal(new Set(all).size, all.length);
+  // No word is an anagram of another on the list
+  const key = (w: string) => [...w].sort().join("");
+  assert.equal(new Set(all.map(key)).size, all.length);
+  const j = jumbleFor("2026-10-25");
+  assert.deepEqual(j.map((x) => x.word.length), LENGTHS);
+  for (const x of j) { assert.notEqual(x.letters, x.word); assert.equal(key(x.letters), key(x.word)); }
+  const days = [...Array(20).keys()].map((i) => jumbleFor(new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10))[2].word);
+  assert.equal(new Set(days).size, 20);
+  assert.notEqual(scramble("latte", seededRand("x")), "latte");
+  assert.ok(isAnswer(" Latte ", "latte"));
+});

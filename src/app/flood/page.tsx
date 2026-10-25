@@ -5,6 +5,7 @@ import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { COLOURS, SIZE, flood, gridFor, isDone, packScore, par, region, unpackScore } from "@/lib/flood";
 import { toDateStr } from "@/lib/cafe";
+import { addFlag } from "@/lib/trophyFlags";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-flood";
@@ -52,6 +53,7 @@ export default function Flood() {
     setPicks(next);
     if (isDone(flood(grid, c))) {
       setDoneMs(Date.now() - t);
+      if (next.length < target) addFlag("flood-under-par");
       toast(next.length <= target ? `Filled in ${next.length} moves. Par beaten! 🎉` : `Filled in ${next.length} moves 🎨`);
     }
   }

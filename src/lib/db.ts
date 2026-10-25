@@ -1122,6 +1122,12 @@ function open() {
     score INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (date, voter)
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS allrounder (
+    voter TEXT PRIMARY KEY,
+    customer_id INTEGER,
+    name TEXT NOT NULL,
+    joined TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD

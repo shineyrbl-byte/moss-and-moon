@@ -5,6 +5,7 @@ import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { HINT_MS, SIZE, allOff, lampsFor, press, solve } from "@/lib/lamps";
 import { toDateStr } from "@/lib/cafe";
+import { addFlag } from "@/lib/trophyFlags";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-lamps";
@@ -48,7 +49,7 @@ export default function LampSwitch() {
     if (!start) { setStart(t); setNow(t); }
     const next = [...presses, i];
     setPresses(next); setHint(null);
-    if (allOff(press(lit, i))) { setDoneMs(Date.now() - t + extra); toast("Lights out! Time for a nap 💤🎉"); }
+    if (allOff(press(lit, i))) { setDoneMs(Date.now() - t + extra); if (next.length <= puzzle!.fewest) addFlag("lamps-fewest"); toast("Lights out! Time for a nap 💤🎉"); }
   }
   function showHint() {
     const s = lit && solve(lit);

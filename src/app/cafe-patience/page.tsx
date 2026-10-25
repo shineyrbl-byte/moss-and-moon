@@ -4,7 +4,7 @@ import { useStore } from "@/components/Store";
 import { RANK, SUITS, autoMove, canFinish, drawCards, finishStep, isWon, newGame, pinkSuit, type Card, type From, type Game } from "@/lib/patience";
 
 const STATS = "mm-patience";
-type Stats = { played: number; won: number; streak: number; best: number | null };
+type Stats = { played: number; won: number; streak: number; best: number | null; bestStreak?: number };
 
 function Face({ c }: { c: Card }) {
   if (!c.up) return <span className="pc-card down" aria-label="Face-down card" />;
@@ -26,7 +26,7 @@ export default function CafePatience() {
   const [counted, setCounted] = useState(false);
   useEffect(() => {
     let d: 1 | 3 = 1;
-    try { const s = JSON.parse(localStorage.getItem(STATS) ?? "null"); if (s) { setStats({ played: s.played ?? 0, won: s.won ?? 0, streak: s.streak ?? 0, best: s.best ?? null }); d = s.draw === 3 ? 3 : 1; } } catch {}
+    try { const s = JSON.parse(localStorage.getItem(STATS) ?? "null"); if (s) { setStats({ played: s.played ?? 0, won: s.won ?? 0, streak: s.streak ?? 0, best: s.best ?? null, bestStreak: s.bestStreak ?? s.streak ?? 0 }); d = s.draw === 3 ? 3 : 1; } } catch {}
     setDraw(d); setG(newGame(Math.random, d));
   }, []);
   function saveStats(s: Stats, d = draw) { setStats(s); try { localStorage.setItem(STATS, JSON.stringify({ ...s, draw: d })); } catch {} }
@@ -36,7 +36,7 @@ export default function CafePatience() {
     // A game counts as played from your first move
     if (!counted) { setCounted(true); saveStats({ ...stats, played: stats.played + 1 }); }
     if (isWon(next)) {
-      const s = { ...stats, played: stats.played + (counted ? 0 : 1), won: stats.won + 1, streak: stats.streak + 1, best: stats.best === null ? next.moves : Math.min(stats.best, next.moves) };
+      const s = { ...stats, played: stats.played + (counted ? 0 : 1), won: stats.won + 1, streak: stats.streak + 1, bestStreak: Math.max(stats.bestStreak ?? 0, stats.streak + 1), best: stats.best === null ? next.moves : Math.min(stats.best, next.moves) };
       saveStats(s); toast("You won! Every card's home 🎉");
     }
     return true;
