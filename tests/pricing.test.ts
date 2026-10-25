@@ -1453,3 +1453,140 @@ test("bean jumble: five words, five to nine letters, scrambled differently, no r
   assert.notEqual(scramble("latte", seededRand("x")), "latte");
   assert.ok(isAnswer(" Latte ", "latte"));
 });
+
+test("milk & coffee: rules, one answer, and the daily grid", async () => {
+  const { N, milkFor, isSolved, clashes, countSolutions, fits, nextValue } = await import("../src/lib/binairo.ts");
+  const p = milkFor("2026-11-03");
+  assert.deepEqual(milkFor("2026-11-03"), p);
+  assert.ok(isSolved(p.solution));
+  assert.equal(countSolutions([...p.given]), 1);
+  p.given.forEach((v, i) => v !== -1 && assert.equal(v, p.solution[i]));
+  // Three in a row is flagged, and so is a row with too many of one
+  const g = Array(N * N).fill(-1) as (0 | 1 | -1)[];
+  g[0] = g[1] = 1; assert.ok(!fits(g, 2, 1)); assert.ok(fits(g, 2, 0));
+  g[2] = 1; assert.deepEqual([...clashes(g)].sort(), [0, 1, 2]);
+  const row = [0, 0, 1, 0, 0, 1, 0, -1] as const;
+  const h = Array(N * N).fill(-1) as (0 | 1 | -1)[]; row.forEach((v, i) => (h[i] = v));
+  assert.ok(clashes(h).has(0), "five milks in a row of eight");
+  assert.deepEqual([nextValue(-1), nextValue(0), nextValue(1)], [0, 1, -1]);
+});
+
+test("string lights: strings between neighbours, no crossing, all linked", async () => {
+  const { lightsFor, isSolved, toggle, neighbours, connected, count } = await import("../src/lib/bridges.ts");
+  for (const d of ["2026-11-01", "2026-11-02", "2026-12-25"]) {
+    const p = lightsFor(d);
+    assert.ok(p.islands.length >= 10);
+    assert.ok(isSolved(p.islands, p.solution), d);
+    assert.ok(!isSolved(p.islands, {}));
+  }
+  // A plus shape: the middle can't reach both arms across and down if strings would cross
+  const isl = [{ r: 0, c: 2, n: 1 }, { r: 2, c: 0, n: 1 }, { r: 2, c: 4, n: 1 }, { r: 4, c: 2, n: 1 }];
+  assert.deepEqual(neighbours(isl, 1), [2]);
+  const a = toggle(isl, {}, 1, 2)!;
+  assert.equal(toggle(isl, a, 0, 3), null, "would cross");
+  assert.equal(toggle(isl, a, 0, 1), null, "not in line");
+  const b = toggle(isl, toggle(isl, a, 1, 2)!, 1, 2)!;
+  assert.deepEqual(b, {}, "one, two, then none");
+  assert.equal(count({ "0-1": 2, "1-2": 1 }, 1), 3);
+  assert.ok(!connected(4, { "0-1": 1, "2-3": 1 }));
+});
+
+test("sugar cubes: closing a box scores and goes again; hard never hands over a box it doesn't have to", async () => {
+  const { start, play, sides, bestLine, over, score, R, C, LINES } = await import("../src/lib/dotsBoxes.ts");
+  assert.equal(LINES, (R + 1) * C + R * (C + 1));
+  let s = start();
+  const [a, b, c, d] = sides(0);
+  for (const l of [a, b, c]) { const r = play(s, l, 0)!; assert.equal(r.closed, 0); s = r.state; }
+  assert.equal(play(s, a, 0), null, "already drawn");
+  // The hard computer takes the box
+  assert.equal(bestLine(s, "hard"), d);
+  const r = play(s, d, 1)!; assert.equal(r.closed, 1); assert.equal(score(r.state, 1), 1);
+  // Two sides on a box: hard won't draw a third while it has a safe line
+  let t = start(); for (const l of sides(6).slice(0, 2)) t = play(t, l, 0)!.state;
+  for (let k = 0; k < 20; k++) { const l = bestLine(t, "hard"); assert.ok(!sides(6).includes(l)); }
+  // Whole games always finish and every box gets an owner
+  let g = start(), turn: 0 | 1 = 0;
+  while (!over(g)) { const res = play(g, bestLine(g, turn ? "hard" : "easy"), turn)!; g = res.state; if (!res.closed) turn = turn ? 0 : 1; }
+  assert.equal(score(g, 0) + score(g, 1), R * C);
+});
+
+test("café dice: scoring every row, the top-half bonus and extra fives", async () => {
+  const { scoreFor, fillRow, total, finished, CATS, DICE_MAX, roll } = await import("../src/lib/dice.ts");
+  assert.equal(scoreFor("threes", [3, 3, 1, 3, 6]), 9);
+  assert.equal(scoreFor("three", [3, 3, 1, 3, 6]), 16);
+  assert.equal(scoreFor("four", [3, 3, 1, 3, 6]), 0);
+  assert.equal(scoreFor("full", [2, 5, 2, 5, 5]), 25);
+  assert.equal(scoreFor("full", [5, 5, 5, 5, 5]), 0);
+  assert.equal(scoreFor("small", [1, 3, 2, 4, 6]), 30);
+  assert.equal(scoreFor("small", [1, 2, 3, 5, 6]), 0);
+  assert.equal(scoreFor("large", [6, 2, 3, 4, 5]), 40);
+  assert.equal(scoreFor("five", [4, 4, 4, 4, 4]), 50);
+  assert.equal(scoreFor("chance", [1, 2, 3, 4, 6]), 16);
+  let card = {}, extras = 0;
+  for (const [cat, d] of [["fours", [4, 4, 4, 1, 2]], ["fives", [5, 5, 5, 1, 2]], ["sixes", [6, 6, 6, 1, 2]], ["threes", [3, 3, 3, 1, 2]], ["twos", [2, 2, 2, 1, 3]], ["ones", [1, 1, 1, 2, 3]]] as const) {
+    ({ card, extras } = fillRow(card, extras, cat, [...d])!);
+  }
+  assert.equal(total(card, extras), 63 + 35, "bonus at 63");
+  ({ card, extras } = fillRow(card, extras, "five", [2, 2, 2, 2, 2])!);
+  ({ card, extras } = fillRow(card, extras, "chance", [2, 2, 2, 2, 2])!);
+  assert.equal(extras, 1, "a second five of a kind after 50");
+  assert.equal(fillRow(card, extras, "chance", [1, 1, 1, 1, 1]), null, "row already used");
+  assert.ok(!finished(card));
+  assert.equal(CATS.length, 13);
+  assert.equal(DICE_MAX, 105 + 35 + 235 + 12 * 100);
+  const held = roll([6, 6, 1, 1, 1], [true, true, false, false, false], () => 0);
+  assert.deepEqual(held, [6, 6, 1, 1, 1]);
+});
+
+test("tray pusher: pushing, walls, and every level solves in its stated fewest steps", async () => {
+  const { LEVELS, parse, move, solved, solve } = await import("../src/lib/sokoban.ts");
+  const p = parse(["#####", "#@$.#", "#####"]);
+  assert.equal(move(p, "up"), null, "wall");
+  const m = move(p, "right")!; assert.ok(m.pushed); assert.ok(solved(m.pos));
+  assert.equal(move(parse(["######", "#@$$.#", "######"]), "right"), null, "two cups at once");
+  assert.equal(solve(["#####", "#@$.#", "#####"]), 1);
+  assert.equal(LEVELS.length, 20);
+  for (const l of LEVELS) {
+    const q = parse(l.map);
+    assert.equal(q.cups.length, q.goals.size, l.name);
+    assert.ok(q.me >= 0, l.name);
+    assert.equal(solve(l.map, 3_000_000), l.fewest, l.name);
+  }
+  assert.ok(LEVELS.every((l, i) => !i || l.fewest >= LEVELS[i - 1].fewest), "gets harder");
+});
+
+test("delivery jam: crates slide along their length, and every level solves in its stated fewest moves", async () => {
+  const { LEVELS, parse, encode, range, slide, isOut, solve, N } = await import("../src/lib/rushHour.ts");
+  const b = "..........B.AA..B...................";
+  const ps = parse(b);
+  assert.equal(encode(ps), b);
+  const van = ps.findIndex((p) => p.id === "A");
+  assert.deepEqual(range(ps, van), [0, 2]);
+  assert.equal(slide(ps, van, 3), null, "blocked by B");
+  const bi = ps.findIndex((p) => p.id === "B");
+  assert.deepEqual(range(ps, bi), [-1, 3]);
+  assert.equal(slide(slide(ps, bi, 1)!, van, 4), null, "still in the way");
+  const out = slide(slide(ps, bi, -1)!, van, 4)!; assert.ok(isOut(out));
+  assert.equal(solve(b), 2);
+  assert.equal(LEVELS.length, 20);
+  for (const l of LEVELS) {
+    assert.equal(l.board.length, N * N);
+    assert.equal(solve(l.board), l.fewest, l.board);
+  }
+});
+
+test("today's five: the new puzzles only join from their start day, so old days keep their picks", async () => {
+  const { todaysFive, NEW_LOGIC_FROM } = await import("../src/lib/todaysFive.ts");
+  const before: string[] = [];
+  for (let d = 1; d <= 26; d++) before.push(...todaysFive(`2026-10-${String(d).padStart(2, "0")}`));
+  assert.ok(!before.includes("milk") && !before.includes("lights"));
+  const after: string[] = [];
+  for (let d = 0; d < 60; d++) after.push(...todaysFive(new Date(Date.UTC(2026, 9, 27 + d)).toISOString().slice(0, 10)));
+  assert.ok(after.includes("milk") && after.includes("lights"));
+  assert.equal(NEW_LOGIC_FROM, "2026-10-27");
+  const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
+  assert.ok(TROPHIES.length >= 42);
+  const got = earned({ played: { word: [] }, five: [], arcade: { dice: 260 }, local: { dots: { hard: { won: 1 } }, tray: 20, jam: 4, flags: ["dice-five", "jam-fewest"] } });
+  for (const id of ["dots", "dotsHard", "dice", "fiveKind", "tray5", "trayAll", "jamFewest"]) assert.ok(got.includes(id), id);
+  for (const id of ["jam5", "jamAll", "milk"]) assert.ok(!got.includes(id), id);
+});

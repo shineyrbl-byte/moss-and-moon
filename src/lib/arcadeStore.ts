@@ -8,9 +8,10 @@ import { MAX_SCORE } from "./merge";
 import { SNAKE_MAX } from "./snake";
 import { TYPING_MAX } from "./callOrder";
 import { STACKER_MAX } from "./stacker";
+import { DICE_MAX } from "./dice";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
-const GAMES = { higherlower: HL_MAX, merge: MAX_SCORE, snake: SNAKE_MAX, typing: TYPING_MAX, stacker: STACKER_MAX } as const;
+const GAMES = { higherlower: HL_MAX, merge: MAX_SCORE, snake: SNAKE_MAX, typing: TYPING_MAX, stacker: STACKER_MAX, dice: DICE_MAX } as const;
 export type ArcadeGame = keyof typeof GAMES;
 export const isArcadeGame = (g: unknown): g is ArcadeGame => typeof g === "string" && g in GAMES;
 

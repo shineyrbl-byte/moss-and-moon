@@ -30,6 +30,8 @@ export const DAILY_GAMES = [
   { id: "flood", title: "Flood the cup", emoji: "🎨", href: "/flood", blurb: "One colour, fewest moves" },
   { id: "lamps", title: "Lamp switch", emoji: "💡", href: "/lamp-switch", blurb: "Turn every lamp off" },
   { id: "jumble", title: "Bean jumble", emoji: "🔀", href: "/bean-jumble", blurb: "Five scrambled café words" },
+  { id: "milk", title: "Milk & coffee", emoji: "🥛", href: "/milk-and-coffee", blurb: "Half and half, never three" },
+  { id: "lights", title: "String lights", emoji: "✨", href: "/string-lights", blurb: "Link up every lamp" },
 ] as const;
 
 /** The days you played each daily game. Signed-in games count you by account; the rest by the id kept in your browser. */
@@ -60,6 +62,8 @@ export function playedMap(customerId: number | null, voter: unknown): Record<str
     flood: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'flood' AND voter = ?", anon),
     lamps: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'lamps' AND voter = ?", anon),
     jumble: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'jumble' AND voter = ?", anon),
+    milk: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'milk' AND voter = ?", anon),
+    lights: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'lights' AND voter = ?", anon),
   };
   return played;
 }

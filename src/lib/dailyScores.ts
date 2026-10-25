@@ -16,6 +16,8 @@ import { minMs as cipherMin } from "./cryptogram";
 import { minMs as lampsMin } from "./lamps";
 import { MAX_MOVES, MIN_MOVES, packScore } from "./flood";
 import { minMs as jumbleMin } from "./jumble";
+import { minMs as milkMin } from "./binairo";
+import { minMs as lightsMin } from "./bridges";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
 const GAMES = {
@@ -32,6 +34,8 @@ const GAMES = {
   cipher: { mode: () => "daily", min: () => cipherMin },
   lamps: { mode: () => "daily", min: () => lampsMin },
   jumble: { mode: () => "daily", min: () => jumbleMin },
+  milk: { mode: () => "daily", min: () => milkMin },
+  lights: { mode: () => "daily", min: () => lightsMin },
   // Flood keeps moves and time packed into one number (see packScore), so fewest moves wins
   flood: { mode: () => "daily", min: () => packScore(MIN_MOVES, 2000), max: packScore(MAX_MOVES, 999_999) },
 } as const;

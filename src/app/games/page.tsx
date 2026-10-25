@@ -88,6 +88,10 @@ export default function Games() {
         <li><Link href="/sink-the-saucers">🛸 Sink the saucers</Link><span className="tiny muted"> · battleship with tableware</span></li>
         <li><Link href="/bean-counting">🫘 Bean counting</Link><span className="tiny muted"> · mancala against the computer</span></li>
         <li><Link href="/draughts">⚪ Café draughts</Link><span className="tiny muted"> · checkers against the computer</span></li>
+        <li><Link href="/sugar-cubes">🧊 Sugar cubes</Link><span className="tiny muted"> · dots and boxes against the computer</span></li>
+        <li><Link href="/cafe-dice">🎲 Café dice</Link><span className="tiny muted"> · five dice, thirteen turns, a weekly board</span></li>
+        <li><Link href="/tray-pusher">☕ Tray pusher</Link><span className="tiny muted"> · push the cups onto the saucers, 20 levels</span></li>
+        <li><Link href="/delivery-jam">🚐 Delivery jam</Link><span className="tiny muted"> · get the cake van out of the yard, 20 levels</span></li>
         <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>
         <li><Link href="/higher-or-lower">💸 Higher or lower</Link><span className="tiny muted"> · which costs more?</span></li>
         <li><Link href="/brew-merge">🌙 Brew merge</Link><span className="tiny muted"> · beans all the way to the moon brew</span></li>

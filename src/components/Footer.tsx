@@ -111,6 +111,12 @@ export default function Footer() {
             <li><Link href="/bean-jumble">{t("footer.jumble")}</Link></li>
             <li><Link href="/bean-counting">{t("footer.mancala")}</Link></li>
             <li><Link href="/draughts">{t("footer.draughts")}</Link></li>
+            <li><Link href="/milk-and-coffee">{t("footer.milk")}</Link></li>
+            <li><Link href="/string-lights">{t("footer.lights")}</Link></li>
+            <li><Link href="/sugar-cubes">{t("footer.dots")}</Link></li>
+            <li><Link href="/cafe-dice">{t("footer.dice")}</Link></li>
+            <li><Link href="/tray-pusher">{t("footer.tray")}</Link></li>
+            <li><Link href="/delivery-jam">{t("footer.jam")}</Link></li>
             <li><Link href="/trophies">{t("footer.trophies")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>

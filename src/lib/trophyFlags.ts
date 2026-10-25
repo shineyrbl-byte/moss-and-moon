@@ -10,7 +10,8 @@ export function addFlag(f: string) {
 export function localTrophyStats() {
   const get = (k: string) => { try { return JSON.parse(localStorage.getItem(k) ?? "null"); } catch { return null; } };
   return {
-    reversi: get("mm-reversi")?.stats, saucers: get("mm-saucers")?.stats, mancala: get("mm-mancala")?.stats, draughts: get("mm-draughts")?.stats,
+    reversi: get("mm-reversi")?.stats, saucers: get("mm-saucers")?.stats, mancala: get("mm-mancala")?.stats, draughts: get("mm-draughts")?.stats, dots: get("mm-dots")?.stats,
+    tray: Object.keys(get("mm-tray")?.best ?? {}).length, jam: Object.keys(get("mm-jam")?.best ?? {}).length,
     patience: get("mm-patience") ?? undefined, flags: readFlags(),
   };
 }
