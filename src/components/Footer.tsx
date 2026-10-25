@@ -84,6 +84,12 @@ export default function Footer() {
             <li><Link href="/shout-outs">{t("footer.shoutouts")}</Link></li>
             <li><Link href="/adopt">{t("footer.adopt")}</Link></li>
             <li><Link href="/ask">{t("footer.ask")}</Link></li>
+            <li><Link href="/crossword">{t("footer.crossword")}</Link></li>
+            <li><Link href="/pixel-picture">{t("footer.pixel")}</Link></li>
+            <li><Link href="/crack-the-order">{t("footer.crack")}</Link></li>
+            <li><Link href="/bean-sweeper">{t("footer.sweeper")}</Link></li>
+            <li><Link href="/brew-merge">{t("footer.merge")}</Link></li>
+            <li><Link href="/higher-or-lower">{t("footer.higherLower")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

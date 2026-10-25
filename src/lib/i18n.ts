@@ -346,6 +346,12 @@ const en = {
   "footer.shoutouts": "Shout-outs on the TV",
   "footer.adopt": "Adopt a friend",
   "footer.ask": "Ask us anything",
+  "footer.crossword": "Mini crossword",
+  "footer.pixel": "Pixel picture",
+  "footer.crack": "Crack the order",
+  "footer.sweeper": "Bean sweeper",
+  "footer.merge": "Brew merge",
+  "footer.higherLower": "Higher or lower",
 };
 
 type Key = keyof typeof en;
@@ -692,6 +698,12 @@ const hi: Record<Key, string> = {
   "footer.shoutouts": "टीवी पर शाउट-आउट",
   "footer.adopt": "एक दोस्त अपनाएँ",
   "footer.ask": "हमसे कुछ भी पूछें",
+  "footer.crossword": "मिनी क्रॉसवर्ड",
+  "footer.pixel": "पिक्सेल चित्र",
+  "footer.crack": "ऑर्डर बूझो",
+  "footer.sweeper": "बीन स्वीपर",
+  "footer.merge": "ब्रू मर्ज",
+  "footer.higherLower": "महँगा या सस्ता",
 };
 
 const mr: Record<Key, string> = {
@@ -1036,6 +1048,12 @@ const mr: Record<Key, string> = {
   "footer.shoutouts": "टीव्हीवर शुभेच्छा",
   "footer.adopt": "एक मित्र दत्तक घ्या",
   "footer.ask": "आम्हाला काहीही विचारा",
+  "footer.crossword": "मिनी शब्दकोडे",
+  "footer.pixel": "पिक्सेल चित्र",
+  "footer.crack": "ऑर्डर ओळखा",
+  "footer.sweeper": "बीन स्वीपर",
+  "footer.merge": "ब्रू मर्ज",
+  "footer.higherLower": "महाग की स्वस्त",
 };
 
 const kok: Record<Key, string> = {
@@ -1380,6 +1398,12 @@ const kok: Record<Key, string> = {
   "footer.shoutouts": "टीव्हीर शुभेच्छा",
   "footer.adopt": "एक इश्ट दत्तक घेयात",
   "footer.ask": "आमकां कितेंय विचारात",
+  "footer.crossword": "मिनी क्रॉसवर्ड",
+  "footer.pixel": "पिक्सेल चित्र",
+  "footer.crack": "ऑर्डर वळख",
+  "footer.sweeper": "बीन स्वीपर",
+  "footer.merge": "ब्रू मर्ज",
+  "footer.higherLower": "म्हारग काय स्वस्त",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

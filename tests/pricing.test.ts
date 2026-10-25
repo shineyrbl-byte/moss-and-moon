@@ -953,3 +953,82 @@ test("doodle prompts, shout-out checks and shelter links", async () => {
   assert.equal(cleanLink("http://not-secure.example"), "");
   assert.equal(petKind("dragon"), "dog");
 });
+
+test("mini crossword: every grid's answers are words with clues", async () => {
+  const { CROSSWORDS, entriesOf, crosswordFor, isSolved } = await import("../src/lib/crossword.ts");
+  for (const x of CROSSWORDS) {
+    assert.ok(x.rows.length === 5 && x.rows.every((r) => r.length === 5));
+    const { entries } = entriesOf(x.rows, x.clues);
+    assert.equal(entries.length, 10);
+    for (const e of entries) assert.ok(e.clue, `${x.rows.join("/")}: no clue for ${e.answer}`);
+    assert.equal(new Set(entries.map((e) => e.answer)).size, entries.length, "no answer twice in a grid");
+    assert.equal(Object.keys(x.clues).length, entries.length, "no spare clues");
+  }
+  const today = crosswordFor("2026-10-25");
+  assert.equal(today.entries[0].num, 1);
+  assert.ok(isSolved(today.rows.join("").split("").map((c) => (c === "#" ? "" : c.toUpperCase())), today.rows));
+  assert.ok(!isSolved(Array(25).fill("a"), today.rows));
+});
+
+test("pixel pictures: every picture has exactly one answer", async () => {
+  const { PICTURES, cluesOf, countSolutions, isSolved, runs } = await import("../src/lib/nonogram.ts");
+  assert.deepEqual(runs([true, true, false, true]), [2, 1]);
+  assert.deepEqual(runs([false, false]), [0]);
+  for (const mode of ["easy", "hard"] as const) for (const p of PICTURES[mode]) {
+    assert.ok(p.rows.every((r) => r.length === p.rows.length) && p.rows.length === (mode === "easy" ? 5 : 10), p.name);
+    const clues = cluesOf(p.rows);
+    assert.equal(countSolutions(clues), 1, `${mode} ${p.name}`);
+    assert.ok(isSolved(p.rows.join("").split("").map((c) => c === "#"), clues));
+  }
+});
+
+test("crack the order: marks like Mastermind", async () => {
+  const { feedback, validGuess, crackGrid } = await import("../src/lib/crack.ts");
+  assert.deepEqual(feedback([0, 1, 2, 3], [0, 1, 2, 3]), { right: 4, near: 0 });
+  assert.deepEqual(feedback([0, 1, 2, 3], [3, 2, 1, 0]), { right: 0, near: 4 });
+  assert.deepEqual(feedback([0, 0, 1, 1], [0, 1, 0, 5]), { right: 1, near: 2 });
+  assert.deepEqual(feedback([0, 1, 2, 3], [0, 0, 0, 0]), { right: 1, near: 0 }, "a repeat only counts once");
+  assert.ok(validGuess([0, 5, 2, 2]) && !validGuess([0, 6, 1, 1]) && !validGuess([1, 2, 3]));
+  assert.equal(crackGrid([{ right: 1, near: 2 }]), "✅🔄🔄▫️");
+});
+
+test("bean sweeper: first tap is safe and empty squares open their neighbours", async () => {
+  const { layBeans, countsOf, reveal, isCleared, SWEEP_MODES, neighbours } = await import("../src/lib/sweeper.ts");
+  for (const mode of ["easy", "hard"] as const) {
+    const { w, h, beans } = SWEEP_MODES[mode];
+    for (const first of [0, 17, w * h - 1]) {
+      const b = layBeans("2026-10-25", mode, first);
+      assert.equal(b.size, beans);
+      assert.ok(![first, ...neighbours(first, w, h)].some((p) => b.has(p)), "first tap and around it are clear");
+      const counts = countsOf(b, w, h);
+      assert.equal(counts[first], 0);
+      const opened = reveal(first, b, counts, new Set(), w, h);
+      assert.ok(opened.size > 1 && [...opened].every((p) => !b.has(p)), "opens a patch, never a bean");
+    }
+  }
+  const b = new Set([0]);
+  const all = new Set([...Array(9).keys()].filter((p) => p !== 0));
+  assert.ok(isCleared(all, b, 3, 3));
+});
+
+test("brew merge: tiles slide and merge once per move", async () => {
+  const { slide, canMove, addTile } = await import("../src/lib/merge.ts");
+  const row = (a: number[]) => [...a, ...Array(12).fill(0)];
+  const r = slide(row([1, 1, 1, 1]), "left");
+  assert.deepEqual(r.board.slice(0, 4), [2, 2, 0, 0]);
+  assert.equal(r.gained, 8);
+  assert.deepEqual(slide(row([2, 0, 2, 1]), "right").board.slice(0, 4), [0, 0, 3, 1]);
+  assert.equal(slide(row([1, 2, 3, 4]), "left").moved, false);
+  const col = slide([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], "down");
+  assert.equal(col.board[12], 2);
+  assert.ok(!canMove([1, 2, 1, 2, 2, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1]));
+  assert.equal(addTile(Array(16).fill(0), () => 0).filter(Boolean).length, 1);
+  assert.equal(slide(row([11, 11, 0, 0]), "left").gained, 0, "the moon brew is the top");
+});
+
+test("higher or lower: pairs never tie on price", async () => {
+  const { pairFrom } = await import("../src/lib/higherLower.ts");
+  const items = [{ id: "a", name: "A", price: 100, img: "" }, { id: "b", name: "B", price: 100, img: "" }, { id: "c", name: "C", price: 150, img: "" }];
+  for (let i = 0; i < 30; i++) { const p = pairFrom(items, Math.random)!; assert.notEqual(p[0].price, p[1].price); }
+  assert.equal(pairFrom(items.slice(0, 2), Math.random), null);
+});

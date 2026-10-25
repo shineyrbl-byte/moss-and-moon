@@ -36,12 +36,14 @@ export default function Games() {
       <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>
       <ul className="games-more">
         <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>
+        <li><Link href="/higher-or-lower">💸 Higher or lower</Link><span className="tiny muted"> · which costs more?</span></li>
+        <li><Link href="/brew-merge">🌙 Brew merge</Link><span className="tiny muted"> · beans all the way to the moon brew</span></li>
         <li><Link href="/play">☕ Barista rush</Link><span className="tiny muted"> · make the orders, fast</span></li>
         <li><Link href="/bingo">🎯 Coffee bingo</Link><span className="tiny muted"> · a card a month</span></li>
         <li><Link href="/story-chain">📜 Story chain</Link><span className="tiny muted"> · add the next line</span></li>
         <li><Link href="/scoreboard">🏆 Board game scoreboard</Link><span className="tiny muted"> · for the games on our shelf</span></li>
       </ul>
-      <p className="tiny muted" style={{ marginTop: "1rem" }}>Signed in? The word, connections, guess the dish and trivia follow your account. The others are kept in this browser.</p>
+      <p className="tiny muted" style={{ marginTop: "1rem" }}>Signed in? The word, connections, guess the dish, trivia and crack the order follow your account. The others are kept in this browser.</p>
     </div>
   );
 }

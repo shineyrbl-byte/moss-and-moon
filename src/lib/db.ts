@@ -1072,6 +1072,23 @@ function open() {
     answered_at TEXT
   );`);
   addColumn(db, "guest_photos", "prompt", "TEXT"); // doodle of the day: which prompt it was drawn for
+  db.exec(`CREATE TABLE IF NOT EXISTS crack_games (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    guesses TEXT NOT NULL DEFAULT '[]',
+    done INTEGER NOT NULL DEFAULT 0,
+    won INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (date, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS arcade_scores (
+    game TEXT NOT NULL,
+    week TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    name TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (game, week, voter)
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD

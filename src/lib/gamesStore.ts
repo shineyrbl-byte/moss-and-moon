@@ -15,6 +15,10 @@ export const DAILY_GAMES = [
   { id: "sudoku", title: "Mini sudoku", emoji: "☕", href: "/sudoku", blurb: "Six treats, no repeats" },
   { id: "memory", title: "Memory match", emoji: "🃏", href: "/memory", blurb: "Find the pairs" },
   { id: "slide", title: "Slide puzzle", emoji: "🖼", href: "/slide", blurb: "Put the picture back" },
+  { id: "crossword", title: "Mini crossword", emoji: "📝", href: "/crossword", blurb: "A five-by-five grid" },
+  { id: "nonogram", title: "Pixel picture", emoji: "🟫", href: "/pixel-picture", blurb: "Shade by the numbers" },
+  { id: "crack", title: "Crack the order", emoji: "🔐", href: "/crack-the-order", blurb: "Guess the secret four" },
+  { id: "sweeper", title: "Bean sweeper", emoji: "🫘", href: "/bean-sweeper", blurb: "Don't spill the beans" },
 ] as const;
 
 /** Signed-in games count you by account; the rest by the id kept in your browser */
@@ -32,6 +36,10 @@ export function gamesFor(customerId: number | null, voter: unknown, now = new Da
     sudoku: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'sudoku' AND voter = ?", anon),
     memory: days("SELECT DISTINCT date FROM memory_scores WHERE voter = ?", anon),
     slide: days("SELECT DISTINCT date FROM slide_scores WHERE voter = ?", anon),
+    crossword: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'crossword' AND voter = ?", anon),
+    nonogram: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'nonogram' AND voter = ?", anon),
+    crack: days("SELECT date FROM crack_games WHERE voter = ? AND done = 1", me),
+    sweeper: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'sweeper' AND voter = ?", anon),
   };
   const games = DAILY_GAMES.map((g) => ({ ...g, done: played[g.id].includes(today), streak: playStreak(played[g.id], today) }));
   // Days you finished every one of them

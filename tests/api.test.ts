@@ -3044,7 +3044,7 @@ test("artist wall and where guests are visiting from", async () => {
 test("games corner: knows which daily games you've played today", async () => {
   const voter = "r".repeat(16) + "games1";
   const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
-  assert.equal(before.games.length, 8);
+  assert.equal(before.games.length, 12);
   assert.equal(before.done, 0);
   await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
   await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
@@ -3122,6 +3122,51 @@ test("doodle of the day: doodles drawn for the prompt get their own gallery", as
   const gallery = (await (await fetch(`${s.url}/api/photos?prompt=${encodeURIComponent(today)}`)).json()).photos as { id: number }[];
   assert.ok(gallery.some((p) => p.id === mine.id));
   assert.ok(((await (await fetch(`${s.url}/api/photos?prompts=1`)).json()).prompts as { prompt: string }[]).some((p) => p.prompt === today));
+});
+
+test("crack the order: marks each guess, keeps the answer back until you're done", async () => {
+  const voter = "k".repeat(16) + "crack1";
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/crack`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.20" }, body: JSON.stringify({ voter, ...json }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  const start = await (await fetch(`${s.url}/api/crack?voter=${voter}`)).json();
+  assert.equal(start.code, null, "the order stays secret");
+  assert.equal((await post({ guess: [0, 1] })).status, 400);
+  assert.equal((await post({ guess: [0, 1, 2, 9] })).status, 400);
+  // Work the answer out the same way the server does
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  const rand = seededRand(`crack:${start.date}:moss-moon`);
+  const code = [0, 1, 2, 3].map(() => Math.floor(rand() * 6));
+  const wrong = code.map((c) => (c + 1) % 6);
+  const first = await post({ guess: wrong });
+  assert.equal(first.status, 200);
+  assert.equal(first.body.guesses[0].right, 0);
+  assert.equal(first.body.code, null);
+  const won = await post({ guess: code });
+  assert.ok(won.body.won && won.body.done);
+  assert.deepEqual(won.body.code, code);
+  assert.match(won.body.grid, /✅✅✅✅/);
+  assert.equal((await post({ guess: code })).status, 400, "one game a day");
+  const games = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
+  assert.ok(games.games.find((g) => g.id === "crack")!.done);
+  assert.equal((await fetch(`${s.url}/crack-the-order`)).status, 200);
+});
+
+test("new daily puzzles and arcade games keep times and weekly scores", async () => {
+  const voter = "m".repeat(16) + "arcade1";
+  const post = (path: string, json: Record<string, unknown>) => fetch(`${s.url}${path}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.21" }, body: JSON.stringify({ voter, ...json }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  assert.equal((await post("/api/daily-scores", { game: "crossword", ms: 2000, name: "Q" })).status, 400, "too quick to be real");
+  assert.equal((await post("/api/daily-scores", { game: "crossword", ms: 95000, name: "Quick" })).body.top[0].name, "Quick");
+  assert.equal((await post("/api/daily-scores", { game: "nonogram", mode: "hard", ms: 120000, name: "Pix" })).body.mode, "hard");
+  assert.equal((await post("/api/daily-scores", { game: "sweeper", mode: "easy", ms: 30000, name: "Sweep" })).status, 200);
+  assert.equal((await post("/api/arcade", { game: "merge", score: 1234, name: "M" })).status, 400, "merge scores go up in fours");
+  assert.equal((await post("/api/arcade", { game: "merge", score: 2048, name: "Moon" })).body.mine, 2048);
+  assert.equal((await post("/api/arcade", { game: "merge", score: 1024, name: "Moon" })).body.mine, 2048, "keeps your best");
+  assert.equal((await post("/api/arcade", { game: "higherlower", score: 9999, name: "H" })).status, 400);
+  const hl = await post("/api/arcade", { game: "higherlower", score: 12, name: "<b>Hi</b>" });
+  assert.equal(hl.body.top[0].name, "bHi/b");
+  assert.equal((await fetch(`${s.url}/api/arcade?game=nope`)).status, 400);
+  const games = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
+  assert.deepEqual(games.games.filter((g) => g.done).map((g) => g.id).sort(), ["crossword", "nonogram", "sweeper"]);
+  for (const p of ["/crossword", "/pixel-picture", "/bean-sweeper", "/brew-merge", "/higher-or-lower", "/games"]) assert.equal((await fetch(s.url + p)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

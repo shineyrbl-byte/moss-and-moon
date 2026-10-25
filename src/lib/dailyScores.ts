@@ -1,14 +1,20 @@
-// Best times for the daily puzzles (word search, mini sudoku): each person's best today, and the day's board.
+// Best times for the daily puzzles (word search, sudoku, crossword, pixel pictures, bean sweeper): each person's best today, and the day's board.
 import "server-only";
 import { db, cleanText } from "./db";
 import { toDateStr } from "./cafe";
 import { minMs as wsMin } from "./wordSearch";
 import { minMs as sudokuMin, sudokuMode } from "./sudoku";
+import { minMs as xwMin } from "./crossword";
+import { minMs as nonoMin, nonoMode } from "./nonogram";
+import { minMs as sweepMin, sweepMode } from "./sweeper";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
 const GAMES = {
   wordsearch: { mode: () => "daily", min: () => wsMin },
   sudoku: { mode: (v: unknown) => sudokuMode(v), min: (m: string) => sudokuMin(sudokuMode(m)) },
+  crossword: { mode: () => "daily", min: () => xwMin },
+  nonogram: { mode: (v: unknown) => nonoMode(v), min: (m: string) => nonoMin(nonoMode(m)) },
+  sweeper: { mode: (v: unknown) => sweepMode(v), min: (m: string) => sweepMin(sweepMode(m)) },
 } as const;
 export type DailyGame = keyof typeof GAMES;
 export const isDailyGame = (g: unknown): g is DailyGame => typeof g === "string" && g in GAMES;
