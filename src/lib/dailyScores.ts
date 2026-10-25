@@ -12,6 +12,9 @@ import { minMs as jigMin, jigsawMode } from "./jigsaw";
 import { minMs as pathsMin, pathMode } from "./pourPaths";
 import { minMs as tilesMin } from "./teaTiles";
 import { minMs as spotMin } from "./spotDiff";
+import { minMs as cipherMin } from "./cryptogram";
+import { minMs as lampsMin } from "./lamps";
+import { MAX_MOVES, MIN_MOVES, packScore } from "./flood";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
 const GAMES = {
@@ -25,6 +28,10 @@ const GAMES = {
   paths: { mode: (v: unknown) => pathMode(v), min: (m: string) => pathsMin(pathMode(m)) },
   tiles: { mode: () => "daily", min: () => tilesMin },
   spot: { mode: () => "daily", min: () => spotMin },
+  cipher: { mode: () => "daily", min: () => cipherMin },
+  lamps: { mode: () => "daily", min: () => lampsMin },
+  // Flood keeps moves and time packed into one number (see packScore), so fewest moves wins
+  flood: { mode: () => "daily", min: () => packScore(MIN_MOVES, 2000), max: packScore(MAX_MOVES, 999_999) },
 } as const;
 export type DailyGame = keyof typeof GAMES;
 export const isDailyGame = (g: unknown): g is DailyGame => typeof g === "string" && g in GAMES;
@@ -44,7 +51,8 @@ export function submitDaily(game: DailyGame, b: Record<string, unknown>, now = n
   if (!voter) return { error: "Something went wrong. Refresh and try again." };
   const mode = GAMES[game].mode(b.mode);
   const ms = Math.round(Number(b.ms));
-  if (!(ms >= GAMES[game].min(mode) && ms <= 3 * 3600_000)) return { error: "That time doesn't look right." };
+  const g = GAMES[game] as { max?: number };
+  if (!(ms >= GAMES[game].min(mode) && ms <= (g.max ?? 3 * 3600_000))) return { error: "That time doesn't look right." };
   const name = cleanText(b.name, 20).replace(/[<>]/g, "") || "Guest";
   db.prepare(`INSERT INTO daily_scores (game, date, voter, mode, name, ms) VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(game, date, voter, mode) DO UPDATE SET name = excluded.name, ms = excluded.ms WHERE excluded.ms < daily_scores.ms`)

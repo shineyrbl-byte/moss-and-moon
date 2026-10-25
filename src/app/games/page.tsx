@@ -39,6 +39,9 @@ export default function Games() {
         <li><Link href="/bean-snake">🐍 Bean snake</Link><span className="tiny muted"> · eat the beans, don&apos;t bite your tail</span></li>
         <li><Link href="/call-the-order">⌨️ Call the order</Link><span className="tiny muted"> · type the orders before they run out</span></li>
         <li><Link href="/cafe-patience">🃏 Café patience</Link><span className="tiny muted"> · solitaire with café suits</span></li>
+        <li><Link href="/cake-stacker">🎂 Cake stacker</Link><span className="tiny muted"> · how tall can you build it?</span></li>
+        <li><Link href="/reversi">⚫ Bean reversi</Link><span className="tiny muted"> · coffee vs milk, against the computer</span></li>
+        <li><Link href="/sink-the-saucers">🛸 Sink the saucers</Link><span className="tiny muted"> · battleship with tableware</span></li>
         <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>
         <li><Link href="/higher-or-lower">💸 Higher or lower</Link><span className="tiny muted"> · which costs more?</span></li>
         <li><Link href="/brew-merge">🌙 Brew merge</Link><span className="tiny muted"> · beans all the way to the moon brew</span></li>

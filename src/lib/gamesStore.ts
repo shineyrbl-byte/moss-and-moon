@@ -25,6 +25,9 @@ export const DAILY_GAMES = [
   { id: "paths", title: "Pour paths", emoji: "🫗", href: "/pour-paths", blurb: "Join the matching cups" },
   { id: "tiles", title: "Tea tiles", emoji: "🀄", href: "/tea-tiles", blurb: "Clear the table in pairs" },
   { id: "spot", title: "Spot the difference", emoji: "🔍", href: "/spot-the-difference", blurb: "Five changes, two minutes" },
+  { id: "cipher", title: "Café cryptogram", emoji: "🔏", href: "/cryptogram", blurb: "Crack the coded saying" },
+  { id: "flood", title: "Flood the cup", emoji: "🎨", href: "/flood", blurb: "One colour, fewest moves" },
+  { id: "lamps", title: "Lamp switch", emoji: "💡", href: "/lamp-switch", blurb: "Turn every lamp off" },
 ] as const;
 
 /** Signed-in games count you by account; the rest by the id kept in your browser */
@@ -52,6 +55,9 @@ export function gamesFor(customerId: number | null, voter: unknown, now = new Da
     paths: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'paths' AND voter = ?", anon),
     tiles: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'tiles' AND voter = ?", anon),
     spot: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'spot' AND voter = ?", anon),
+    cipher: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'cipher' AND voter = ?", anon),
+    flood: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'flood' AND voter = ?", anon),
+    lamps: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'lamps' AND voter = ?", anon),
   };
   const games = DAILY_GAMES.map((g) => ({ ...g, done: played[g.id].includes(today), streak: playStreak(played[g.id], today) }));
   // Days you finished every one of them

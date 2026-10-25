@@ -1244,3 +1244,108 @@ test("café patience: deals, moves and tap-to-move follow the rules", async () =
   assert.ok(isWon(end));
   assert.equal(finishStep(end), null);
 });
+
+test("café cryptogram: no letter stands for itself, guesses move, hints fill", async () => {
+  const { cipherFor, makeKey, codeLetters, guess, isSolved, isFilled, hintLetter, decode, SAYINGS, ALPHABET } = await import("../src/lib/cryptogram.ts");
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  const key = makeKey(seededRand("k"));
+  assert.ok([...ALPHABET].every((c) => key[c] !== c));
+  assert.equal(new Set(Object.values(key)).size, 26);
+  const days = [...Array(SAYINGS.length).keys()].map((i) => new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10));
+  assert.equal(new Set(days.map((d) => cipherFor(d).plain)).size, SAYINGS.length, "no repeats within a cycle");
+  const p = cipherFor("2026-10-25");
+  assert.equal(p.code.length, p.plain.length);
+  assert.equal(Object.keys(p.given).length, 1);
+  // A plain letter can only be used once: putting it elsewhere moves it
+  const [a, b] = codeLetters(p);
+  let g = guess({}, a, "Q"); g = guess(g, b, "Q");
+  assert.equal(g[a], undefined); assert.equal(g[b], "Q");
+  // Locked (given) letters can't be changed
+  const [given] = Object.keys(p.given);
+  assert.equal(guess(p.given, given, "Z", p.given)[given], p.given[given]);
+  // Fill everything in with hints and it's solved
+  let all: Record<string, string> = {};
+  for (let c = hintLetter(p, all); c; c = hintLetter(p, all)) all = { ...all, [c]: decode(p, c) };
+  assert.ok(isFilled(p, all) && isSolved(p, all));
+});
+
+test("cake stacker: drops trim the overhang, perfect drops grow back, misses end it", async () => {
+  const { drop, slide, START_W, WIDTH } = await import("../src/lib/stacker.ts");
+  const base = { x: 20, w: 60 };
+  const half = drop(base, { x: 50, w: 60 })!;
+  assert.equal(half.x, 50); assert.equal(half.w, 30); assert.equal(half.cut, 30); assert.ok(!half.perfect);
+  const perfect = drop({ x: 30, w: 40 }, { x: 31, w: 40 })!;
+  assert.ok(perfect.perfect); assert.equal(perfect.w, 43);
+  assert.ok(drop({ x: 20, w: START_W }, { x: 20.5, w: START_W })!.w <= START_W, "never wider than it started");
+  assert.equal(drop({ x: 0, w: 20 }, { x: 40, w: 20 }), null);
+  // Bounces off both edges
+  const r = slide(75, 1, 20, 100, 0.1);
+  assert.equal(r.dir, -1); assert.ok(r.x <= WIDTH - 20 && r.x >= 0);
+  assert.equal(slide(2, -1, 20, 100, 0.05).dir, 1);
+});
+
+test("bean reversi: flips lines, passes when stuck, and the hard computer takes corners", async () => {
+  const { start, legal, play, count, flips, nextTurn, bestMove } = await import("../src/lib/reversi.ts");
+  const b = start();
+  assert.deepEqual(legal(b, 1).sort((x, y) => x - y), [19, 26, 37, 44]);
+  const after = play(b, 19, 1)!;
+  assert.equal(count(after, 1), 4); assert.equal(count(after, 2), 1);
+  assert.equal(play(b, 0, 1), null);
+  // A corner up for grabs: hard takes it
+  const c = Array(64).fill(0); c[9] = 2; c[18] = 1; c[1] = 2; c[2] = 1; c[50] = 1;
+  assert.ok(flips(c, 0, 1).length > 0);
+  assert.equal(bestMove(c, 1, "hard", () => 0), 0);
+  // Nobody can move on a full board
+  assert.equal(nextTurn(Array(64).fill(1), 2), null);
+});
+
+test("flood the cup: the patch soaks up neighbours, par finishes the board, scores pack", async () => {
+  const { gridFor, flood, region, isDone, par, packScore, unpackScore, SIZE, COLOURS } = await import("../src/lib/flood.ts");
+  const g = gridFor("2026-10-25");
+  assert.equal(g.length, SIZE * SIZE);
+  assert.equal(new Set(g).size, COLOURS.length);
+  assert.deepEqual(gridFor("2026-10-25"), g);
+  const other = (g[0] + 1) % COLOURS.length;
+  assert.ok(region(flood(g, other)).size >= region(g).size);
+  const p = par(g);
+  assert.ok(p >= 5 && p < 40, `par ${p}`);
+  assert.ok(isDone(Array(SIZE * SIZE).fill(2)));
+  assert.ok(packScore(20, 99000) < packScore(21, 1000));
+  assert.deepEqual(unpackScore(packScore(20, 4321)), { moves: 20, ms: 4321 });
+});
+
+test("lamp switch: presses flip a plus shape, and every day can be solved in the fewest taps", async () => {
+  const { press, solve, lampsFor, allOff, SIZE } = await import("../src/lib/lamps.ts");
+  const off = Array(SIZE * SIZE).fill(false);
+  assert.equal(press(off, 12).filter(Boolean).length, 5);
+  assert.equal(press(off, 0).filter(Boolean).length, 3);
+  assert.ok(allOff(press(press(off, 7), 7)));
+  for (let i = 0; i < 20; i++) {
+    const d = new Date(Date.UTC(2026, 9, 1 + i)).toISOString().slice(0, 10);
+    const { lit, fewest } = lampsFor(d);
+    const s = solve(lit)!;
+    assert.equal(s.length, fewest);
+    assert.ok(allOff(s.reduce((g, k) => press(g, k), lit)), d);
+  }
+});
+
+test("sink the saucers: fleets never touch, shots sink ships, the hard computer finishes faster", async () => {
+  const { placeFleet, shoot, allSunk, aiShot, FLEET, SIZE } = await import("../src/lib/saucers.ts");
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  const rand = seededRand("fleet");
+  for (let n = 0; n < 20; n++) {
+    const ships = placeFleet(rand);
+    assert.deepEqual(ships.map((s) => s.cells.length), FLEET.map((f) => f.len));
+    for (const [i, a] of ships.entries()) for (const b of ships.slice(i + 1)) for (const x of a.cells) for (const y of b.cells)
+      assert.ok(Math.abs(Math.floor(x / SIZE) - Math.floor(y / SIZE)) > 1 || Math.abs((x % SIZE) - (y % SIZE)) > 1, "touching");
+  }
+  const ships = placeFleet(rand), cup = ships[4].cells;
+  assert.equal(shoot(ships, [], cup[0]), "hit");
+  assert.equal(shoot(ships, [cup[0]], cup[1]), "sunk");
+  const avg = (lv: "easy" | "hard") => {
+    let total = 0;
+    for (let n = 0; n < 8; n++) { const f = placeFleet(rand), shots: number[] = []; while (!allSunk(f, shots)) shots.push(aiShot(f, shots, lv, rand)); total += shots.length; }
+    return total / 8;
+  };
+  assert.ok(avg("hard") < avg("easy") - 10);
+});
