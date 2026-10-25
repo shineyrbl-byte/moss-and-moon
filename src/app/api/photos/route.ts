@@ -1,5 +1,7 @@
 import { isAdmin, unauthorized } from "@/lib/auth";
-import { addGuestPhoto, allPhotos, approvedPhotos, photoKind, reviewPhoto } from "@/lib/guestPhotos";
+import { addGuestPhoto, allPhotos, approvedPhotos, doodlePrompts, photoKind, promptDoodles, reviewPhoto } from "@/lib/guestPhotos";
+import { promptFor } from "@/lib/doodlePrompts";
+import { toDateStr } from "@/lib/cafe";
 import { savePhoto } from "@/lib/uploads";
 import { limited, tooMany } from "@/lib/rateLimit";
 import { alertOwner } from "@/lib/push";
@@ -11,6 +13,9 @@ export async function GET(req: Request) {
     if (!(await isAdmin())) return unauthorized();
     return Response.json({ photos: allPhotos() });
   }
+  // Doodle of the day: ?prompts=1 for today's prompt and past ones; ?prompt= for one prompt's doodles
+  if (q.get("prompts") === "1") return Response.json({ today: promptFor(toDateStr(new Date())), prompts: doodlePrompts() });
+  if (q.get("prompt")) return Response.json({ photos: promptDoodles(q.get("prompt")!.slice(0, 80)) });
   const kind = photoKind(q.get("kind"));
   return Response.json({ photos: approvedPhotos(kind === "cafe" ? 24 : 48, kind) });
 }
@@ -23,7 +28,7 @@ export async function POST(req: Request) {
   const saved = await savePhoto(form.get("file"), 5);
   if ("error" in saved) return Response.json(saved, { status: 400 });
   const kind = photoKind(form.get("kind"));
-  const r = addGuestPhoto(saved.url, { name: form.get("name"), caption: form.get("caption"), kind });
+  const r = addGuestPhoto(saved.url, { name: form.get("name"), caption: form.get("caption"), kind, prompt: form.get("prompt") });
   if ("error" in r) return Response.json(r, { status: 400 });
   alertOwner("review", kind === "pup" ? "🐾 A guest shared their dog" : kind === "doodle" ? "🎨 A guest drew a doodle" : "📸 A guest shared a photo", "Have a look and approve it", "/admin#Reviews");
   return Response.json({ ok: true });

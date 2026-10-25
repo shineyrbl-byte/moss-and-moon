@@ -3041,6 +3041,89 @@ test("artist wall and where guests are visiting from", async () => {
   for (const p of ["/artist-wall", "/visiting-from", "/recipes/rose-latte", "/board"]) assert.equal((await fetch(s.url + p)).status, 200, p);
 });
 
+test("games corner: knows which daily games you've played today", async () => {
+  const voter = "r".repeat(16) + "games1";
+  const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
+  assert.equal(before.games.length, 8);
+  assert.equal(before.done, 0);
+  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
+  await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
+  const after = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean; streak: number }[]; done: number };
+  assert.equal(after.done, 2);
+  assert.ok(after.games.find((g) => g.id === "wordsearch")!.done && after.games.find((g) => g.id === "slide")!.streak === 1);
+  assert.equal((await fetch(`${s.url}/games`)).status, 200);
+});
+
+test("shout-outs: guests pick a day, staff approve, the board shows today's", async () => {
+  const { toDateStr } = await import("../src/lib/cafe.ts");
+  const today = toDateStr(new Date()), tomorrow = toDateStr(new Date(Date.now() + 86400_000));
+  const send = (json: Record<string, unknown>) => fetch(`${s.url}/api/shoutouts`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.10" }, body: JSON.stringify(json) });
+  assert.equal((await send({ date: "2020-01-01", text: "Happy birthday, Priya!" })).status, 400);
+  assert.equal((await send({ date: today, text: "Happy birthday, Priya! 🎂", from: "Mum" })).status, 200);
+  assert.equal((await send({ date: tomorrow, text: "Happy anniversary, Ravi & Meera" })).status, 200);
+  assert.deepEqual((await (await fetch(`${s.url}/api/shoutouts`)).json()).shouts, [], "nothing shows before staff approve");
+  assert.equal((await fetch(`${s.url}/api/shoutouts?all=1`)).status, 401);
+  const all = (await s.api("/api/shoutouts?all=1")).body.shouts as { id: number; date: string }[];
+  for (const x of all) await s.api("/api/shoutouts", { method: "PATCH", json: { id: x.id, approve: true } });
+  const shown = (await (await fetch(`${s.url}/api/shoutouts`)).json()).shouts as { text: string; from_name: string }[];
+  assert.equal(shown.length, 1, "only today's");
+  assert.equal(shown[0].from_name, "Mum");
+  assert.equal((await fetch(`${s.url}/shout-outs`)).status, 200);
+});
+
+test("adopt a friend, focus together and ask us anything", async () => {
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  const fd = () => { const f = new FormData(); f.append("file", new Blob([png], { type: "image/png" }), "pet.png"); f.append("name", "Biscuit"); f.append("kind", "dog"); f.append("link", "https://shelter.example/biscuit"); return f; };
+  assert.equal((await fetch(`${s.url}/api/adopt`, { method: "POST", body: fd() })).status, 401);
+  assert.equal((await fetch(`${s.url}/api/adopt`, { method: "POST", headers: { cookie: s.cookie() }, body: fd() })).status, 200);
+  const pets = (await (await fetch(`${s.url}/api/adopt`)).json()).pets as { id: number; name: string; link: string }[];
+  const b = pets.find((p) => p.name === "Biscuit")!;
+  assert.equal(b.link, "https://shelter.example/biscuit");
+  await s.api("/api/adopt", { method: "PUT", json: { id: b.id, adopted: true } });
+  const after = await (await fetch(`${s.url}/api/adopt`)).json();
+  assert.ok(!after.pets.some((p: { id: number }) => p.id === b.id) && after.homed.some((p: { id: number }) => p.id === b.id), "moves to found a home");
+
+  const focus = (json: Record<string, unknown>) => fetch(`${s.url}/api/focus`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.11" }, body: JSON.stringify(json) }).then((r) => r.json());
+  const f1 = "s".repeat(16) + "focus1", f2 = "s".repeat(16) + "focus2";
+  const base = (await (await fetch(`${s.url}/api/focus`)).json()).live;
+  await focus({ voter: f1, event: "ping" });
+  const two = await focus({ voter: f2, event: "ping" });
+  assert.equal(two.live, base + 2);
+  const done = await focus({ voter: f1, event: "done", minutes: 25 });
+  assert.equal(done.sessions, 1);
+  assert.equal((await focus({ voter: f1, event: "done", minutes: 25 })).sessions, 1, "can't finish two 25-minute sessions at once");
+  assert.equal((await focus({ voter: f2, event: "stop" })).live, base + 1);
+
+  const ask = (q: string) => fetch(`${s.url}/api/ask`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.12" }, body: JSON.stringify({ q, name: "Tanvi" }) });
+  assert.equal((await ask("decaf?")).status, 400);
+  assert.equal((await ask("Is the oat milk unsweetened?")).status, 200);
+  assert.deepEqual((await (await fetch(`${s.url}/api/ask`)).json()).questions, [], "not public until answered");
+  const q = ((await s.api("/api/ask?all=1")).body.questions as { id: number; q: string }[]).find((x) => x.q.startsWith("Is the oat milk"))!;
+  assert.equal((await fetch(`${s.url}/api/ask`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: q.id, answer: "Yes" }) })).status, 401);
+  await s.api("/api/ask", { method: "PATCH", json: { id: q.id, answer: "Yes! We use an unsweetened barista oat milk." } });
+  const pub = (await (await fetch(`${s.url}/api/ask`)).json()).questions as { q: string; answer: string }[];
+  assert.equal(pub[0].answer, "Yes! We use an unsweetened barista oat milk.");
+  assert.equal((pub[0] as { answered_by?: string | null }).answered_by, null, "the owner passcode signs as the team");
+  for (const p of ["/adopt", "/ask", "/focus", "/pups"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+});
+
+test("doodle of the day: doodles drawn for the prompt get their own gallery", async () => {
+  const { promptFor } = await import("../src/lib/doodlePrompts.ts");
+  const { toDateStr } = await import("../src/lib/cafe.ts");
+  const today = promptFor(toDateStr(new Date()));
+  assert.equal((await (await fetch(`${s.url}/api/photos?prompts=1`)).json()).today, today);
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  const f = new FormData();
+  f.append("file", new Blob([png], { type: "image/png" }), "d.png"); f.append("kind", "doodle"); f.append("name", "Zoya"); f.append("prompt", "1");
+  assert.equal((await fetch(`${s.url}/api/photos`, { method: "POST", headers: { "X-Real-IP": "10.9.9.13" }, body: f })).status, 200);
+  const mine = ((await s.api("/api/photos?all=1")).body.photos as { id: number; name: string; prompt: string | null }[]).find((p) => p.name === "Zoya")!;
+  assert.equal(mine.prompt, today, "tagged with today's prompt by the server");
+  await s.api("/api/photos", { method: "PATCH", json: { id: mine.id, approve: true } });
+  const gallery = (await (await fetch(`${s.url}/api/photos?prompt=${encodeURIComponent(today)}`)).json()).photos as { id: number }[];
+  assert.ok(gallery.some((p) => p.id === mine.id));
+  assert.ok(((await (await fetch(`${s.url}/api/photos?prompts=1`)).json()).prompts as { prompt: string }[]).some((p) => p.prompt === today));
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

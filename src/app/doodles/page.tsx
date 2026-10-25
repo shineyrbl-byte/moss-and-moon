@@ -19,7 +19,16 @@ export default function Doodles() {
   const [caption, setCaption] = useState("");
   const [busy, setBusy] = useState(false);
   const [wall, setWall] = useState<P[] | null>(null);
-  useEffect(() => { fetch("/api/photos?kind=doodle").then((r) => r.json()).then((d) => setWall(d.photos ?? [])).catch(() => setWall([])); }, []);
+  const [prompts, setPrompts] = useState<{ today: string; prompts: { prompt: string; n: number }[] } | null>(null);
+  const [usePrompt, setUsePrompt] = useState(true);
+  const [view, setView] = useState("");
+  useEffect(() => {
+    fetch("/api/photos?prompts=1").then((r) => r.json()).then(setPrompts).catch(() => {});
+  }, []);
+  useEffect(() => {
+    const u = view ? `/api/photos?prompt=${encodeURIComponent(view)}` : "/api/photos?kind=doodle";
+    fetch(u).then((r) => r.json()).then((d) => setWall(d.photos ?? [])).catch(() => setWall([]));
+  }, [view]);
   useEffect(() => { clear(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ctx = () => canvas.current!.getContext("2d")!;
@@ -60,6 +69,7 @@ export default function Doodles() {
     const f = new FormData();
     f.set("file", new File([blob], "doodle.png", { type: "image/png" }));
     f.set("kind", "doodle"); f.set("name", name || "A guest"); f.set("caption", caption);
+    if (usePrompt && prompts) f.set("prompt", "1");
     const r = await fetch("/api/photos", { method: "POST", body: f });
     const d = await r.json().catch(() => ({}));
     setBusy(false);
@@ -73,6 +83,7 @@ export default function Doodles() {
       <p className="eyebrow">draw us something</p>
       <h1 className="h2">The doodle <em>wall</em></h1>
       <p className="lead">Your latte, your dog, the view from the window: anything goes. We&apos;ll pin the best ones up here and on the screen by the counter.</p>
+      {prompts && <p className="doodle-prompt">✏️ Doodle of the day: <b>{prompts.today}</b></p>}
       <div className="doodle-layout">
         <section className="card doodle-pad">
           <canvas ref={canvas} width={SIZE} height={SIZE} className="doodle-canvas" aria-label="Drawing area" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={up} />
@@ -88,11 +99,21 @@ export default function Doodles() {
             <label className="field">Your name<input className="input" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} placeholder="Asha" /></label>
             <label className="field">What is it? <span className="muted small">· optional</span><input className="input" value={caption} maxLength={120} onChange={(e) => setCaption(e.target.value)} placeholder="My dog Biscuit" /></label>
           </div>
+          {prompts && <label className="small" style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}><input type="checkbox" checked={usePrompt} onChange={(e) => setUsePrompt(e.target.checked)} /> I drew today&apos;s prompt: &ldquo;{prompts.today}&rdquo;</label>}
           <button className="btn btn-pink" disabled={busy || !drawn} onClick={send}>{busy ? "Sending…" : "📌 Pin it to the wall"}</button>
           <p className="tiny muted center" style={{ margin: 0 }}>We have a look before it goes up.</p>
         </section>
         <section>
-          <h2 className="h3">On the wall</h2>
+          <h2 className="h3">{view ? <>&ldquo;{view}&rdquo;</> : "On the wall"}</h2>
+          {prompts && (prompts.prompts.length > 0 || view) && (
+            <label className="field small" style={{ maxWidth: "18rem" }}>Show
+              <select className="input" value={view} onChange={(e) => setView(e.target.value)}>
+                <option value="">Every doodle</option>
+                {!prompts.prompts.some((p) => p.prompt === prompts.today) && <option value={prompts.today}>Today: {prompts.today}</option>}
+                {prompts.prompts.map((p) => <option key={p.prompt} value={p.prompt}>{p.prompt === prompts.today ? "Today: " : ""}{p.prompt} · {p.n}</option>)}
+              </select>
+            </label>
+          )}
           <div className="doodle-wall">
             {wall?.map((p, i) => (
               <figure key={p.id} className="doodle-pin" style={{ transform: `rotate(${((i * 37) % 7) - 3}deg)` }}>
@@ -101,7 +122,7 @@ export default function Doodles() {
                 <figcaption className="tiny"><b>{p.name}</b>{p.caption ? ` · ${p.caption}` : ""}</figcaption>
               </figure>
             ))}
-            {wall?.length === 0 && <p className="muted">The wall is empty. Be the first ✏️</p>}
+            {wall?.length === 0 && <p className="muted">{view ? "Nobody's drawn this one yet. Be the first ✏️" : "The wall is empty. Be the first ✏️"}</p>}
           </div>
         </section>
       </div>

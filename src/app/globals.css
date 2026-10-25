@@ -1989,3 +1989,37 @@ body:has(.mboard) .nav, body:has(.mboard) .footer, body:has(.mboard) .chat-fab, 
 .origin-bar { height: 0.7rem; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
 .origin-bar span { display: block; height: 100%; background: var(--moss); border-radius: 999px; }
 .origin-list li.mine b { color: var(--pink-ink); }
+
+/* Games corner */
+.games-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(46%, 11.5rem), 1fr)); gap: 0.6rem; margin-top: 1rem; }
+.games-tile { display: grid; gap: 0.2rem; height: 100%; padding: 0.9rem; color: var(--text); text-decoration: none; }
+.games-tile:hover { border-color: var(--pink); }
+.games-tile.done { background: var(--surface-2); }
+.games-emoji { font-size: 1.8rem; }
+.games-status { margin-top: 0.3rem; font-weight: 600; color: var(--pink-ink); }
+.games-tile.done .games-status { color: var(--moss); }
+.games-more { padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+
+/* Shout-outs */
+.shout-card { padding: 0.8rem 1rem; }
+.board-shout { margin: 0.6rem 0 0; padding: 0.6rem 1rem; border-radius: 14px; background: color-mix(in srgb, var(--pink) 22%, transparent); font-family: var(--font-display, serif); font-size: 1.6rem; text-align: center; }
+
+/* Adopt a friend */
+.pet-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
+.pet-card { display: grid; overflow: hidden; padding: 0; }
+.pet-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.pet-body { display: grid; gap: 0.3rem; padding: 0.8rem 1rem 1rem; }
+.pet-body .btn { justify-self: start; margin-top: 0.3rem; }
+.pet-name { font-family: var(--font-display, serif); font-size: 1.35rem; }
+.pet-homed { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.pet-homed li { display: grid; justify-items: center; gap: 0.2rem; }
+.pet-homed img { width: 4.5rem; height: 4.5rem; border-radius: 50%; object-fit: cover; border: 3px solid var(--pink-soft); }
+
+/* Focus together */
+.focus-together { text-align: center; margin: 0.8rem 0 0; }
+
+/* Doodle of the day */
+.doodle-prompt { display: inline-block; padding: 0.4rem 0.9rem; border-radius: 999px; background: var(--butter); color: #3b2720; margin: 0 0 1rem; }
+
+/* Ask us anything */
+.ask-card { display: grid; gap: 0.1rem; }

@@ -342,6 +342,10 @@ const en = {
   "footer.guessDish": "Guess the dish",
   "footer.artWall": "Artist wall",
   "footer.visitingFrom": "Where are you from?",
+  "footer.games": "Games corner",
+  "footer.shoutouts": "Shout-outs on the TV",
+  "footer.adopt": "Adopt a friend",
+  "footer.ask": "Ask us anything",
 };
 
 type Key = keyof typeof en;
@@ -684,6 +688,10 @@ const hi: Record<Key, string> = {
   "footer.guessDish": "डिश पहचानो",
   "footer.artWall": "कलाकार की दीवार",
   "footer.visitingFrom": "आप कहाँ से हैं?",
+  "footer.games": "खेल कोना",
+  "footer.shoutouts": "टीवी पर शाउट-आउट",
+  "footer.adopt": "एक दोस्त अपनाएँ",
+  "footer.ask": "हमसे कुछ भी पूछें",
 };
 
 const mr: Record<Key, string> = {
@@ -1024,6 +1032,10 @@ const mr: Record<Key, string> = {
   "footer.guessDish": "पदार्थ ओळखा",
   "footer.artWall": "कलाकाराची भिंत",
   "footer.visitingFrom": "तुम्ही कुठून आलात?",
+  "footer.games": "खेळांचा कोपरा",
+  "footer.shoutouts": "टीव्हीवर शुभेच्छा",
+  "footer.adopt": "एक मित्र दत्तक घ्या",
+  "footer.ask": "आम्हाला काहीही विचारा",
 };
 
 const kok: Record<Key, string> = {
@@ -1364,6 +1376,10 @@ const kok: Record<Key, string> = {
   "footer.guessDish": "खाण वळख",
   "footer.artWall": "कलाकाराची वण्टी",
   "footer.visitingFrom": "तुमी खंयच्यान आयल्यात?",
+  "footer.games": "खेळांचो कोनसो",
+  "footer.shoutouts": "टीव्हीर शुभेच्छा",
+  "footer.adopt": "एक इश्ट दत्तक घेयात",
+  "footer.ask": "आमकां कितेंय विचारात",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

@@ -36,6 +36,7 @@ export default function Pups() {
       <p className="eyebrow">four legs welcome</p>
       <h1 className="h2">Pups at <em>Moss &amp; Moon</em></h1>
       <p className="lead">Well-behaved dogs are welcome on the terrace and by the window. There&apos;s always a water bowl, and a little menu just for them.</p>
+      <p className="small"><a href="/adopt">🐾 Looking for a friend of your own? Meet the shelter pets →</a></p>
       <ul className="pup-rules small">
         <li>🐾 Tick <b>&ldquo;Bringing a dog&rdquo;</b> when you <Link href="/#visit">book a table</Link> and we&apos;ll seat you somewhere with room to lie down.</li>
         <li>💧 Water bowls by the door. Just ask for a refill.</li>

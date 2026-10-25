@@ -80,6 +80,10 @@ export default function Footer() {
             <li><Link href="/guess-the-dish">{t("footer.guessDish")}</Link></li>
             <li><Link href="/artist-wall">{t("footer.artWall")}</Link></li>
             <li><Link href="/visiting-from">{t("footer.visitingFrom")}</Link></li>
+            <li><Link href="/games">{t("footer.games")}</Link></li>
+            <li><Link href="/shout-outs">{t("footer.shoutouts")}</Link></li>
+            <li><Link href="/adopt">{t("footer.adopt")}</Link></li>
+            <li><Link href="/ask">{t("footer.ask")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

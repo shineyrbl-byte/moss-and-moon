@@ -4,6 +4,7 @@ import { useStore } from "@/components/Store";
 import { PLANS, clock, nextPhase, phaseMinutes, type Phase } from "@/lib/focus";
 import { defaultOptions, rupees } from "@/lib/pricing";
 import { itemName } from "@/lib/menu";
+import { voterId } from "@/components/LabCard";
 
 type Layer = "rain" | "steam" | "chatter";
 const LAYERS: { id: Layer; label: string; icon: string }[] = [
@@ -110,6 +111,24 @@ export default function Focus() {
   const [vol, setVol] = useState<Record<Layer, number>>({ rain: 0, steam: 0, chatter: 0 });
   const [refill, setRefill] = useState(false);
   const snd = useRef<ReturnType<typeof makeSounds> | null>(null);
+  const [together, setTogether] = useState<{ live: number; sessions: number; minutes: number } | null>(null);
+  const tell = (event: "ping" | "stop" | "done", minutes?: number) =>
+    fetch("/api/focus", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voter: voterId(), event, minutes }), keepalive: true }).then((r) => r.json()).then((d) => d.live !== undefined && setTogether(d)).catch(() => {});
+
+  // Focus together: count yourself in while a focus round is running, and see who else is
+  const focusing = !!endsAt && phase === "work";
+  useEffect(() => {
+    if (!focusing) return;
+    tell("ping");
+    const id = setInterval(() => tell("ping"), 30_000);
+    return () => { clearInterval(id); tell("stop"); };
+  }, [focusing]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const load = () => fetch("/api/focus").then((r) => r.json()).then(setTogether).catch(() => {});
+    load();
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => { try { setToday(Number(localStorage.getItem(todayKey()) || 0)); } catch {} return () => snd.current?.close(); }, []);
   useEffect(() => { if (!endsAt) setLeft(phaseMinutes(plan, phase) * 60); }, [planId, phase]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -129,6 +148,7 @@ export default function Focus() {
         setToday(mins);
         try { localStorage.setItem(todayKey(), String(mins)); } catch {}
         setRefill(true);
+        tell("done", plan.work);
         setPhase(nextPhase("work", n));
       } else { setRefill(false); setPhase("work"); }
       try { if (document.hidden && Notification.permission === "granted") new Notification(phase === "work" ? "Break time ☕" : "Back to it ✿"); } catch {}
@@ -177,6 +197,12 @@ export default function Focus() {
         </div>
         <span className="small muted">🍃 {today} min focused today{done ? ` · ${done} round${done > 1 ? "s" : ""} this sitting` : ""}</span>
       </section>
+      {together && (
+        <p className="focus-together small" aria-live="polite">
+          {together.live > 0 ? <>👥 <b>{together.live}</b> {together.live === 1 ? (focusing ? "person focusing: you! Others will join." : "person focusing right now") : `people focusing right now${focusing ? ", including you" : ""}`}</> : "👥 Nobody's focusing right now. Start a round and lead the way."}
+          {together.sessions > 0 && <span className="muted"> · {together.sessions} session{together.sessions === 1 ? "" : "s"} ({together.minutes} min) finished today</span>}
+        </p>
+      )}
 
       {refill && phase !== "work" && refills.length > 0 && (
         <section className="card reward-banner" style={{ marginTop: "1rem" }}>

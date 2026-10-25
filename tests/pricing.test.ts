@@ -935,3 +935,21 @@ test("guess the dish, the recipe scaler, story chain lines and places", async ()
   assert.deepEqual(placeFor("Goa"), { name: "Goa", kind: "state" });
   assert.equal(placeFor("Atlantis"), null);
 });
+
+test("doodle prompts, shout-out checks and shelter links", async () => {
+  const { promptFor, DOODLE_PROMPTS } = await import("../src/lib/doodlePrompts.ts");
+  assert.equal(new Set(DOODLE_PROMPTS).size, DOODLE_PROMPTS.length);
+  assert.equal(promptFor("2026-10-25"), promptFor("2026-10-25"));
+  const week = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31"].map(promptFor);
+  assert.equal(new Set(week).size, 7, "a different prompt every day of the week");
+  const { shoutProblem } = await import("../src/lib/shoutouts.ts");
+  assert.equal(shoutProblem("Happy birthday, Priya! 🎂", "2026-10-26", "2026-10-25"), null);
+  assert.ok(shoutProblem("Happy birthday, Priya!", "2026-10-24", "2026-10-25"), "not in the past");
+  assert.ok(shoutProblem("Happy birthday, Priya!", "2027-03-01", "2026-10-25"), "not too far ahead");
+  assert.ok(shoutProblem("Call me on 98765 43210", "2026-10-26", "2026-10-25"));
+  const { cleanLink, petKind } = await import("../src/lib/pets.ts");
+  assert.equal(cleanLink("https://shelter.example/biscuit"), "https://shelter.example/biscuit");
+  assert.equal(cleanLink("javascript:alert(1)"), "");
+  assert.equal(cleanLink("http://not-secure.example"), "");
+  assert.equal(petKind("dragon"), "dog");
+});

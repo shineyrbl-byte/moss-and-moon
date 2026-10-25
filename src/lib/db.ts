@@ -1028,6 +1028,50 @@ function open() {
     kind TEXT NOT NULL,
     PRIMARY KEY (date, voter)
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS shoutouts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    text TEXT NOT NULL,
+    from_name TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS adopt_pets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    age TEXT NOT NULL DEFAULT '',
+    about TEXT NOT NULL DEFAULT '',
+    good_with TEXT NOT NULL DEFAULT '',
+    shelter TEXT NOT NULL DEFAULT '',
+    link TEXT NOT NULL DEFAULT '',
+    img TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'available',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    adopted_at TEXT
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS focus_presence (
+    voter TEXT PRIMARY KEY,
+    last_ms INTEGER NOT NULL
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS focus_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    minutes INTEGER NOT NULL,
+    created_ms INTEGER NOT NULL
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    q TEXT NOT NULL,
+    name TEXT NOT NULL DEFAULT '',
+    answer TEXT,
+    answered_by TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    answered_at TEXT
+  );`);
+  addColumn(db, "guest_photos", "prompt", "TEXT"); // doodle of the day: which prompt it was drawn for
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
