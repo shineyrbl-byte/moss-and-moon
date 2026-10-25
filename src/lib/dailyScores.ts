@@ -1,4 +1,4 @@
-// Best times for the daily puzzles (word search, sudoku, crossword, pixel pictures, bean sweeper): each person's best today, and the day's board.
+// Best times for the daily puzzles (word search, sudoku, crossword, pixel pictures, bean sweeper and the rest): each person's best today, and the day's board.
 import "server-only";
 import { db, cleanText } from "./db";
 import { toDateStr } from "./cafe";
@@ -9,6 +9,9 @@ import { minMs as nonoMin, nonoMode } from "./nonogram";
 import { minMs as sweepMin, sweepMode } from "./sweeper";
 import { minMs as ladderMin } from "./wordLadder";
 import { minMs as jigMin, jigsawMode } from "./jigsaw";
+import { minMs as pathsMin, pathMode } from "./pourPaths";
+import { minMs as tilesMin } from "./teaTiles";
+import { minMs as spotMin } from "./spotDiff";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
 const GAMES = {
@@ -19,6 +22,9 @@ const GAMES = {
   sweeper: { mode: (v: unknown) => sweepMode(v), min: (m: string) => sweepMin(sweepMode(m)) },
   ladder: { mode: () => "daily", min: () => ladderMin },
   jigsaw: { mode: (v: unknown) => jigsawMode(v), min: (m: string) => jigMin(jigsawMode(m)) },
+  paths: { mode: (v: unknown) => pathMode(v), min: (m: string) => pathsMin(pathMode(m)) },
+  tiles: { mode: () => "daily", min: () => tilesMin },
+  spot: { mode: () => "daily", min: () => spotMin },
 } as const;
 export type DailyGame = keyof typeof GAMES;
 export const isDailyGame = (g: unknown): g is DailyGame => typeof g === "string" && g in GAMES;

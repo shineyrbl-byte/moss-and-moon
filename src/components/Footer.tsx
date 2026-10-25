@@ -96,6 +96,12 @@ export default function Footer() {
             <li><Link href="/word-ladder">{t("footer.ladder")}</Link></li>
             <li><Link href="/jigsaw">{t("footer.jigsaw")}</Link></li>
             <li><Link href="/bean-snake">{t("footer.snake")}</Link></li>
+            <li><Link href="/bean-hive">{t("footer.hive")}</Link></li>
+            <li><Link href="/pour-paths">{t("footer.paths")}</Link></li>
+            <li><Link href="/tea-tiles">{t("footer.tiles")}</Link></li>
+            <li><Link href="/spot-the-difference">{t("footer.spot")}</Link></li>
+            <li><Link href="/call-the-order">{t("footer.typing")}</Link></li>
+            <li><Link href="/cafe-patience">{t("footer.patience")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

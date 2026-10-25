@@ -21,6 +21,10 @@ export const DAILY_GAMES = [
   { id: "sweeper", title: "Bean sweeper", emoji: "🫘", href: "/bean-sweeper", blurb: "Don't spill the beans" },
   { id: "ladder", title: "Word ladder", emoji: "🪜", href: "/word-ladder", blurb: "One letter at a time" },
   { id: "jigsaw", title: "Café jigsaw", emoji: "🧩", href: "/jigsaw", blurb: "Today's menu photo" },
+  { id: "hive", title: "Bean hive", emoji: "🐝", href: "/bean-hive", blurb: "Seven letters, how many words?" },
+  { id: "paths", title: "Pour paths", emoji: "🫗", href: "/pour-paths", blurb: "Join the matching cups" },
+  { id: "tiles", title: "Tea tiles", emoji: "🀄", href: "/tea-tiles", blurb: "Clear the table in pairs" },
+  { id: "spot", title: "Spot the difference", emoji: "🔍", href: "/spot-the-difference", blurb: "Five changes, two minutes" },
 ] as const;
 
 /** Signed-in games count you by account; the rest by the id kept in your browser */
@@ -44,6 +48,10 @@ export function gamesFor(customerId: number | null, voter: unknown, now = new Da
     sweeper: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'sweeper' AND voter = ?", anon),
     ladder: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'ladder' AND voter = ?", anon),
     jigsaw: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'jigsaw' AND voter = ?", anon),
+    hive: days("SELECT date FROM hive_games WHERE voter = ? AND score > 0", me),
+    paths: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'paths' AND voter = ?", anon),
+    tiles: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'tiles' AND voter = ?", anon),
+    spot: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'spot' AND voter = ?", anon),
   };
   const games = DAILY_GAMES.map((g) => ({ ...g, done: played[g.id].includes(today), streak: playStreak(played[g.id], today) }));
   // Days you finished every one of them

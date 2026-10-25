@@ -1104,3 +1104,143 @@ test("quiz night: quick right answers score more", async () => {
   assert.equal(points(99999, 20000), 500);
   assert.equal(cleanName("  <b>Flat   Whites</b> "), "bFlat Whites/b");
 });
+
+test("bean hive: every puzzle's words fit its letters, and ranks build up", async () => {
+  const { HIVE_PUZZLES } = await import("../src/lib/data/hive.ts");
+  const { puzzle, hiveFor, hiveProblem, points, rankOf, isPangram, lettersOf } = await import("../src/lib/hive.ts");
+  for (const p of HIVE_PUZZLES) {
+    const h = puzzle(p, "x"), letters = new Set(p.base);
+    assert.equal(letters.size, 7, p.base);
+    assert.equal(h.outer.length, 6);
+    const all = [...h.common, ...h.bonus];
+    assert.equal(new Set(all).size, all.length, `${p.base} has a repeated word`);
+    for (const w of all) assert.ok(w.length >= 4 && w.includes(p.centre) && [...w].every((c) => letters.has(c)), `${p.base}: ${w}`);
+    assert.ok(h.common.some((w) => isPangram(w, p.base)), `${p.base} needs a word using all seven`);
+  }
+  const h = hiveFor("2026-10-25"), word = h.common[0];
+  assert.equal(hiveProblem(h, "abc", []), "Four letters or more.");
+  assert.equal(hiveProblem(h, word, [word]), "Already found.");
+  assert.equal(hiveProblem(h, word, []), null);
+  assert.match(hiveProblem(h, h.outer.slice(0, 4).join(""), []) ?? "", /middle letter|word list/);
+  assert.equal(points("cake", "cupcakes"), 1);
+  assert.equal(points("cupcakes", "cupcakes"), 15);
+  assert.equal(rankOf(0, 100), "Decaf");
+  assert.equal(rankOf(100, 100), "Moon brew");
+  // Sixteen days in a row never repeat a puzzle
+  const seen = new Set<string>();
+  for (let d = 1; d <= 16; d++) seen.add(lettersOf(hiveFor(`2026-11-${String(d).padStart(2, "0")}`)).split("").sort().join(""));
+  assert.equal(seen.size, 16);
+});
+
+test("pour paths: every puzzle has a full answer, and pipes behave", async () => {
+  const { pathsFor, isSolved, extend, PATH_MODES } = await import("../src/lib/pourPaths.ts");
+  for (const mode of ["easy", "hard"] as const) for (let d = 1; d <= 20; d++) {
+    const p = pathsFor(`2026-11-${String(d).padStart(2, "0")}`, mode);
+    assert.equal(p.ends.length, PATH_MODES[mode].pairs);
+    assert.ok(isSolved(p.size, p.ends, p.solution), `${mode} ${d}`);
+    assert.ok(p.solution.every((s) => s.length >= 3));
+  }
+  const p = pathsFor("2026-10-25", "easy");
+  assert.ok(!isSolved(p.size, p.ends, p.ends.map(() => [])));
+  // Drawing the answer step by step through extend gets there too
+  let paths = p.ends.map(() => [] as number[]);
+  p.solution.forEach((s, i) => { paths = paths.map((x, k) => (k === i ? [s[0]] : x)); for (const c of s.slice(1)) paths = extend(p.size, p.ends, paths, i, c); });
+  assert.ok(isSolved(p.size, p.ends, paths));
+  // Can't run a pipe into someone else's cup
+  const other = p.ends[1][0], before = [[p.ends[0][0]], ...p.ends.slice(1).map(() => [])];
+  assert.equal(extend(p.size, p.ends, before, 0, other), before);
+});
+
+test("tea tiles: the daily deal can always be cleared, and a reshuffle keeps it clearable", async () => {
+  const { tilesFor, freeSpots, hintPair, reshuffle, LAYOUT } = await import("../src/lib/teaTiles.ts");
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  assert.equal(LAYOUT.length % 2, 0);
+  for (let d = 1; d <= 10; d++) {
+    const tiles = tilesFor(`2026-11-${String(d).padStart(2, "0")}`);
+    assert.equal(tiles.length, LAYOUT.length);
+    // A careful player (always taking a pair that keeps a way out) can clear it: search for one
+    const solve = (left: typeof tiles, depth = 0): boolean => {
+      if (!left.length) return true;
+      if (depth > 40) return false;
+      const free = freeSpots(left) as typeof tiles;
+      for (let i = 0; i < free.length; i++) for (let k = i + 1; k < free.length; k++) {
+        if (free[i].face !== free[k].face) continue;
+        if (solve(left.filter((t) => t !== free[i] && t !== free[k]), depth + 1)) return true;
+      }
+      return false;
+    };
+    assert.ok(hintPair(tiles));
+    if (d <= 3) assert.ok(solve(tiles), `day ${d}`);
+  }
+  let t = tilesFor("2026-10-25");
+  for (let i = 0; i < 10; i++) { const pair = hintPair(t)!; t = t.filter((x) => !pair.includes(x)); }
+  const r = reshuffle(t, seededRand("x"));
+  assert.deepEqual(r.map((x) => x.id), t.map((x) => x.id));
+  assert.deepEqual(r.map((x) => x.face).sort(), t.map((x) => x.face).sort());
+});
+
+test("spot the difference: five separate changes, and taps find them", async () => {
+  const { sceneFor, hitDiff, DIFFS, COLS, ROWS } = await import("../src/lib/spotDiff.ts");
+  for (let d = 1; d <= 30; d++) {
+    const s = sceneFor(`2026-11-${String(d).padStart(2, "0")}`);
+    assert.equal(s.diffs.length, DIFFS);
+    assert.equal(new Set(s.diffs.map((x) => x.cell)).size, DIFFS);
+    for (const x of s.diffs) {
+      const a = s.left.find((i) => i.cell === x.cell), b = s.right.find((i) => i.cell === x.cell);
+      assert.notDeepEqual(a, b, `day ${d}: ${x.kind} at ${x.cell} changes nothing`);
+    }
+    // Everything else is identical
+    for (const a of s.left) if (!s.diffs.some((x) => x.cell === a.cell)) assert.deepEqual(s.right.find((i) => i.cell === a.cell), a);
+  }
+  const s = sceneFor("2026-10-25"), c = s.diffs[2].cell;
+  assert.equal(hitDiff(s, ((c % COLS) + 0.5) / COLS, (Math.floor(c / COLS) + 0.5) / ROWS, []), 2);
+  assert.equal(hitDiff(s, ((c % COLS) + 0.5) / COLS, (Math.floor(c / COLS) + 0.5) / ROWS, [2]), -1);
+});
+
+test("call the order: typing matches the oldest ticket and ignores case and commas", async () => {
+  const { matchTicket, isDone, orderText, norm, travelMs } = await import("../src/lib/callOrder.ts");
+  const tickets = [{ id: 2, text: "oat latte", born: 20, travel: 9000 }, { id: 1, text: "Oat latte, to go", born: 10, travel: 9000 }, { id: 3, text: "mocha", born: 30, travel: 9000 }];
+  assert.equal(matchTicket(tickets, "oat l")?.id, 1);
+  assert.equal(matchTicket(tickets, "MOC")?.id, 3);
+  assert.equal(matchTicket(tickets, "tea"), null);
+  assert.ok(isDone(tickets[1], "oat latte to go"));
+  assert.ok(!isDone(tickets[1], "oat latte"));
+  assert.equal(norm("  Large,  OAT latte "), "large oat latte ");
+  assert.ok(!orderText(0, () => 0.5).includes(" ") || orderText(0, () => 0.5).split(" ").length <= 2);
+  assert.ok(orderText(30, () => 0.5).includes(","));
+  assert.ok(travelMs(100) >= 6500);
+});
+
+test("café patience: deals, moves and tap-to-move follow the rules", async () => {
+  const { newGame, drawCards, autoMove, move, canStack, canFound, isWon, canFinish, finishStep } = await import("../src/lib/patience.ts");
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  const g = newGame(seededRand("deal"), 1);
+  assert.equal(g.stock.length, 24);
+  assert.deepEqual(g.piles.map((p) => p.length), [1, 2, 3, 4, 5, 6, 7]);
+  assert.ok(g.piles.every((p) => p[p.length - 1].up && p.slice(0, -1).every((c) => !c.up)));
+  const d = drawCards(g);
+  assert.equal(d.waste.length, 1); assert.equal(d.stock.length, 23);
+  let x = g; for (let i = 0; i < 24; i++) x = drawCards(x);
+  assert.equal(x.stock.length, 0);
+  assert.equal(drawCards(x).stock.length, 24);
+  assert.equal(drawCards(newGame(seededRand("deal"), 3)).waste.length, 3);
+  // Colours alternate: brown (0, 2) on pink (1, 3)
+  assert.ok(canStack({ suit: 0, rank: 6, up: true }, [{ suit: 1, rank: 7, up: true }]));
+  assert.ok(!canStack({ suit: 2, rank: 6, up: true }, [{ suit: 0, rank: 7, up: true }]));
+  assert.ok(canStack({ suit: 0, rank: 13, up: true }, []));
+  assert.ok(canFound({ suit: 0, rank: 1, up: true }, []));
+  assert.ok(!canFound({ suit: 0, rank: 2, up: true }, []));
+  // An ace on a pile flies home when tapped, and the card under it turns over
+  const ace = { ...g, piles: [[{ suit: 1, rank: 9, up: false }, { suit: 3, rank: 1, up: true }], ...g.piles.slice(1)] };
+  const after = autoMove(ace, { kind: "pile", i: 0, at: 1 })!;
+  assert.equal(after.found[3].length, 1);
+  assert.ok(after.piles[0][0].up);
+  assert.equal(move(ace, { kind: "pile", i: 0, at: 1 }, { kind: "found", i: 0 }), null);
+  // Nearly won: everything face up, finish sends it all home
+  const found = [0, 1, 2, 3].map((s) => [...Array(12).keys()].map((r) => ({ suit: s, rank: r + 1, up: true })));
+  let end = { ...g, stock: [], waste: [], found, piles: [[{ suit: 0, rank: 13, up: true }], [{ suit: 1, rank: 13, up: true }], [{ suit: 2, rank: 13, up: true }], [{ suit: 3, rank: 13, up: true }], [], [], []] };
+  assert.ok(canFinish(end));
+  for (let i = 0; i < 4; i++) end = finishStep(end)!;
+  assert.ok(isWon(end));
+  assert.equal(finishStep(end), null);
+});

@@ -3044,7 +3044,7 @@ test("artist wall and where guests are visiting from", async () => {
 test("games corner: knows which daily games you've played today", async () => {
   const voter = "r".repeat(16) + "games1";
   const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
-  assert.equal(before.games.length, 14);
+  assert.equal(before.games.length, 18);
   assert.equal(before.done, 0);
   await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
   await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
@@ -3225,6 +3225,46 @@ test("word ladder, jigsaw and bean snake keep scores; the other new pages load",
   for (const p of ["/word-ladder", "/jigsaw", "/bean-snake", "/photo-booth", "/split-bill"]) assert.equal((await fetch(s.url + p)).status, 200, p);
   const policy = (await fetch(`${s.url}/photo-booth`)).headers.get("permissions-policy") ?? "";
   assert.match(policy, /camera=\(self\)/, "the photo booth can ask for the camera");
+});
+
+test("bean hive: words are checked on the server and the score builds up", async () => {
+  const { hiveFor } = await import("../src/lib/hive.ts");
+  const { toDateStr } = await import("../src/lib/cafe.ts");
+  const h = hiveFor(toDateStr(new Date()));
+  const voter = "h".repeat(16) + "hive1";
+  const send = (word: string) => fetch(`${s.url}/api/hive`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.31" }, body: JSON.stringify({ word, voter }) });
+  const start = (await (await fetch(`${s.url}/api/hive?voter=${voter}`)).json()) as { centre: string; outer: string[]; found: string[]; score: number; yesterday: { words: string[] } };
+  assert.equal(start.centre, h.centre);
+  assert.equal(start.found.length, 0);
+  assert.ok(start.yesterday.words.length > 5);
+  // Today's word list isn't sent to the page
+  assert.ok(!("common" in start));
+  const ok = await send(h.common[0]);
+  assert.equal(ok.status, 200);
+  const body = (await ok.json()) as { found: string[]; score: number; added: { points: number } };
+  assert.deepEqual(body.found, [h.common[0]]);
+  assert.equal(body.score, body.added.points);
+  assert.equal((await send(h.common[0])).status, 400);
+  assert.match(((await (await send("zzzz")).json()) as { error: string }).error, /letters in the hive/);
+  const games = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
+  assert.ok(games.games.find((g) => g.id === "hive")!.done);
+  for (const p of ["/bean-hive", "/pour-paths", "/tea-tiles", "/spot-the-difference", "/call-the-order", "/cafe-patience"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+});
+
+test("new boards: pour paths, tea tiles and spot times, call the order scores", async () => {
+  const voter = "p".repeat(16) + "paths1";
+  const post = (p: string, json: Record<string, unknown>) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.32" }, body: JSON.stringify({ voter, name: "Pat", ...json }) });
+  assert.equal((await post("/api/daily-scores", { game: "paths", mode: "hard", ms: 1000 })).status, 400);
+  const hard = (await (await post("/api/daily-scores", { game: "paths", mode: "hard", ms: 42000 })).json()) as { mode: string; top: { ms: number }[] };
+  assert.equal(hard.mode, "hard"); assert.equal(hard.top[0].ms, 42000);
+  assert.equal((await post("/api/daily-scores", { game: "tiles", ms: 5000 })).status, 400);
+  assert.equal((await post("/api/daily-scores", { game: "tiles", ms: 95000 })).status, 200);
+  assert.equal((await post("/api/daily-scores", { game: "spot", ms: 31000 })).status, 200);
+  assert.equal((await post("/api/arcade", { game: "typing", score: 5000 })).status, 400);
+  const t = (await (await post("/api/arcade", { game: "typing", score: 23 })).json()) as { top: { score: number }[]; best: number };
+  assert.equal(t.top[0].score, 23); assert.equal(t.best, 23);
+  const games = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
+  for (const id of ["paths", "tiles", "spot"]) assert.ok(games.games.find((g) => g.id === id)!.done, id);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

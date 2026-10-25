@@ -1,4 +1,4 @@
-// Weekly high scores for the arcade games (higher or lower, brew merge, bean snake). Each person keeps their best this week.
+// Weekly high scores for the arcade games (higher or lower, brew merge, bean snake, call the order). Each person keeps their best this week.
 import "server-only";
 import { db, cleanText } from "./db";
 import { toDateStr } from "./cafe";
@@ -6,9 +6,10 @@ import { weekOf } from "./polls";
 import { HL_MAX } from "./higherLower";
 import { MAX_SCORE } from "./merge";
 import { SNAKE_MAX } from "./snake";
+import { TYPING_MAX } from "./callOrder";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
-const GAMES = { higherlower: HL_MAX, merge: MAX_SCORE, snake: SNAKE_MAX } as const;
+const GAMES = { higherlower: HL_MAX, merge: MAX_SCORE, snake: SNAKE_MAX, typing: TYPING_MAX } as const;
 export type ArcadeGame = keyof typeof GAMES;
 export const isArcadeGame = (g: unknown): g is ArcadeGame => typeof g === "string" && g in GAMES;
 

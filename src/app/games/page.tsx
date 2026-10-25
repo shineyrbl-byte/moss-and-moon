@@ -37,6 +37,8 @@ export default function Games() {
       <ul className="games-more">
         <li><Link href="/quiz">🎤 Quiz night</Link><span className="tiny muted"> · when the team hosts one, live on the TV</span></li>
         <li><Link href="/bean-snake">🐍 Bean snake</Link><span className="tiny muted"> · eat the beans, don&apos;t bite your tail</span></li>
+        <li><Link href="/call-the-order">⌨️ Call the order</Link><span className="tiny muted"> · type the orders before they run out</span></li>
+        <li><Link href="/cafe-patience">🃏 Café patience</Link><span className="tiny muted"> · solitaire with café suits</span></li>
         <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>
         <li><Link href="/higher-or-lower">💸 Higher or lower</Link><span className="tiny muted"> · which costs more?</span></li>
         <li><Link href="/brew-merge">🌙 Brew merge</Link><span className="tiny muted"> · beans all the way to the moon brew</span></li>
@@ -45,7 +47,7 @@ export default function Games() {
         <li><Link href="/story-chain">📜 Story chain</Link><span className="tiny muted"> · add the next line</span></li>
         <li><Link href="/scoreboard">🏆 Board game scoreboard</Link><span className="tiny muted"> · for the games on our shelf</span></li>
       </ul>
-      <p className="tiny muted" style={{ marginTop: "1rem" }}>Signed in? The word, connections, guess the dish, trivia and crack the order follow your account. The others are kept in this browser.</p>
+      <p className="tiny muted" style={{ marginTop: "1rem" }}>Signed in? The word, connections, guess the dish, trivia, crack the order and bean hive follow your account. The others are kept in this browser.</p>
     </div>
   );
 }

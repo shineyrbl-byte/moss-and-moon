@@ -358,6 +358,12 @@ const en = {
   "footer.ladder": "Word ladder",
   "footer.jigsaw": "Café jigsaw",
   "footer.snake": "Bean snake",
+  "footer.hive": "Bean hive",
+  "footer.paths": "Pour paths",
+  "footer.tiles": "Tea tiles",
+  "footer.spot": "Spot the difference",
+  "footer.typing": "Call the order",
+  "footer.patience": "Café patience",
 };
 
 type Key = keyof typeof en;
@@ -716,6 +722,12 @@ const hi: Record<Key, string> = {
   "footer.ladder": "शब्द सीढ़ी",
   "footer.jigsaw": "कैफ़े जिगसॉ",
   "footer.snake": "बीन स्नेक",
+  "footer.hive": "बीन हाइव",
+  "footer.paths": "पोर पाथ्स",
+  "footer.tiles": "चाय टाइल्स",
+  "footer.spot": "अंतर ढूँढो",
+  "footer.typing": "ऑर्डर बोलो",
+  "footer.patience": "कैफ़े सॉलिटेयर",
 };
 
 const mr: Record<Key, string> = {
@@ -1072,6 +1084,12 @@ const mr: Record<Key, string> = {
   "footer.ladder": "शब्दांची शिडी",
   "footer.jigsaw": "कॅफे जिगसॉ",
   "footer.snake": "बीन स्नेक",
+  "footer.hive": "बीन हाइव",
+  "footer.paths": "पोर पाथ्स",
+  "footer.tiles": "चहा टाइल्स",
+  "footer.spot": "फरक ओळखा",
+  "footer.typing": "ऑर्डर सांगा",
+  "footer.patience": "कॅफे सॉलिटेअर",
 };
 
 const kok: Record<Key, string> = {
@@ -1428,6 +1446,12 @@ const kok: Record<Key, string> = {
   "footer.ladder": "उतरांची शिडी",
   "footer.jigsaw": "कॅफे जिगसॉ",
   "footer.snake": "बीन स्नेक",
+  "footer.hive": "बीन हाइव",
+  "footer.paths": "पोर पाथ्स",
+  "footer.tiles": "चा टाइल्स",
+  "footer.spot": "फरक सोदात",
+  "footer.typing": "ऑर्डर सांगात",
+  "footer.patience": "कॅफे सॉलिटेअर",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

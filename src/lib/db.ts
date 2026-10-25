@@ -1115,6 +1115,13 @@ function open() {
     points INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (quiz_id, q_index, voter)
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS hive_games (
+    date TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    words TEXT NOT NULL DEFAULT '[]',
+    score INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (date, voter)
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD
