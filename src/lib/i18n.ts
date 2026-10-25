@@ -352,6 +352,12 @@ const en = {
   "footer.sweeper": "Bean sweeper",
   "footer.merge": "Brew merge",
   "footer.higherLower": "Higher or lower",
+  "footer.quiz": "Quiz night",
+  "footer.photoBooth": "Photo booth",
+  "footer.split": "Split the bill",
+  "footer.ladder": "Word ladder",
+  "footer.jigsaw": "Café jigsaw",
+  "footer.snake": "Bean snake",
 };
 
 type Key = keyof typeof en;
@@ -704,6 +710,12 @@ const hi: Record<Key, string> = {
   "footer.sweeper": "बीन स्वीपर",
   "footer.merge": "ब्रू मर्ज",
   "footer.higherLower": "महँगा या सस्ता",
+  "footer.quiz": "क्विज़ नाइट",
+  "footer.photoBooth": "फ़ोटो बूथ",
+  "footer.split": "बिल बाँटें",
+  "footer.ladder": "शब्द सीढ़ी",
+  "footer.jigsaw": "कैफ़े जिगसॉ",
+  "footer.snake": "बीन स्नेक",
 };
 
 const mr: Record<Key, string> = {
@@ -1054,6 +1066,12 @@ const mr: Record<Key, string> = {
   "footer.sweeper": "बीन स्वीपर",
   "footer.merge": "ब्रू मर्ज",
   "footer.higherLower": "महाग की स्वस्त",
+  "footer.quiz": "क्विझ नाइट",
+  "footer.photoBooth": "फोटो बूथ",
+  "footer.split": "बिल वाटून घ्या",
+  "footer.ladder": "शब्दांची शिडी",
+  "footer.jigsaw": "कॅफे जिगसॉ",
+  "footer.snake": "बीन स्नेक",
 };
 
 const kok: Record<Key, string> = {
@@ -1404,6 +1422,12 @@ const kok: Record<Key, string> = {
   "footer.sweeper": "बीन स्वीपर",
   "footer.merge": "ब्रू मर्ज",
   "footer.higherLower": "म्हारग काय स्वस्त",
+  "footer.quiz": "क्विझ नाइट",
+  "footer.photoBooth": "फोटो बूथ",
+  "footer.split": "बील वाटून घेयात",
+  "footer.ladder": "उतरांची शिडी",
+  "footer.jigsaw": "कॅफे जिगसॉ",
+  "footer.snake": "बीन स्नेक",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

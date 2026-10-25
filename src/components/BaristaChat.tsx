@@ -47,7 +47,7 @@ export default function BaristaChat() {
   }, [msgs, busy]);
 
   // Not on staff pages or the TV board
-  if (pathname?.startsWith("/admin") || pathname?.startsWith("/board")) return null;
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/board") || pathname === "/quiz/screen") return null;
 
   async function send(content: string) {
     const t = content.trim();

@@ -19,6 +19,8 @@ export const DAILY_GAMES = [
   { id: "nonogram", title: "Pixel picture", emoji: "🟫", href: "/pixel-picture", blurb: "Shade by the numbers" },
   { id: "crack", title: "Crack the order", emoji: "🔐", href: "/crack-the-order", blurb: "Guess the secret four" },
   { id: "sweeper", title: "Bean sweeper", emoji: "🫘", href: "/bean-sweeper", blurb: "Don't spill the beans" },
+  { id: "ladder", title: "Word ladder", emoji: "🪜", href: "/word-ladder", blurb: "One letter at a time" },
+  { id: "jigsaw", title: "Café jigsaw", emoji: "🧩", href: "/jigsaw", blurb: "Today's menu photo" },
 ] as const;
 
 /** Signed-in games count you by account; the rest by the id kept in your browser */
@@ -40,6 +42,8 @@ export function gamesFor(customerId: number | null, voter: unknown, now = new Da
     nonogram: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'nonogram' AND voter = ?", anon),
     crack: days("SELECT date FROM crack_games WHERE voter = ? AND done = 1", me),
     sweeper: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'sweeper' AND voter = ?", anon),
+    ladder: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'ladder' AND voter = ?", anon),
+    jigsaw: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'jigsaw' AND voter = ?", anon),
   };
   const games = DAILY_GAMES.map((g) => ({ ...g, done: played[g.id].includes(today), streak: playStreak(played[g.id], today) }));
   // Days you finished every one of them

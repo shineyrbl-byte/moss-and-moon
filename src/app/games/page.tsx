@@ -35,6 +35,8 @@ export default function Games() {
       </ul>
       <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>
       <ul className="games-more">
+        <li><Link href="/quiz">🎤 Quiz night</Link><span className="tiny muted"> · when the team hosts one, live on the TV</span></li>
+        <li><Link href="/bean-snake">🐍 Bean snake</Link><span className="tiny muted"> · eat the beans, don&apos;t bite your tail</span></li>
         <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>
         <li><Link href="/higher-or-lower">💸 Higher or lower</Link><span className="tiny muted"> · which costs more?</span></li>
         <li><Link href="/brew-merge">🌙 Brew merge</Link><span className="tiny muted"> · beans all the way to the moon brew</span></li>

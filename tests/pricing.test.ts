@@ -1032,3 +1032,75 @@ test("higher or lower: pairs never tie on price", async () => {
   for (let i = 0; i < 30; i++) { const p = pairFrom(items, Math.random)!; assert.notEqual(p[0].price, p[1].price); }
   assert.equal(pairFrom(items.slice(0, 2), Math.random), null);
 });
+
+test("word ladder: every ladder can be climbed with everyday words", async () => {
+  const { LADDERS, shortest, ladderFor, stepProblem, isWord } = await import("../src/lib/wordLadder.ts");
+  const { COMMON4 } = await import("../src/lib/data/words4.ts");
+  for (const [a, b] of LADDERS) {
+    const path = shortest(a, b);
+    assert.ok(path && path.length - 1 >= 4 && path.length - 1 <= 6, `${a} → ${b}`);
+    assert.ok(path.every((w) => COMMON4.includes(w)));
+  }
+  assert.equal(new Set(LADDERS.map((l) => l.join())).size, LADDERS.length, "no repeats");
+  assert.ok(ladderFor("2026-10-25").par >= 4);
+  assert.equal(stepProblem("cold", "cord", ["cold"]), null);
+  assert.ok(stepProblem("cold", "cart", ["cold"]), "two letters changed");
+  assert.ok(stepProblem("cold", "cold", ["cold"]));
+  assert.ok(stepProblem("cold", "colx", ["cold"]), "not a word");
+  assert.ok(isWord("cups") && isWord("mugs"), "plurals count");
+});
+
+test("jigsaw: trays are shuffled and pieces map to the right part of the photo", async () => {
+  const { trayOrder, piecePos, photoFor, pieceCount } = await import("../src/lib/jigsaw.ts");
+  const t = trayOrder(12, () => 0.5);
+  assert.deepEqual([...t].sort((a, b) => a - b), [...Array(12).keys()]);
+  assert.ok(t.some((v, i) => v !== i));
+  assert.deepEqual(piecePos(0, "small"), { x: 0, y: 0 });
+  assert.deepEqual(piecePos(11, "small"), { x: 100, y: 100 });
+  assert.deepEqual(piecePos(1, "small"), { x: 50, y: 0 });
+  assert.equal(pieceCount("large"), 48);
+  const items = [{ id: "a", img: "/api/uploads/x.jpg" }, { id: "b", img: "1509042239860-f550ce710b93" }];
+  assert.equal(photoFor("2026-10-25", items)!.id, "b", "only Unsplash photos");
+  assert.equal(photoFor("2026-10-25", [items[0]]), null);
+});
+
+test("bean snake: grows when it eats, wraps at the edges, ends on its own tail", async () => {
+  const { start, tick, GRID } = await import("../src/lib/snake.ts");
+  const s0 = start(() => 0);
+  const head = s0.body[0];
+  const fed = tick({ ...s0, bean: head + 1 }, "right", () => 0);
+  assert.equal(fed.score, 1);
+  assert.equal(fed.body.length, 4);
+  assert.equal(tick(s0, "left", () => 0).body[0], head + 1, "can't turn straight back");
+  const edge = tick({ ...s0, body: [GRID - 1, GRID - 2, GRID - 3], bean: 100 }, "right", () => 0);
+  assert.equal(edge.body[0], 0, "wraps around");
+  const loop = { body: [16, 17, 32, 31, 30], dir: "up" as const, bean: 200, score: 5, over: false };
+  assert.ok(tick(loop, "right", () => 0).over, "bumped into itself");
+});
+
+test("split the bill: shares add up exactly, shared items split evenly", async () => {
+  const { splitBill, fairShares } = await import("../src/lib/split.ts");
+  assert.deepEqual(fairShares(100, 3), [34, 33, 33]);
+  const r = splitBill([
+    { name: "Latte", price: 220, qty: 1, people: [0] },
+    { name: "Cold brew", price: 240, qty: 1, people: [1] },
+    { name: "Cheesecake", price: 310, qty: 1, people: [0, 1, 2] },
+  ], 3, 10);
+  assert.equal(r.subtotal, 770);
+  assert.equal(r.tip, 77);
+  assert.equal(r.shares.reduce((a, b) => a + b, 0), r.total, "adds up to the total");
+  assert.equal(r.own.reduce((a, b) => a + b, 0), 770);
+  assert.ok(Math.max(...r.own.map((o, i) => o - [220, 240, 0][i])) - Math.min(...r.own.map((o, i) => o - [220, 240, 0][i])) <= 1, "cheesecake split within a rupee");
+  const nobody = splitBill([{ name: "Tea", price: 120, qty: 2, people: [] }], 2);
+  assert.equal(nobody.unassigned, 240);
+  assert.equal(nobody.total, 0);
+});
+
+test("quiz night: quick right answers score more", async () => {
+  const { points, cleanName } = await import("../src/lib/quizNight.ts");
+  assert.equal(points(0, 20000), 1000);
+  assert.equal(points(20000, 20000), 500);
+  assert.equal(points(10000, 20000), 750);
+  assert.equal(points(99999, 20000), 500);
+  assert.equal(cleanName("  <b>Flat   Whites</b> "), "bFlat Whites/b");
+});

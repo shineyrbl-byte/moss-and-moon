@@ -1089,6 +1089,32 @@ function open() {
     at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (game, week, voter)
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS quiz_nights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    questions TEXT NOT NULL,
+    q_index INTEGER NOT NULL DEFAULT -1,
+    status TEXT NOT NULL DEFAULT 'lobby',
+    q_started INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    ended_at TEXT
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS quiz_players (
+    quiz_id INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    name TEXT NOT NULL,
+    score INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (quiz_id, voter)
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS quiz_answers (
+    quiz_id INTEGER NOT NULL,
+    q_index INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    choice INTEGER NOT NULL,
+    ms INTEGER NOT NULL,
+    points INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (quiz_id, q_index, voter)
+  );`);
   addColumn(db, "drink_gifts", "forward", "INTEGER NOT NULL DEFAULT 0"); // pay it forward: for whoever needs one, handed out by staff
   addColumn(db, "orders", "email", "TEXT");
   addColumn(db, "customers", "student_until", "TEXT"); // YYYY-MM-DD

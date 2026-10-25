@@ -3044,7 +3044,7 @@ test("artist wall and where guests are visiting from", async () => {
 test("games corner: knows which daily games you've played today", async () => {
   const voter = "r".repeat(16) + "games1";
   const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
-  assert.equal(before.games.length, 12);
+  assert.equal(before.games.length, 14);
   assert.equal(before.done, 0);
   await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
   await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
@@ -3167,6 +3167,64 @@ test("new daily puzzles and arcade games keep times and weekly scores", async ()
   const games = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
   assert.deepEqual(games.games.filter((g) => g.done).map((g) => g.id).sort(), ["crossword", "nonogram", "sweeper"]);
   for (const p of ["/crossword", "/pixel-picture", "/bean-sweeper", "/brew-merge", "/higher-or-lower", "/games"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+});
+
+test("quiz night: staff host, guests join and answer, the quickest right answer scores most", async () => {
+  const guest = (voter: string, json: Record<string, unknown>) => fetch(`${s.url}/api/quiz`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.30" }, body: JSON.stringify({ voter, ...json }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  const a = "q".repeat(16) + "quiza", b = "q".repeat(16) + "quizb";
+  assert.equal((await fetch(`${s.url}/api/quiz`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "start" }) })).status, 401, "guests can't host");
+  assert.equal((await guest(a, { action: "join", name: "Early" })).status, 400, "no quiz yet");
+  const opened = await s.api("/api/quiz", { method: "PUT", json: { action: "start", title: "Tuesday <b>quiz</b>", size: 5 } });
+  assert.equal(opened.status, 200);
+  assert.equal(opened.body.quiz.title, "Tuesday bquiz/b");
+  assert.equal(opened.body.quiz.total, 5);
+  assert.equal((await s.api("/api/quiz", { method: "PUT", json: { action: "start" } })).status, 400, "one at a time");
+  assert.equal((await guest(a, { action: "join", name: "The Flat Whites" })).status, 200);
+  assert.equal((await guest(b, { action: "join", name: "the flat whites" })).status, 400, "names are unique");
+  assert.equal((await guest(b, { action: "join", name: "Beans" })).status, 200);
+  assert.equal((await guest(a, { action: "answer", choice: 0 })).status, 400, "not started");
+  const q1 = await s.api("/api/quiz?host=1", { method: "PUT", json: { action: "next" } });
+  const answer = q1.body.quiz.question.answer as number;
+  const pub = await (await fetch(`${s.url}/api/quiz?voter=${a}`)).json();
+  assert.equal(pub.quiz.phase, "question");
+  assert.equal(pub.quiz.question.answer, null, "the answer stays secret while it's open");
+  assert.equal(pub.quiz.counts, null);
+  assert.equal((await guest(a, { action: "answer", choice: answer })).status, 200);
+  assert.equal((await guest(a, { action: "answer", choice: answer })).status, 400, "one answer each");
+  await new Promise((r) => setTimeout(r, 400));
+  assert.equal((await guest(b, { action: "answer", choice: answer })).status, 200);
+  await new Promise((r) => setTimeout(r, 1300));
+  assert.equal((await guest("q".repeat(16) + "late01", { action: "join", name: "Late" })).status, 200, "you can join mid-quiz");
+  assert.equal((await guest("q".repeat(16) + "late01", { action: "answer", choice: answer })).status, 400, "too late once time's up");
+  const after = await (await fetch(`${s.url}/api/quiz?voter=${b}`)).json();
+  assert.equal(after.quiz.phase, "reveal");
+  assert.equal(after.quiz.question.answer, answer);
+  assert.equal(after.quiz.top[0].name, "The Flat Whites", "quicker scores more");
+  assert.ok(after.quiz.top[0].score > after.quiz.top[1].score && after.quiz.top[1].score >= 500);
+  assert.equal(after.quiz.me.rank, 2);
+  const q2 = await s.api("/api/quiz", { method: "PUT", json: { action: "next" } });
+  assert.equal(q2.body.quiz.index, 1);
+  const closed = await s.api("/api/quiz", { method: "PUT", json: { action: "next" } });
+  assert.equal(closed.body.quiz.phase, "reveal", "staff can close a question early");
+  const ended = await s.api("/api/quiz", { method: "PUT", json: { action: "end" } });
+  assert.equal(ended.body.quiz.phase, "done");
+  assert.equal((await guest(a, { action: "join", name: "Again" })).status, 400);
+  for (const p of ["/quiz", "/quiz/screen", "/board"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+});
+
+test("word ladder, jigsaw and bean snake keep scores; the other new pages load", async () => {
+  const voter = "w".repeat(16) + "ladder1";
+  const post = (path: string, json: Record<string, unknown>) => fetch(`${s.url}${path}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.31" }, body: JSON.stringify({ voter, ...json }) }).then(async (r) => ({ status: r.status, body: await r.json() }));
+  assert.equal((await post("/api/daily-scores", { game: "ladder", ms: 1000 })).status, 400);
+  assert.equal((await post("/api/daily-scores", { game: "ladder", ms: 45000, name: "Climber" })).body.top[0].name, "Climber");
+  assert.equal((await post("/api/daily-scores", { game: "jigsaw", mode: "large", ms: 90000, name: "J" })).body.mode, "large");
+  assert.equal((await post("/api/arcade", { game: "snake", score: 999, name: "S" })).status, 400);
+  assert.equal((await post("/api/arcade", { game: "snake", score: 31, name: "Snek" })).body.mine, 31);
+  const games = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
+  assert.deepEqual(games.games.filter((g) => g.done).map((g) => g.id).sort(), ["jigsaw", "ladder"]);
+  for (const p of ["/word-ladder", "/jigsaw", "/bean-snake", "/photo-booth", "/split-bill"]) assert.equal((await fetch(s.url + p)).status, 200, p);
+  const policy = (await fetch(`${s.url}/photo-booth`)).headers.get("permissions-policy") ?? "";
+  assert.match(policy, /camera=\(self\)/, "the photo booth can ask for the camera");
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

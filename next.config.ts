@@ -26,7 +26,7 @@ function securityHeaders() {
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "X-Frame-Options", value: "DENY" },
     { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-    { key: "Permissions-Policy", value: 'camera=(), geolocation=(), microphone=(self), payment=(self "https://checkout.razorpay.com" "https://api.razorpay.com"), interest-cohort=()' },
+    { key: "Permissions-Policy", value: 'camera=(self), geolocation=(), microphone=(self), payment=(self "https://checkout.razorpay.com" "https://api.razorpay.com"), interest-cohort=()' },
     { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
     // Browsers only obey this on https, so it's safe to always send (the address is only known when running)
     ...(live ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),

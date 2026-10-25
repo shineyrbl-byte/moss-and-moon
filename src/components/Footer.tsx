@@ -90,6 +90,12 @@ export default function Footer() {
             <li><Link href="/bean-sweeper">{t("footer.sweeper")}</Link></li>
             <li><Link href="/brew-merge">{t("footer.merge")}</Link></li>
             <li><Link href="/higher-or-lower">{t("footer.higherLower")}</Link></li>
+            <li><Link href="/quiz">{t("footer.quiz")}</Link></li>
+            <li><Link href="/photo-booth">{t("footer.photoBooth")}</Link></li>
+            <li><Link href="/split-bill">{t("footer.split")}</Link></li>
+            <li><Link href="/word-ladder">{t("footer.ladder")}</Link></li>
+            <li><Link href="/jigsaw">{t("footer.jigsaw")}</Link></li>
+            <li><Link href="/bean-snake">{t("footer.snake")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>

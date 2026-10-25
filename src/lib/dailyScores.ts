@@ -7,6 +7,8 @@ import { minMs as sudokuMin, sudokuMode } from "./sudoku";
 import { minMs as xwMin } from "./crossword";
 import { minMs as nonoMin, nonoMode } from "./nonogram";
 import { minMs as sweepMin, sweepMode } from "./sweeper";
+import { minMs as ladderMin } from "./wordLadder";
+import { minMs as jigMin, jigsawMode } from "./jigsaw";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
 const GAMES = {
@@ -15,6 +17,8 @@ const GAMES = {
   crossword: { mode: () => "daily", min: () => xwMin },
   nonogram: { mode: (v: unknown) => nonoMode(v), min: (m: string) => nonoMin(nonoMode(m)) },
   sweeper: { mode: (v: unknown) => sweepMode(v), min: (m: string) => sweepMin(sweepMode(m)) },
+  ladder: { mode: () => "daily", min: () => ladderMin },
+  jigsaw: { mode: (v: unknown) => jigsawMode(v), min: (m: string) => jigMin(jigsawMode(m)) },
 } as const;
 export type DailyGame = keyof typeof GAMES;
 export const isDailyGame = (g: unknown): g is DailyGame => typeof g === "string" && g in GAMES;

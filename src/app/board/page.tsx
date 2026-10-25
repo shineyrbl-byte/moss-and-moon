@@ -42,6 +42,7 @@ export default function BoardPage() {
   const [latte, setLatte] = useState<{ img: string; staff_name: string; final: boolean } | null>(null);
   const [c4, setC4] = useState<{ board: number[]; status: string; score: { guests: number; barista: number } } | null>(null);
   const [chain, setChain] = useState<{ text: string; name: string; count: number } | null>(null);
+  const [quizOn, setQuizOn] = useState<{ title: string; players: number } | null>(null);
   const [shouts, setShouts] = useState<{ id: number; text: string; from_name: string }[]>([]);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const seenReady = useRef<Set<string> | null>(null);
@@ -58,6 +59,7 @@ export default function BoardPage() {
         fetch("/api/stories?week=1").then((r) => r.json()).then((d) => alive && setStory(d.week)).catch(() => {});
         fetch("/api/latte-art?board=1").then((r) => r.json()).then((d) => alive && setLatte(d.art)).catch(() => {});
         fetch("/api/connect4").then((r) => r.json()).then((d) => alive && setC4(d)).catch(() => {});
+        fetch("/api/quiz").then((r) => r.json()).then((d) => alive && setQuizOn(d.quiz && d.quiz.phase !== "done" ? d.quiz : null)).catch(() => {});
         fetch("/api/shoutouts").then((r) => r.json()).then((d) => alive && Array.isArray(d.shouts) && setShouts(d.shouts)).catch(() => {});
         fetch("/api/story-chain?board=1").then((r) => r.json()).then((d) => alive && setChain(d)).catch(() => {});
         fetch("/api/photos?kind=doodle").then((r) => r.json()).then((d) => { if (alive && Array.isArray(d.photos)) { setDoodles(d.photos.slice(0, 12)); setDoodleAt((i) => i + 1); } }).catch(() => {});
@@ -127,6 +129,7 @@ export default function BoardPage() {
           <span className="muted">Request one: table QR → 🔔 → 🎵</span>
         </div>
       )}
+      {quizOn && <p className="board-shout">🎤 {quizOn.title} is on! Join on your phone: mossandmoon → Quiz night <span className="muted">· {quizOn.players} team{quizOn.players === 1 ? "" : "s"} in</span></p>}
       {story && <p className="board-story">✍️ <q>{story.text}</q> <span className="muted">· six-word story of the week{story.name ? ` by ${story.name}` : ""}</span></p>}
       {shouts.length > 0 && (() => {
         const sh = shouts[doodleAt % shouts.length];
