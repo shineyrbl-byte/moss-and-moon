@@ -51,6 +51,11 @@ export const DAILY_GAMES = [
   { id: "garden", title: "Garden plots", emoji: "🌷", href: "/garden-plots", blurb: "Lay the garden path" },
   { id: "rope", title: "Queue rope", emoji: "🪢", href: "/queue-rope", blurb: "One loop round the numbers" },
   { id: "necklace", title: "Bead necklace", emoji: "📿", href: "/bead-necklace", blurb: "Thread every bead" },
+  { id: "trail", title: "Coffee trail", emoji: "☕", href: "/coffee-trail", blurb: "Number the trail, one to 36" },
+  { id: "pipes", title: "Steam pipes", emoji: "♨️", href: "/steam-pipes", blurb: "Turn the pipes, fill every cup" },
+  { id: "cutters", title: "Cookie cutters", emoji: "🍪", href: "/cookie-cutters", blurb: "Fit every cutter in the dough" },
+  { id: "cryptic", title: "Cryptic clue", emoji: "✏️", href: "/cryptic-clue", blurb: "One clue, two ways in" },
+  { id: "stars", title: "Sugar stars", emoji: "⭐", href: "/sugar-stars", blurb: "Two stars in every row and tray" },
 ] as const;
 
 /** The days you played each daily game. Signed-in games count you by account; the rest by the id kept in your browser. */
@@ -106,6 +111,11 @@ export function playedMap(customerId: number | null, voter: unknown): Record<str
     garden: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'garden' AND voter = ?", anon),
     rope: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'rope' AND voter = ?", anon),
     necklace: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'necklace' AND voter = ?", anon),
+    trail: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'trail' AND voter = ?", anon),
+    pipes: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'pipes' AND voter = ?", anon),
+    cutters: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'cutters' AND voter = ?", anon),
+    cryptic: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'cryptic' AND voter = ?", anon),
+    stars: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'stars' AND voter = ?", anon),
   };
   return played;
 }

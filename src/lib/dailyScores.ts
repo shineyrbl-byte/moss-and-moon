@@ -34,6 +34,11 @@ import { minMs as threadsMin } from "./threads";
 import { minMs as gardenMin } from "./nurikabe";
 import { minMs as ropeMin } from "./slitherlink";
 import { minMs as necklaceMin } from "./masyu";
+import { minMs as trailMin } from "./hidato";
+import { minMs as pipesMin } from "./pipes";
+import { minMs as cuttersMin } from "./cutters";
+import { minMs as crypticMin } from "./cryptic";
+import { minMs as starsMin } from "./starBattle";
 import { MIN_SCORE as fourMin, MAX_SCORE as fourMax } from "./quordle";
 import { MIN_SCORE as cornersMin, MAX_SCORE as cornersMax } from "./letterBoxed";
 
@@ -73,6 +78,11 @@ const GAMES = {
   garden: { mode: () => "daily", min: () => gardenMin },
   rope: { mode: () => "daily", min: () => ropeMin },
   necklace: { mode: () => "daily", min: () => necklaceMin },
+  trail: { mode: () => "daily", min: () => trailMin },
+  pipes: { mode: () => "daily", min: () => pipesMin },
+  cutters: { mode: () => "daily", min: () => cuttersMin },
+  cryptic: { mode: () => "daily", min: () => crypticMin },
+  stars: { mode: () => "daily", min: () => starsMin },
   // Four at once packs tries and time together, so fewest tries wins
   four: { mode: () => "daily", min: () => fourMin, max: fourMax },
   // Café corners packs words and time into one number (see letterBoxed pack), so fewest words wins

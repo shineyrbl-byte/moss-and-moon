@@ -1,0 +1,11 @@
+/* Styles only this page uses */
+.ct-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 3px; width: min(100%, 26rem); margin: 0.8rem auto; }
+.ct-cell { aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); font-weight: 700; font-size: clamp(1rem, 5vw, 1.4rem); font-variant-numeric: tabular-nums; cursor: pointer; }
+.ct-cell.given { background: var(--brown); color: var(--surface); border-color: var(--brown); }
+.ct-cell.mine { background: color-mix(in srgb, var(--pink) 16%, var(--surface)); }
+.ct-cell.end.given { background: var(--pink-deep); border-color: var(--pink-deep); color: #fff; }
+.ct-cell.cur { box-shadow: 0 0 0 3px var(--pink); }
+.ct-cell.can { border-style: dashed; border-color: var(--pink); }
+.ct-ghost { opacity: 0.35; font-weight: 600; }
+.ct-cell.bad { color: var(--pink-ink); background: color-mix(in srgb, #d64545 16%, var(--surface)); text-decoration: line-through; }
+.ct-grid.done .ct-cell { background: var(--butter); color: #3b2720; border-color: var(--butter); }

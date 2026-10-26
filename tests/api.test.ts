@@ -3044,7 +3044,7 @@ test("artist wall and where guests are visiting from", async () => {
 test("games corner: knows which daily games you've played today", async () => {
   const voter = "r".repeat(16) + "games1";
   const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
-  assert.equal(before.games.length, 42);
+  assert.equal(before.games.length, 47);
   assert.equal(before.done, 0);
   await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
   await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
@@ -3391,7 +3391,7 @@ test("my puzzle stats, bean sums and freecell times, and the delivery dash board
   const post = (p: string, json: Record<string, unknown>) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.38" }, body: JSON.stringify({ voter, name: "Sam", ...json }) });
   let st = (await (await fetch(`${s.url}/api/my-stats?voter=${voter}`)).json()) as { days: number; plays: number; games: { id: string; days: number }[]; times: unknown[] };
   assert.equal(st.days, 0); assert.equal(st.times.length, 0);
-  assert.equal(st.games.length, 42);
+  assert.equal(st.games.length, 47);
   assert.equal((await post("/api/daily-scores", { game: "sums", ms: 4000 })).status, 400, "too quick");
   assert.equal((await post("/api/daily-scores", { game: "sums", ms: 90000 })).status, 200);
   assert.equal((await post("/api/daily-scores", { game: "freecell", ms: 20000 })).status, 400, "nobody clears FreeCell in 20s");
@@ -3529,6 +3529,25 @@ test("daily reminders, the hall of fame and practice", async () => {
   for (const p of ["/hall-of-fame", "/practice", "/game-settings"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
   const hof = await (await fetch(`${s.url}/hall-of-fame`)).text();
   assert.match(hof, /Hall of/); assert.match(hof, /Puzzle of the week/);
+});
+
+test("batch B daily puzzles and the weekly crossword board", async () => {
+  const voter = "h".repeat(16) + "batchb";
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.48" }, body: JSON.stringify({ voter, name: "Bo", ...json }) });
+  for (const game of ["trail", "pipes", "cutters", "cryptic", "stars"]) {
+    assert.equal((await post({ game, ms: 1000 })).status, 400, `${game} too fast`);
+    assert.equal((await post({ game, ms: 95_000 })).status, 200, game);
+  }
+  const g = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
+  for (const id of ["trail", "pipes", "cutters", "cryptic", "stars"]) assert.ok(g.games.find((x) => x.id === id)!.done, id);
+  const wpost = (json: Record<string, unknown>) => fetch(`${s.url}/api/weekly-games`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.49" }, body: JSON.stringify({ voter, name: "Bo", ...json }) });
+  assert.equal((await wpost({ game: "chess", ms: 600_000 })).status, 400);
+  assert.equal((await wpost({ game: "crossword", ms: 5000 })).status, 400, "too fast");
+  assert.equal((await wpost({ game: "crossword", ms: 600_000 })).status, 200);
+  assert.equal((await wpost({ game: "crossword", ms: 700_000 })).status, 200);
+  const wb = (await (await fetch(`${s.url}/api/weekly-games?game=crossword&voter=${voter}`)).json()) as { mine: { ms: number }; top: unknown[] };
+  assert.equal(wb.mine.ms, 600_000, "keeps your best"); assert.equal(wb.top.length, 1);
+  for (const p of ["/coffee-trail", "/steam-pipes", "/cookie-cutters", "/cryptic-clue", "/sugar-stars", "/weekly-crossword"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

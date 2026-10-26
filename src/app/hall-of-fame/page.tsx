@@ -34,6 +34,11 @@ export default function HallOfFame() {
         <ol className="hof-list">{h.weekly.map((w) => <Row key={w.when} w={w} label={weekName(w.when)} show={showClock} />)}</ol>
       </section>
 
+      <section className="card hof-card" style={{ marginTop: "0.8rem" }}>
+        <h2 className="h3"><Link href="/weekly-crossword">✏️ Weekly crossword</Link></h2>
+        <ol className="hof-list">{h.crossword.map((w) => <Row key={w.when} w={w} label={weekName(w.when)} show={showClock} />)}</ol>
+      </section>
+
       <h2 className="h3" style={{ marginTop: "1.6rem" }}>Arcade, week by week</h2>
       {anyArcade.length === 0 ? <p className="small muted">No arcade winners yet. Set a score this week and you&apos;ll be first in here next Monday.</p> : (
         <div className="hof-grid">

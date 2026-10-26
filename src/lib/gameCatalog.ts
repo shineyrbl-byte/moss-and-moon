@@ -15,10 +15,12 @@ export const DAILY_KIND: Record<string, { kind: Kind; quick: boolean }> = {
   cups: { kind: "logic", quick: false }, corners: { kind: "word", quick: false }, sums: { kind: "logic", quick: false }, freecell: { kind: "cards", quick: false },
   boggle: { kind: "word", quick: true }, bill: { kind: "logic", quick: true },
   taller: { kind: "logic", quick: true }, traytiles: { kind: "logic", quick: true }, seats: { kind: "logic", quick: true }, four: { kind: "word", quick: true }, threads: { kind: "word", quick: false }, garden: { kind: "logic", quick: false }, rope: { kind: "logic", quick: false }, necklace: { kind: "logic", quick: false },
+  trail: { kind: "logic", quick: false }, pipes: { kind: "logic", quick: true }, cutters: { kind: "logic", quick: false }, cryptic: { kind: "word", quick: true }, stars: { kind: "logic", quick: false },
 };
 
 /** Games you can play any time */
 export const ANY_TIME: Entry[] = [
+  { id: "weeklycross", href: "/weekly-crossword", title: "Weekly crossword", emoji: "🗞️", blurb: "a bigger grid that lasts all week", kind: "word", quick: false },
   { id: "quiz", href: "/quiz", title: "Quiz night", emoji: "🎤", blurb: "when the team hosts one, live on the TV", kind: "together", quick: false },
   { id: "chess", href: "/cafe-chess", title: "Café chess", emoji: "♟️", blurb: "chess against the computer", kind: "board", quick: false },
   { id: "backgammon", href: "/terrace-backgammon", title: "Terrace backgammon", emoji: "🎲", blurb: "backgammon against the computer", kind: "board", quick: false },

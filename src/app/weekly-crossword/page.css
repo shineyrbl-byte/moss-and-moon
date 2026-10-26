@@ -1,0 +1,6 @@
+/* Styles only this page uses: the mini crossword's look, on a bigger, open grid */
+.wx .xw-grid { grid-template-columns: repeat(11, 1fr); width: min(100%, 34rem); border: 0; background: transparent; gap: 2px; overflow: visible; }
+.wx .xw-cell { font-size: clamp(0.85rem, 4.2vw, 1.3rem); border-radius: 4px; box-shadow: 0 0 0 1px var(--brown); }
+.wx .xw-cell.black { background: transparent; box-shadow: none; }
+.wx .xw-num { font-size: clamp(0.42rem, 1.8vw, 0.6rem); top: 1px; left: 2px; }
+.wx .xw-clue { width: min(100%, 34rem); }

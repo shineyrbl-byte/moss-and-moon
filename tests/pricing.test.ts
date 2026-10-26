@@ -2329,3 +2329,59 @@ test("challenge links, practice days, replays, reminder times and score wording"
   assert.equal(S.showDaily("boggle", 1_000_000 - 42), "42 points");
   assert.equal(S.showDaily("bill", 30_000), "spot on, 0:30");
 });
+
+test("batch B puzzles: coffee trail, steam pipes, cookie cutters, cryptic clues, sugar stars and the weekly crossword", async () => {
+  const H = await import("../src/lib/hidato.ts");
+  for (const d of ["2026-10-27", "2026-11-03", "2025-01-01"]) {
+    const p = H.trailFor(d);
+    assert.equal(H.countAnswers(p.given, 3), 1, `one trail on ${d}`);
+    const where = (v: number) => p.answer.indexOf(v);
+    for (let v = 1; v < H.LAST; v++) assert.ok(H.touches(where(v), where(v + 1)), `${v} touches ${v + 1}`);
+    assert.ok(p.given.every((g, i) => !g || g === p.answer[i]));
+    assert.ok(H.isSolved(p.answer, p.given, p.answer.map((v, i) => (p.given[i] ? 0 : v))));
+  }
+  assert.deepEqual(H.trailFor("2026-10-27"), H.trailFor("2026-10-27"), "same day, same trail");
+
+  const P = await import("../src/lib/pipes.ts");
+  const pp = P.pipesFor("2026-10-27"), zero = pp.tiles.map(() => 0);
+  assert.ok(!P.isSolved(pp.tiles, pp.spins, zero));
+  const fix = pp.tiles.map((_, i) => P.fixTurns(pp.tiles, pp.spins, zero, i));
+  assert.ok(P.isSolved(pp.tiles, pp.spins, fix));
+  assert.equal(P.turn(P.UP | P.RIGHT, 1), P.RIGHT | P.DOWN); assert.equal(P.turn(P.LEFT, 1), P.UP);
+
+  const C = await import("../src/lib/cutters.ts");
+  const cp = C.cuttersFor("2026-10-27");
+  assert.ok(C.isSolved(cp, cp.answer));
+  assert.ok(!C.isSolved(cp, cp.answer.map((a, k) => (k === 0 ? null : a))));
+  assert.equal(new Set([0, 1, 2, 3, 4, 5, 6, 7].map((o) => JSON.stringify(C.orient(C.shapeOf("F"), o)))).size, 8, "F has eight ways round");
+  assert.equal(new Set([0, 1, 2, 3, 4, 5, 6, 7].map((o) => JSON.stringify(C.orient(C.shapeOf("O"), o)))).size, 1);
+
+  const { CRYPTICS } = await import("../src/lib/data/cryptic.ts");
+  const letters = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+  assert.equal(new Set(CRYPTICS.map((c) => c.a)).size, CRYPTICS.length, "no repeats");
+  for (const c of CRYPTICS) {
+    if (c.kind === "anagram") assert.equal([...letters(c.fodder!)].sort().join(""), [...c.a].sort().join(""), `anagram ${c.a}`);
+    if (c.kind === "hidden") { assert.ok(letters(c.fodder!).includes(c.a), `hidden ${c.a}`); assert.ok(c.clue.toLowerCase().replace(/[^a-z ]/g, "").includes(c.fodder!), `fodder in clue: ${c.a}`); }
+    // Anagram words come straight from the clue (single letters like O can stand for a word, such as "round")
+    if (c.kind === "anagram") for (const w of c.fodder!.split(" ").filter((x) => x.length > 1)) assert.ok(c.clue.toLowerCase().replace(/[^a-z ]/g, " ").split(" ").includes(w), `anagram word "${w}" in clue: ${c.a}`);
+  }
+  const X = await import("../src/lib/cryptic.ts");
+  const days = new Set([...Array(CRYPTICS.length).keys()].map((k) => X.crypticFor(new Date(Date.UTC(2026, 0, 1 + k)).toISOString().slice(0, 10)).a));
+  assert.equal(days.size, CRYPTICS.length, "every clue once before any repeats");
+  assert.ok(X.isRight(" Latte! ", { ...CRYPTICS[0], a: "latte" }));
+
+  const S = await import("../src/lib/starBattle.ts");
+  const sp = S.starsFor("2026-10-27");
+  assert.equal(S.answers(sp.region, 3).length, 1);
+  assert.equal(new Set(sp.region).size, 10);
+  for (const a of sp.stars) for (const b of sp.stars) assert.ok(!S.touching(a, b));
+  const marks = Array(100).fill(0).map((_, i) => (sp.stars.includes(i) ? 2 : 0)) as (0 | 1 | 2)[];
+  assert.ok(S.isSolved(sp.stars, marks)); assert.equal(S.problems(sp.region, marks).size, 0);
+
+  const W = await import("../src/lib/weeklyCrossword.ts");
+  const a = W.weeklyFor("2026-10-26"), b = W.weeklyFor("2026-11-01"), c = W.weeklyFor("2026-11-02");
+  assert.deepEqual(a, b, "Monday to Sunday is one puzzle"); assert.notDeepEqual(a.grid, c.grid);
+  assert.ok(a.entries.length >= 12);
+  for (const e of a.entries) { assert.equal(e.cells.map((i) => a.grid[i]).join(""), e.answer); assert.ok(e.clue); }
+  assert.ok(W.isSolved(a.grid, a.grid.map((g) => g.toUpperCase())));
+});

@@ -1,0 +1,13 @@
+/* Styles only this page uses */
+.cu-board { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 3px; width: min(100%, 24rem); margin: 0.8rem auto; }
+.cu-sq { aspect-ratio: 1; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: default; }
+.cu-sq.dough { background: #ecd3b0; cursor: pointer; box-shadow: inset 0 -2px 0 rgba(120, 80, 40, 0.18); }
+.cu-sq.pre { outline: 3px dashed var(--pink-deep); outline-offset: -3px; }
+.cu-sq.pre.bad { outline-color: #d64545; }
+.cu-board.done .cu-sq.dough { filter: saturate(1.2); }
+.cu-tray { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin: 0.6rem 0 1rem; }
+.cu-piece { min-width: 3.6rem; min-height: 3.6rem; display: grid; place-items: center; padding: 0.4rem; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer; }
+.cu-piece.on { border-color: var(--pink-deep); box-shadow: 0 0 0 2px var(--pink-soft); }
+.cu-piece.used { opacity: 0.35; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cu-sq.dough { background: #8a6a4a; } }
+:root[data-theme="dark"] .cu-sq.dough { background: #8a6a4a; }

@@ -1122,6 +1122,16 @@ function open() {
     guest TEXT,
     updated_at INTEGER NOT NULL
   );`);
+  // Boards for puzzles that last a week (the weekly crossword): each person's best time that week
+  db.exec(`CREATE TABLE IF NOT EXISTS weekly_games (
+    game TEXT NOT NULL,
+    week TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    name TEXT NOT NULL,
+    ms INTEGER NOT NULL,
+    at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (game, week, voter)
+  );`);
   // "Remind me to play today's puzzles": one row per browser, at a minute past midnight UTC
   db.exec(`CREATE TABLE IF NOT EXISTS game_reminders (
     endpoint TEXT PRIMARY KEY,

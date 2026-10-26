@@ -38,10 +38,11 @@ export function hallOfFame(now = new Date(), days = 7, weeks = 6) {
   const q = (n: number) => Array(n).fill("?").join(",");
   // SQLite returns the row that holds MIN()/MAX() for the bare columns, so the name matches the score
   const weekly = fill(weekList, db.prepare(`SELECT week AS k, name, MIN(ms) AS score FROM weekly_scores WHERE week IN (${q(weeks)}) GROUP BY week`).all(...weekList) as never);
+  const crossword = fill(weekList, db.prepare(`SELECT week AS k, name, MIN(ms) AS score FROM weekly_games WHERE game = 'crossword' AND week IN (${q(weeks)}) GROUP BY week`).all(...weekList) as never);
   const arcade = ARCADE.map((g) => ({ ...g, winners: fill(weekList, db.prepare(`SELECT week AS k, name, MAX(score) AS score FROM arcade_scores WHERE game = ? AND week IN (${q(weeks)}) GROUP BY week`).all(g.id, ...weekList) as never) }));
   const daily = DAILY_GAMES.filter((g) => isDailyGame(g.id)).map((g) => ({
     id: g.id, title: g.title, emoji: g.emoji, href: g.href,
     winners: fill(dayList, db.prepare(`SELECT date AS k, name, MIN(ms) AS score FROM daily_scores WHERE game = ? AND mode = ? AND date IN (${q(days)}) GROUP BY date`).all(g.id, defaultMode(g.id as never), ...dayList) as never),
   }));
-  return { today, dayList, weekList, weekly, arcade, daily };
+  return { today, dayList, weekList, weekly, crossword, arcade, daily };
 }

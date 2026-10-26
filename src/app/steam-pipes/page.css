@@ -1,0 +1,11 @@
+/* Styles only this page uses */
+.sp-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; width: min(100%, 26rem); margin: 0.8rem auto; background: var(--line); border-radius: 10px; padding: 2px; }
+.sp-tile { aspect-ratio: 1; padding: 0; border: 0; border-radius: 6px; background: var(--surface); cursor: pointer; display: block; }
+.sp-tile svg { width: 100%; height: 100%; display: block; }
+.sp-tile.wet { background: color-mix(in srgb, var(--pink) 12%, var(--surface)); }
+.sp-pipe { stroke: var(--brown); stroke-width: 18; stroke-linecap: butt; }
+.sp-pipe.wet { stroke: var(--pink-deep); }
+.sp-joint { fill: var(--brown); }
+.sp-joint.wet { fill: var(--pink-deep); }
+.sp-grid.done .sp-tile { background: var(--butter); }
+@media (prefers-reduced-motion: no-preference) { .sp-tile svg { transition: transform 0.12s; } .sp-tile:active svg { transform: rotate(20deg); } }

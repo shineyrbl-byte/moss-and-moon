@@ -1,0 +1,14 @@
+/* Styles only this page uses */
+.sb-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); width: min(100%, 30rem); margin: 0.8rem auto; border: 3px solid var(--brown-deep); border-radius: 6px; overflow: hidden; }
+.sb-cell { aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 0; border-right: 1px solid rgba(59, 39, 32, 0.18); border-bottom: 1px solid rgba(59, 39, 32, 0.18); background: var(--t); font-size: clamp(0.9rem, 4.2vw, 1.3rem); cursor: pointer; color: #3b2720; }
+.sb-cell.br { border-right: 3px solid var(--brown-deep); }
+.sb-cell.bd { border-bottom: 3px solid var(--brown-deep); }
+.sb-cell.bad { box-shadow: inset 0 0 0 3px #d64545; }
+.sb-dot { width: 22%; aspect-ratio: 1; border-radius: 50%; background: #765749; }
+.sb-dot.auto { opacity: 0.35; }
+.sb-grid.done .sb-cell { filter: saturate(1.4) brightness(1.03); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sb-cell { background: var(--td); color: #f6eee7; border-color: rgba(255, 255, 255, 0.12); } :root:not([data-theme="light"]) .sb-dot { background: #e6cfbd; } :root:not([data-theme="light"]) .sb-cell.br { border-right-color: #f6eee7; } :root:not([data-theme="light"]) .sb-cell.bd { border-bottom-color: #f6eee7; } }
+:root[data-theme="dark"] .sb-cell { background: var(--td); color: #f6eee7; border-color: rgba(255, 255, 255, 0.12); }
+:root[data-theme="dark"] .sb-dot { background: #e6cfbd; }
+:root[data-theme="dark"] .sb-cell.br { border-right-color: #f6eee7; }
+:root[data-theme="dark"] .sb-cell.bd { border-bottom-color: #f6eee7; }
