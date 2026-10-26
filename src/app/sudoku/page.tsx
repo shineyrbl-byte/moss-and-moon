@@ -6,7 +6,9 @@ import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
-import { clashes, ICON_NAMES, ICONS, isComplete, N, sudokuFor, type SudokuMode } from "@/lib/sudoku";
+import { clashes, explain, ICON_NAMES, ICONS, isComplete, N, sudokuFor, type SudokuMode } from "@/lib/sudoku";
+
+const HINT_MS = 10000;
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-sudoku";
@@ -24,19 +26,22 @@ export default function Sudoku() {
   const [board, setBoard] = useState<Board | null>(null);
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
+  const [hints, setHints] = useState(0);
+  const [why, setWhy] = useState("");
   useEffect(() => { setDate(playDay()); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
-  const puzzle = useMemo(() => (date ? sudokuFor(date, mode).puzzle : null), [date, mode]);
+  const both = useMemo(() => (date ? sudokuFor(date, mode) : null), [date, mode]);
+  const puzzle = both?.puzzle ?? null;
   useEffect(() => {
     if (!puzzle) return;
-    let s: { date?: string; cells?: number[]; start?: number; doneMs?: number; saved?: boolean } | null = null;
+    let s: { date?: string; cells?: number[]; start?: number; doneMs?: number; saved?: boolean; hints?: number } | null = null;
     try { s = JSON.parse(localStorage.getItem(dayKey(`${KEY}-${mode}`)) ?? "null"); } catch {}
     const fresh = s?.date === date && s.cells?.length === N * N;
     setCells(fresh ? s!.cells! : [...puzzle]);
     setStart(fresh ? s!.start ?? null : null); setNow(Date.now());
-    setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved)); setAt(null);
+    setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved)); setAt(null); setHints(fresh ? s!.hints ?? 0 : 0); setWhy("");
     fetch(`/api/daily-scores?game=sudoku&mode=${mode}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, [puzzle, mode, date]);
-  useEffect(() => { if (date && cells.length) try { localStorage.setItem(dayKey(`${KEY}-${mode}`), JSON.stringify({ date, cells, start, doneMs, saved })); } catch {} }, [date, mode, cells, start, doneMs, saved]);
+  useEffect(() => { if (date && cells.length) try { localStorage.setItem(dayKey(`${KEY}-${mode}`), JSON.stringify({ date, cells, start, doneMs, saved, hints })); } catch {} }, [date, mode, cells, start, doneMs, saved, hints]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -49,8 +54,24 @@ export default function Sudoku() {
     const t = start ?? Date.now();
     if (!start) { setStart(t); setNow(t); }
     const next = cells.map((x, i) => (i === at ? v : x));
-    setCells(next);
-    if (isComplete(next)) setDoneMs(Date.now() - t);
+    setCells(next); setWhy("");
+    if (isComplete(next)) setDoneMs(Date.now() - t + hints * HINT_MS);
+  }
+  /** Fix a wrong picture, or take the next step the rules force and say why. Each hint adds ten seconds. */
+  function hint() {
+    if (!both || doneMs !== null) return;
+    const t = start ?? Date.now();
+    if (!start) { setStart(t); setNow(t); }
+    const wrong = cells.findIndex((v, i) => v && v !== both.answer[i]);
+    const step = wrong < 0 ? explain(cells) : null;
+    const ok = step && step.v === both.answer[step.at];
+    const i = wrong >= 0 ? wrong : ok ? step!.at : cells.findIndex((v) => !v);
+    if (i < 0) return;
+    setWhy(wrong >= 0 ? "That picture was in the wrong place, so it's been fixed." : ok ? step!.why : "Here's a square for free.");
+    const next = cells.map((x, k) => (k === i ? both.answer[k] : x));
+    setCells(next); setAt(i);
+    const h = hints + 1; setHints(h);
+    if (isComplete(next)) setDoneMs(Date.now() - t + h * HINT_MS);
   }
   // Keyboard: arrows move, 1 to 6 place a picture, Backspace clears
   useEffect(() => {
@@ -72,7 +93,7 @@ export default function Sudoku() {
     setBoard(d); setSaved(true);
   }
   if (!puzzle || !cells.length) return <div className="page"><p className="muted">Setting the table…</p></div>;
-  const elapsed = doneMs ?? (start ? now - start : 0);
+  const elapsed = doneMs ?? (start ? now - start + hints * HINT_MS : 0);
   const rowOf = (p: number) => Math.floor(p / N), colOf = (p: number) => p % N;
   return (
     <div className="page" style={{ maxWidth: "36rem" }}>
@@ -82,6 +103,7 @@ export default function Sudoku() {
       <p className="small muted">Fill the grid so every row, column and box has each of the six treats once. Tap a square, then a treat. Keyboard works too: arrows and 1 to 6.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
         {(["easy", "hard"] as SudokuMode[]).map((m) => <button key={m} className={`chip ${mode === m ? "on" : ""}`} aria-pressed={mode === m} onClick={() => setMode(m)}>{m === "easy" ? "Easy" : "Hard"}</button>)}
+        <button className="btn btn-ghost btn-sm" onClick={hint} disabled={doneMs !== null}>Hint (+{HINT_MS / 1000}s)</button>
         <span className="memory-stats"><span>⏱ {clock(elapsed)}</span></span>
       </div>
       <div className={`sd-grid ${doneMs !== null ? "done" : ""}`} role="grid" aria-label="Mini sudoku">
@@ -96,6 +118,7 @@ export default function Sudoku() {
           );
         })}
       </div>
+      {why && doneMs === null && <p className="small center hint-why" role="status">💡 {why}</p>}
       {doneMs === null && (
         <div className="sd-pad" role="group" aria-label="Treats">
           {ICONS.map((ic, i) => <button key={ic} className="sd-key" onClick={() => put(i + 1)} disabled={at === null || !!puzzle[at]} aria-label={ICON_NAMES[i]}>{ic}</button>)}

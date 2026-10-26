@@ -1080,6 +1080,48 @@ function open() {
     won INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (date, voter)
   );`);
+  // Game progress that follows a signed-in account across devices, and the browser ids linked to it
+  db.exec(`CREATE TABLE IF NOT EXISTS account_sync (
+    customer_id INTEGER PRIMARY KEY,
+    data TEXT NOT NULL DEFAULT '{}',
+    updated_at INTEGER NOT NULL
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS account_voters (
+    customer_id INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    PRIMARY KEY (customer_id, voter)
+  );`);
+  // Friend codes and who's added whom (one way: you see the friends you've added)
+  db.exec(`CREATE TABLE IF NOT EXISTS friend_codes (
+    code TEXT PRIMARY KEY,
+    voter TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS friends (
+    voter TEXT NOT NULL,
+    friend TEXT NOT NULL,
+    at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (voter, friend)
+  );`);
+  // The puzzle of the week's board
+  db.exec(`CREATE TABLE IF NOT EXISTS weekly_scores (
+    week TEXT NOT NULL,
+    voter TEXT NOT NULL,
+    name TEXT NOT NULL,
+    ms INTEGER NOT NULL,
+    at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (week, voter)
+  );`);
+  // Live games between two devices: the room's state and a version number so moves can't cross
+  db.exec(`CREATE TABLE IF NOT EXISTS game_rooms (
+    code TEXT PRIMARY KEY,
+    game TEXT NOT NULL,
+    state TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 0,
+    host TEXT NOT NULL,
+    guest TEXT,
+    updated_at INTEGER NOT NULL
+  );`);
   db.exec(`CREATE TABLE IF NOT EXISTS arcade_scores (
     game TEXT NOT NULL,
     week TEXT NOT NULL,

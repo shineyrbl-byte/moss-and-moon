@@ -18,9 +18,9 @@ import { MAX_MOVES, MIN_MOVES, packScore } from "./flood";
 import { minMs as jumbleMin } from "./jumble";
 import { minMs as milkMin } from "./binairo";
 import { minMs as lightsMin } from "./bridges";
-import { minMs as tableMin } from "./queens";
+import { minMs as tableMin, minMsHard as tableMinHard } from "./queens";
 import { minMs as parasolsMin } from "./tents";
-import { minMs as tipjarMin } from "./kenken";
+import { minMs as tipjarMin, minMsHard as tipjarMinHard } from "./kenken";
 import { minMs as towersMin } from "./skyscrapers";
 import { minMs as cupsMin } from "./hitori";
 import { minMs as sumsMin } from "./kakuro";
@@ -44,11 +44,12 @@ const GAMES = {
   cipher: { mode: () => "daily", min: () => cipherMin },
   lamps: { mode: () => "daily", min: () => lampsMin },
   jumble: { mode: () => "daily", min: () => jumbleMin },
-  milk: { mode: () => "daily", min: () => milkMin },
+  milk: { mode: (v: unknown) => (v === "easy" ? "easy" : "daily"), min: (m: string) => (m === "easy" ? 3000 : milkMin) },
   lights: { mode: () => "daily", min: () => lightsMin },
-  table: { mode: () => "daily", min: () => tableMin },
+  // Levels: "daily" is the usual grid, plus a hard (bigger) one for Table for one and Tip jar, and an easy one for Milk & coffee
+  table: { mode: (v: unknown) => (v === "hard" ? "hard" : "daily"), min: (m: string) => (m === "hard" ? tableMinHard : tableMin) },
   parasols: { mode: () => "daily", min: () => parasolsMin },
-  tipjar: { mode: () => "daily", min: () => tipjarMin },
+  tipjar: { mode: (v: unknown) => (v === "hard" ? "hard" : "daily"), min: (m: string) => (m === "hard" ? tipjarMinHard : tipjarMin) },
   towers: { mode: () => "daily", min: () => towersMin },
   cups: { mode: () => "daily", min: () => cupsMin },
   sums: { mode: () => "daily", min: () => sumsMin },

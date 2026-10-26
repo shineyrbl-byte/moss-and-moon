@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import SyncAgent from "@/components/SyncAgent";
 import HowToPlay from "@/components/HowToPlay";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <PwaSetup />
             <ErrorReporter />
             <StatsBeacon />
+            <SyncAgent />
           </PaymentProvider>
         </StoreProvider>
       </body>

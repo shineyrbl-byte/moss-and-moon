@@ -3429,6 +3429,67 @@ test("bean boggle and bill total boards, and the chess, backgammon and finder pa
   for (const p of ["/cafe-chess", "/terrace-backgammon", "/bean-boggle", "/bill-total", "/games", "/game-settings", "/print-puzzles", "/print-puzzles?day=2026-10-25"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
+test("account sync, friends, the puzzle of the week and live rooms", async () => {
+  // Sync needs an account
+  await s.api("/api/account/logout", { method: "POST" });
+  assert.equal((await s.api("/api/sync")).status, 401);
+  await signIn("sync@example.com");
+  const phone = "f".repeat(16) + "phone1", laptop = "f".repeat(16) + "laptop";
+  // The phone has some progress and a win
+  let r = await s.api("/api/sync", { method: "POST", json: { voter: phone, data: { "mm-chess": { v: JSON.stringify({ stats: { easy: { won: 2, lost: 1, drawn: 0 } } }), t: 100 }, "mm-trophy-flags": { v: JSON.stringify(["bill-exact"]), t: 100 }, "mm-cart": { v: "[]", t: 1 } } } });
+  assert.equal(r.status, 200);
+  assert.ok(!("mm-cart" in r.body.data), "the basket doesn't sync");
+  // The laptop has different progress: the merge keeps the best of both
+  r = await s.api("/api/sync", { method: "POST", json: { voter: laptop, data: { "mm-chess": { v: JSON.stringify({ stats: { easy: { won: 1, lost: 3, drawn: 0 } } }), t: 200 }, "mm-trophy-flags": { v: JSON.stringify(["dash-1000"]), t: 200 } } } });
+  assert.deepEqual(JSON.parse(r.body.data["mm-chess"].v), { stats: { easy: { won: 2, lost: 3, drawn: 0 } } });
+  assert.deepEqual(JSON.parse(r.body.data["mm-trophy-flags"].v).sort(), ["bill-exact", "dash-1000"]);
+  assert.equal(r.body.voters, 2);
+  // A daily time from either browser counts for the account
+  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.40" }, body: JSON.stringify({ game: "sums", ms: 80000, name: "Syn", voter: phone }) });
+  const g = await s.api(`/api/games?voter=${laptop}`);
+  assert.ok(g.body.games.find((x: { id: string; done: boolean }) => x.id === "sums").done, "played on the phone, counted on the laptop");
+  assert.equal((await s.api(`/api/my-stats?voter=${laptop}`)).body.days, 1);
+  await s.api("/api/account/logout", { method: "POST" });
+
+  // Friends: codes, adding, the board
+  const post = (p: string, json: Record<string, unknown>, ip = "10.9.9.41") => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": ip }, body: JSON.stringify(json) });
+  const a = "a".repeat(16) + "friend", b = "b".repeat(16) + "friend";
+  assert.equal((await post("/api/friends", { voter: a, name: "" })).status, 400);
+  const ca = (await (await post("/api/friends", { voter: a, name: "Asha" })).json()).me.code as string;
+  const cb = (await (await post("/api/friends", { voter: b, name: "Ben" })).json()).me.code as string;
+  assert.match(ca, /^[A-Z2-9]{6}$/); assert.notEqual(ca, cb);
+  assert.equal((await post("/api/friends", { voter: a, add: ca })).status, 400, "not yourself");
+  assert.equal((await post("/api/friends", { voter: a, add: "ZZZZZZ" })).status, 400);
+  await post("/api/daily-scores", { game: "towers", ms: 61000, name: "Ben", voter: b });
+  const fb = await (await post("/api/friends", { voter: a, add: cb.toLowerCase() })).json();
+  const ben = fb.people.find((p: { name: string }) => p.name === "Ben");
+  assert.equal(ben.times.towers, 61000); assert.equal(ben.played, 1);
+  assert.equal(fb.people.find((p: { me: boolean }) => p.me).name, "Asha");
+  // The puzzle of the week, with friends alongside
+  assert.equal((await post("/api/weekly", { voter: b, name: "Ben", ms: 5000 })).status, 400, "too quick for a 9×9");
+  assert.equal((await post("/api/weekly", { voter: b, name: "Ben", ms: 600000 })).status, 200);
+  const wk = await (await fetch(`${s.url}/api/weekly?voter=${a}`)).json();
+  assert.deepEqual(wk.friends, [{ name: "Ben", ms: 600000 }]);
+  const after = await (await post("/api/friends", { voter: a, remove: cb })).json();
+  assert.equal(after.people.length, 1);
+
+  // Live rooms: create, join, take turns, no moving out of turn
+  const created = await (await post("/api/rooms", { create: "gomoku", state: { seat: 0, b: [], last: null, line: null } }, "10.9.9.42")).json();
+  assert.match(created.code, /^[A-Z2-9]{5}$/); assert.equal(created.seat, 0);
+  assert.equal((await post("/api/rooms", { create: "poker", state: {} }, "10.9.9.42")).status, 400);
+  const joined = await (await post("/api/rooms", { join: created.code.toLowerCase() }, "10.9.9.43")).json();
+  assert.equal(joined.seat, 1); assert.equal(joined.joined, true);
+  assert.equal((await post("/api/rooms", { join: created.code }, "10.9.9.44")).status, 400, "the room is full");
+  const out = await post("/api/rooms", { code: created.code, token: joined.token, version: joined.version, state: { seat: 0 } }, "10.9.9.43");
+  assert.equal(out.status, 409, "not the guest's turn");
+  const moved = await (await post("/api/rooms", { code: created.code, token: created.token, version: joined.version, state: { seat: 1, b: [0] } }, "10.9.9.42")).json();
+  assert.equal(moved.version, joined.version + 1); assert.equal(moved.state.seat, 1);
+  assert.equal((await post("/api/rooms", { code: created.code, token: joined.token, version: joined.version, state: { seat: 0 } }, "10.9.9.43")).status, 409, "an old version is refused");
+  assert.equal((await fetch(`${s.url}/api/rooms?code=${created.code}`)).status, 200);
+  assert.equal((await fetch(`${s.url}/api/rooms?code=NOPE1`)).status, 404);
+  for (const p of ["/friends", "/puzzle-of-the-week", "/play-together", "/play-together?room=ABCDE"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

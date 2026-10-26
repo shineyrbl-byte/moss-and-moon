@@ -6,7 +6,7 @@ import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
-import { HINT_MS, N, clashes, isSolved, milkFor, nextValue, type Cell } from "@/lib/binairo";
+import { HINT_MS, milkOf, nextValue, type Cell } from "@/lib/binairo";
 import { addFlag } from "@/lib/trophyFlags";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
@@ -27,22 +27,30 @@ export default function MilkAndCoffee() {
   const [board, setBoard] = useState<Board | null>(null);
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
-  const puzzle = useMemo(() => (date ? milkFor(date) : null), [date]);
+  const [mode, setMode] = useState<"daily" | "easy">("daily");
+  // Normal is 8×8; easy is 6×6 with three of each in every line
+  const M = useMemo(() => milkOf(mode === "easy" ? 6 : 8), [mode]);
+  const { N, clashes, isSolved, milkFor, explain } = M;
+  const [why, setWhy] = useState("");
+  const store = dayKey(mode === "easy" ? `${KEY}-easy` : KEY);
+  const puzzle = useMemo(() => (date ? milkFor(date) : null), [date, milkFor]);
   useEffect(() => {
     const d = playDay();
     setDate(d);
     try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
-    fetch(`/api/daily-scores?game=milk&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
+    try { if (localStorage.getItem("mm-milk-mode") === "easy") setMode("easy"); } catch {}
   }, []);
+  useEffect(() => { fetch(`/api/daily-scores?game=milk&mode=${mode}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {}); }, [mode]);
   useEffect(() => {
     if (!puzzle) return;
     let s: { date?: string; cells?: Cell[]; hints?: number; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(store) ?? "null"); } catch {}
     if (s?.date === date && s.cells?.length === N * N) { setCells(s.cells); setHints(s.hints ?? 0); setStart(s.start ?? null); setDoneMs(s.doneMs ?? null); setSaved(!!s.saved); }
-    else setCells([...puzzle.given]);
+    else { setCells([...puzzle.given]); setHints(0); setStart(null); setDoneMs(null); setSaved(false); }
+    setHistory([]); setHinted(null);
     setNow(Date.now());
-  }, [puzzle, date]);
-  useEffect(() => { if (date && cells) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, cells, hints, start, doneMs, saved })); } catch {} }, [date, cells, hints, start, doneMs, saved]);
+  }, [puzzle, date]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (date && cells) try { localStorage.setItem(store, JSON.stringify({ date, cells, hints, start, doneMs, saved })); } catch {} }, [date, cells, hints, start, doneMs, saved]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -65,19 +73,22 @@ export default function MilkAndCoffee() {
   function tap(i: number) {
     if (done || puzzle!.given[i] !== -1) return;
     const next = [...cells!]; next[i] = nextValue(next[i]);
-    setHinted(null); put(next);
+    setHinted(null); setWhy(""); put(next);
   }
   function hint() {
-    // Fix the first cup that's wrong, or else fill the first gap
+    // Fix a wrong cup first; otherwise take the next step the rules force, and say which rule
     const wrong = cells!.findIndex((v, i) => v !== -1 && v !== puzzle!.solution[i]);
-    const i = wrong >= 0 ? wrong : cells!.indexOf(-1);
+    const step = wrong < 0 ? explain(cells!) : null;
+    const ok = step && step.v === puzzle!.solution[step.at];
+    const i = wrong >= 0 ? wrong : ok ? step!.at : cells!.indexOf(-1);
     if (i < 0) return;
+    setWhy(wrong >= 0 ? "That square was wrong, so it's been swapped." : ok ? step!.why : "There's no one-step move here, so here's a square for free.");
     const next = [...cells!]; next[i] = puzzle!.solution[i];
     setHints(hints + 1); setHinted(i); put(next, HINT_MS);
   }
   async function save() {
     try { localStorage.setItem("mm-game-name", name); } catch {}
-    const r = await fetch("/api/daily-scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game: "milk", ms: doneMs, name, voter: voterId() }) });
+    const r = await fetch("/api/daily-scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game: "milk", mode, ms: doneMs, name, voter: voterId() }) });
     const d = await r.json();
     if (!r.ok) return toast(d.error);
     setBoard(d); setSaved(true);
@@ -89,8 +100,9 @@ export default function MilkAndCoffee() {
       <p className="eyebrow">a daily puzzle</p>
       <ArchiveNote date={date} path="/milk-and-coffee" />
       <h1 className="h2">Milk &amp; <em>coffee</em></h1>
-      <p className="small muted">Fill every square with a glass of milk or a cup of coffee. Never three of the same in a row, across or down, and every row and every column has four of each. Tap a square to go milk, coffee, empty. There&apos;s only one answer.</p>
+      <p className="small muted">Fill every square with a glass of milk or a cup of coffee. Never three of the same in a row, across or down, and every row and every column has {N / 2} of each. Tap a square to go milk, coffee, empty. There&apos;s only one answer.</p>
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+        {(["easy", "daily"] as const).map((m) => <button key={m} className={`chip ${mode === m ? "on" : ""}`} aria-pressed={mode === m} onClick={() => { setMode(m); try { localStorage.setItem("mm-milk-mode", m); } catch {} }}>{m === "easy" ? "Easy 6×6" : "Normal 8×8"}</button>)}
         <button className="btn btn-ghost btn-sm" onClick={hint} disabled={done}>Hint (+{HINT_MS / 1000}s)</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { setCells(p); setHistory(history.slice(0, -1)); setHinted(null); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, cells]); setCells([...puzzle.given]); setHinted(null); }} disabled={done}>Start over</button>
@@ -107,6 +119,7 @@ export default function MilkAndCoffee() {
           );
         })}
       </div>
+      {why && !done && <p className="small center hint-why" role="status">💡 {why}</p>}
       <p className="tiny muted center"><i className="mk-cup milk mk-key" aria-hidden="true" /> milk · <i className="mk-cup coffee mk-key" aria-hidden="true" /> coffee · squares that break a rule turn red</p>
       {done && (
         <section className="card memory-done" aria-live="polite">

@@ -5,6 +5,7 @@ import { voterId } from "@/components/LabCard";
 import { useStore } from "@/components/Store";
 import { TROPHIES, earned, type TrophyCtx } from "@/lib/trophies";
 import { localTrophyStats } from "@/lib/trophyFlags";
+import { eventToday, progress } from "@/lib/seasonalGames";
 import { ANY_TIME, DAILY_KIND, FAVS_KEY, KIND_LABEL, matches, toggleFav, type Filter, type Kind } from "@/lib/gameCatalog";
 
 type G = { id: string; title: string; emoji: string; href: string; blurb: string; done: boolean; streak: number };
@@ -15,13 +16,14 @@ export default function Games() {
   const { toast } = useStore();
   const [s, setS] = useState<S | null>(null);
   const [trophies, setTrophies] = useState<number | null>(null);
+  const [played, setPlayed] = useState<Record<string, string[]>>({});
   const [ar, setAr] = useState<AR | null>(null);
   const [arName, setArName] = useState("");
   const [f, setF] = useState<Filter>({ q: "", kind: "all", quick: false, favs: [] });
   useEffect(() => {
     const v = voterId();
     fetch(`/api/games?voter=${v}`).then((r) => r.json()).then(setS).catch(() => {});
-    fetch(`/api/trophies?voter=${v}`).then((r) => r.json()).then((d: Omit<TrophyCtx, "local">) => setTrophies(earned({ ...d, local: localTrophyStats() }).length)).catch(() => {});
+    fetch(`/api/trophies?voter=${v}`).then((r) => r.json()).then((d: Omit<TrophyCtx, "local">) => { setTrophies(earned({ ...d, local: localTrophyStats() }).length); setPlayed(d.played); }).catch(() => {});
     fetch(`/api/all-rounder?voter=${v}`).then((r) => r.json()).then(setAr).catch(() => {});
     try { setArName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
     try { const favs = JSON.parse(localStorage.getItem(FAVS_KEY) ?? "[]"); if (Array.isArray(favs)) setF((x) => ({ ...x, favs })); } catch {}
@@ -81,6 +83,19 @@ export default function Games() {
         {s.five.done === 5 ? <p className="small" style={{ margin: "0.6rem 0 0" }}>All five done! 🎉 <button className="btn btn-ghost btn-sm" onClick={shareFive}>Share</button></p>
           : s.five.done > 0 && <p className="tiny" style={{ margin: "0.6rem 0 0" }}><button className="btn btn-ghost btn-sm" onClick={shareFive}>Share so far</button></p>}
       </section>
+      {(() => {
+        const ev = eventToday(s.date);
+        if (!ev) return null;
+        const n = Math.min(ev.need, progress(ev, played));
+        return (
+          <section className="card season-event" aria-label={ev.name}>
+            <span className="season-emoji" aria-hidden="true">{ev.emoji}</span>
+            <div><b>{ev.name}</b><p className="small" style={{ margin: "0.1rem 0 0.3rem" }}>{ev.how} for a seasonal trophy.</p>
+              <div className="explore-bar" role="progressbar" aria-valuemin={0} aria-valuemax={ev.need} aria-valuenow={n} aria-label={`${n} of ${ev.need}`}><span style={{ width: `${(n / ev.need) * 100}%` }} /></div>
+              <span className="tiny muted">{n >= ev.need ? "Done! It's on your trophy shelf 🏆" : `${n} of ${ev.need} ${ev.unit === "days" ? "days" : "puzzles"}`}</span></div>
+          </section>
+        );
+      })()}
       <p className="small center" style={{ margin: "0.8rem 0" }}><Link href="/trophies">🏆 Trophy shelf{trophies !== null ? `: ${trophies} of ${TROPHIES.length}` : ""} →</Link></p>
       {favs.length > 0 && !filtering && f.kind !== "fav" && (
         <section className="games-favs" aria-labelledby="fav-h">
@@ -114,7 +129,7 @@ export default function Games() {
           </li>
         ))}
       </ul>
-      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration and colour-blind patterns: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link></p>
+      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration and colour-blind patterns: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/play-together">🎮 Play a friend live</Link></p>
       {anyTime.length > 0 && <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>}
       <ul className="games-more">
         {anyTime.map((g) => (

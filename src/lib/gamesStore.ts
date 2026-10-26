@@ -1,6 +1,7 @@
 // Games corner: has this person played each daily game today, and their streak for each.
 import "server-only";
 import { db } from "./db";
+import { votersFor } from "./syncStore";
 import { toDateStr } from "./cafe";
 import { playStreak } from "./gameOrders";
 import { fiveDays, todaysFive } from "./todaysFive";
@@ -48,7 +49,12 @@ export const DAILY_GAMES = [
 export function playedMap(customerId: number | null, voter: unknown): Record<string, string[]> {
   const anon = cleanVoter(voter);
   const me = customerId ? `c${customerId}` : anon;
-  const days = (sql: string, v: string | null) => (v ? (db.prepare(sql).all(v) as { date: string }[]).map((r) => r.date) : []);
+  // Signed in, the games kept by browser count every browser you've synced from
+  const anons = [...new Set([anon, ...votersFor(customerId)].filter(Boolean))] as string[];
+  const days = (sql: string, v: string | null) => {
+    const vs = v && v === anon ? anons : v ? [v] : anons;
+    return [...new Set(vs.flatMap((x) => (db.prepare(sql).all(x) as { date: string }[]).map((r) => r.date)))];
+  };
   const played: Record<string, string[]> = {
     word: days("SELECT date FROM word_games WHERE voter = ? AND done = 1", me),
     connections: days("SELECT date FROM connections_games WHERE voter = ? AND done = 1", me),

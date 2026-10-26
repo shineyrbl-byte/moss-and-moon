@@ -2980,3 +2980,37 @@ button.pc-slot { cursor: pointer; }
 @media print { .howto, .howto-bar { display: none !important; } }
 .pp-cell.black small { font-size: 0.5rem; }
 @media print { .pp-grid { max-width: 8cm; } .pp-cell { font-size: 11pt; } .pp-cell.black small { font-size: 7pt; } }
+
+/* Friends */
+.fr-me { display: grid; justify-items: start; gap: 0.3rem; padding: 1rem 1.2rem; margin-top: 1rem; }
+.fr-code { font-family: ui-monospace, monospace; font-size: 2rem; letter-spacing: 0.18em; color: var(--pink-ink); }
+.fr-table td.fr-best { font-weight: 700; } .fr-table td.fr-best::after { content: " 🏅"; }
+
+/* Puzzle of the week */
+.s9-grid { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); max-width: 27rem; margin: 0.6rem auto 0.4rem; border: 3px solid var(--text); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.s9-cell { aspect-ratio: 1; min-width: 0; padding: 0; border: none; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); color: var(--pink-ink); font-size: clamp(1rem, 5vw, 1.45rem); font-weight: 600; cursor: pointer; display: grid; place-items: center; }
+.s9-cell.br { border-right: 2.5px solid var(--text); } .s9-cell.bb { border-bottom: 2.5px solid var(--text); }
+.s9-cell.fixed { color: var(--text); font-weight: 700; background: var(--surface-2); }
+.s9-cell.same { background: color-mix(in srgb, var(--pink-soft) 60%, var(--surface)); }
+.s9-cell.sel { background: var(--pink-soft); box-shadow: inset 0 0 0 2px var(--pink-deep); }
+.s9-cell.bad { color: #c43c3c; }
+.s9-cell:disabled { opacity: 1; cursor: default; }
+.s9-notes { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; height: 100%; font-size: clamp(0.42rem, 2vw, 0.6rem); color: var(--muted); font-weight: 500; line-height: 1; }
+.s9-notes i { font-style: normal; display: grid; place-items: center; }
+.s9-grid.done { border-color: var(--moss); }
+.memory-board li.me { font-weight: 700; }
+
+/* Play together */
+.pt-start { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 0.6rem; margin-top: 1rem; }
+.pt-game { display: grid; justify-items: center; gap: 0.25rem; padding: 1.1rem; cursor: pointer; color: var(--text); font: inherit; }
+.pt-game span { font-size: 2.2rem; }
+.pt-game:hover { border-color: var(--pink); }
+.pt-code { font-family: ui-monospace, monospace; font-size: 1.4rem; letter-spacing: 0.16em; font-weight: 700; color: var(--pink-ink); }
+.season-event { display: flex; gap: 0.9rem; align-items: center; padding: 0.9rem 1.1rem; margin-top: 0.8rem; background: color-mix(in srgb, var(--butter) 30%, var(--surface)); }
+.season-emoji { font-size: 2.2rem; }
+.season-event > div { flex: 1; }
+.tf-stone { background: #d9d4cc; }
+:root[data-theme="dark"] .tf-stone { background: #4d4741; }
+:root[data-patterns="on"] .tf-stone { background-image: repeating-linear-gradient(135deg, rgba(59, 39, 32, 0.18) 0 3px, transparent 3px 7px); }
+.hint-why { max-width: 30rem; margin: 0.4rem auto; padding: 0.45rem 0.8rem; border-radius: 12px; background: color-mix(in srgb, var(--butter) 40%, var(--surface)); }
+:root[data-theme="dark"] .hint-why { background: #3a3220; }

@@ -6,12 +6,12 @@ import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
-import { HINT_MS, N, clashes, isSolved, nextMark, ruledOut, tableFor, type Mark } from "@/lib/queens";
+import { HINT_MS, nextMark, queensOf, type Mark } from "@/lib/queens";
 import { addFlag } from "@/lib/trophyFlags";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-table";
-const SECTION = ["rose", "latte", "sage", "butter", "lilac", "sky", "peach", "mint"];
+const SECTION = ["rose", "latte", "sage", "butter", "lilac", "sky", "peach", "mint", "stone"];
 
 export default function TableForOne() {
   const { toast } = useStore();
@@ -28,22 +28,30 @@ export default function TableForOne() {
   const [board, setBoard] = useState<Board | null>(null);
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
-  const puzzle = useMemo(() => (date ? tableFor(date) : null), [date]);
+  const [mode, setMode] = useState<"daily" | "hard">("daily");
+  // Normal is 8×8 with eight guests; hard is 9×9 with nine
+  const Q = useMemo(() => queensOf(mode === "hard" ? 9 : 8), [mode]);
+  const { N, clashes, isSolved, ruledOut, tableFor, explain } = Q;
+  const [why, setWhy] = useState("");
+  const store = dayKey(mode === "hard" ? `${KEY}-hard` : KEY);
+  const puzzle = useMemo(() => (date ? tableFor(date) : null), [date, tableFor]);
   useEffect(() => {
     const d = playDay();
     setDate(d);
     try { setName(localStorage.getItem("mm-game-name") ?? ""); setAuto(localStorage.getItem("mm-table-auto") === "1"); } catch {}
-    fetch(`/api/daily-scores?game=table&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
+    try { if (localStorage.getItem("mm-table-mode") === "hard") setMode("hard"); } catch {}
   }, []);
+  useEffect(() => { fetch(`/api/daily-scores?game=table&mode=${mode}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {}); }, [mode]);
   useEffect(() => {
     if (!puzzle) return;
     let s: { date?: string; marks?: Mark[]; hints?: number; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(store) ?? "null"); } catch {}
     if (s?.date === date && s.marks?.length === N * N) { setMarks(s.marks); setHints(s.hints ?? 0); setStart(s.start ?? null); setDoneMs(s.doneMs ?? null); setSaved(!!s.saved); }
-    else setMarks(Array(N * N).fill(0));
+    else { setMarks(Array(N * N).fill(0)); setHints(0); setStart(null); setDoneMs(null); setSaved(false); }
+    setHistory([]); setHinted(null);
     setNow(Date.now());
-  }, [puzzle, date]);
-  useEffect(() => { if (date && marks) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, marks, hints, start, doneMs, saved })); } catch {} }, [date, marks, hints, start, doneMs, saved]);
+  }, [puzzle, date]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (date && marks) try { localStorage.setItem(store, JSON.stringify({ date, marks, hints, start, doneMs, saved })); } catch {} }, [date, marks, hints, start, doneMs, saved]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -70,20 +78,22 @@ export default function TableForOne() {
     const next = [...marks!];
     next[i] = nextMark(next[i]);
     if (next[i] === 2 && auto) for (const j of ruledOut(regions, i)) if (next[j] === 0) next[j] = 1;
-    setHinted(null); put(next);
+    setHinted(null); setWhy(""); put(next);
   }
   function hint() {
     // Take away a guest in the wrong seat, or else seat the next one
     const wrong = marks!.findIndex((m, i) => m === 2 && !seats.includes(i));
     const next = [...marks!];
     let at: number;
-    if (wrong >= 0) { next[wrong] = 0; at = wrong; }
-    else { at = seats.find((s) => marks![s] !== 2)!; if (at === undefined) return; next[at] = 2; }
+    const step = wrong < 0 ? explain(regions, marks!) : null;
+    if (wrong >= 0) { next[wrong] = 0; at = wrong; setWhy("That guest was in the wrong seat, so they've been moved off."); }
+    else if (step && seats.includes(step.at)) { at = step.at; next[at] = 2; setWhy(step.why); }
+    else { at = seats.find((s) => marks![s] !== 2)!; if (at === undefined) return; next[at] = 2; setWhy("There's no one-step move here (check your crosses), so here's a guest for free."); }
     setHints(hints + 1); setHinted(at); put(next, true);
   }
   async function save() {
     try { localStorage.setItem("mm-game-name", name); } catch {}
-    const r = await fetch("/api/daily-scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game: "table", ms: doneMs, name, voter: voterId() }) });
+    const r = await fetch("/api/daily-scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game: "table", mode, ms: doneMs, name, voter: voterId() }) });
     const d = await r.json();
     if (!r.ok) return toast(d.error);
     setBoard(d); setSaved(true);
@@ -100,8 +110,9 @@ export default function TableForOne() {
       <p className="eyebrow">a daily puzzle</p>
       <ArchiveNote date={date} path="/table-for-one" />
       <h1 className="h2">Table <em>for one</em></h1>
-      <p className="small muted">Eight guests, and every one wants some space. Seat one guest in every row, every column and every coloured section of the floor. No two guests can sit in touching seats, not even corner to corner. Tap once to cross a seat off, twice to seat a guest. There&apos;s only one answer.</p>
+      <p className="small muted">{N === 8 ? "Eight" : "Nine"} guests, and every one wants some space. Seat one guest in every row, every column and every coloured section of the floor. No two guests can sit in touching seats, not even corner to corner. Tap once to cross a seat off, twice to seat a guest. There&apos;s only one answer.</p>
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+        {(["daily", "hard"] as const).map((m) => <button key={m} className={`chip ${mode === m ? "on" : ""}`} aria-pressed={mode === m} onClick={() => { setMode(m); try { localStorage.setItem("mm-table-mode", m); } catch {} }}>{m === "daily" ? "Normal 8×8" : "Hard 9×9"}</button>)}
         <button className="btn btn-ghost btn-sm" onClick={hint} disabled={done}>Hint (+{HINT_MS / 1000}s)</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { setMarks(p); setHistory(history.slice(0, -1)); setHinted(null); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, marks]); setMarks(Array(N * N).fill(0)); setHinted(null); }} disabled={done || marks.every((m) => !m)}>Start over</button>
@@ -116,6 +127,7 @@ export default function TableForOne() {
           </button>
         ))}
       </div>
+      {why && !done && <p className="small center hint-why" role="status">💡 {why}</p>}
       <p className="tiny muted center">Guests who share a row, column or section, or who sit next to each other, turn red. Auto ✕ crosses off the seats a new guest rules out.</p>
       {done && (
         <section className="card memory-done" aria-live="polite">

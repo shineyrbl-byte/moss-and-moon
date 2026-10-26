@@ -57,3 +57,25 @@ export function sudokuFor(date: string, mode: SudokuMode) {
 export const isComplete = (b: number[]) => b.every((v, p) => v >= 1 && v <= N && peers(p).every((q) => b[q] !== v));
 /** Cells that clash with another in their row, column or box */
 export const clashes = (b: number[]) => new Set([...b.keys()].filter((p) => b[p] && peers(p).some((q) => b[q] === b[p])));
+
+/** A hint that explains itself: a square that has to be one picture, and why. Looks for a square with only one picture left
+ * first, then for a picture with only one square left in its row, column or box. */
+export function explain(b: number[]): { at: number; v: number; why: string } | null {
+  const cands = (p: number) => [1, 2, 3, 4, 5, 6].filter((v) => !peers(p).some((q) => b[q] === v));
+  for (let p = 0; p < N * N; p++) {
+    if (b[p]) continue;
+    const c = cands(p);
+    if (c.length === 1) return { at: p, v: c[0], why: `Only the ${ICON_NAMES[c[0] - 1]} fits here: its row, column and box already have the other five.` };
+  }
+  const units: [string, number[]][] = [];
+  for (let k = 0; k < N; k++) {
+    units.push(["row", [...Array(N).keys()].map((c) => k * N + c)], ["column", [...Array(N).keys()].map((r) => r * N + k)]);
+    units.push(["box", [...Array(N * N).keys()].filter((p) => box(p) === k)]);
+  }
+  for (const [kind, cells] of units) for (let v = 1; v <= 6; v++) {
+    if (cells.some((p) => b[p] === v)) continue;
+    const spots = cells.filter((p) => !b[p] && cands(p).includes(v));
+    if (spots.length === 1) return { at: spots[0], v, why: `In this ${kind}, the ${ICON_NAMES[v - 1]} can only go here: every other empty square already sees one.` };
+  }
+  return null;
+}

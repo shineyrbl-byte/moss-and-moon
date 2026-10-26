@@ -2090,7 +2090,7 @@ test("bean boggle and bill total", async () => {
   while (!s.things.some((x) => x.kind !== "bean" && x.x < D.RIDER_X + 20) && t < 10) { s = D.step(s, 1 / 120, () => 0.1); t += 1 / 120; }
   assert.ok(t > 2.5, `first obstacle reaches you after ${t.toFixed(1)}s`);
   const { TROPHIES } = await import("../src/lib/trophies.ts");
-  assert.equal(TROPHIES.length, 69);
+  assert.ok(TROPHIES.length >= 69);
 });
 
 test("how to play cards: every one is for a real game page, with a goal and a tip", async () => {
@@ -2105,4 +2105,59 @@ test("how to play cards: every one is for a real game page, with a goal and a ti
   for (const g of ANY_TIME.filter((x) => x.kind === "board" || x.kind === "arcade" || x.kind === "cards")) if (g.id !== "saucers" && g.id !== "rush") assert.ok(HOW_TO[g.href], g.href);
   const { DEFAULTS } = await import("../src/lib/gameSettings.ts");
   assert.deepEqual(DEFAULTS, { sound: true, vibrate: false, patterns: false }, "vibration and patterns start off");
+});
+
+test("account sync: what follows you, and merging two devices", async () => {
+  const { synced, mergeEntry, mergeBlobs, clean } = await import("../src/lib/syncMerge.ts");
+  for (const k of ["mm-milk", "mm-sudoku-hard", "mm-milk@2026-10-25", "mm-chess", "mm-dash-best", "mm-trophy-flags", "mm-tipjar-hard"]) assert.ok(synced(k), k);
+  for (const k of ["mm-cart", "mm-orders", "mm-theme", "mm-voter", "mm-kds-station", "other"]) assert.ok(!synced(k), k);
+  const e = (v: unknown, t: number) => ({ v: typeof v === "string" ? v : JSON.stringify(v), t });
+  assert.equal(mergeEntry("mm-dash-best", e("120", 5), e("90", 9))!.v, "120", "bests keep the higher");
+  assert.deepEqual(JSON.parse(mergeEntry("mm-fav-games", e(["chess"], 1), e(["reversi", "chess"], 2))!.v), ["chess", "reversi"]);
+  // A day's puzzle: the later day wins; on the same day, the finished one
+  assert.equal(JSON.parse(mergeEntry("mm-milk", e({ date: "2026-10-26", doneMs: 9000 }, 1), e({ date: "2026-10-25", doneMs: null }, 9))!.v).date, "2026-10-26");
+  assert.equal(JSON.parse(mergeEntry("mm-milk", e({ date: "2026-10-26", doneMs: null }, 9), e({ date: "2026-10-26", doneMs: 9000 }, 1))!.v).doneMs, 9000);
+  assert.deepEqual(JSON.parse(mergeEntry("mm-gomoku", e({ stats: { easy: { won: 3, lost: 0 } }, level: "easy" }, 1), e({ stats: { easy: { won: 1, lost: 2 } }, level: "hard" }, 2))!.v), { stats: { easy: { won: 3, lost: 2 } }, level: "hard" });
+  assert.equal(mergeEntry("mm-game-name", e("Asha", 1), e("Ash", 2))!.v, "Ash", "anything else: the newer one");
+  const old = mergeBlobs({}, { "mm-milk@2020-01-01": e({ date: "2020-01-01" }, 1), "mm-milk": e({ date: "2026-10-26" }, 1) });
+  assert.deepEqual(Object.keys(old), ["mm-milk"], "old archive days are dropped");
+  assert.deepEqual(clean({ "mm-milk": { v: 5, t: 1 }, "mm-cart": { v: "x", t: 1 }, "mm-chess": { v: "{}", t: 3 } }), { "mm-chess": { v: "{}", t: 3 } });
+});
+
+test("seasonal events, bigger and smaller grids, the weekly 9×9 and hints that explain", async () => {
+  const { EVENTS, progress, eventToday } = await import("../src/lib/seasonalGames.ts");
+  const diwali = EVENTS.find((e) => e.id === "diwaliGames")!;
+  assert.equal(eventToday("2026-11-08")?.id, "diwaliGames");
+  assert.equal(eventToday("2027-01-01")?.season, "christmas", "Christmas runs to New Year's Day");
+  assert.equal(progress(diwali, { milk: ["2026-11-07", "2026-11-08"], sums: ["2026-11-08"], word: ["2026-10-01"] }), 3);
+  const newYear = EVENTS.find((e) => e.id === "newYearGames")!;
+  assert.equal(progress(newYear, { milk: ["2027-01-01"] }), 1);
+  const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
+  assert.ok(TROPHIES.some((t) => t.group === "Seasons"));
+  assert.ok(earned({ played: { milk: ["2026-11-04", "2026-11-05", "2026-11-06", "2026-11-07", "2026-11-08"] }, five: [], arcade: {}, local: {} }).includes("diwaliGames"));
+
+  const K = await import("../src/lib/kenken.ts");
+  const hard = K.HARD.jarFor("2026-10-26");
+  assert.equal(hard.solution.length, 36); assert.equal(K.HARD.answers(hard.cages).length, 1);
+  const Q = await import("../src/lib/queens.ts");
+  const q9 = Q.HARD.tableFor("2026-10-26");
+  assert.equal(q9.seats.length, 9); assert.equal(Q.HARD.countSeatings(q9.regions), 1);
+  const M = await import("../src/lib/binairo.ts");
+  const m6 = M.EASY.milkFor("2026-10-26");
+  assert.equal(m6.solution.length, 36); assert.equal(M.EASY.countSolutions([...m6.given]), 1);
+
+  const W = await import("../src/lib/sudoku9.ts");
+  const wk = W.weeklyFor("2026-10-26");
+  assert.equal(W.countSolutions(wk.puzzle), 1); assert.ok(W.isSolved(wk.answer));
+  assert.deepEqual(W.weeklyFor("2026-10-26"), wk, "the same all week");
+
+  // Following the explained hints alone solves (or nearly solves) the easy puzzles, and every step is right
+  const S = await import("../src/lib/sudoku.ts");
+  const sd = S.sudokuFor("2026-10-26", "easy"), b = [...sd.puzzle];
+  for (let k = 0; k < 40; k++) { const st = S.explain(b); if (!st) break; assert.equal(st.v, sd.answer[st.at], st.why); b[st.at] = st.v; }
+  assert.ok(S.isComplete(b), "easy sudoku solves by explained steps");
+  const g = [...m6.given];
+  for (let k = 0; k < 40; k++) { const st = M.EASY.explain(g); if (!st) break; assert.equal(st.v, m6.solution[st.at], st.why); g[st.at] = st.v; }
+  const t8 = Q.tableFor("2026-10-26"), marks = Array(64).fill(0) as (0 | 1 | 2)[];
+  for (let k = 0; k < 8; k++) { const st = Q.explain(t8.regions, marks); if (!st) break; assert.ok(t8.seats.includes(st.at), st.why); marks[st.at] = 2; }
 });

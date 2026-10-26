@@ -1,5 +1,6 @@
 // Game trophies: worked out from what you've played (from the server) and wins kept in this browser. Pure, so the page and tests share it.
 import { KINDS } from "./todaysFive.ts";
+import { EVENTS, progress } from "./seasonalGames.ts";
 
 // Kept here as numbers (rather than importing the level lists) so the trophy shelf stays small
 export const TRAY_LEVELS = 20, JAM_LEVELS = 20;
@@ -104,4 +105,6 @@ export const TROPHIES: Trophy[] = [
   { group: "Puzzle packs", id: "jamAll", emoji: "🎂", name: "Special delivery", how: "Finish every Delivery jam level", test: (c) => (c.local.jam ?? 0) >= JAM_LEVELS },
   { group: "Puzzle packs", id: "jamFewest", emoji: "🗺", name: "Shortcut", how: "Finish a Delivery jam level in the fewest moves", test: (c) => flag(c, "jam-fewest") },
 ];
+// Seasonal ones, from the festivals the café dresses up for
+TROPHIES.push(...EVENTS.map((e) => ({ group: "Seasons", id: e.id, emoji: e.emoji, name: e.name, how: e.how, test: (c: TrophyCtx) => progress(e, c.played) >= e.need })));
 export const earned = (c: TrophyCtx) => TROPHIES.filter((t) => t.test(c)).map((t) => t.id);
