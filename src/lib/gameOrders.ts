@@ -48,6 +48,13 @@ export function seededRand(seed: string): () => number {
   return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 
+/** A shuffled copy (Fisher–Yates). Sorting with a random comparator isn't the same in every browser, so a daily puzzle
+ * built that way could differ between people; this is. */
+export function shuffled<T>(a: readonly T[], rand: () => number): T[] {
+  const out = [...a];
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
 /** Days in a row you've played, counting back from today (dates as YYYY-MM-DD) */
 export function playStreak(days: string[], today: string): number {
   return streakWithFreeze(days, today).streak;

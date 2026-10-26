@@ -14,6 +14,7 @@ export const DAILY_KIND: Record<string, { kind: Kind; quick: boolean }> = {
   table: { kind: "logic", quick: true }, parasols: { kind: "logic", quick: false }, tipjar: { kind: "logic", quick: false }, towers: { kind: "logic", quick: false },
   cups: { kind: "logic", quick: false }, corners: { kind: "word", quick: false }, sums: { kind: "logic", quick: false }, freecell: { kind: "cards", quick: false },
   boggle: { kind: "word", quick: true }, bill: { kind: "logic", quick: true },
+  taller: { kind: "logic", quick: true }, traytiles: { kind: "logic", quick: true }, seats: { kind: "logic", quick: true }, four: { kind: "word", quick: true }, threads: { kind: "word", quick: false }, garden: { kind: "logic", quick: false }, rope: { kind: "logic", quick: false }, necklace: { kind: "logic", quick: false },
 };
 
 /** Games you can play any time */

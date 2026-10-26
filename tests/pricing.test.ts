@@ -1581,10 +1581,10 @@ test("today's five: the new puzzles only join from their start day, so old days 
   const { todaysFive, NEW_LOGIC_FROM } = await import("../src/lib/todaysFive.ts");
   const before: string[] = [];
   for (let d = 1; d <= 26; d++) before.push(...todaysFive(`2026-10-${String(d).padStart(2, "0")}`));
-  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill"].every((id) => !before.includes(id)));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill", "taller", "seats", "four", "threads", "garden", "rope", "necklace", "traytiles"].every((id) => !before.includes(id)));
   const after: string[] = [];
   for (let d = 0; d < 60; d++) after.push(...todaysFive(new Date(Date.UTC(2026, 9, 27 + d)).toISOString().slice(0, 10)));
-  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill"].every((id) => after.includes(id)));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill", "taller", "seats", "four", "threads", "garden", "rope", "necklace", "traytiles"].every((id) => after.includes(id)));
   assert.equal(NEW_LOGIC_FROM, "2026-10-27");
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
   assert.ok(TROPHIES.length >= 42);
@@ -2160,4 +2160,45 @@ test("seasonal events, bigger and smaller grids, the weekly 9×9 and hints that 
   for (let k = 0; k < 40; k++) { const st = M.EASY.explain(g); if (!st) break; assert.equal(st.v, m6.solution[st.at], st.why); g[st.at] = st.v; }
   const t8 = Q.tableFor("2026-10-26"), marks = Array(64).fill(0) as (0 | 1 | 2)[];
   for (let k = 0; k < 8; k++) { const st = Q.explain(t8.regions, marks); if (!st) break; assert.ok(t8.seats.includes(st.at), st.why); marks[st.at] = 2; }
+});
+
+test("batch 3 daily puzzles: one answer each, and the rules", async () => {
+  const days = ["2026-10-26", "2026-10-27", "2027-02-02"];
+  const F = await import("../src/lib/futoshiki.ts");
+  for (const d of days) { const x = F.tallerFor(d); assert.equal(F.answers(x.given, x.signs).length, 1, d); assert.ok(F.isSolved(x.signs, x.solution)); }
+  const S = await import("../src/lib/shikaku.ts");
+  for (const d of days) { const x = S.trayTilesFor(d); assert.equal(S.answers(x.clues).length, 1, d); assert.ok(S.isSolved(x.clues, x.rects)); }
+  assert.deepEqual(S.rectFrom(S.N + 1, 0), { r: 0, c: 0, h: 2, w: 2 });
+  const A = await import("../src/lib/akari.ts");
+  for (const d of days) { const x = A.seatsFor(d); assert.equal(A.answers(x.walls).length, 1, d); const m = Array(A.N * A.N).fill(0); x.lamps.forEach((i) => { m[i] = 2; }); assert.ok(A.isSolved(x.walls, m)); m[x.lamps[0]] = 0; assert.ok(!A.isSolved(x.walls, m)); }
+  const G = await import("../src/lib/nurikabe.ts");
+  for (const d of days) { const x = G.gardenFor(d); assert.equal(G.answers(x.clues).length, 1, d); assert.ok(G.isSolved(x.clues, x.path.map((p) => (p ? 1 : 0)))); }
+  const L = await import("../src/lib/slitherlink.ts");
+  for (const d of days) { const x = L.ropeFor(d); assert.equal(L.answers(x.clues).length, 1, d); assert.ok(L.isSolved(x.clues, L.loopOf(x.inside))); }
+  const M = await import("../src/lib/masyu.ts");
+  for (const d of days.slice(0, 2)) { const x = M.necklaceFor(d); assert.equal(M.answers(x.beads).length, 1, d); const links = M.linksOf(x.region); assert.ok(M.isSolved(x.beads, links)); assert.ok(!M.isSolved(x.beads, links.map(() => false))); }
+  const Q = await import("../src/lib/quordle.ts");
+  const four = Q.fourFor("2026-10-26");
+  assert.equal(new Set(four).size, 4); assert.ok(four.every((w) => w.length === 5 && Q.isGuess(w)));
+  assert.ok(Q.allSolved(four, [...four]) && !Q.allSolved(four, four.slice(0, 3)));
+  assert.deepEqual(Q.solvedAt(four, ["crane", four[2]]), [null, null, 2, null]);
+  const T = await import("../src/lib/threads.ts");
+  for (const d of days) {
+    const x = T.threadsFor(d);
+    assert.ok(x.grid.every(Boolean), "every square used");
+    assert.equal(x.threads.reduce((n, t) => n + t.word.length, 0), T.ROWS * T.COLS);
+    for (const t of x.threads) { assert.equal(T.spell(x.grid, t.cells), t.word); assert.equal(T.matchThread(x.threads, [...t.cells].reverse()), t); }
+  }
+  const { HOW_TO } = await import("../src/lib/howTo.ts");
+  for (const p of ["/taller-order", "/tray-tiles", "/window-seats", "/four-at-once", "/menu-threads", "/garden-plots", "/queue-rope", "/bead-necklace"]) assert.ok(HOW_TO[p], p);
+});
+
+test("daily puzzles shuffle the same way in every browser", async () => {
+  // Sorting with a random comparator gives different orders in different JavaScript engines, so a "daily" puzzle built that
+  // way isn't the same for everyone. Puzzles must use shuffled() instead.
+  const { readdirSync, readFileSync } = await import("node:fs");
+  for (const f of readdirSync("src/lib").filter((x) => x.endsWith(".ts"))) assert.doesNotMatch(readFileSync(`src/lib/${f}`, "utf8"), /sort\(\(\) => (rand|Math\.random)\(\)/, f);
+  const { shuffled, seededRand } = await import("../src/lib/gameOrders.ts");
+  assert.deepEqual(shuffled([1, 2, 3, 4, 5], seededRand("x")), shuffled([1, 2, 3, 4, 5], seededRand("x")));
+  assert.deepEqual(shuffled([1, 2, 3, 4, 5], seededRand("x")).sort(), [1, 2, 3, 4, 5]);
 });

@@ -56,6 +56,14 @@ export const HOW_TO: Record<string, HowTo> = {
   "/tray-pusher": { title: "Tray pusher", goal: "Push every cup onto a saucer.", tip: "Never push a cup into a corner that isn't a saucer: it's stuck there." },
   "/delivery-jam": { title: "Delivery jam", goal: "Slide the crates to get the cake van out.", tip: "Work out which crates block the van's row and what blocks them." },
   "/brew-merge": { title: "Brew merge", goal: "Merge drinks all the way up to the moon brew.", tip: "Keep your biggest tile in a corner." },
+  "/taller-order": { title: "Taller order", goal: "Fill the grid with 1 to 5 so every sign between squares is true.", tip: "A square next to a > can't be 1, and one next to a < can't be 5." },
+  "/tray-tiles": { title: "Tray tiles", goal: "Cut the tray into rectangles, each holding one number that matches its size.", tip: "Big numbers in tight corners often have only one shape that fits." },
+  "/window-seats": { title: "Window seats", goal: "Light every square with lamps that don't shine on each other.", tip: "A 4 wall needs lamps on all four sides; a 0 wall means none touch it." },
+  "/four-at-once": { title: "Four at once", goal: "Find four words at once in nine tries.", tip: "Use your first few guesses on lots of different letters." },
+  "/menu-threads": { title: "Menu threads", goal: "Find every menu word hidden in the grid.", tip: "Long words with unusual letters are easier to spot first." },
+  "/garden-plots": { title: "Garden plots", goal: "Shade the garden path so every flower bed is the right size.", tip: "Squares between two numbers that touch must be path." },
+  "/queue-rope": { title: "Queue rope", goal: "Draw one loop round the numbers, never crossing itself.", tip: "A 0 means no rope round that square: cross off all four sides." },
+  "/bead-necklace": { title: "Bead necklace", goal: "Draw one loop through every bead.", tip: "A black bead on the edge must turn away from it; start there." },
   "/higher-or-lower": { title: "Higher or lower", goal: "Guess which item costs more.", tip: "Large drinks and bakes with extras usually cost more." },
 };
 export const HOWTO_KEY = "mm-howto-seen";

@@ -52,6 +52,14 @@ export const ARCHIVE_GAMES = [
   { id: "freecell", href: "/cafe-freecell", title: "Café FreeCell", emoji: "🃏", key: "mm-freecell" },
   { id: "boggle", href: "/bean-boggle", title: "Bean boggle", emoji: "🔠", key: "mm-boggle" },
   { id: "bill", href: "/bill-total", title: "Bill total", emoji: "🧾", key: "mm-bill" },
+  { id: "taller", href: "/taller-order", title: "Taller order", emoji: "📏", key: "mm-taller" },
+  { id: "traytiles", href: "/tray-tiles", title: "Tray tiles", emoji: "🍱", key: "mm-traytiles" },
+  { id: "seats", href: "/window-seats", title: "Window seats", emoji: "💡", key: "mm-seats" },
+  { id: "four", href: "/four-at-once", title: "Four at once", emoji: "🍀", key: "mm-four" },
+  { id: "threads", href: "/menu-threads", title: "Menu threads", emoji: "🧵", key: "mm-threads" },
+  { id: "garden", href: "/garden-plots", title: "Garden plots", emoji: "🌷", key: "mm-garden" },
+  { id: "rope", href: "/queue-rope", title: "Queue rope", emoji: "🪢", key: "mm-rope" },
+  { id: "necklace", href: "/bead-necklace", title: "Bead necklace", emoji: "📿", key: "mm-necklace" },
 ] as const;
 
 /** Has a past day been finished? `keys` is every saved key in this browser, `get` reads one. */

@@ -1,6 +1,6 @@
 // Konkani word of the day: everyday Goan Konkani in Romi (Roman) script, as it's often written in Goa.
 // Spellings vary from village to village. Owners: please check these and correct any that sound wrong locally.
-import { seededRand } from "./gameOrders.ts";
+import { seededRand, shuffled } from "./gameOrders.ts";
 
 export type KWord = { word: string; say: string; means: string; example?: string; exampleMeans?: string };
 
@@ -63,7 +63,7 @@ export function quizFor(date: string) {
     const others = KONKANI.filter((x) => x.means !== w.means).map((x) => x.means);
     const picks = new Set<string>();
     while (picks.size < 3) picks.add(others[Math.floor(rand() * others.length)]);
-    const choices = [w.means, ...picks].sort(() => rand() - 0.5);
+    const choices = shuffled([w.means, ...picks], rand);
     return { word: w.word, choices, answer: choices.indexOf(w.means) };
   });
 }

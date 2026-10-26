@@ -1,3 +1,4 @@
+import { shuffled } from "./gameOrders.ts";
 // Café hearts: the card game Hearts for four (you and three computer players). Each hand, pass three cards, then play
 // thirteen tricks. Every heart you take costs a point and the queen of spades costs 13, unless you take all 26 ("shoot
 // the moon"), when everyone else gets 26 instead. First to 100 ends the game; lowest score wins. Pure, so the page and
@@ -86,7 +87,7 @@ export const leaders = (totals: number[]) => totals.flatMap((t, i) => (t === Mat
 
 /** Three cards for the computer to pass: the dangerous high spades and hearts, then its highest cards */
 export function choosePass(hand: Card[], level: Level, rand: () => number = Math.random): Card[] {
-  if (level === "easy") return [...hand].sort(() => rand() - 0.5).slice(0, 3);
+  if (level === "easy") return shuffled(hand, rand).slice(0, 3);
   const danger = (c: Card) => (isQueen(c) ? 100 : c.suit === SPADES && c.rank > 12 ? 90 + c.rank : c.suit === HEARTS ? 40 + c.rank : c.rank);
   // Keep low spades if it holds the queen's guards
   return [...hand].sort((a, b) => danger(b) - danger(a)).slice(0, 3);

@@ -43,6 +43,14 @@ export const DAILY_GAMES = [
   { id: "freecell", title: "Café FreeCell", emoji: "🃏", href: "/cafe-freecell", blurb: "Today's deal, every card face up" },
   { id: "boggle", title: "Bean boggle", emoji: "🔠", href: "/bean-boggle", blurb: "Three minutes, sixteen letters" },
   { id: "bill", title: "Bill total", emoji: "🧾", href: "/bill-total", blurb: "Six numbers, one total" },
+  { id: "taller", title: "Taller order", emoji: "📏", href: "/taller-order", blurb: "Signs between the cups" },
+  { id: "traytiles", title: "Tray tiles", emoji: "🍱", href: "/tray-tiles", blurb: "Cut the tray into rectangles" },
+  { id: "seats", title: "Window seats", emoji: "💡", href: "/window-seats", blurb: "Light every seat" },
+  { id: "four", title: "Four at once", emoji: "🍀", href: "/four-at-once", blurb: "Four words, nine tries" },
+  { id: "threads", title: "Menu threads", emoji: "🧵", href: "/menu-threads", blurb: "Find the menu in the letters" },
+  { id: "garden", title: "Garden plots", emoji: "🌷", href: "/garden-plots", blurb: "Lay the garden path" },
+  { id: "rope", title: "Queue rope", emoji: "🪢", href: "/queue-rope", blurb: "One loop round the numbers" },
+  { id: "necklace", title: "Bead necklace", emoji: "📿", href: "/bead-necklace", blurb: "Thread every bead" },
 ] as const;
 
 /** The days you played each daily game. Signed-in games count you by account; the rest by the id kept in your browser. */
@@ -90,6 +98,14 @@ export function playedMap(customerId: number | null, voter: unknown): Record<str
     freecell: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'freecell' AND voter = ?", anon),
     boggle: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'boggle' AND voter = ?", anon),
     bill: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'bill' AND voter = ?", anon),
+    taller: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'taller' AND voter = ?", anon),
+    traytiles: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'traytiles' AND voter = ?", anon),
+    seats: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'seats' AND voter = ?", anon),
+    four: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'four' AND voter = ?", anon),
+    threads: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'threads' AND voter = ?", anon),
+    garden: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'garden' AND voter = ?", anon),
+    rope: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'rope' AND voter = ?", anon),
+    necklace: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'necklace' AND voter = ?", anon),
   };
   return played;
 }

@@ -27,6 +27,14 @@ import { minMs as sumsMin } from "./kakuro";
 import { minMs as freecellMin } from "./freecell";
 import { MIN_BOARD as boggleMin, MAX_BOARD as boggleMax } from "./boggle";
 import { MIN_SCORE as billMin, MAX_SCORE as billMax } from "./billTotal";
+import { minMs as tallerMin } from "./futoshiki";
+import { minMs as traytilesMin } from "./shikaku";
+import { minMs as seatsMin } from "./akari";
+import { minMs as threadsMin } from "./threads";
+import { minMs as gardenMin } from "./nurikabe";
+import { minMs as ropeMin } from "./slitherlink";
+import { minMs as necklaceMin } from "./masyu";
+import { MIN_SCORE as fourMin, MAX_SCORE as fourMax } from "./quordle";
 import { MIN_SCORE as cornersMin, MAX_SCORE as cornersMax } from "./letterBoxed";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
@@ -58,6 +66,15 @@ const GAMES = {
   boggle: { mode: () => "daily", min: () => boggleMin, max: boggleMax },
   // Bill total packs how far off and the time together, so closest wins
   bill: { mode: () => "daily", min: () => billMin, max: billMax },
+  taller: { mode: () => "daily", min: () => tallerMin },
+  traytiles: { mode: () => "daily", min: () => traytilesMin },
+  seats: { mode: () => "daily", min: () => seatsMin },
+  threads: { mode: () => "daily", min: () => threadsMin },
+  garden: { mode: () => "daily", min: () => gardenMin },
+  rope: { mode: () => "daily", min: () => ropeMin },
+  necklace: { mode: () => "daily", min: () => necklaceMin },
+  // Four at once packs tries and time together, so fewest tries wins
+  four: { mode: () => "daily", min: () => fourMin, max: fourMax },
   // Café corners packs words and time into one number (see letterBoxed pack), so fewest words wins
   corners: { mode: () => "daily", min: () => cornersMin, max: cornersMax },
   // Flood keeps moves and time packed into one number (see packScore), so fewest moves wins
