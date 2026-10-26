@@ -1,0 +1,12 @@
+/* Styles only this page uses */
+.hof-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.8rem; }
+.hof-card { padding: 0.9rem 1rem; }
+.hof-card h3 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+.hof-card h3 a, .hof-card h2 a { color: inherit; text-decoration: none; }
+.hof-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.25rem; font-size: 0.9rem; }
+.hof-list li { display: grid; grid-template-columns: 5.8rem minmax(4.8rem, 1fr) minmax(0, max-content); gap: 0.5rem; align-items: baseline; }
+.hof-when { color: var(--muted); font-size: 0.8rem; }
+.hof-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hof-list b { font-variant-numeric: tabular-nums; text-align: right; }
+.hof-empty { opacity: 0.6; }
+.hof-empty .muted { grid-column: span 2; font-size: 0.8rem; }

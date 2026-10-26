@@ -2,6 +2,7 @@
 import "./page.css";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
+import { useReplay } from "@/components/useReplay";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -43,7 +44,8 @@ export default function CakeTowers() {
     else setG(Array(N * N).fill(0));
     setNow(Date.now());
   }, [puzzle, date]);
-  useEffect(() => { if (date && g) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, g, hints, start, doneMs, saved })); } catch {} }, [date, g, hints, start, doneMs, saved]);
+  useEffect(() => { if (!rp.on && date && g) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, g, hints, start, doneMs, saved })); } catch {} }, [date, g, hints, start, doneMs, saved]);
+  const rp = useReplay({ key: dayKey(KEY), date, state: g, setState: setG, start, doneMs, first: null });
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -145,14 +147,14 @@ export default function CakeTowers() {
       {done && (
         <section className="card memory-done" aria-live="polite">
           <b>Baked in {clock(doneMs)}{hints ? ` (${hints} hint${hints === 1 ? "" : "s"})` : ", no hints"} 🎉</b>
-          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
           <p className="tiny muted" style={{ margin: 0 }}>New towers tomorrow.</p>
-          <ShareResult title="Cake towers" date={date} />
+          <ShareResult title="Cake towers" date={date} score={doneMs} replay={rp.replay} />
         </section>
       )}
       {board && !past && (

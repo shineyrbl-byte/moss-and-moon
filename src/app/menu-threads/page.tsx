@@ -97,7 +97,7 @@ export default function MenuThreads() {
       </div>
       <p className="tiny muted center">{st.extras.length % HINT_EVERY}/{HINT_EVERY} other words towards your next hint. A hint outlines one of the menu words.</p>
       {st.found.length > 0 && <p className="center small">{st.found.map((w) => w.toUpperCase()).join(" · ")}</p>}
-      {done && <DoneCard game="threads" title="Menu threads" date={d.date} past={past} headline={`All ${puzzle.threads.length} found in ${clock(d.doneMs ?? 0)}${st.shown.length ? ` (${st.shown.length} hint${st.shown.length === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} game="threads" title="Menu threads" date={d.date} past={past} headline={`All ${puzzle.threads.length} found in ${clock(d.doneMs ?? 0)}${st.shown.length ? ` (${st.shown.length} hint${st.shown.length === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

@@ -2,6 +2,7 @@
 import "./page.css";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
+import { useReplay } from "@/components/useReplay";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
@@ -56,7 +57,8 @@ export default function SpotTheDifference() {
     fetch(`/api/daily-scores?game=spot&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []);
   const scene = useMemo(() => (date ? sceneFor(date) : null), [date]);
-  useEffect(() => { if (date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, found, start, penalty, doneMs, timeUp, saved })); } catch {} }, [date, found, start, penalty, doneMs, timeUp, saved]);
+  useEffect(() => { if (!rp.on && date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, found, start, penalty, doneMs, timeUp, saved })); } catch {} }, [date, found, start, penalty, doneMs, timeUp, saved]);
+  const rp = useReplay({ key: dayKey(KEY), date, state: found, setState: setFound, start, doneMs, first: null });
   const used = start ? now - start + penalty : 0;
   const over = doneMs !== null || timeUp;
   useEffect(() => {
@@ -102,13 +104,13 @@ export default function SpotTheDifference() {
       {doneMs !== null && (
         <section className="card memory-done" aria-live="polite">
           <b>All five in {clock(doneMs)} 🎉</b>
-          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
-          <ShareResult title="Spot the difference" date={date} />
+          <ShareResult title="Spot the difference" date={date} score={doneMs} replay={rp.replay} />
         </section>
       )}
       {timeUp && <p className="small center">You found {found.length} of {DIFFS}. New shelves tomorrow!</p>}

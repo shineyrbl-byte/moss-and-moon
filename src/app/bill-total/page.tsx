@@ -5,6 +5,7 @@ import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ArchiveNote from "@/components/ArchiveNote";
 import ShareResult from "@/components/ShareResult";
+import { useReplay } from "@/components/useReplay";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { clock } from "@/lib/memory";
 import { OPS, apply, billFor, offBy, pack, unpack, type Op } from "@/lib/billTotal";
@@ -46,7 +47,8 @@ export default function BillTotal() {
     else setTiles(fresh(bill.nums));
     setNow(Date.now());
   }, [bill, date]);
-  useEffect(() => { if (date && tiles.length) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, tiles, steps, start, doneMs, off, saved })); } catch {} }, [date, tiles, steps, start, doneMs, off, saved]);
+  useEffect(() => { if (!rp.on && date && tiles.length) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, tiles, steps, start, doneMs, off, saved })); } catch {} }, [date, tiles, steps, start, doneMs, off, saved]);
+  const rp = useReplay({ key: dayKey(KEY), date, state: tiles, setState: setTiles, start, doneMs, first: null });
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -111,14 +113,14 @@ export default function BillTotal() {
         <section className="card memory-done" aria-live="polite">
           <b>{off === 0 ? `Spot on in ${clock(doneMs)}` : `${off} off, in ${clock(doneMs)}`} 🎉</b>
           <p className="small" style={{ margin: 0 }}>One way to make {bill.target}: {bill.way.join("; ")}.</p>
-          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
           <p className="tiny muted" style={{ margin: 0 }}>A new bill tomorrow.</p>
-          <ShareResult title="Bill total" date={date} />
+          <ShareResult title="Bill total" date={date} score={pack(off ?? 99, doneMs ?? 0)} replay={rp.replay} />
         </section>
       )}
       {board && !past && (

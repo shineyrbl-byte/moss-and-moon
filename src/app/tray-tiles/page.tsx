@@ -94,7 +94,7 @@ export default function TrayTiles() {
         ))}
       </div>
       <p className="tiny muted center">{anchor !== null ? "Now the opposite corner." : "Tiles with no number, two numbers, or the wrong size turn red."}</p>
-      {done && <DoneCard game="traytiles" title="Tray tiles" date={d.date} past={past} headline={`Tiled in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} game="traytiles" title="Tray tiles" date={d.date} past={past} headline={`Tiled in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

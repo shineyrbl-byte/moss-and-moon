@@ -3517,6 +3517,20 @@ test("batch 4 arcade boards and the twelve new any-time pages", async () => {
   for (const p of ["/cafe-spider", "/cafe-pyramid", "/crazy-eights", "/cafe-rummy", "/cafe-ludo", "/spoons-and-piping-bags", "/cafe-go", "/star-checkers", "/bean-muncher", "/steam-puff", "/pigeon-patrol", "/latte-beat"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
+test("daily reminders, the hall of fame and practice", async () => {
+  const post = (json: Record<string, unknown>, method = "POST") => fetch(`${s.url}/api/game-reminder`, { method, headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.47" }, body: JSON.stringify(json) });
+  const sub = { endpoint: "https://push.example.test/abc", keys: { p256dh: "k", auth: "a" } };
+  assert.equal((await post({ subscription: { endpoint: "http://insecure" , keys: sub.keys }, atMin: 150 })).status, 400);
+  assert.equal((await post({ subscription: sub, atMin: 1440 })).status, 400);
+  assert.equal((await post({ subscription: sub, atMin: 150, voter: "h".repeat(16) })).status, 200);
+  assert.equal((await post({ subscription: sub, atMin: 600 })).status, 200, "changing the time");
+  assert.equal(((await (await post({ endpoint: sub.endpoint }, "DELETE")).json()) as { removed: boolean }).removed, true);
+  assert.equal(((await (await post({ endpoint: sub.endpoint }, "DELETE")).json()) as { removed: boolean }).removed, false);
+  for (const p of ["/hall-of-fame", "/practice", "/game-settings"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+  const hof = await (await fetch(`${s.url}/hall-of-fame`)).text();
+  assert.match(hof, /Hall of/); assert.match(hof, /Puzzle of the week/);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

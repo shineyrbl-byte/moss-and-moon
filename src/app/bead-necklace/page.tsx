@@ -78,7 +78,7 @@ export default function BeadNecklace() {
         </svg>
       </div>
       <p className="tiny muted center">⚪ white: straight through, with a turn next door · ⚫ black: a turn, with straight runs on both sides.</p>
-      {done && <DoneCard game="necklace" title="Bead necklace" date={d.date} past={past} headline={`Strung in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} game="necklace" title="Bead necklace" date={d.date} past={past} headline={`Strung in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

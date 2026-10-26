@@ -105,7 +105,7 @@ export default function WordLadder() {
       {doneMs !== null && (
         <section className="card memory-done" aria-live="polite">
           <b>{steps.length <= lad.par ? `A perfect ${steps.length}-step ladder 🎉` : `Done in ${steps.length} steps 🎉`} · {clock(doneMs)}</b>
-          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>

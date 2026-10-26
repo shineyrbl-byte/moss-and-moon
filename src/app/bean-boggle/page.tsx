@@ -5,6 +5,7 @@ import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ArchiveNote from "@/components/ArchiveNote";
 import ShareResult from "@/components/ShareResult";
+import { useReplay } from "@/components/useReplay";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { N, SECONDS, fromBoard, pathFor, points, problem, toBoard, total, touching, trayFor } from "@/lib/boggle";
 import { addFlag } from "@/lib/trophyFlags";
@@ -37,7 +38,8 @@ export default function BeanBoggle() {
     setNow(Date.now()); setLoaded(true);
     fetch(`/api/daily-scores?game=boggle&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []);
-  useEffect(() => { if (date && loaded) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, found, start, doneMs, saved })); } catch {} }, [date, loaded, found, start, doneMs, saved]);
+  useEffect(() => { if (!rp.on && date && loaded) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, found, start, doneMs, saved })); } catch {} }, [date, loaded, found, start, doneMs, saved]);
+  const rp = useReplay({ key: dayKey(KEY), date, state: found, setState: setFound, start, doneMs, first: null });
   const left = start ? Math.max(0, SECONDS * 1000 - (now - start)) : SECONDS * 1000;
   const done = doneMs !== null;
   useEffect(() => {
@@ -141,14 +143,14 @@ export default function BeanBoggle() {
         <section className="card memory-done" aria-live="polite">
           <b>{found.length} word{found.length === 1 ? "" : "s"}, {score} point{score === 1 ? "" : "s"} 🎉</b>
           {missed.length > 0 && <p className="small" style={{ margin: 0 }}>Some everyday ones you missed: {missed.slice(0, 18).join(", ")}{missed.length > 18 ? `, and ${missed.length - 18} more` : ""}.</p>}
-          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved && score > 0 ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved && score > 0 ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
             </div>
           ) : saved ? <p className="small" style={{ margin: 0 }}>Saved ✓</p> : null}
           <p className="tiny muted" style={{ margin: 0 }}>A new tray tomorrow.</p>
-          <ShareResult title="Bean boggle" date={date} />
+          <ShareResult title="Bean boggle" date={date} score={toBoard(total(found))} replay={rp.replay} />
         </section>
       )}
       {board && !past && (

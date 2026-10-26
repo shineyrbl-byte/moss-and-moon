@@ -2,6 +2,7 @@
 import "./page.css";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
+import { useReplay } from "@/components/useReplay";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
@@ -42,7 +43,8 @@ export default function Sudoku() {
     setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved)); setAt(null); setHints(fresh ? s!.hints ?? 0 : 0); setWhy("");
     fetch(`/api/daily-scores?game=sudoku&mode=${mode}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, [puzzle, mode, date]);
-  useEffect(() => { if (date && cells.length) try { localStorage.setItem(dayKey(`${KEY}-${mode}`), JSON.stringify({ date, cells, start, doneMs, saved, hints })); } catch {} }, [date, mode, cells, start, doneMs, saved, hints]);
+  useEffect(() => { if (!rp.on && date && cells.length) try { localStorage.setItem(dayKey(`${KEY}-${mode}`), JSON.stringify({ date, cells, start, doneMs, saved, hints })); } catch {} }, [date, mode, cells, start, doneMs, saved, hints]);
+  const rp = useReplay({ key: dayKey(`${KEY}-${mode}`), date, state: cells, setState: setCells, start, doneMs, first: null });
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -130,14 +132,14 @@ export default function Sudoku() {
       {doneMs !== null && (
         <section className="card memory-done" aria-live="polite">
           <b>Solved in {clock(doneMs)} 🎉</b>
-          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓ Your best today is {clock(board?.mine?.ms ?? doneMs)}.</p>}
           <p className="tiny muted" style={{ margin: 0 }}>A new grid tomorrow{mode === "easy" ? ". Fancy trying hard?" : "."}</p>
-          <ShareResult title="Mini sudoku" date={date} />
+          <ShareResult title="Mini sudoku" date={date} score={doneMs} mode={mode} replay={rp.replay} />
         </section>
       )}
       {board && !past && (

@@ -5,6 +5,7 @@ import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ArchiveNote from "@/components/ArchiveNote";
 import ShareResult from "@/components/ShareResult";
+import { useReplay } from "@/components/useReplay";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { clock } from "@/lib/memory";
 import { RANK, SUITS, autoHome, bestSpot, cardsFrom, deal, dealFor, isWon, move, pinkSuit, type Card, type Spot, type State } from "@/lib/freecell";
@@ -49,7 +50,8 @@ export default function CafeFreecell() {
     setNow(Date.now());
     fetch(`/api/daily-scores?game=freecell&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []);
-  useEffect(() => { if (date && s && !practice) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, s, start, doneMs, saved })); } catch {} }, [date, s, start, doneMs, saved, practice]);
+  useEffect(() => { if (!rp.on && date && s && !practice) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, s, start, doneMs, saved })); } catch {} }, [date, s, start, doneMs, saved, practice]);
+  const rp = useReplay({ key: dayKey(KEY), date, state: s, setState: setS, start, doneMs, first: null });
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -144,14 +146,14 @@ export default function CafeFreecell() {
       {done && (
         <section className="card memory-done" aria-live="polite">
           <b>Cleared in {clock(doneMs)}, {s.moves} moves 🎉</b>
-          {practice ? <p className="small" style={{ margin: 0 }}>Practice deals don&apos;t go on the board.</p> : past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+          {practice ? <p className="small" style={{ margin: 0 }}>Practice deals don&apos;t go on the board.</p> : past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
           <button className="btn btn-ghost btn-sm" onClick={() => newDeal(true)}>Another deal</button>
-          {!practice && <ShareResult title="Café FreeCell" date={date} />}
+          {!practice && <ShareResult title="Café FreeCell" date={date} score={doneMs} replay={rp.replay} />}
         </section>
       )}
       <p className="small muted" style={{ marginTop: "1rem" }}>Won {stats.won} of {stats.played} deals on this device.</p>

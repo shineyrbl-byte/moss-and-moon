@@ -2,6 +2,7 @@
 import "./page.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ShareResult from "@/components/ShareResult";
+import { useReplay } from "@/components/useReplay";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
@@ -38,7 +39,8 @@ export default function WordSearch() {
       if (s?.date === date) { setFound(s.found ?? []); if (s.start) { setStart(s.start); setNow(Date.now()); } if (s.doneMs) setDoneMs(s.doneMs); if (s.saved) setSaved(true); }
     } catch {}
   }, [date]);
-  useEffect(() => { if (date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, found, start, doneMs, saved })); } catch {} }, [date, found, start, doneMs, saved]);
+  useEffect(() => { if (!rp.on && date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, found, start, doneMs, saved })); } catch {} }, [date, found, start, doneMs, saved]);
+  const rp = useReplay({ key: dayKey(KEY), date, state: found, setState: setFound, start, doneMs, first: null });
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 100);
@@ -127,14 +129,14 @@ export default function WordSearch() {
       {doneMs !== null && (
         <section className="card memory-done" aria-live="polite">
           <b>All eight in {clock(doneMs)} 🎉</b>
-          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓ Your best today is {clock(board?.mine?.ms ?? doneMs)}.</p>}
           <p className="tiny muted" style={{ margin: 0 }}>New words tomorrow.</p>
-          <ShareResult title="Word search" date={date} />
+          <ShareResult title="Word search" date={date} score={doneMs} replay={rp.replay} />
         </section>
       )}
       {board && !past && (

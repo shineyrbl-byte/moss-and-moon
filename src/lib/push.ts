@@ -47,6 +47,18 @@ export async function notifyOrder(orderCode: string, payload: { title: string; b
   );
 }
 
+/** Send one notification. Returns false when the browser has unsubscribed, so the caller can forget it. Never throws. */
+export async function pushTo(sub: webpush.PushSubscription, payload: { title: string; body: string; url: string }, ttl = 3600) {
+  setup();
+  try { await webpush.sendNotification(sub, JSON.stringify(payload), { TTL: ttl }); return true; }
+  catch (e) {
+    const code = (e as { statusCode?: number }).statusCode;
+    if (code === 404 || code === 410) return false;
+    console.error("Push failed", code ?? e);
+    return true;
+  }
+}
+
 // ----- Alerts for the owner's phone -----
 export const OWNER_ALERTS = [
   { id: "review", label: "A 1–2★ review" },

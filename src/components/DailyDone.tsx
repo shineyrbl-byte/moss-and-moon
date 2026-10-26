@@ -1,16 +1,17 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ShareResult from "@/components/ShareResult";
 import { dayKey, playDay } from "@/lib/archive";
+import { useReplay, type Replay } from "@/components/useReplay";
 
 export type DailyBoard = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 
 /** The "done" card for a daily puzzle: the headline, saving to today's board (not for archive days) and sharing */
-export function DoneCard({ game, title, date, past, headline, score, saved, onSaved, children }: {
+export function DoneCard({ game, title, date, past, headline, score, saved, onSaved, replay, children }: {
   game: string; title: string; date: string; past: boolean; headline: string; score: number; saved: boolean;
-  onSaved: (board: DailyBoard) => void; children?: React.ReactNode;
+  onSaved: (board: DailyBoard) => void; replay?: Replay; children?: React.ReactNode;
 }) {
   const { toast } = useStore();
   const [name, setName] = useState("");
@@ -26,13 +27,13 @@ export function DoneCard({ game, title, date, past, headline, score, saved, onSa
     <section className="card memory-done" aria-live="polite">
       <b>{headline}</b>
       {children}
-      {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+      {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
         <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
           <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
           <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
         </div>
       ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
-      <ShareResult title={title} date={date} />
+      <ShareResult title={title} date={date} score={score} replay={replay} />
     </section>
   );
 }
@@ -71,7 +72,7 @@ export function useDaily<T>(game: string, key: string, fresh: (date: string) => 
     fetch(`/api/daily-scores?game=${game}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!ready || !date) return;
+    if (!ready || !date || rp.on) return;
     try { localStorage.setItem(dayKey(key), JSON.stringify({ date, state, start, doneMs, saved, hints })); } catch {}
   }, [ready, date, state, start, doneMs, saved, hints]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -79,8 +80,11 @@ export function useDaily<T>(game: string, key: string, fresh: (date: string) => 
     const id = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(id);
   }, [start, doneMs]);
+  const first = useMemo(() => (date ? fresh(date) : null), [date]); // eslint-disable-line react-hooks/exhaustive-deps
+  const rp = useReplay<T>({ key: date ? dayKey(key) : key, date, state, setState, start, doneMs, first });
+  const replay = rp.replay;
   /** Call on every move: starts the clock the first time */
   const tick = () => { const t = start ?? Date.now(); if (!start) { setStart(t); setNow(t); } return t; };
   const elapsed = doneMs ?? (start ? now - start : 0);
-  return { date, state, setState, start, tick, elapsed, doneMs, setDoneMs, saved, setSaved, hints, setHints, board, setBoard };
+  return { date, state, setState, start, tick, elapsed, doneMs, setDoneMs, saved, setSaved, hints, setHints, board, setBoard, replay };
 }

@@ -3,6 +3,7 @@ import "./page.css";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/components/Store";
+import GameReminder from "@/components/GameReminder";
 import { DEFAULTS, buzz, gameSettings, saveGameSettings, type GameSettings } from "@/lib/gameSettings";
 
 const ROWS: { key: keyof GameSettings; title: string; how: string }[] = [
@@ -34,6 +35,7 @@ export default function GameSettingsPage() {
           </li>
         ))}
       </ul>
+      <GameReminder />
       <p className="small"><Link href="/games">← Back to the games corner</Link></p>
     </div>
   );

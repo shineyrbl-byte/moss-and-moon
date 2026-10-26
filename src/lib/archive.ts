@@ -10,19 +10,39 @@ export function pastDays(today: string, n = ARCHIVE_DAYS): string[] {
   const [y, m, d] = today.split("-").map(Number);
   return [...Array(n).keys()].map((k) => local(new Date(y, m - 1, d - 1 - k)));
 }
-/** A ?day= value, if it's one of the archive days */
-export const validDay = (day: unknown, today: string) => (typeof day === "string" && pastDays(today).includes(day) ? day : null);
+/** Practice puzzles come from any day between this and the start of the archive week */
+export const PRACTICE_FROM = "2024-01-01";
+const realDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && local(new Date(`${s}T12:00:00`)) === s;
+/** A ?day= value, if it's one of the archive days (or, for practice, any older day back to PRACTICE_FROM) */
+export const validDay = (day: unknown, today: string, practice = false) => {
+  if (typeof day !== "string") return null;
+  if (pastDays(today).includes(day)) return day;
+  const oldest = pastDays(today)[ARCHIVE_DAYS - 1];
+  return practice && realDay(day) && day >= PRACTICE_FROM && day < oldest ? day : null;
+};
+/** A random older day for a practice puzzle */
+export function practiceDay(today: string, rand = Math.random) {
+  const from = Date.parse(`${PRACTICE_FROM}T12:00:00`), to = Date.parse(`${pastDays(today)[ARCHIVE_DAYS - 1]}T12:00:00`);
+  const n = Math.round((to - from) / 86400_000);
+  const [y, m, d] = PRACTICE_FROM.split("-").map(Number);
+  return local(new Date(y, m - 1, d + Math.floor(rand() * n)));
+}
+/** Is this page a practice puzzle (?practice=1)? Browser only. */
+export function isPractice(): boolean {
+  try { const q = new URLSearchParams(window.location.search); return q.get("practice") === "1" && validDay(q.get("day"), todayStr(), true) !== null; } catch { return false; }
+}
 
 /** The day this page is playing: from ?day= in the address, or today. Browser only. */
 export function playDay(): string {
   const today = todayStr();
-  try { return validDay(new URLSearchParams(window.location.search).get("day"), today) ?? today; } catch { return today; }
+  try { const q = new URLSearchParams(window.location.search); return validDay(q.get("day"), today, q.get("practice") === "1") ?? today; } catch { return today; }
 }
 export const isPast = (date: string) => !!date && date < todayStr();
 /** Where a page keeps its progress: past days get their own key */
 export function dayKey(key: string) {
   const d = playDay();
-  return d === todayStr() ? key : `${key}@${d}`;
+  // Practice puzzles share one slot, so old ones don't pile up in storage
+  return d === todayStr() ? key : isPractice() ? `${key}@practice` : `${key}@${d}`;
 }
 
 /** The puzzles in the archive, with the key each one saves under */

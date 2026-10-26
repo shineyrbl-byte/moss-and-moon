@@ -1753,3 +1753,7 @@ button.pc-slot { cursor: pointer; }
 .bm-grid.scared { box-shadow: inset 0 0 0 3px #9fae8d; }
 /* Latte beat */
 .lb2-wrap { position: relative; }
+/* Challenge links (on every daily puzzle) */
+.challenge-note { background: var(--pink-soft); }
+.share-result { flex-wrap: wrap; }
+.challenge-result { flex-basis: 100%; text-align: center; }

@@ -2282,3 +2282,50 @@ test("batch 4 arcade games: puffing, patrolling, munching and the beat", async (
   const { HOW_TO } = await import("../src/lib/howTo.ts");
   for (const pth of ["/cafe-spider", "/cafe-go", "/latte-beat", "/bean-muncher"]) assert.ok(HOW_TO[pth], pth);
 });
+
+test("challenge links, practice days, replays, reminder times and score wording", async () => {
+  const C = await import("../src/lib/challenge.ts");
+  const c = { n: "Léela ☕", s: 154_000, h: "Solved in 2:34, no hints 🎉", d: "2026-10-26", m: "hard" };
+  assert.deepEqual(C.decodeChallenge(C.encodeChallenge(c)), c);
+  assert.equal(C.decodeChallenge("not!base64"), null);
+  assert.equal(C.decodeChallenge(C.encodeChallenge({ ...c, d: "yesterday" })), null);
+  assert.equal(C.decodeChallenge(btoa(JSON.stringify({ n: "x", s: "fast", h: "", d: "2026-10-26" })).replace(/=+$/, "")), null);
+  assert.equal(C.decodeChallenge(C.encodeChallenge({ ...c, n: "<b>" }))?.n, "b"); assert.equal(C.decodeChallenge(C.encodeChallenge({ ...c, n: "<>" }))?.n, "A friend");
+  assert.equal(C.verdict(100, 200), "win"); assert.equal(C.verdict(200, 100), "lose"); assert.equal(C.verdict(5, 5), "tie");
+
+  const A = await import("../src/lib/archive.ts");
+  const today = "2026-10-26";
+  assert.equal(A.validDay("2026-10-25", today), "2026-10-25");
+  assert.equal(A.validDay("2025-03-14", today), null, "older days only for practice");
+  assert.equal(A.validDay("2025-03-14", today, true), "2025-03-14");
+  assert.equal(A.validDay("2025-02-30", today, true), null, "not a real day");
+  assert.equal(A.validDay("2023-12-31", today, true), null, "before practice starts");
+  assert.equal(A.validDay(today, today, true), null, "today isn't a practice day");
+  const oldest = A.pastDays(today)[A.ARCHIVE_DAYS - 1];
+  for (let k = 0; k < 300; k++) { const d = A.practiceDay(today); assert.ok(A.validDay(d, today, true) === d && d < oldest, d); }
+  assert.equal(A.practiceDay(today, () => 0), A.PRACTICE_FROM);
+
+  const R = await import("../src/lib/replay.ts");
+  const frames = [...Array(700).keys()].map((i) => [i * 100, i] as [number, number]);
+  let f = frames; while (f.length > R.MAX_FRAMES) f = R.thinFrames(f);
+  assert.ok(f.length <= R.MAX_FRAMES); assert.deepEqual(f[0], frames[0]); assert.deepEqual(f[f.length - 1], frames[699]);
+  const plan = R.planReplay([0, 1000, 60_000, 61_000], { lead: 0, tail: 0 });
+  assert.deepEqual(plan.at, [0, 1000, 2500, 3500], "a long pause shrinks to a short one");
+  const long = R.planReplay([...Array(100).keys()].map((i) => i * 1000), { lead: 0, tail: 0 });
+  assert.ok(long.end <= 12_000 && long.at.every((x, i, a) => i === 0 || x >= a[i - 1]));
+
+  const T = await import("../src/lib/reminderTime.ts");
+  assert.equal(T.toUtcMin("08:00", -330), 150, "8am in India is 2:30 UTC");
+  assert.equal(T.toUtcMin("02:00", -330), 1230, "wraps to the day before");
+  assert.equal(T.toUtcMin("20:00", 300), 60);
+  assert.equal(T.toUtcMin("25:00", 0), null);
+  const at = new Date("2026-10-26T03:00:00Z");
+  assert.ok(T.isDue(150, null, at)); assert.ok(T.isDue(150, "2026-10-25", at));
+  assert.ok(!T.isDue(150, "2026-10-26", at), "once a day"); assert.ok(!T.isDue(200, null, at), "not yet");
+
+  const S = await import("../src/lib/scoreFormat.ts");
+  assert.equal(S.showDaily("sudoku", 154_000), "2:34");
+  assert.equal(S.showDaily("flood", 17_065_000), "17 moves, 1:05");
+  assert.equal(S.showDaily("boggle", 1_000_000 - 42), "42 points");
+  assert.equal(S.showDaily("bill", 30_000), "spot on, 0:30");
+});

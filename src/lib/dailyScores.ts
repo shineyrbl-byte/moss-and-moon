@@ -81,6 +81,8 @@ const GAMES = {
   flood: { mode: () => "daily", min: () => packScore(MIN_MOVES, 2000), max: packScore(MAX_MOVES, 999_999) },
 } as const;
 export type DailyGame = keyof typeof GAMES;
+/** The level a board shows when none is picked */
+export const defaultMode = (game: DailyGame) => GAMES[game].mode(undefined);
 export const isDailyGame = (g: unknown): g is DailyGame => typeof g === "string" && g in GAMES;
 
 export function dailyBoard(game: DailyGame, modeIn: unknown, voter?: unknown, now = new Date()) {

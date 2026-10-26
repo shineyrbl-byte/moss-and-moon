@@ -1,6 +1,11 @@
 "use client";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/components/Store";
+import { readChallenge } from "@/components/ChallengeNote";
+import { CHALLENGE_PARAM, encodeChallenge, verdict, type Challenge } from "@/lib/challenge";
+import { isPractice } from "@/lib/archive";
+import { addFlag } from "@/lib/trophyFlags";
+import type { Replay } from "@/components/useReplay";
 
 /** The line people share once a daily puzzle is done */
 export function shareText(title: string, date: string, result: string) {
@@ -32,10 +37,29 @@ export function drawCard(title: string, date: string, result: string): HTMLCanva
 }
 
 /** Share buttons for a puzzle's "done" card. They share the card's headline (time, hints, moves), so every puzzle says it its own way. */
-export default function ShareResult({ title, date }: { title: string; date: string }) {
+export default function ShareResult({ title, date, score, mode, replay }: { title: string; date: string; score?: number | null; mode?: string; replay?: Replay }) {
   const { toast } = useStore();
   const me = useRef<HTMLSpanElement>(null);
   const head = () => me.current?.closest(".memory-done")?.querySelector("b")?.textContent ?? "";
+  const [vs, setVs] = useState<Challenge | null>(null);
+  const canChallenge = typeof score === "number" && Number.isFinite(score);
+  useEffect(() => {
+    if (!canChallenge) return;
+    const c = readChallenge(location.pathname);
+    if (c && c.d === date && (c.m ?? "") === (mode ?? "")) { setVs(c); if (verdict(score!, c.s) === "win") addFlag("challenge-won"); }
+  }, [canChallenge, score, date, mode]);
+  // A link to the same puzzle, with your result packed in, for a friend to try to beat
+  async function challenge() {
+    let name = "";
+    try { name = localStorage.getItem("mm-game-name") ?? ""; } catch {}
+    const code = encodeChallenge({ n: name || "A friend", s: score!, h: head().replace(/\s+/g, " ").trim(), d: date, ...(mode ? { m: mode } : {}) });
+    const url = `${location.origin}${location.pathname}?${isPractice() ? "practice=1&" : ""}day=${date}&${CHALLENGE_PARAM}=${code}`;
+    const text = `Can you beat me at ${title} on Moss & Moon? ${head().replace(/\s+/g, " ").trim()}`;
+    try {
+      if (navigator.share) await navigator.share({ text, url });
+      else { await navigator.clipboard.writeText(`${text}\n${url}`); toast("Challenge link copied 🤝"); }
+    } catch {}
+  }
   async function share() {
     const text = shareText(title, date, head());
     const url = `${location.origin}${location.pathname}${location.search}`;
@@ -61,6 +85,13 @@ export default function ShareResult({ title, date }: { title: string; date: stri
     <span ref={me} className="share-result row" style={{ gap: "0.4rem", justifyContent: "center" }}>
       <button type="button" className="btn btn-ghost btn-sm" onClick={share}>📤 Share</button>
       <button type="button" className="btn btn-ghost btn-sm" onClick={picture}>🖼 Picture</button>
+      {replay?.can && <button type="button" className="btn btn-ghost btn-sm" onClick={replay.on ? replay.stop : replay.start} aria-pressed={replay.on}>{replay.on ? "■ Stop the replay" : "▶ Watch my solve"}</button>}
+      {canChallenge && <button type="button" className="btn btn-ghost btn-sm" onClick={challenge}>🤝 Challenge a friend</button>}
+      {vs && (
+        <span className="challenge-result small" role="status">
+          {{ win: `You beat ${vs.n}! 🎉`, lose: `${vs.n} wins this one.`, tie: `A dead heat with ${vs.n}!` }[verdict(score!, vs.s)]} They had: {vs.h}
+        </span>
+      )}
     </span>
   );
 }

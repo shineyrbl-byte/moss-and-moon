@@ -66,7 +66,7 @@ export default function WindowSeats() {
         ))}
       </div>
       <p className="tiny muted center">Lit squares glow. Lamps that shine on each other, and walls with too many lamps, turn red.</p>
-      {done && <DoneCard game="seats" title="Window seats" date={d.date} past={past} headline={`All lit in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} game="seats" title="Window seats" date={d.date} past={past} headline={`All lit in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

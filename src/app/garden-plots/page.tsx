@@ -65,7 +65,7 @@ export default function GardenPlots() {
         ))}
       </div>
       <p className="tiny muted center">A 2×2 block of path turns red.</p>
-      {done && <DoneCard game="garden" title="Garden plots" date={d.date} past={past} headline={`Planted in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} game="garden" title="Garden plots" date={d.date} past={past} headline={`Planted in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

@@ -1122,6 +1122,15 @@ function open() {
     guest TEXT,
     updated_at INTEGER NOT NULL
   );`);
+  // "Remind me to play today's puzzles": one row per browser, at a minute past midnight UTC
+  db.exec(`CREATE TABLE IF NOT EXISTS game_reminders (
+    endpoint TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    voter TEXT,
+    at_min INTEGER NOT NULL,
+    last TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
   db.exec(`CREATE TABLE IF NOT EXISTS arcade_scores (
     game TEXT NOT NULL,
     week TEXT NOT NULL,

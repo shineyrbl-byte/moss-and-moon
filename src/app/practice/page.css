@@ -1,0 +1,6 @@
+/* Styles only this page uses */
+.practice-list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.6rem; }
+.practice-card { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem; color: inherit; text-decoration: none; }
+.practice-card:hover { border-color: var(--pink); }
+.practice-emoji { font-size: 1.3rem; }
+.practice-go { margin-left: auto; opacity: 0.7; }

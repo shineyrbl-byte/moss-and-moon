@@ -2,6 +2,7 @@
 import "./page.css";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
+import { useReplay } from "@/components/useReplay";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -42,7 +43,8 @@ export default function CafeCorners() {
     setNow(Date.now()); setLoaded(true);
     fetch(`/api/daily-scores?game=corners&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []);
-  useEffect(() => { if (date && loaded) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, words, cur, start, doneMs, saved })); } catch {} }, [date, loaded, words, cur, start, doneMs, saved]);
+  useEffect(() => { if (!rp.on && date && loaded) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, words, cur, start, doneMs, saved })); } catch {} }, [date, loaded, words, cur, start, doneMs, saved]);
+  const rp = useReplay({ key: dayKey(KEY), date, state: words, setState: setWords, start, doneMs, first: null });
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -133,14 +135,14 @@ export default function CafeCorners() {
         <section className="card memory-done" aria-live="polite">
           <b>Every letter in {words.length} words, {clock(doneMs)} 🎉</b>
           <p className="small" style={{ margin: 0 }}>The barista&apos;s go: {best.map((w) => w.toUpperCase()).join(" – ")}</p>
-          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
           <p className="tiny muted" style={{ margin: 0 }}>New letters tomorrow.</p>
-          <ShareResult title="Café corners" date={date} />
+          <ShareResult title="Café corners" date={date} score={pack(words.length, doneMs ?? 0)} replay={rp.replay} />
         </section>
       )}
       {board && !past && (
