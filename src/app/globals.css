@@ -2842,3 +2842,91 @@ button.pc-slot { cursor: pointer; }
 :root[data-theme="dark"] .ks-cell { background: #4f3d33; }
 :root[data-theme="dark"] .ks-cell.run { background: #6a4450; }
 :root[data-theme="dark"] .ks-cell.fixed { background: #7a604e; }
+
+/* Games finder */
+.games-finder { margin: 1rem 0 0.4rem; }
+.games-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+.games-li { position: relative; }
+.games-star { position: absolute; top: 0.35rem; right: 0.35rem; z-index: 1; width: 2rem; height: 2rem; border-radius: 50%; border: none; background: transparent; color: var(--muted); font-size: 1.15rem; cursor: pointer; line-height: 1; display: grid; place-items: center; }
+.games-star:hover { color: var(--pink-deep); background: var(--pink-soft); }
+.games-star.on { color: #d4a017; }
+.games-more li { position: relative; padding-right: 2.2rem; }
+.games-more .games-star { top: 50%; transform: translateY(-50%); right: 0; }
+.games-favs { margin: 1rem 0 0; padding: 0.8rem 1rem; border-radius: 16px; background: color-mix(in srgb, var(--butter) 35%, var(--surface)); border: 1px solid var(--line); }
+:root[data-theme="dark"] .games-favs { background: #3a3220; }
+.games-more.fav { columns: 2 12rem; }
+
+/* Café chess */
+.cc-board { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); width: min(100%, 30rem); margin: 0 auto; border: 4px solid #6b4433; border-radius: 8px; overflow: hidden; }
+.cc-sq { position: relative; aspect-ratio: 1; border: none; padding: 0; display: grid; place-items: center; cursor: pointer; min-width: 0; }
+.cc-sq.light { background: #f3e2cf; } .cc-sq.dark { background: #c49a78; }
+:root[data-theme="dark"] .cc-sq.light { background: #8a6f5c; } :root[data-theme="dark"] .cc-sq.dark { background: #5a4033; }
+.cc-sq.last { box-shadow: inset 0 0 0 100px rgba(246, 218, 158, 0.55); }
+.cc-sq.sel { box-shadow: inset 0 0 0 100px rgba(227, 145, 168, 0.55); }
+.cc-sq.dot::after { content: ""; width: 32%; aspect-ratio: 1; border-radius: 50%; background: rgba(194, 91, 120, 0.7); }
+.cc-sq.hit { box-shadow: inset 0 0 0 4px rgba(194, 91, 120, 0.85); }
+.cc-sq.check { box-shadow: inset 0 0 0 4px #d64545, inset 0 0 18px #d64545; }
+.cc-piece { font-size: clamp(1.4rem, 8.5vw, 2.6rem); line-height: 1; user-select: none; }
+.cc-piece.w { color: #fffaf6; -webkit-text-stroke: 1.2px #3b2720; text-shadow: 0 1px 0 #3b2720; }
+.cc-piece.b { color: #3b2720; }
+.cc-rank, .cc-file { position: absolute; font-size: 0.6rem; font-weight: 700; opacity: 0.6; color: #3b2720; }
+.cc-rank { top: 2px; left: 3px; } .cc-file { bottom: 1px; right: 3px; }
+.cc-taken { min-height: 1.4rem; margin: 0.2rem auto; width: min(100%, 30rem); font-size: 1.15rem; letter-spacing: 0.05em; color: var(--muted); }
+.cc-promo { display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin: 0.6rem 0; flex-wrap: wrap; }
+.cc-promo .cc-piece { font-size: 2rem; }
+.cc-log { columns: 3 6rem; font-size: 0.85rem; max-height: 9rem; overflow-y: auto; margin: 0.8rem 0 0; padding-left: 1.6rem; font-variant-numeric: tabular-nums; }
+.cc-log li span { display: inline-block; min-width: 3.4em; }
+
+/* Terrace backgammon */
+.bg-board { position: relative; width: min(100%, 36rem); margin: 0 auto; padding: 8px 8px 2.2rem; border-radius: 14px; background: #6b4433; }
+.bg-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) 10px repeat(6, minmax(0, 1fr)); gap: 2px; height: clamp(8rem, 34vw, 11rem); }
+.bg-bar { background: #4a3227; border-radius: 3px; }
+.bg-pt { position: relative; border: none; padding: 0; cursor: pointer; background: transparent; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.bg-pt::before { content: ""; position: absolute; inset: 0; background: #f3e2cf; clip-path: polygon(0 0, 100% 0, 50% 88%); }
+.bg-pt.bottom::before { clip-path: polygon(50% 12%, 100% 100%, 0 100%); }
+.bg-pt.odd::before { background: #c49a78; }
+.bg-pt.bottom { flex-direction: column-reverse; }
+.bg-pt.target::before { background: var(--pink); }
+.bg-pt.can .bg-ck.you:last-child, .bg-pt.bottom.can .bg-ck.you:last-child { box-shadow: 0 0 0 2px #f6da9e; }
+.bg-pt.sel::before { background: var(--butter); }
+.bg-pt.theirs { outline: 2px dashed #f6da9e; outline-offset: -2px; }
+.bg-stack { position: relative; display: flex; flex-direction: inherit; align-items: center; width: 100%; }
+.bg-ck { display: grid; place-items: center; width: min(88%, 2rem); aspect-ratio: 1; border-radius: 50%; font-style: normal; font-size: 0.7rem; font-weight: 700; margin: 1px 0; }
+.bg-ck.you { background: radial-gradient(circle at 38% 34%, #fff, #f6c9d4 45%, #e391a8 80%); box-shadow: inset 0 0 0 1.5px #c25b78; color: #3b2720; }
+.bg-ck.them { background: radial-gradient(circle at 38% 34%, #8a5a40, #3b2720 75%); box-shadow: inset 0 0 0 1.5px #1e140f; color: #f3e2cf; }
+.bg-num { position: absolute; font-size: 0.55rem; color: #f3e2cf; opacity: 0.75; }
+.bg-pt.top .bg-num { bottom: -0.05rem; } .bg-pt.bottom .bg-num { top: -0.05rem; }
+.bg-mid { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; min-height: 2.6rem; padding: 0.2rem 0.4rem; }
+.bg-barbox { min-width: 3.4rem; height: 2rem; display: inline-flex; align-items: center; gap: 0.2rem; border: none; background: #4a3227; border-radius: 999px; color: #f3e2cf; padding: 0 0.4rem; font-size: 0.8rem; }
+.bg-barbox .bg-ck { width: 1.3rem; }
+.bg-barbox.can { box-shadow: 0 0 0 2px #f6da9e; cursor: pointer; } .bg-barbox.sel { background: var(--butter); color: #3b2720; }
+.bg-dice { display: flex; gap: 0.25rem; font-size: 2rem; color: #fffaf6; line-height: 1; }
+.bg-dice b.used { opacity: 0.3; }
+.bg-off { position: absolute; right: 8px; bottom: 6px; border: none; border-radius: 999px; padding: 0.25rem 0.7rem; background: #4a3227; color: #f3e2cf; font-size: 0.8rem; cursor: pointer; }
+.bg-off.target { background: var(--pink-fill); color: var(--on-pink); }
+
+/* Bean boggle */
+.bo-wrap { position: relative; width: min(100%, 20rem); margin: 0 auto; }
+.bo-wrap.hidden .bo-grid { filter: blur(9px); }
+.bo-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 8px; padding: 10px; border-radius: 18px; background: #6b4433; touch-action: none; user-select: none; }
+.bo-cube { aspect-ratio: 1; border-radius: 12px; border: none; background: linear-gradient(160deg, #fffaf6, #ead6c4); color: #3b2720; font-weight: 700; font-size: clamp(1.5rem, 9vw, 2.2rem); cursor: pointer; box-shadow: 0 3px 0 #b97f52; padding: 0; }
+.bo-cube.on { background: linear-gradient(160deg, #f9dce3, #e391a8); }
+.bo-cube.last { box-shadow: 0 3px 0 #b97f52, 0 0 0 3px var(--pink-deep); }
+.bo-cube:disabled { cursor: default; }
+.bo-grid.done .bo-cube { opacity: 0.7; }
+.bo-found { display: flex; flex-wrap: wrap; gap: 0.3rem 0.7rem; justify-content: center; margin: 0.8rem 0; }
+.bo-found sup { color: var(--muted); margin-left: 1px; }
+
+/* Bill total */
+.bt-target { display: grid; justify-items: center; margin: 0.8rem auto 0.4rem; padding: 0.6rem 1.4rem; width: fit-content; border-radius: 14px; background: #3b2720; color: #f6da9e; font-variant-numeric: tabular-nums; }
+.bt-target b { font-size: 2.6rem; line-height: 1.05; font-family: ui-monospace, monospace; }
+.bt-target small { font-size: 0.75rem; opacity: 0.8; }
+.bt-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin: 0.8rem 0; min-height: 3.6rem; }
+.bt-tile { min-width: 3.4rem; height: 3.4rem; padding: 0 0.6rem; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font-size: 1.35rem; font-weight: 700; cursor: pointer; font-variant-numeric: tabular-nums; }
+.bt-tile.made { background: var(--pink-soft); border-color: var(--pink); }
+.bt-tile.sel { box-shadow: 0 0 0 3px var(--pink-deep); }
+.bt-tile.hit { background: var(--sage); color: #1e2a16; }
+.bt-ops { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.4rem; max-width: 18rem; margin: 0 auto; }
+.bt-ops .btn { font-size: 1.4rem; padding: 0.35rem 0; }
+.bt-ops .btn.on { background: var(--pink-fill); color: var(--on-pink); border-color: var(--pink-fill); }
+.bt-steps { margin: 0.8rem auto 0; width: fit-content; font-variant-numeric: tabular-nums; }

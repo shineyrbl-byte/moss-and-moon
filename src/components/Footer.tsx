@@ -134,6 +134,10 @@ export default function Footer() {
             <li><Link href="/cafe-freecell">{t("footer.freecell")}</Link></li>
             <li><Link href="/delivery-dash">{t("footer.dash")}</Link></li>
             <li><Link href="/cafe-hearts">{t("footer.hearts")}</Link></li>
+            <li><Link href="/cafe-chess">{t("footer.chess")}</Link></li>
+            <li><Link href="/terrace-backgammon">{t("footer.backgammon")}</Link></li>
+            <li><Link href="/bean-boggle">{t("footer.boggle")}</Link></li>
+            <li><Link href="/bill-total">{t("footer.bill")}</Link></li>
             <li><Link href="/trophies">{t("footer.trophies")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>

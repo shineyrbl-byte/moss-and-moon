@@ -50,6 +50,8 @@ export const ARCHIVE_GAMES = [
   { id: "corners", href: "/cafe-corners", title: "Café corners", emoji: "🔤", key: "mm-corners" },
   { id: "sums", href: "/bean-sums", title: "Bean sums", emoji: "➕", key: "mm-sums" },
   { id: "freecell", href: "/cafe-freecell", title: "Café FreeCell", emoji: "🃏", key: "mm-freecell" },
+  { id: "boggle", href: "/bean-boggle", title: "Bean boggle", emoji: "🔠", key: "mm-boggle" },
+  { id: "bill", href: "/bill-total", title: "Bill total", emoji: "🧾", key: "mm-bill" },
 ] as const;
 
 /** Has a past day been finished? `keys` is every saved key in this browser, `get` reads one. */

@@ -3,13 +3,15 @@
 // page and tests share it.
 export const W = 100, H = 50;
 export const RIDER_X = 16, RIDER_W = 7, RIDER_H = 9, DUCK_H = 5;
-export const GRAVITY = 260, JUMP_V = 92;
+export const GRAVITY = 230, JUMP_V = 92;
 export const DASH_MAX = 9_999_999;
+export const START_SPEED = 30;
 export type Kind = "puddle" | "crate" | "awning";
 export type Thing = { kind: Kind | "bean"; x: number; w: number; y: number; h: number };
 export type State = { y: number; vy: number; ducking: boolean; speed: number; dist: number; beans: number; things: Thing[]; gap: number; over: boolean; hit: Kind | null };
 
-export const newGame = (): State => ({ y: 0, vy: 0, ducking: false, speed: 34, dist: 0, beans: 0, things: [], gap: 40, over: false, hit: null });
+// A quiet first few seconds before the first obstacle
+export const newGame = (): State => ({ y: 0, vy: 0, ducking: false, speed: START_SPEED, dist: 0, beans: 0, things: [], gap: 110, over: false, hit: null });
 /** Score: a point a metre (10 world units), and 10 a bean */
 export const score = (s: State) => Math.floor(s.dist / 10) + s.beans * 10;
 export const onGround = (s: State) => s.y <= 0 && s.vy <= 0;
@@ -19,8 +21,9 @@ export function duck(s: State, on: boolean): State { return s.over ? s : { ...s,
 
 /** What comes next along the street. Gaps shrink a little as you speed up, but always leave room to land and jump again. */
 function spawn(s: State, rand: () => number): Thing[] {
-  const r = rand(), x = W + 4;
-  if (r < 0.38) return [{ kind: "puddle", x, w: 8 + rand() * 6, y: 0, h: 1.5 }];
+  // Only jumps for the first 100 metres; awnings come after
+  const r = s.dist < 1000 ? rand() * 0.66 : rand(), x = W + 4;
+  if (r < 0.38) return [{ kind: "puddle", x, w: 7 + rand() * 5, y: 0, h: 1.5 }];
   if (r < 0.66) return [{ kind: "crate", x, w: 5, y: 0, h: 5 + Math.floor(rand() * 2) * 2 }];
   if (r < 0.88) return [{ kind: "awning", x, w: 12, y: DUCK_H + 1.5, h: H }]; // low enough that only ducking gets under
   // A little arc of beans
@@ -33,7 +36,8 @@ const overlap = (a: { x: number; w: number; y: number; h: number }, b: Thing) =>
 export function step(s0: State, dt: number, rand: () => number = Math.random): State {
   if (s0.over) return s0;
   const s: State = { ...s0, things: [] };
-  s.speed = Math.min(95, 34 + s0.dist / 400);
+  // Speeds up slowly at first, then more as you go
+  s.speed = Math.min(95, START_SPEED + s0.dist / 700 + Math.max(0, s0.dist - 3000) / 900);
   const dx = s.speed * dt;
   s.dist += dx;
   // The rider
@@ -56,7 +60,8 @@ export function step(s0: State, dt: number, rand: () => number = Math.random): S
   if (s.gap <= 0) {
     s.things.push(...spawn(s, rand));
     // Enough room to land and take off again, and less of it as the bike gets quicker
-    s.gap = 30 + s.speed * 0.45 + rand() * 40;
+    // ...with extra room early on that shrinks over the first 200 metres
+    s.gap = 30 + s.speed * 0.45 + rand() * 40 + Math.max(0, 45 - s.dist / 45);
   }
   return s;
 }

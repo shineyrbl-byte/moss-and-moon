@@ -5,6 +5,7 @@ import { voterId } from "@/components/LabCard";
 import { useStore } from "@/components/Store";
 import { TROPHIES, earned, type TrophyCtx } from "@/lib/trophies";
 import { localTrophyStats } from "@/lib/trophyFlags";
+import { ANY_TIME, DAILY_KIND, FAVS_KEY, KIND_LABEL, matches, toggleFav, type Filter, type Kind } from "@/lib/gameCatalog";
 
 type G = { id: string; title: string; emoji: string; href: string; blurb: string; done: boolean; streak: number };
 type S = { date: string; games: G[]; done: number; allStreak: number; five: { ids: string[]; done: number; streak: number } };
@@ -16,13 +17,21 @@ export default function Games() {
   const [trophies, setTrophies] = useState<number | null>(null);
   const [ar, setAr] = useState<AR | null>(null);
   const [arName, setArName] = useState("");
+  const [f, setF] = useState<Filter>({ q: "", kind: "all", quick: false, favs: [] });
   useEffect(() => {
     const v = voterId();
     fetch(`/api/games?voter=${v}`).then((r) => r.json()).then(setS).catch(() => {});
     fetch(`/api/trophies?voter=${v}`).then((r) => r.json()).then((d: Omit<TrophyCtx, "local">) => setTrophies(earned({ ...d, local: localTrophyStats() }).length)).catch(() => {});
     fetch(`/api/all-rounder?voter=${v}`).then((r) => r.json()).then(setAr).catch(() => {});
     try { setArName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
+    try { const favs = JSON.parse(localStorage.getItem(FAVS_KEY) ?? "[]"); if (Array.isArray(favs)) setF((x) => ({ ...x, favs })); } catch {}
   }, []);
+  function star(id: string, title: string) {
+    const favs = toggleFav(f.favs, id);
+    setF({ ...f, favs });
+    try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs)); } catch {}
+    toast(favs.includes(id) ? `★ ${title} is in your favourites` : `${title} is out of your favourites`);
+  }
   async function allRounder(body: Record<string, unknown>) {
     if (body.name) try { localStorage.setItem("mm-game-name", String(body.name)); } catch {}
     const r = await fetch("/api/all-rounder", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voter: voterId(), ...body }) });
@@ -40,6 +49,13 @@ export default function Games() {
   }
   if (!s) return <div className="page"><p className="muted">Setting out the games…</p></div>;
   const pct = Math.round((s.done / s.games.length) * 100);
+  const tagged = s.games.map((g) => ({ ...g, ...(DAILY_KIND[g.id] ?? { kind: "logic" as Kind, quick: false }) }));
+  const daily = tagged.filter((g) => matches(g, f)), anyTime = ANY_TIME.filter((g) => matches(g, f));
+  const filtering = !!f.q.trim() || f.kind !== "all" || f.quick;
+  const favs = [...tagged, ...ANY_TIME].filter((g) => f.favs.includes(g.id));
+  const Star = ({ id, title }: { id: string; title: string }) => (
+    <button type="button" className={`games-star ${f.favs.includes(id) ? "on" : ""}`} onClick={() => star(id, title)} aria-pressed={f.favs.includes(id)} aria-label={`${f.favs.includes(id) ? "Remove" : "Add"} ${title} ${f.favs.includes(id) ? "from" : "to"} favourites`}>{f.favs.includes(id) ? "★" : "☆"}</button>
+  );
   return (
     <div className="page" style={{ maxWidth: "52rem" }}>
       <p className="eyebrow">play a while</p>
@@ -65,48 +81,44 @@ export default function Games() {
           : s.five.done > 0 && <p className="tiny" style={{ margin: "0.6rem 0 0" }}><button className="btn btn-ghost btn-sm" onClick={shareFive}>Share so far</button></p>}
       </section>
       <p className="small center" style={{ margin: "0.8rem 0" }}><Link href="/trophies">🏆 Trophy shelf{trophies !== null ? `: ${trophies} of ${TROPHIES.length}` : ""} →</Link></p>
+      {favs.length > 0 && !filtering && f.kind !== "fav" && (
+        <section className="games-favs" aria-labelledby="fav-h">
+          <h2 className="h3" id="fav-h" style={{ margin: "0 0 0.4rem" }}>★ Your favourites</h2>
+          <ul className="games-more fav">{favs.map((g) => <li key={g.id}><Link href={g.href}><span aria-hidden="true">{g.emoji}</span> {g.title}</Link><Star id={g.id} title={g.title} /></li>)}</ul>
+        </section>
+      )}
+      <section className="games-finder" aria-label="Find a game">
+        <label className="field" style={{ marginBottom: 0 }}><span className="sr-only">Search the games</span>
+          <input className="input" type="search" placeholder="🔍 Find a game: chess, words, cards…" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} />
+        </label>
+        <div className="games-chips" role="group" aria-label="Kind of game">
+          {(["all", "fav", ...Object.keys(KIND_LABEL)] as (Kind | "all" | "fav")[]).map((k) => (
+            <button key={k} className={`chip ${f.kind === k ? "on" : ""}`} aria-pressed={f.kind === k} onClick={() => setF({ ...f, kind: k })}>{k === "all" ? "All" : k === "fav" ? `★ Favourites${f.favs.length ? ` (${f.favs.length})` : ""}` : KIND_LABEL[k]}</button>
+          ))}
+          <button className={`chip ${f.quick ? "on" : ""}`} aria-pressed={f.quick} onClick={() => setF({ ...f, quick: !f.quick })}>⏱ Quick ones</button>
+        </div>
+        {(filtering || f.kind === "fav") && <p className="tiny muted" role="status" style={{ margin: "0.4rem 0 0" }}>{daily.length + anyTime.length} game{daily.length + anyTime.length === 1 ? "" : "s"} found{daily.length + anyTime.length === 0 ? (f.kind === "fav" ? ". Tap the ☆ on any game to add it here." : ". Try another word or kind.") : ""} <button className="link-btn" onClick={() => setF({ ...f, q: "", kind: "all", quick: false })}>Show everything</button></p>}
+      </section>
+      {daily.length > 0 && <h2 className="h3" style={{ marginTop: "1rem" }}>Daily games</h2>}
       <ul className="games-grid">
-        {s.games.map((g) => (
-          <li key={g.id}>
+        {daily.map((g) => (
+          <li key={g.id} className="games-li">
             <Link href={g.href} className={`card games-tile ${g.done ? "done" : ""}`}>
               <span className="games-emoji" aria-hidden="true">{g.emoji}</span>
               <b>{g.title}</b>
               <span className="tiny muted">{g.blurb}</span>
               <span className="games-status small">{g.done ? "✓ Played today" : "Play →"}{g.streak > 1 ? ` · 🔥 ${g.streak}` : ""}</span>
             </Link>
+            <Star id={g.id} title={g.title} />
           </li>
         ))}
       </ul>
       <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link></p>
-      <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>
+      {anyTime.length > 0 && <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>}
       <ul className="games-more">
-        <li><Link href="/quiz">🎤 Quiz night</Link><span className="tiny muted"> · when the team hosts one, live on the TV</span></li>
-        <li><Link href="/bean-snake">🐍 Bean snake</Link><span className="tiny muted"> · eat the beans, don&apos;t bite your tail</span></li>
-        <li><Link href="/call-the-order">⌨️ Call the order</Link><span className="tiny muted"> · type the orders before they run out</span></li>
-        <li><Link href="/cafe-patience">🃏 Café patience</Link><span className="tiny muted"> · solitaire with café suits</span></li>
-        <li><Link href="/cake-stacker">🎂 Cake stacker</Link><span className="tiny muted"> · how tall can you build it?</span></li>
-        <li><Link href="/reversi">⚫ Bean reversi</Link><span className="tiny muted"> · coffee vs milk, against the computer</span></li>
-        <li><Link href="/sink-the-saucers">🛸 Sink the saucers</Link><span className="tiny muted"> · battleship with tableware</span></li>
-        <li><Link href="/bean-counting">🫘 Bean counting</Link><span className="tiny muted"> · mancala against the computer</span></li>
-        <li><Link href="/draughts">⚪ Café draughts</Link><span className="tiny muted"> · checkers against the computer</span></li>
-        <li><Link href="/sugar-cubes">🧊 Sugar cubes</Link><span className="tiny muted"> · dots and boxes against the computer</span></li>
-        <li><Link href="/cafe-dice">🎲 Café dice</Link><span className="tiny muted"> · five dice, thirteen turns, a weekly board</span></li>
-        <li><Link href="/five-in-a-row">⭕ Five in a row</Link><span className="tiny muted"> · gomoku against the computer</span></li>
-        <li><Link href="/baristas-echo">🔔 Barista&apos;s echo</Link><span className="tiny muted"> · repeat the café&apos;s sounds, a weekly board</span></li>
-        <li><Link href="/bean-breaker">🧱 Bean breaker</Link><span className="tiny muted"> · knock out the sugar cube wall, a weekly board</span></li>
-        <li><Link href="/pastry-drop">🥐 Pastry drop</Link><span className="tiny muted"> · fill the rows as the pastries fall, a weekly board</span></li>
-        <li><Link href="/saucer-mill">⚪ Saucer mill</Link><span className="tiny muted"> · nine men&apos;s morris against the computer</span></li>
-        <li><Link href="/cafe-hearts">♥️ Café hearts</Link><span className="tiny muted"> · the card game, against three computer players</span></li>
-        <li><Link href="/delivery-dash">🚲 Delivery dash</Link><span className="tiny muted"> · jump the puddles, duck the awnings, a weekly board</span></li>
-        <li><Link href="/tray-pusher">☕ Tray pusher</Link><span className="tiny muted"> · push the cups onto the saucers, 20 levels</span></li>
-        <li><Link href="/delivery-jam">🚐 Delivery jam</Link><span className="tiny muted"> · get the cake van out of the yard, 20 levels</span></li>
-        <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>
-        <li><Link href="/higher-or-lower">💸 Higher or lower</Link><span className="tiny muted"> · which costs more?</span></li>
-        <li><Link href="/brew-merge">🌙 Brew merge</Link><span className="tiny muted"> · beans all the way to the moon brew</span></li>
-        <li><Link href="/play">☕ Barista rush</Link><span className="tiny muted"> · make the orders, fast</span></li>
-        <li><Link href="/bingo">🎯 Coffee bingo</Link><span className="tiny muted"> · a card a month</span></li>
-        <li><Link href="/story-chain">📜 Story chain</Link><span className="tiny muted"> · add the next line</span></li>
-        <li><Link href="/scoreboard">🏆 Board game scoreboard</Link><span className="tiny muted"> · for the games on our shelf</span></li>
+        {anyTime.map((g) => (
+          <li key={g.id}><Link href={g.href}><span aria-hidden="true">{g.emoji}</span> {g.title}</Link><span className="tiny muted"> · {g.blurb}</span><Star id={g.id} title={g.title} /></li>
+        ))}
       </ul>
       {ar && (
         <section style={{ marginTop: "1.6rem" }}>

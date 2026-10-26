@@ -3044,7 +3044,7 @@ test("artist wall and where guests are visiting from", async () => {
 test("games corner: knows which daily games you've played today", async () => {
   const voter = "r".repeat(16) + "games1";
   const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
-  assert.equal(before.games.length, 32);
+  assert.equal(before.games.length, 34);
   assert.equal(before.done, 0);
   await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
   await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
@@ -3300,7 +3300,7 @@ test("games corner: today's five, trophies data, the all-rounder board and jumbl
   const g = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { date: string; five: { ids: string[]; done: number; streak: number } };
   assert.deepEqual(g.five.ids, todaysFive(g.date));
   // Finish the five (the time-based ones are enough to count)
-  const timed: Record<string, number> = { wordsearch: 60000, sudoku: 60000, crossword: 60000, nonogram: 60000, sweeper: 60000, ladder: 60000, jigsaw: 60000, paths: 60000, tiles: 60000, spot: 60000, cipher: 60000, lamps: 60000, jumble: 60000, milk: 60000, lights: 60000, table: 60000, parasols: 60000, tipjar: 60000, towers: 60000, cups: 60000, corners: 3_060_000, sums: 60000, freecell: 300000, flood: 25_000_000 };
+  const timed: Record<string, number> = { wordsearch: 60000, sudoku: 60000, crossword: 60000, nonogram: 60000, sweeper: 60000, ladder: 60000, jigsaw: 60000, paths: 60000, tiles: 60000, spot: 60000, cipher: 60000, lamps: 60000, jumble: 60000, milk: 60000, lights: 60000, table: 60000, parasols: 60000, tipjar: 60000, towers: 60000, cups: 60000, corners: 3_060_000, sums: 60000, freecell: 300000, boggle: 999_988, bill: 60000, flood: 25_000_000 };
   const easy = g.five.ids.filter((id) => id in timed);
   for (const id of easy) assert.equal((await post("/api/daily-scores", { game: id, ms: timed[id], mode: "easy" })).status, 200, id);
   const g2 = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { five: { done: number; streak: number } };
@@ -3391,7 +3391,7 @@ test("my puzzle stats, bean sums and freecell times, and the delivery dash board
   const post = (p: string, json: Record<string, unknown>) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.38" }, body: JSON.stringify({ voter, name: "Sam", ...json }) });
   let st = (await (await fetch(`${s.url}/api/my-stats?voter=${voter}`)).json()) as { days: number; plays: number; games: { id: string; days: number }[]; times: unknown[] };
   assert.equal(st.days, 0); assert.equal(st.times.length, 0);
-  assert.equal(st.games.length, 32);
+  assert.equal(st.games.length, 34);
   assert.equal((await post("/api/daily-scores", { game: "sums", ms: 4000 })).status, 400, "too quick");
   assert.equal((await post("/api/daily-scores", { game: "sums", ms: 90000 })).status, 200);
   assert.equal((await post("/api/daily-scores", { game: "freecell", ms: 20000 })).status, 400, "nobody clears FreeCell in 20s");
@@ -3406,6 +3406,27 @@ test("my puzzle stats, bean sums and freecell times, and the delivery dash board
   assert.equal((await post("/api/arcade", { game: "dash", score: 1234 })).status, 200);
   assert.equal((await post("/api/arcade", { game: "dash", score: 10_000_000 })).status, 400);
   for (const p of ["/my-stats", "/bean-sums", "/cafe-freecell", "/delivery-dash", "/cafe-hearts"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("bean boggle and bill total boards, and the chess, backgammon and finder pages", async () => {
+  const voter = "b".repeat(16) + "boggle";
+  const post = (p: string, json: Record<string, unknown>) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.39" }, body: JSON.stringify({ voter, name: "Bo", ...json }) });
+  // Boggle stores 1,000,000 minus the points, so more points sort first
+  assert.equal((await post("/api/daily-scores", { game: "boggle", ms: 1_000_000 })).status, 400, "zero points");
+  assert.equal((await post("/api/daily-scores", { game: "boggle", ms: 1_000_000 - 20 })).status, 200);
+  const b = (await (await post("/api/daily-scores", { game: "boggle", ms: 1_000_000 - 35 })).json()) as { mine: { ms: number } };
+  assert.equal(b.mine.ms, 1_000_000 - 35, "a better score replaces it");
+  const b2 = (await (await post("/api/daily-scores", { game: "boggle", ms: 1_000_000 - 10 })).json()) as { mine: { ms: number } };
+  assert.equal(b2.mine.ms, 1_000_000 - 35, "a worse one doesn't");
+  // Bill total: how far off, then time
+  assert.equal((await post("/api/daily-scores", { game: "bill", ms: 2000 })).status, 400, "too quick");
+  assert.equal((await post("/api/daily-scores", { game: "bill", ms: 100_000_000 })).status, 400, "100 off doesn't count");
+  assert.equal((await post("/api/daily-scores", { game: "bill", ms: 3_050_000 })).status, 200);
+  const c = (await (await post("/api/daily-scores", { game: "bill", ms: 95_000 })).json()) as { mine: { ms: number } };
+  assert.equal(c.mine.ms, 95_000, "spot on beats 3 off");
+  const g = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
+  assert.ok(g.games.find((x) => x.id === "boggle")!.done && g.games.find((x) => x.id === "bill")!.done);
+  for (const p of ["/cafe-chess", "/terrace-backgammon", "/bean-boggle", "/bill-total", "/games"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

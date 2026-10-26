@@ -1579,10 +1579,10 @@ test("today's five: the new puzzles only join from their start day, so old days 
   const { todaysFive, NEW_LOGIC_FROM } = await import("../src/lib/todaysFive.ts");
   const before: string[] = [];
   for (let d = 1; d <= 26; d++) before.push(...todaysFive(`2026-10-${String(d).padStart(2, "0")}`));
-  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums"].every((id) => !before.includes(id)));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill"].every((id) => !before.includes(id)));
   const after: string[] = [];
   for (let d = 0; d < 60; d++) after.push(...todaysFive(new Date(Date.UTC(2026, 9, 27 + d)).toISOString().slice(0, 10)));
-  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums"].every((id) => after.includes(id)));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill"].every((id) => after.includes(id)));
   assert.equal(NEW_LOGIC_FROM, "2026-10-27");
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
   assert.ok(TROPHIES.length >= 42);
@@ -1959,8 +1959,134 @@ test("café hearts: legal cards, scoring, the moon, and hard beats easy", async 
   }
   assert.ok(wins >= 20, `hard won ${wins} of 30 against three easy players`);
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
-  assert.equal(TROPHIES.length, 63);
-  assert.equal(new Set(TROPHIES.map((x) => x.name)).size, 63);
+  assert.ok(TROPHIES.length >= 63);
+  assert.equal(new Set(TROPHIES.map((x) => x.name)).size, TROPHIES.length);
   const got = earned({ played: {}, five: [], arcade: { dash: 1000 }, local: { hearts: { hard: { won: 1 } }, flags: ["sums-no-hints", "freecell-win"] } });
   for (const id of ["dash", "hearts", "heartsHard", "sums", "freecell"]) assert.ok(got.includes(id), id);
+});
+
+test("games finder: every game is sorted into a kind, and the filters work", async () => {
+  const { DAILY_KIND, ANY_TIME, matches, toggleFav } = await import("../src/lib/gameCatalog.ts");
+  const { existsSync } = await import("node:fs");
+  const src = (await import("node:fs")).readFileSync("src/lib/gamesStore.ts", "utf8");
+  const ids = [...src.matchAll(/\{ id: "([a-z0-9]+)", title:/g)].map((m) => m[1]);
+  assert.ok(ids.length >= 34);
+  for (const id of ids) assert.ok(DAILY_KIND[id], `${id} has a kind`);
+  for (const g of ANY_TIME) assert.ok(existsSync(`src/app${g.href}/page.tsx`), `${g.href} is a page`);
+  assert.equal(new Set(ANY_TIME.map((g) => g.id)).size, ANY_TIME.length);
+  const chess = ANY_TIME.find((g) => g.id === "chess")!;
+  const f = { q: "", kind: "all" as const, quick: false, favs: [] as string[] };
+  assert.ok(matches(chess, f));
+  assert.ok(matches(chess, { ...f, q: "CHESS" }) && !matches(chess, { ...f, q: "sudoku" }));
+  assert.ok(matches(chess, { ...f, kind: "board" }) && !matches(chess, { ...f, kind: "word" as never }));
+  assert.ok(!matches(chess, { ...f, quick: true }), "chess isn't a quick one");
+  assert.ok(!matches(chess, { ...f, kind: "fav" }) && matches(chess, { ...f, kind: "fav", favs: ["chess"] }));
+  assert.deepEqual(toggleFav(toggleFav([], "chess"), "chess"), []);
+});
+
+test("café chess: move counts, castling, en passant, promotion and mate", async () => {
+  const C = await import("../src/lib/chess.ts");
+  const perft = (s: import("../src/lib/chess.ts").State, d: number): number => (d ? C.moves(s).reduce((n, m) => n + perft(C.play(s, m), d - 1), 0) : 1);
+  assert.equal(perft(C.newGame(), 3), 8902, "the standard count from the start");
+  assert.equal(perft(C.fromFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R", "w", "KQkq"), 2), 2039, "the standard tricky position");
+  // Fool's mate
+  let s = C.newGame();
+  for (const [a, b] of [["f2", "f3"], ["e7", "e5"], ["g2", "g4"], ["d8", "h4"]]) s = C.play(s, C.moves(s).find((m) => m.from === C.sq(a) && m.to === C.sq(b))!);
+  assert.deepEqual(C.result(s), { over: true, winner: "b", why: "checkmate" });
+  // Castling both ways, and not through check
+  const k = C.fromFen("r3k2r/8/8/8/8/8/8/R3K2R", "w", "KQkq");
+  assert.deepEqual(C.moves(k).filter((m) => m.castle).map((m) => m.castle).sort(), ["K", "Q"]);
+  const checked = C.fromFen("r3k2r/8/8/8/4r3/8/8/R3K2R", "w", "KQkq");
+  assert.ok(!C.moves(checked).some((m) => m.castle), "in check, so no castling");
+  const through = C.fromFen("r3k2r/8/8/8/8/8/5r2/R3K2R", "w", "KQkq");
+  assert.deepEqual(C.moves(through).filter((m) => m.castle).map((m) => m.castle), ["Q"], "can't castle through f1 while the rook covers it");
+  // En passant
+  let e = C.fromFen("4k3/8/8/3pP3/8/8/8/4K3", "w", "-", C.sq("d6"));
+  const ep = C.moves(e).find((m) => m.ep)!;
+  assert.ok(ep); e = C.play(e, ep); assert.equal(e.b[C.sq("d5")], null, "the pawn is taken");
+  // Promotion offers four pieces
+  const pr = C.fromFen("8/4P3/8/8/8/8/8/k6K");
+  assert.deepEqual(C.moves(pr).filter((m) => m.promo).map((m) => m.promo).sort(), ["b", "n", "q", "r"]);
+  assert.equal(C.san(pr, C.moves(pr).find((m) => m.promo === "q")!), "e8=Q");
+  // Stalemate and bare kings
+  assert.equal((C.result(C.fromFen("7k/5Q2/6K1/8/8/8/8/8", "b")) as { why: string }).why, "stalemate");
+  assert.equal((C.result(C.fromFen("7k/8/6K1/8/8/8/8/8", "b")) as { why: string }).why, "material");
+  // Hard finds mate in one
+  const m1 = C.fromFen("6k1/5ppp/8/8/8/8/8/R5K1");
+  const mv = C.bestMove(m1, "hard", () => 0.5);
+  assert.ok((C.result(C.play(m1, mv)) as { why?: string }).why === "checkmate", "Ra8#");
+});
+
+test("terrace backgammon: the opening, bearing off, hitting and the larger die", async () => {
+  const G = await import("../src/lib/backgammon.ts");
+  const s = G.newGame();
+  assert.equal(G.pips(s, 0), 167); assert.equal(G.pips(s, 1), 167);
+  assert.ok(G.plays(s, [6, 6]).every((p) => p.length === 4), "doubles play four times");
+  assert.ok(G.plays(s, [3, 1]).every((p) => p.length === 2));
+  // A hit sends the checker to the bar
+  const h = { pts: Array(26).fill(0), bar: [0, 0] as [number, number], off: [0, 0] as [number, number], turn: 0 as const };
+  h.pts[10] = 1; h.pts[7] = -1; h.pts[20] = -14;
+  const hit = G.plays(h, [3, 5]).find((p) => p.some((x) => x.hit))!;
+  assert.ok(hit); assert.equal(G.end(h, hit).bar[1], 1);
+  // From the bar first
+  const bar = { ...h, bar: [1, 0] as [number, number] };
+  assert.ok(G.plays(bar, [3, 5]).every((p) => p[0].from === 25));
+  // Bearing off with a bigger die from the back
+  const home = { pts: Array(26).fill(0), bar: [0, 0] as [number, number], off: [13, 0] as [number, number], turn: 0 as const };
+  home.pts[2] = 2; home.pts[24] = -15;
+  const off = G.plays(home, [6, 5]);
+  assert.ok(off.some((p) => p.every((x) => x.to === 0)), "both off with 6 and 5 from the 2 point");
+  assert.equal(G.winner(G.end(home, off.find((p) => p.every((x) => x.to === 0))!)), 0);
+  // When only one die can be played, it's the larger
+  const one = { pts: Array(26).fill(0), bar: [0, 0] as [number, number], off: [0, 0] as [number, number], turn: 0 as const };
+  one.pts[13] = 1; one.pts[6] = -2; one.pts[20] = -13; // 2 then 5, or 5 then 2, both land on the blocked 6 point
+  const ps = G.plays(one, [5, 2]);
+  assert.ok(ps.length && ps.every((p) => p.length === 1 && p[0].die === 5), JSON.stringify(ps));
+  assert.equal(G.winKind({ ...home, off: [15, 0] }, 0), 2, "a gammon");
+  let wins = 0;
+  for (let g = 1; g <= 40; g++) {
+    let x = g; const r = () => { x = (x * 16807) % 2147483647; return x / 2147483647; };
+    let st = G.newGame();
+    for (let n = 0; G.winner(st) === null && n < 600; n++) st = G.finish(G.end(st, G.bestPlay(st, G.roll(r), st.turn === 0 ? "hard" : "easy", r)));
+    if (G.winner(st) === 0) wins++;
+  }
+  assert.ok(wins >= 26, `hard won ${wins} of 40`);
+});
+
+test("bean boggle and bill total", async () => {
+  const B = await import("../src/lib/boggle.ts");
+  for (const d of ["2026-10-26", "2026-10-27", "2027-03-01"]) {
+    const t = B.trayFor(d);
+    assert.equal(t.grid.length, 16);
+    assert.ok(t.everyday.length >= 25, d);
+    assert.ok(t.everyday.every((w) => B.pathFor(t.grid, w) && B.isWord(w)));
+  }
+  const g = ["c", "a", "f", "e", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x"];
+  assert.deepEqual(B.pathFor(g, "cafe"), [0, 1, 2, 3]);
+  assert.equal(B.pathFor(g, "face"), null, "letters must touch in order");
+  assert.ok(B.touching(0, 5) && !B.touching(0, 2));
+  assert.match(B.problem(g, [], "caf")!, /4 letters/);
+  assert.match(B.problem(g, ["cafe"], "cafe")!, /already/);
+  assert.deepEqual([4, 5, 6, 7, 8, 9].map((n) => B.points("a".repeat(n))), [1, 2, 3, 5, 11, 11]);
+  assert.equal(B.fromBoard(B.toBoard(42)), 42);
+  const T = await import("../src/lib/billTotal.ts");
+  assert.equal(T.apply(7, "−", 7), null); assert.equal(T.apply(9, "÷", 2), null); assert.equal(T.apply(9, "÷", 3), 3);
+  const r = T.reachable([25, 4, 3]);
+  assert.ok(r.has(100) && r.has(103) && r.has(97) && r.has(28));
+  for (const d of ["2026-10-26", "2026-10-27", "2027-09-09"]) {
+    const { nums, target, way } = T.billFor(d);
+    assert.equal(nums.length, 6); assert.ok(target >= 101 && target <= 999);
+    // Replay the barista's way with the six numbers
+    const pool = [...nums];
+    for (const st of way) { const [a, op, b, , v] = st.split(" "); for (const x of [+a, +b]) pool.splice(pool.indexOf(x), 1); assert.equal(T.apply(+a, op as never, +b), +v); pool.push(+v); }
+    assert.ok(pool.includes(target), d);
+  }
+  assert.deepEqual(T.unpack(T.pack(3, 61234)), { off: 3, ms: 61234 });
+  // The gentler Delivery dash: nothing in the way for the first couple of seconds
+  const D = await import("../src/lib/dash.ts");
+  let s = D.newGame(), t = 0;
+  while (!s.things.some((x) => x.kind !== "bean" && x.x < D.RIDER_X + 20) && t < 10) { s = D.step(s, 1 / 120, () => 0.1); t += 1 / 120; }
+  assert.ok(t > 2.5, `first obstacle reaches you after ${t.toFixed(1)}s`);
+  const { TROPHIES } = await import("../src/lib/trophies.ts");
+  assert.equal(TROPHIES.length, 69);
 });

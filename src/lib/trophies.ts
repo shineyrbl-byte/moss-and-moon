@@ -10,7 +10,7 @@ export type TrophyCtx = {
   five: string[]; // days you finished Today's five
   arcade: Record<string, number | null>; // best ever score per arcade game
   local: {
-    reversi?: Record<string, Rec>; saucers?: Record<string, Rec>; mancala?: Record<string, Rec>; draughts?: Record<string, Rec>; dots?: Record<string, Rec>; gomoku?: Record<string, Rec>; morris?: Record<string, Rec>; hearts?: Record<string, Rec>;
+    reversi?: Record<string, Rec>; saucers?: Record<string, Rec>; mancala?: Record<string, Rec>; draughts?: Record<string, Rec>; dots?: Record<string, Rec>; gomoku?: Record<string, Rec>; morris?: Record<string, Rec>; hearts?: Record<string, Rec>; chess?: Record<string, Rec>; backgammon?: Record<string, Rec>;
     archive?: number; // past days finished from the archive
     tray?: number; jam?: number; // puzzle pack levels done
     patience?: { won?: number; streak?: number; bestStreak?: number };
@@ -60,6 +60,8 @@ export const TROPHIES: Trophy[] = [
   { group: "Clever moments", id: "corners", emoji: "🔤", name: "Barista's match", how: "Finish Café corners in as few words as the barista", test: (c) => flag(c, "corners-par") },
   { group: "Clever moments", id: "sums", emoji: "➕", name: "Sum total", how: "Solve Bean sums with no hints", test: (c) => flag(c, "sums-no-hints") },
   { group: "Clever moments", id: "freecell", emoji: "🃏", name: "Free and easy", how: "Win a game of Café FreeCell", test: (c) => flag(c, "freecell-win") },
+  { group: "Clever moments", id: "boggle", emoji: "🔠", name: "Word hoard", how: "Score 30 points in Bean boggle", test: (c) => flag(c, "boggle-30") },
+  { group: "Clever moments", id: "bill", emoji: "🧾", name: "Spot on", how: "Hit the Bill total exactly", test: (c) => flag(c, "bill-exact") },
   { group: "Streaks", id: "archive", emoji: "🗂", name: "Catching up", how: "Finish 5 puzzles from the archive", test: (c) => (c.local.archive ?? 0) >= 5 },
   { group: "Arcade", id: "stack15", emoji: "🎂", name: "Tall order", how: "Stack 15 layers in Cake stacker", test: (c) => arcade(c, "stacker", 15) },
   { group: "Arcade", id: "stack40", emoji: "💒", name: "Wedding cake", how: "Stack 40 layers in Cake stacker", test: (c) => arcade(c, "stacker", 40) },
@@ -89,6 +91,10 @@ export const TROPHIES: Trophy[] = [
   { group: "Against the computer", id: "morrisHard", emoji: "🌾", name: "Master miller", how: "Win Saucer mill on hard", test: (c) => won(c.local.morris, "hard") },
   { group: "Against the computer", id: "hearts", emoji: "♥️", name: "Sweetheart", how: "Win a game of Café hearts", test: (c) => won(c.local.hearts) },
   { group: "Against the computer", id: "heartsHard", emoji: "👸", name: "Queen of hearts", how: "Win Café hearts on hard", test: (c) => won(c.local.hearts, "hard") },
+  { group: "Against the computer", id: "chess", emoji: "♟️", name: "Checkmate", how: "Win a game of Café chess", test: (c) => won(c.local.chess) },
+  { group: "Against the computer", id: "chessHard", emoji: "♛", name: "Café grandmaster", how: "Win Café chess on hard", test: (c) => won(c.local.chess, "hard") },
+  { group: "Against the computer", id: "backgammon", emoji: "🎲", name: "Home and dry", how: "Win a game of Terrace backgammon", test: (c) => won(c.local.backgammon) },
+  { group: "Against the computer", id: "gammon", emoji: "🎯", name: "Double trouble", how: "Win a gammon or backgammon in Terrace backgammon", test: (c) => flag(c, "backgammon-gammon") },
   { group: "Against the computer", id: "patience", emoji: "🃏", name: "Patience pays", how: "Win a game of Café patience", test: (c) => (c.local.patience?.won ?? 0) > 0 },
   { group: "Against the computer", id: "patience3", emoji: "🍀", name: "Lucky streak", how: "Win Café patience 3 times in a row", test: (c) => Math.max(c.local.patience?.streak ?? 0, c.local.patience?.bestStreak ?? 0) >= 3 },
   { group: "Puzzle packs", id: "tray5", emoji: "☕", name: "Steady hands", how: "Finish 5 Tray pusher levels", test: (c) => (c.local.tray ?? 0) >= 5 },

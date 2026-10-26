@@ -25,6 +25,8 @@ import { minMs as towersMin } from "./skyscrapers";
 import { minMs as cupsMin } from "./hitori";
 import { minMs as sumsMin } from "./kakuro";
 import { minMs as freecellMin } from "./freecell";
+import { MIN_BOARD as boggleMin, MAX_BOARD as boggleMax } from "./boggle";
+import { MIN_SCORE as billMin, MAX_SCORE as billMax } from "./billTotal";
 import { MIN_SCORE as cornersMin, MAX_SCORE as cornersMax } from "./letterBoxed";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
@@ -51,6 +53,10 @@ const GAMES = {
   cups: { mode: () => "daily", min: () => cupsMin },
   sums: { mode: () => "daily", min: () => sumsMin },
   freecell: { mode: () => "daily", min: () => freecellMin },
+  // Bean boggle stores "1,000,000 minus points", so the lowest-first board puts the top score first
+  boggle: { mode: () => "daily", min: () => boggleMin, max: boggleMax },
+  // Bill total packs how far off and the time together, so closest wins
+  bill: { mode: () => "daily", min: () => billMin, max: billMax },
   // Café corners packs words and time into one number (see letterBoxed pack), so fewest words wins
   corners: { mode: () => "daily", min: () => cornersMin, max: cornersMax },
   // Flood keeps moves and time packed into one number (see packScore), so fewest moves wins

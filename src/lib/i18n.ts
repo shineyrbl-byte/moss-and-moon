@@ -397,6 +397,10 @@ const en = {
   "footer.freecell": "Café FreeCell",
   "footer.dash": "Delivery dash",
   "footer.hearts": "Café hearts",
+  "footer.chess": "Café chess",
+  "footer.backgammon": "Terrace backgammon",
+  "footer.boggle": "Bean boggle",
+  "footer.bill": "Bill total",
 };
 
 type Key = keyof typeof en;
@@ -794,6 +798,10 @@ const hi: Record<Key, string> = {
   "footer.freecell": "कैफ़े फ़्रीसेल",
   "footer.dash": "डिलीवरी दौड़",
   "footer.hearts": "कैफ़े हार्ट्स",
+  "footer.chess": "कैफ़े शतरंज",
+  "footer.backgammon": "छत पर बैकगैमन",
+  "footer.boggle": "बीन बॉगल",
+  "footer.bill": "बिल का जोड़",
 };
 
 const mr: Record<Key, string> = {
@@ -1189,6 +1197,10 @@ const mr: Record<Key, string> = {
   "footer.freecell": "कॅफे फ्रीसेल",
   "footer.dash": "डिलिव्हरी धाव",
   "footer.hearts": "कॅफे हार्ट्स",
+  "footer.chess": "कॅफे बुद्धिबळ",
+  "footer.backgammon": "गच्चीवरचा बॅकगॅमन",
+  "footer.boggle": "बीन बॉगल",
+  "footer.bill": "बिलाची बेरीज",
 };
 
 const kok: Record<Key, string> = {
@@ -1584,6 +1596,10 @@ const kok: Record<Key, string> = {
   "footer.freecell": "कॅफे फ्रीसेल",
   "footer.dash": "डिलिव्हरी धांव",
   "footer.hearts": "कॅफे हार्ट्स",
+  "footer.chess": "कॅफे बुद्धिबळ",
+  "footer.backgammon": "गच्चेरचो बॅकगॅमन",
+  "footer.boggle": "बीन बॉगल",
+  "footer.bill": "बिलाची बेरीज",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };
