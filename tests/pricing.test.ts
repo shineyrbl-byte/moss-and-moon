@@ -2202,3 +2202,83 @@ test("daily puzzles shuffle the same way in every browser", async () => {
   assert.deepEqual(shuffled([1, 2, 3, 4, 5], seededRand("x")), shuffled([1, 2, 3, 4, 5], seededRand("x")));
   assert.deepEqual(shuffled([1, 2, 3, 4, 5], seededRand("x")).sort(), [1, 2, 3, 4, 5]);
 });
+
+test("batch 4 card and board games keep their rules", async () => {
+  const rnd = (seed: number) => { let x = seed; return () => { x = (x * 16807) % 2147483647; return x / 2147483647; }; };
+  const Sp = await import("../src/lib/spider.ts");
+  const sp = Sp.deal(rnd(1), 1);
+  assert.equal(sp.cols.flat().length + sp.stock.length, 104); assert.deepEqual(sp.cols.map((c) => c.length), [6, 6, 6, 6, 5, 5, 5, 5, 5, 5]);
+  assert.ok(sp.cols.every((c) => c[c.length - 1].up && c.slice(0, -1).every((x) => !x.up)));
+  const dealt = Sp.dealRow(sp)!; assert.equal(dealt.stock.length, 40);
+  const run = { cols: [[...Array(13).keys()].map((k) => ({ suit: 0, rank: 13 - k, up: true })).slice(0, 12), [{ suit: 0, rank: 1, up: true }], [], [], [], [], [], [], [], []], stock: [], done: 0, moves: 0 } as import("../src/lib/spider.ts").State;
+  const cleared = Sp.move(run, 1, 0, 0)!; assert.equal(cleared.done, 1); assert.equal(cleared.cols[0].length, 0, "a full run is taken away");
+  const Py = await import("../src/lib/pyramid.ts");
+  const py = Py.deal(rnd(2));
+  assert.equal(py.pyr.length, 28); assert.ok(Py.free(py, 21) && !Py.free(py, 0)); assert.deepEqual(Py.coveredBy(0), [1, 2]);
+  const kp = { ...py, pyr: py.pyr.map((c, i) => (i === 27 ? { suit: 0, rank: 13 } : c)) };
+  assert.equal(Py.take(kp, { kind: "pyr", i: 27 })!.pyr[27], null, "a king goes on its own");
+  const E = await import("../src/lib/crazyEights.ts");
+  let e = E.deal(rnd(3));
+  assert.notEqual(E.top(e).rank, 8); assert.equal(e.hands[0].length, 7);
+  const eight = { suit: 2, rank: 8 }; e = { ...e, hands: [[eight, ...e.hands[0].slice(1)], e.hands[1]] };
+  const after = E.play(e, eight, 3)!; assert.equal(after.suit, 3, "an 8 calls the suit");
+  const R = await import("../src/lib/rummy.ts");
+  assert.ok(R.isSet([{ suit: 0, rank: 5 }, { suit: 1, rank: 5 }, { suit: 2, rank: 5 }]) && !R.isSet([{ suit: 0, rank: 5 }, { suit: 0, rank: 5 }, { suit: 2, rank: 5 }]));
+  assert.ok(R.isRun([{ suit: 1, rank: 1 }, { suit: 1, rank: 3 }, { suit: 1, rank: 2 }]) && !R.isRun([{ suit: 1, rank: 12 }, { suit: 1, rank: 13 }, { suit: 1, rank: 1 }]), "ace is low");
+  assert.equal(R.findMelds([{ suit: 0, rank: 4 }, { suit: 0, rank: 5 }, { suit: 0, rank: 6 }, { suit: 1, rank: 9 }, { suit: 2, rank: 9 }, { suit: 3, rank: 9 }, { suit: 2, rank: 1 }]).length, 2);
+  let wins = 0;
+  for (let g = 1; g <= 60; g++) { const r = rnd(g); let st = R.deal(r); for (let n = 0; st.winner === null && n < 600; n++) st = R.computerTurn(st, st.turn === 0 ? "hard" : "easy", r); if (st.winner === 0) wins++; }
+  assert.ok(wins >= 40, `rummy: hard won ${wins} of 60`);
+  const L = await import("../src/lib/ludo.ts");
+  assert.equal(new Set(L.TRACK.map(String)).size, 52);
+  let lu = L.rollDie(L.newGame(), () => 0.99); assert.equal(lu.roll, 6); assert.deepEqual(L.movable(lu), [0, 1, 2, 3], "a 6 brings a counter out");
+  lu = L.move(lu, 0); assert.equal(lu.turn, 0, "a 6 rolls again"); assert.equal(lu.pos[0][0], 0);
+  // Landing on someone sends them home
+  const cap = { ...L.newGame(), pos: [[3, -1, -1, -1], [L.trackOf(0, 5) - 13 + 52 * (L.trackOf(0, 5) < 13 ? 1 : 0), -1, -1, -1], [-1, -1, -1, -1], [-1, -1, -1, -1]], roll: 2 };
+  assert.equal(L.move(cap, 0).pos[1][0], -1);
+  const SL = await import("../src/lib/snakesLadders.ts");
+  assert.equal(SL.take(SL.newGame(2), 3).pos[0], 22, "a spoon at 3"); assert.equal(SL.take({ ...SL.newGame(2), pos: [96, 0] }, 6).pos[0], 79, "102 bounces back to 98, a piping bag down to 79");
+  assert.deepEqual(SL.cellOf(1), [9, 0]); assert.deepEqual(SL.cellOf(11), [8, 9]); assert.deepEqual(SL.cellOf(100), [0, 0]);
+  const Go = await import("../src/lib/go.ts");
+  let g = Go.newGame();
+  for (const [b, w] of [[1, 0], [9, 80], [11, 79]]) { g = Go.play(g, b)!; g = Go.play(g, w)!; }
+  // White's corner stone at 0 lost its last breathing space when black played 9
+  assert.equal(g.b[0], 0, "the corner stone was captured"); assert.equal(g.caps[0], 1);
+  assert.equal(Go.play(Go.newGame(), -1), null);
+  assert.equal(Go.score(Go.newGame().b).white, Go.KOMI);
+  const C = await import("../src/lib/chineseCheckers.ts");
+  assert.equal(C.HOLES.length, 121); assert.equal(C.HOME[0].length, 10);
+  const cc = C.newGame(); const front = C.HOME[0].find((i) => C.reach(cc, i).size)!;
+  assert.ok(front !== undefined, "someone can move at the start");
+  let hw = 0;
+  for (let k = 1; k <= 10; k++) { const r = rnd(k); let st = C.newGame(); for (let n = 0; st.winner === null && n < 400; n++) { const m = C.bestMove(st, st.turn === 0 ? "hard" : "easy", r); if (!m) break; st = C.move(st, m[0], m[1])!; } if (st.winner === 0) hw++; }
+  assert.ok(hw >= 6, `star checkers: hard won ${hw} of 10`);
+});
+
+test("batch 4 arcade games: puffing, patrolling, munching and the beat", async () => {
+  const P = await import("../src/lib/steamPuff.ts");
+  let p = P.flap(P.newGame()); assert.ok(p.vy < 0);
+  let n = 0; while (!p.over && n < 2000) { p = P.step(p, 1 / 120, () => 0.5); n++; }
+  assert.ok(p.over, "no taps, you fall");
+  const G = await import("../src/lib/pigeons.ts");
+  let g = G.fire(G.newGame()); assert.equal(g.shots.length, 1); assert.equal(G.fire(g), g, "a short wait between beans");
+  const first = G.birdBox(g, g.birds[(G.ROWS - 1) * G.COLS]);
+  // The flock drifts right while the bean flies up, so aim a little ahead
+  g = G.fire(G.moveShip(G.newGame(), first.x + first.w / 2 + 4));
+  for (let k = 0; k < 120 && g.birds.every((b) => b.alive); k++) g = G.step(g, 1 / 120, () => 0.99);
+  assert.ok(g.birds.some((b) => !b.alive) && g.score > 0, "a bean shoos a pigeon");
+  const M = await import("../src/lib/muncher.ts");
+  let m = M.newGame(); const beans = m.beans.size;
+  m = M.step(M.steer(m, 3), () => 0.5); assert.equal(m.beans.size, beans - 1); assert.equal(m.score, 10);
+  assert.ok(M.tickSecs(1) > M.tickSecs(5));
+  const B = await import("../src/lib/latteBeat.ts");
+  const notes = B.chart(B.SONGS[0], () => 0.3);
+  assert.ok(notes.length > 20 && notes.every((x) => x.lane >= 0 && x.lane < 4));
+  const k = notes[0];
+  assert.equal(B.judge(notes, new Set(), k.lane, k.t + 0.02)?.grade, "perfect");
+  assert.equal(B.judge(notes, new Set(), k.lane, k.t + 0.1)?.grade, "good");
+  assert.equal(B.judge(notes, new Set(), k.lane, k.t + 0.5), null);
+  assert.equal(B.multiplier(0), 1); assert.equal(B.multiplier(25), 2);
+  const { HOW_TO } = await import("../src/lib/howTo.ts");
+  for (const pth of ["/cafe-spider", "/cafe-go", "/latte-beat", "/bean-muncher"]) assert.ok(HOW_TO[pth], pth);
+});

@@ -64,6 +64,18 @@ export const HOW_TO: Record<string, HowTo> = {
   "/garden-plots": { title: "Garden plots", goal: "Shade the garden path so every flower bed is the right size.", tip: "Squares between two numbers that touch must be path." },
   "/queue-rope": { title: "Queue rope", goal: "Draw one loop round the numbers, never crossing itself.", tip: "A 0 means no rope round that square: cross off all four sides." },
   "/bead-necklace": { title: "Bead necklace", goal: "Draw one loop through every bead.", tip: "A black bead on the edge must turn away from it; start there." },
+  "/cafe-spider": { title: "Café spider", goal: "Clear eight king-to-ace runs, each in one suit.", tip: "Empty a column early: it's the most useful space on the table." },
+  "/cafe-pyramid": { title: "Café pyramid", goal: "Clear the pyramid with pairs that make 13.", tip: "Uncover the cards near the bottom first; the top can wait." },
+  "/crazy-eights": { title: "Crazy eights", goal: "Get rid of all your cards first.", tip: "Save your 8s for when nothing else fits." },
+  "/cafe-rummy": { title: "Café rummy", goal: "Lay down sets and runs until your hand is empty.", tip: "Watch what the computer picks up from the discards." },
+  "/cafe-ludo": { title: "Café ludo", goal: "Get all four counters home first.", tip: "Spread your counters out so one unlucky roll doesn't cost you." },
+  "/spoons-and-piping-bags": { title: "Spoons & piping bags", goal: "Reach square 100 first.", tip: "It's all luck: enjoy the ride." },
+  "/cafe-go": { title: "Café go", goal: "Surround more of the board than the computer.", tip: "Corners are easiest to claim, then the sides, then the middle." },
+  "/star-checkers": { title: "Star checkers", goal: "Move all ten marbles into the far point first.", tip: "Build ladders of marbles you can hop along in one go." },
+  "/bean-muncher": { title: "Bean muncher", goal: "Munch every bean without getting caught.", tip: "Save the espresso cups for when the cats are close." },
+  "/steam-puff": { title: "Steam puff", goal: "Float the steam through as many gaps as you can.", tip: "Small, steady taps beat big panicky ones." },
+  "/pigeon-patrol": { title: "Pigeon patrol", goal: "Shoo every pigeon before they reach the tables.", tip: "Clear one column at a time so the flock has less room." },
+  "/latte-beat": { title: "Latte beat", goal: "Tap each lane as its note crosses the line.", tip: "Listen for the soft tick: notes land on the beat." },
   "/higher-or-lower": { title: "Higher or lower", goal: "Guess which item costs more.", tip: "Large drinks and bakes with extras usually cost more." },
 };
 export const HOWTO_KEY = "mm-howto-seen";
