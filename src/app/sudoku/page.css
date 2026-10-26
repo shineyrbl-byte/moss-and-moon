@@ -1,0 +1,10 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.sd-cell { aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); font-size: clamp(1.1rem, 6vw, 1.7rem); cursor: pointer; }
+.sd-cell:nth-child(6n) { border-right: 0; }
+.sd-cell.given { background: var(--surface-2); cursor: default; }
+.sd-cell.line { background: color-mix(in srgb, var(--pink) 12%, var(--surface)); }
+.sd-cell.given.line { background: color-mix(in srgb, var(--pink) 12%, var(--surface-2)); }
+.sd-cell.at { background: var(--pink-soft); box-shadow: inset 0 0 0 2px var(--pink); }
+.sd-cell.bad { box-shadow: inset 0 0 0 3px var(--pink-deep); }
+.sd-grid.done .sd-cell { background: var(--butter); }
+.sd-pad { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.35rem; }

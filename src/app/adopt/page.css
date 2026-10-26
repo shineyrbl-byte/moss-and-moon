@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.pet-card { display: grid; overflow: hidden; padding: 0; }
+.pet-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.pet-body { display: grid; gap: 0.3rem; padding: 0.8rem 1rem 1rem; }
+.pet-body .btn { justify-self: start; margin-top: 0.3rem; }
+.pet-name { font-family: var(--font-display, serif); font-size: 1.35rem; }
+.pet-homed { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.pet-homed li { display: grid; justify-items: center; gap: 0.2rem; }
+.pet-homed img { width: 4.5rem; height: 4.5rem; border-radius: 50%; object-fit: cover; border: 3px solid var(--pink-soft); }

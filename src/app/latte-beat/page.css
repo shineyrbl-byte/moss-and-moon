@@ -1,0 +1,14 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.lb2-lanes { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); height: min(26rem, 55vh); border-radius: 16px; overflow: hidden; background: var(--surface-2); }
+.lb2-lane { position: relative; border-right: 1px solid var(--line); }
+.lb2-lane:last-child { border-right: none; }
+.lb2-note { position: absolute; left: 50%; transform: translate(-50%, -50%); font-size: 1.7rem; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); }
+.lb2-line { position: absolute; left: 0; right: 0; top: 85%; height: 3px; background: var(--pink-deep); }
+.lb2-grade { position: absolute; left: 50%; top: 72%; transform: translateX(-50%); font-weight: 700; font-size: 0.8rem; white-space: nowrap; }
+.lb2-grade.perfect { color: var(--moss); }
+.lb2-grade.good { color: #b98a2a; }
+.lb2-grade.miss { color: #c43c3c; }
+.lb2-pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; margin-top: 0.5rem; }
+.lb2-pad { display: grid; place-items: center; gap: 0.1rem; padding: 0.8rem 0; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); font-size: 1.6rem; cursor: pointer; touch-action: none; user-select: none; }
+.lb2-pad:active { background: var(--pink-soft); }
+.lb2-pad small { font-size: 0.65rem; color: var(--muted); }

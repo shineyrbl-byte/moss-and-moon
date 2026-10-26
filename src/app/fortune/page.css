@@ -1,0 +1,6 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.cup-art { width: 8.5rem; height: 8.5rem; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 50%, var(--latte) 0 52%, var(--surface-2) 53% 62%, var(--line) 63%); box-shadow: var(--shadow); }
+.cup-symbol { font-size: 3.2rem; }
+.cup-read.shown .cup-symbol { animation: cup-in 0.6s ease-out; }
+.cup-text { font-family: var(--serif, Georgia, serif); font-size: 1.2rem; margin: 0.3rem 0; }
+@media (prefers-reduced-motion: reduce) { .cup-read.shown .cup-symbol { animation: none; } }

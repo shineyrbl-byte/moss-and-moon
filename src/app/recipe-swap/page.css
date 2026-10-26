@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.recipe-card { display: grid; gap: 0.3rem; padding: 0.8rem 1rem; }
+.recipe-body h3 { margin: 0.6rem 0 0.2rem; }
+.recipe-body ul, .recipe-body ol { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.2rem; }
+.recipe-body li { padding: 0; }

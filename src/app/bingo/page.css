@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.bingo-sq { aspect-ratio: 1; border: 1.5px dashed var(--line); border-radius: 16px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.2rem; padding: 0.4rem; min-width: 0; }
+.bingo-sq.on { border-style: solid; border-color: var(--pink); background: var(--surface-2); }
+.bingo-sq.line { box-shadow: 0 0 0 3px var(--pink) inset; }
+.bingo-ico { font-size: 1.5rem; line-height: 1; }
+.bingo-sq.on .bingo-ico { color: var(--pink-deep); }
+.bingo-name { font-size: 0.82rem; line-height: 1.2; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.bingo-sq .link-btn { margin: 0; }
+@media (max-width: 480px) { .bingo-card { gap: 0.3rem; } .bingo-sq { border-radius: 12px; padding: 0.25rem; } .bingo-name { font-size: 0.68rem; } .bingo-ico { font-size: 1.1rem; } }

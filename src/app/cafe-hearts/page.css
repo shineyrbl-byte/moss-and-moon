@@ -1,0 +1,21 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.hh-scores th, .hh-scores td { padding: 0.3rem 0.2rem; border-bottom: 1px solid var(--line); }
+.hh-scores thead th { font-weight: 600; }
+.hh-scores thead th.on { color: var(--pink-ink); text-decoration: underline; text-underline-offset: 4px; }
+.hh-scores tbody th { text-align: left; font-weight: 500; color: var(--muted); font-size: 0.78rem; }
+.hh-table { position: relative; height: 13rem; margin: 0.4rem auto; max-width: 24rem; border-radius: 50%; background: radial-gradient(ellipse at center, #c9dcb8, #9fae8d 70%); }
+:root[data-theme="dark"] .hh-table { background: radial-gradient(ellipse at center, #45543b, #2f3a28 70%); }
+.hh-seat { position: absolute; font-size: 0.8rem; font-weight: 600; color: #2c3a22; white-space: nowrap; }
+:root[data-theme="dark"] .hh-seat { color: #dfe8d4; }
+.hh-seat small { display: block; font-weight: 400; }
+.hh-play { position: absolute; transition: transform 0.2s; }
+.hh-play.win .hc-card { box-shadow: 0 0 0 3px var(--butter); }
+.hc-card { display: inline-grid; place-items: center; align-content: center; width: 2.6rem; height: 3.6rem; border-radius: 6px; background: #fffaf6; color: #3b2720; border: 1px solid #d9c3b3; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18); line-height: 1; }
+.hc-card b { font-size: 0.95rem; }
+.hc-card i { font-style: normal; font-size: 1.05rem; }
+.hc-card.red { color: #b8384f; }
+.hh-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: 0.6rem; }
+.hh-btn { border: none; background: none; padding: 0; cursor: pointer; border-radius: 6px; transition: transform 0.15s; }
+.hh-btn.ok:hover, .hh-btn.ok:focus-visible { transform: translateY(-4px); }
+.hh-btn.picked { transform: translateY(-8px); }
+.hh-btn.picked .hc-card { box-shadow: 0 0 0 2px var(--pink-deep); }

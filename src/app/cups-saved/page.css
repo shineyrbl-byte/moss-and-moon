@@ -1,0 +1,6 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.cups-big { margin: 0; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.cups-big b { font-family: var(--serif, Georgia, serif); font-size: clamp(2.6rem, 10vw, 3.6rem); line-height: 1; color: var(--moss); }
+.cups-bar { height: 12px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.cups-bar span { display: block; height: 100%; background: var(--moss); border-radius: 6px; transition: width 0.4s; }
+.cups-how { padding-left: 1.2rem; display: grid; gap: 0.35rem; }

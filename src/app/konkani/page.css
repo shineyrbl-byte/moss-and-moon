@@ -1,0 +1,7 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.konkani-word { font-family: var(--serif, Georgia, serif); font-size: clamp(2rem, 7vw, 3rem); margin: 0; color: var(--pink-ink); overflow-wrap: anywhere; }
+.konkani-means { font-size: 1.15rem; margin: 0.6rem 0 0; }
+.konkani-eg { margin: 0.8rem 0 0; padding-top: 0.8rem; border-top: 1px dashed var(--line); }
+.konkani-quiz { margin-top: 1.2rem; padding: 1.2rem; }
+.konkani-quiz ol { padding-left: 1.2rem; display: grid; gap: 1rem; }
+.konkani-week ul { padding-left: 1.2rem; display: grid; gap: 0.3rem; }

@@ -1,3 +1,4 @@
+import "./page.css";
 import type { Metadata } from "next";
 import { getMenu } from "@/lib/menuStore";
 import { CATEGORIES, CATEGORY_ORDER } from "@/lib/menu";

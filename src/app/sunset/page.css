@@ -1,0 +1,15 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.sunset-card.golden { background: linear-gradient(170deg, var(--butter), var(--pink-soft)); color: #3b2720; }
+.sunset-card.golden .small, .sunset-card.golden dt { color: #6b4433; }
+.sunset-sun { font-size: 3rem; line-height: 1; }
+.sunset-time { margin: 0; display: grid; }
+.sunset-time b { font-family: var(--serif, Georgia, serif); font-size: clamp(2.4rem, 9vw, 3.4rem); line-height: 1.1; }
+.sunset-status { margin: 0; }
+.sunset-facts { display: flex; gap: 1.4rem; margin: 0.3rem 0; flex-wrap: wrap; justify-content: center; }
+.sunset-facts div { display: grid; }
+.sunset-facts dt { font-size: 0.78rem; color: var(--muted); }
+.sunset-facts dd { margin: 0; font-weight: 600; }
+.sunset-spots { padding-left: 1.2rem; display: grid; gap: 0.3rem; }
+.sunset-week { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.sunset-week th, .sunset-week td { text-align: left; padding: 0.4rem 0.3rem; border-bottom: 1px solid var(--line); }
+.sunset-week thead th { font-size: 0.78rem; color: var(--muted); font-weight: 500; }

@@ -1,0 +1,3 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.sp-cols { display: grid; grid-template-columns: repeat(10, var(--w)); gap: 5px; }
+.sp-pile { min-height: calc(var(--h) + var(--n) * var(--h) * 0.24); }

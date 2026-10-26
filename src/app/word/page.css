@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.word-row { display: grid; grid-template-columns: repeat(5, min(15vw, 3.4rem)); gap: 6px; }
+.word-row.shake { animation: word-shake 0.35s; }
+.word-tile { aspect-ratio: 1; display: grid; place-items: center; border: 2px solid var(--line); border-radius: 8px; font-size: 1.6rem; font-weight: 700; text-transform: uppercase; background: var(--surface); }
+.word-tile.typed { border-color: var(--muted); }
+.word-tile.b { background: var(--surface-2); border-color: var(--surface-2); color: var(--muted); }
+.word-after { padding: 1rem; text-align: center; }
+.word-answer { text-transform: uppercase; letter-spacing: 0.1em; }
+@media (prefers-reduced-motion: reduce) { .word-row.shake { animation: none; } }

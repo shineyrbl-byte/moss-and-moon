@@ -1,0 +1,12 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.st-board svg { display: block; width: 100%; height: auto; }
+.st-star { fill: #f3e2cf; stroke: #b97f52; stroke-width: 0.15; stroke-linejoin: round; }
+:root[data-theme="dark"] .st-star { fill: #3a2a22; }
+.st-hole { fill: #d9c0a8; }
+.st-hole.can { fill: var(--pink); }
+.st-hole-g { cursor: pointer; outline: none; }
+.st-hole-g:focus-visible .st-hole { stroke: var(--pink-deep); stroke-width: 0.15; }
+.st-marble.you { fill: #e391a8; stroke: #c25b78; stroke-width: 0.1; }
+.st-marble.them { fill: #5a3424; stroke: #2c1a12; stroke-width: 0.1; }
+.st-marble.sel { stroke: #f6da9e; stroke-width: 0.22; }
+.st-path { fill: none; stroke: #f6da9e; stroke-width: 0.18; stroke-dasharray: 0.3 0.2; stroke-linejoin: round; }

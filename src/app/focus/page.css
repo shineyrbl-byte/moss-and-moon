@@ -1,0 +1,7 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.focus-timer .meter { width: 100%; max-width: 22rem; }
+.focus-phase { font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.focus-clock { font-family: var(--font-serif), Georgia, serif; font-size: clamp(3.6rem, 16vw, 6rem); line-height: 1; font-variant-numeric: tabular-nums; }
+.focus-timer.short .focus-clock, .focus-timer.long .focus-clock { color: var(--pink-deep); }
+.focus-layer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.45rem 0; }
+.focus-layer input { flex: 0 1 12rem; min-width: 0; accent-color: var(--pink-deep); }

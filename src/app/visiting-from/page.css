@@ -1,0 +1,10 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.origin-sum div { display: grid; padding: 0.8rem 0.4rem; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.origin-sum b { font-family: var(--font-display, serif); font-size: 1.8rem; line-height: 1.1; }
+.origin-list { list-style: none; padding: 0; display: grid; gap: 0.45rem; }
+.origin-list li { display: grid; grid-template-columns: minmax(0, 11rem) 1fr 2rem; gap: 0.6rem; align-items: center; }
+.origin-list li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.origin-list li b { text-align: right; }
+.origin-bar { height: 0.7rem; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.origin-bar span { display: block; height: 100%; background: var(--moss); border-radius: 999px; }
+.origin-list li.mine b { color: var(--pink-ink); }

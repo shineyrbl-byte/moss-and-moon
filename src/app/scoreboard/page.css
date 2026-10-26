@@ -1,0 +1,4 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.score-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem; }
+.score-recent { list-style: none; padding: 0; display: grid; gap: 0.3rem; }
+.score-cols h3 { margin: 0.6rem 0 0.3rem; font-family: inherit; }

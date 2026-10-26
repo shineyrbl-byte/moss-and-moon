@@ -1,0 +1,32 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.tf-cell { aspect-ratio: 1; min-width: 0; padding: 0; display: grid; place-items: center; border: 0.5px solid color-mix(in srgb, var(--text) 18%, transparent); font-size: clamp(0.9rem, 4.6vw, 1.45rem); cursor: pointer; color: var(--text); }
+.tf-cell.el { border-left: 2px solid var(--text); }
+.tf-cell:disabled { opacity: 1; cursor: default; }
+.tf-cell.bad { box-shadow: inset 0 0 0 3px #d64545; }
+.tf-cell.hint { outline: 3px solid var(--pink-deep); outline-offset: -3px; animation: tilePulse 0.9s 3; }
+.tf-rose { background: #f6c9d4; }
+.tf-latte { background: #ead6c4; }
+.tf-sage { background: #cfdcc0; }
+.tf-butter { background: #f8e2a9; }
+.tf-lilac { background: #dccdea; }
+.tf-sky { background: #c6dcec; }
+.tf-peach { background: #f7cfb2; }
+.tf-mint { background: #bfe3d6; }
+:root[data-theme="dark"] .tf-rose { background: #6a3a48; }
+:root[data-theme="dark"] .tf-latte { background: #5c4636; }
+:root[data-theme="dark"] .tf-sage { background: #45543b; }
+:root[data-theme="dark"] .tf-butter { background: #6a5a2c; }
+:root[data-theme="dark"] .tf-lilac { background: #4f4166; }
+:root[data-theme="dark"] .tf-sky { background: #344d63; }
+:root[data-theme="dark"] .tf-peach { background: #6b4532; }
+:root[data-theme="dark"] .tf-mint { background: #2f5a4c; }
+.tf-grid.done { border-color: var(--moss); }
+:root[data-patterns="on"] .tf-sage { background-image: radial-gradient(rgba(59, 39, 32, 0.22) 1.5px, transparent 1.6px); background-size: 8px 8px; }
+:root[data-patterns="on"] .tf-butter { background-image: repeating-linear-gradient(0deg, rgba(59, 39, 32, 0.16) 0 2px, transparent 2px 8px); }
+:root[data-patterns="on"] .tf-lilac { background-image: repeating-linear-gradient(-45deg, rgba(59, 39, 32, 0.16) 0 2px, transparent 2px 9px); }
+:root[data-patterns="on"] .tf-sky { background-image: repeating-linear-gradient(90deg, rgba(59, 39, 32, 0.16) 0 2px, transparent 2px 8px); }
+:root[data-patterns="on"] .tf-peach { background-image: repeating-linear-gradient(45deg, rgba(59, 39, 32, 0.14) 0 2px, transparent 2px 6px), repeating-linear-gradient(-45deg, rgba(59, 39, 32, 0.14) 0 2px, transparent 2px 6px); }
+:root[data-patterns="on"] .tf-mint { background-image: radial-gradient(circle, transparent 3px, rgba(59, 39, 32, 0.2) 3.5px, transparent 4.5px); background-size: 11px 11px; }
+.tf-stone { background: #d9d4cc; }
+:root[data-theme="dark"] .tf-stone { background: #4d4741; }
+:root[data-patterns="on"] .tf-stone { background-image: repeating-linear-gradient(135deg, rgba(59, 39, 32, 0.18) 0 3px, transparent 3px 7px); }

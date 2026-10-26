@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useRef, useState } from "react";
 import { HAPPY_HOUR, isHappyHour } from "@/lib/pricing";
 import { useLive } from "@/components/useLive";

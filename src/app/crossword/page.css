@@ -1,0 +1,19 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.xw-clue p { flex: 1; margin: 0; font-size: 0.95rem; min-height: 2.6em; display: flex; align-items: center; gap: 0.35rem; }
+.xw-clue b { text-transform: capitalize; white-space: nowrap; }
+.xw-step { width: 2.2rem; height: 2.4rem; border: 0; border-radius: 8px; background: transparent; font-size: 1.4rem; cursor: pointer; color: inherit; }
+.xw-grid { display: grid; grid-template-columns: repeat(5, 1fr); width: min(100%, 22rem); margin: 0.6rem auto; border: 2px solid var(--brown); border-radius: 8px; overflow: hidden; background: var(--brown); gap: 1px; }
+.xw-cell { position: relative; aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 0; background: var(--surface); color: var(--text); font-size: clamp(1.3rem, 8vw, 2rem); font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.xw-cell.black { background: repeating-linear-gradient(45deg, var(--brown-deep) 0 6px, color-mix(in srgb, var(--brown) 22%, var(--brown-deep)) 6px 9px); cursor: default; }
+.xw-cell.line { background: color-mix(in srgb, var(--pink) 18%, var(--surface)); }
+.xw-cell.at { background: var(--pink-soft); color: var(--text); box-shadow: inset 0 0 0 3px var(--pink); }
+.xw-cell.bad { color: var(--pink-ink); text-decoration: line-through; }
+.xw-num { position: absolute; top: 3px; left: 4px; font-size: 0.62rem; font-weight: 600; line-height: 1; color: var(--muted); }
+.xw-grid.done .xw-cell:not(.black) { background: var(--butter); color: #3b2720; }
+.xw-grid.done .xw-num { color: #765749; }
+.xw-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 0 1.2rem; margin-top: 1rem; }
+.xw-list { list-style: none; margin: 0; padding: 0; }
+.xw-list button { display: block; width: 100%; text-align: left; border: 0; background: transparent; color: var(--text); padding: 0.4rem 0.5rem; border-radius: 8px; font: inherit; font-size: 0.92rem; cursor: pointer; }
+.xw-list b { display: inline-block; min-width: 1.4rem; }
+.xw-list li.on button { background: var(--pink-soft); color: var(--text); }
+.xw-list li.filled button { color: var(--muted); }

@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { playDay } from "@/lib/archive";

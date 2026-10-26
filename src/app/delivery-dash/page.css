@@ -1,0 +1,4 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.dd-canvas { display: block; width: 100%; aspect-ratio: 100 / 58; border-radius: 16px; touch-action: none; box-shadow: var(--shadow); cursor: pointer; }
+.dd-pad { justify-content: center; gap: 0.6rem; margin-top: 0.6rem; }
+.dd-pad .btn { min-width: 8.5rem; touch-action: none; user-select: none; }

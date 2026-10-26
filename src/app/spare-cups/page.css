@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.hc-cell { aspect-ratio: 1; min-width: 0; padding: 0; border-radius: 50% 50% 40% 40%; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font-weight: 600; font-size: clamp(0.95rem, 4.4vw, 1.3rem); cursor: pointer; display: grid; place-items: center; }
+.hc-cell.away { background: #5a3a2c; color: #c9ab9c; border-color: #3b2720; text-decoration: line-through; }
+.hc-cell.kept { box-shadow: inset 0 0 0 2.5px var(--pink-deep); }
+.hc-cell.bad { box-shadow: inset 0 0 0 3px #d64545; }
+.hc-cell.hint { outline: 3px solid var(--pink); outline-offset: 1px; animation: tilePulse 0.9s 3; }
+.hc-cell:disabled { opacity: 1; cursor: default; }
+:root[data-theme="dark"] .hc-cell.away { background: transparent; border: 1.5px dashed #8a6a5c; color: #7d6559; }
+.hc-grid.done .hc-cell:not(.away) { border-color: var(--sage); }

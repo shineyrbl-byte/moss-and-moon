@@ -1,0 +1,6 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.poll-results { list-style: none; padding: 0; display: grid; gap: 0.7rem; }
+.poll-label { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.95rem; }
+.poll-bar { display: block; height: 10px; margin-top: 0.25rem; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.poll-bar span { display: block; height: 100%; border-radius: 5px; background: var(--caramel); }
+.poll-results .mine .poll-bar span { background: var(--pink-deep); }

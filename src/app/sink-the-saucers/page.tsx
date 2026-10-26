@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
 import { FLEET, SIZE, aiShot, allSunk, isSunk, placeFleet, shipAt, shoot, type Ship } from "@/lib/saucers";

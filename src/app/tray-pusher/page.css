@@ -1,0 +1,11 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.tp-cell { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; }
+.tp-cell.tp-wall { background: #6b4433; }
+.tp-cell.tp-floor { background: #efe1d5; }
+.tp-cell.tp-goal::before { content: ""; position: absolute; width: 62%; aspect-ratio: 1; border-radius: 50%; background: #fffaf6; box-shadow: inset 0 0 0 3px #b97f52; }
+.tp-cup, .tp-me { position: relative; font-style: normal; font-size: clamp(1rem, 6vw, 1.7rem); line-height: 1; }
+.tp-cup { filter: grayscale(0.2); }
+.tp-cup.home { filter: drop-shadow(0 0 4px #f6da9e); }
+.tp-board.won .tp-cup { animation: tilePulse 0.9s 2; }
+:root[data-theme="dark"] .tp-cell.tp-floor { background: #c9ab9c; }
+:root[data-theme="dark"] .tp-cell.tp-wall, :root[data-theme="dark"] .tp-board { background: #4a372c; }

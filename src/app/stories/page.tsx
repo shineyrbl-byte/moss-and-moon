@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import { voterId } from "@/components/LabCard";
 import { useStore } from "@/components/Store";

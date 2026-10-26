@@ -1,0 +1,4 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.trophy-emoji { font-size: 1.9rem; line-height: 1; filter: grayscale(1); }
+.trophy.has .trophy-emoji { filter: none; }
+.trophy-new { margin-left: 0.35rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: var(--pink-fill); color: var(--on-pink); font-size: 0.7rem; vertical-align: middle; }

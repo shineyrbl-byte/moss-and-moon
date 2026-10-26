@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import { ARCHIVE_GAMES, finishedOn, pastDays, todayStr } from "@/lib/archive";
 

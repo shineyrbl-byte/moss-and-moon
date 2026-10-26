@@ -1,0 +1,6 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.stacker-world { position: absolute; inset: 0; transition: transform 0.25s ease-out; }
+.stacker-plate { position: absolute; left: 12%; right: 12%; bottom: 4px; height: 10px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); }
+.stacker-layer { position: absolute; height: 20px; border-radius: 5px; background: var(--caramel); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12), inset 0 3px 0 rgba(255, 255, 255, 0.35); }
+.stacker-layer.base { background: var(--brown); }
+.stacker-over { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 0.6rem; background: color-mix(in srgb, var(--surface) 55%, transparent); text-align: center; padding: 1rem; }

@@ -1,0 +1,29 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.kds { padding: 1rem 16px 3rem; max-width: 110rem; margin: 0 auto; }
+.kds-head { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.kds-head .logo span { color: var(--pink-deep); font-style: italic; }
+.kds-calls { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
+.kds-call { background: var(--pink-fill); color: var(--on-pink); border: none; border-radius: 16px; padding: 0.8rem 1.1rem; font-size: 1.05rem; animation: pulseRing 1.8s infinite; text-align: left; }
+.kds-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; align-items: start; }
+.kds-col { background: var(--surface-2); border-radius: 24px; padding: 1rem; min-height: 60vh; display: flex; flex-direction: column; gap: 0.8rem; }
+.kds-col h2 { font-size: 1.8rem; display: flex; justify-content: space-between; align-items: center; margin: 0; }
+.kds-col h2 span { font-family: var(--font-sans), sans-serif; font-size: 1rem; background: var(--surface); border-radius: 999px; padding: 0.1rem 0.7rem; }
+.kds-col.ready { background: var(--pink-soft); }
+.ticket-top { display: flex; justify-content: space-between; align-items: baseline; }
+.ticket-top strong { font-family: ui-monospace, monospace; font-size: 1.3rem; letter-spacing: 0.06em; }
+.ticket-time { font-weight: 700; color: var(--muted); }
+.ticket.late .ticket-time { color: var(--pink-deep); }
+.ticket-who { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.ticket-pickup { font-size: 0.85rem; color: var(--muted); }
+.ticket-items { list-style: none; font-size: 1.15rem; line-height: 1.4; }
+.ticket-items small { display: block; font-size: 0.85rem; color: var(--pink-deep); margin-left: 1.6rem; }
+.ticket-note { background: var(--butter); color: #3b2720; border-radius: 10px; padding: 0.4rem 0.7rem; font-size: 0.95rem; }
+.ticket-foot { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; margin-top: 0.3rem; }
+.ticket-foot .btn { padding: 0.75rem 1.2rem; font-size: 1rem; }
+.kds-empty { text-align: center; padding: 2rem 0; }
+@media (max-width: 900px) { .kds-cols { grid-template-columns: 1fr; } .kds-col { min-height: auto; } }
+.vip-tag { color: #b0731a; font-weight: 600; }
+.ticket-items .recipe-link { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+.ticket-here { background: var(--butter); color: #3b2720; border-radius: 10px; padding: 0.4rem 0.6rem; font-weight: 700; margin: 0.4rem 0; animation: pulseRing 1.8s infinite; }
+@media (prefers-reduced-motion: reduce) { .ticket-here { animation: none; } }
+.kds-offline { margin: 0 1rem 0.6rem; padding: 0.5rem 0.8rem; border-radius: 12px; background: var(--butter); color: #3b2720; font-weight: 600; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }

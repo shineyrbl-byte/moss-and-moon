@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.kind-got { display: grid; gap: 0.6rem; justify-items: center; text-align: center; padding: 1.6rem 1.4rem; margin-top: 1rem; background: var(--butter); color: #3b2720; border-radius: 4px; box-shadow: var(--shadow); transform: rotate(-1.2deg); }
+.kind-got p { font-family: var(--font-display, serif); font-size: 1.3rem; line-height: 1.45; margin: 0; }
+.kind-got .muted { color: #5a463c; }
+.kind-got .btn-ghost { color: #3b2720; border-color: #3b2720; }

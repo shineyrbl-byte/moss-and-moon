@@ -1,0 +1,14 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.allergen-card { font-size: 9pt; }
+.al-table { width: 100%; border-collapse: collapse; }
+.al-table th, .al-table td { border-bottom: 1px solid #e8d6c9; padding: 1.3mm 1.5mm; }
+.al-table thead th { font-size: 7.5pt; font-weight: 600; color: #765749; text-align: center; vertical-align: bottom; }
+.al-table thead th:first-child, .al-table tbody th { text-align: left; }
+.al-table tbody th { font-weight: 500; }
+.al-table tbody th small { color: #765749; font-weight: 400; }
+.al-table td { text-align: center; color: #b8506e; font-weight: 700; }
+.al-section th { background: #f9dce3; font-family: var(--serif, Georgia, serif); font-size: 11pt; color: #b8506e; padding-top: 2mm; }
+.al-table tbody { break-inside: avoid; }
+@media (max-width: 760px) {
+  .al-table { min-width: 640px; }
+}

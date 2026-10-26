@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useStore } from "@/components/Store";

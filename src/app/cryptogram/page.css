@@ -1,0 +1,16 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.cipher-word { display: inline-flex; gap: 3px; align-items: flex-end; }
+.cipher-cell { display: grid; justify-items: center; gap: 2px; width: 1.75rem; padding: 0; border: 0; background: none; cursor: pointer; color: var(--text); font: inherit; }
+.cipher-cell b { display: block; width: 100%; height: 1.75rem; line-height: 1.75rem; border-bottom: 2px solid var(--muted); border-radius: 4px 4px 0 0; font-size: 1.15rem; background: var(--surface); }
+.cipher-cell span { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.04em; }
+.cipher-cell.on b { background: var(--pink-soft); border-color: var(--pink-deep); }
+.cipher-cell.given b { color: var(--moss); }
+.cipher-cell:focus-visible { outline: 2px solid var(--pink-deep); outline-offset: 2px; border-radius: 4px; }
+.cipher.solved .cipher-cell b { color: var(--moss); border-color: var(--moss); }
+.cipher-punct { align-self: flex-start; font-size: 1.15rem; line-height: 1.75rem; }
+.cipher-keys { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; max-width: 26rem; margin: 0 auto 0.4rem; }
+.cipher-key { padding: 0.55rem 0; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.cipher-key.used { opacity: 0.45; }
+.cipher-key.wide { grid-column: span 1; }
+.cipher-key:disabled { cursor: default; opacity: 0.35; }
+:root[data-theme="dark"] .cipher-cell.on b { background: #5a3340; }

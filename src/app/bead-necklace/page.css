@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.bn-sq { fill: var(--surface-2); }
+.bn-bead { stroke: #3b2720; stroke-width: 0.05; pointer-events: none; }
+.bn-bead.white { fill: #fffaf6; }
+.bn-bead.black { fill: #3b2720; }
+:root[data-theme="dark"] .bn-bead { stroke: #f3e2cf; }
+:root[data-theme="dark"] .bn-sq { fill: #5a463a; }
+:root[data-theme="dark"] .bn-bead.black { fill: #0d0806; stroke: #c9ab9c; stroke-width: 0.025; }
+:root[data-theme="dark"] .bn-bead.white { stroke: none; }

@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.fc-top, .fc-cols { display: grid; grid-template-columns: repeat(8, var(--w)); gap: 5px; }
+.fc-top { margin-bottom: 0.7rem; }
+.fc-pile { cursor: pointer; }
+.fc-pile { min-height: calc(var(--h) + var(--n) * var(--h) * 0.26); }

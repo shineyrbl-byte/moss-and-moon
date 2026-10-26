@@ -1,0 +1,18 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.conn-group { display: grid; gap: 0.1rem; text-align: center; padding: 0.7rem; border-radius: 10px; color: #2b1d18; }
+.conn-group b { text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.95rem; }
+.conn-group span { font-size: 0.9rem; }
+.conn-group.missed { opacity: 0.75; }
+.lvl-0 { background: #f3d77c; }
+.lvl-1 { background: #aed294; }
+.lvl-2 { background: #a5c8e8; }
+.lvl-3 { background: #c9b0e2; }
+.conn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; margin: 0.5rem 0; }
+.conn-tile { min-height: 4rem; padding: 0.3rem; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--text); font-weight: 700; font-size: 0.85rem; overflow-wrap: anywhere; cursor: pointer; }
+.conn-tile.long { font-size: 0.7rem; }
+.conn-tile.on { background: var(--brown); color: var(--surface); }
+.conn-grid.shake { animation: conn-shake 0.4s; }
+.conn-dots { display: inline-flex; gap: 0.3rem; vertical-align: middle; margin-left: 0.3rem; }
+.conn-dots span { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--line); }
+.conn-dots span.on { background: var(--brown); }
+@media (prefers-reduced-motion: reduce) { .conn-grid.shake { animation: none; } }

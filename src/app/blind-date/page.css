@@ -1,0 +1,7 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.parcel { position: relative; padding: 1.4rem 1.1rem 1.1rem; border-radius: 6px; color: #3b2720; transform: rotate(var(--tilt, 0deg)); box-shadow: var(--shadow);
+  background: linear-gradient(90deg, transparent 46%, #b0834f 46%, #b0834f 49%, transparent 49%), linear-gradient(0deg, transparent 58%, #b0834f 58%, #b0834f 61%, transparent 61%), #d9b98f; display: grid; gap: 0.5rem; align-content: start; min-height: 14rem; }
+.parcel ul { margin: 0; padding: 0.7rem 0.8rem 0.7rem 1.6rem; background: #fffaf1; border-radius: 4px; display: grid; gap: 0.25rem; font-size: 0.92rem; }
+.parcel .btn { justify-self: start; background: #fffaf1; color: #3b2720; border-color: #3b2720; }
+.parcel-tag { justify-self: start; background: #fffaf1; padding: 0.15rem 0.6rem; border-radius: 3px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; }
+.parcel.open { background: #fffaf1; transform: none; }

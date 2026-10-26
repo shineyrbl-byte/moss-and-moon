@@ -1,0 +1,12 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.origins-map { width: 100%; height: auto; overflow: visible; }
+.origins-map .land { fill: var(--pink-soft); stroke: var(--pink-deep); stroke-width: 1.2; stroke-linejoin: round; }
+.origins-map .route { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.35; }
+.origins-map .route.on { stroke: var(--pink-deep); opacity: 1; stroke-width: 1.6; }
+.origins-map text { font-size: 11px; fill: var(--text); font-family: var(--font-sans), sans-serif; }
+.origin-pin { cursor: pointer; outline: none; }
+.origin-pin .hit { fill: transparent; }
+.origin-pin.on text { font-weight: 700; }
+.origin-pin:focus-visible .hit { stroke: var(--pink-deep); stroke-width: 2; }
+.cafe-spot circle { fill: var(--pink-fill); stroke: var(--bg); stroke-width: 2; }
+.cafe-spot text { font-weight: 700; }

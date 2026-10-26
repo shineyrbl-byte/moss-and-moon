@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.typing-input.wrong { border-color: var(--pink-deep); background: var(--pink-soft); }
+.typing-rail { position: relative; min-height: 17rem; display: grid; align-content: start; gap: 0.5rem; padding: 0.6rem; border-radius: 14px; background: var(--surface-2); }
+.typing-ticket { position: relative; overflow: hidden; padding: 0.6rem 0.8rem 0.8rem; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-size: 1.05rem; }
+.typing-ticket.on { border-color: var(--pink-deep); }
+.typing-ticket.on b { color: var(--pink-ink); }
+.typing-fuse { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--moss); }
+.typing-ticket.late .typing-fuse { background: var(--pink-deep); }
+.typing-over { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; border-radius: 14px; background: color-mix(in srgb, var(--surface) 80%, transparent); font-size: 1.1rem; text-align: center; padding: 1rem; }

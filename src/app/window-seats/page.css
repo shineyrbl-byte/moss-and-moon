@@ -1,0 +1,3 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.ws-wall { aspect-ratio: 1; border-radius: 6px; background: #3b2720; color: #f6da9e; display: grid; place-items: center; font-weight: 700; font-size: clamp(1rem, 5vw, 1.35rem); }
+.ws-wall.bad { color: #ff8a8a; box-shadow: inset 0 0 0 2px #d64545; }

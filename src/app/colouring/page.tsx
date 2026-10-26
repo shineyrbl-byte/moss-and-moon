@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import { COLOUR_PAGES, CRAYONS } from "@/lib/colouring";
 import HiddenMoon from "@/components/HiddenMoon";

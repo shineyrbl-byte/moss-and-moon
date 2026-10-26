@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";

@@ -1,0 +1,12 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.wish-trunk { fill: var(--brown); }
+.wish-branches path { fill: none; stroke: var(--brown); stroke-width: 6; stroke-linecap: round; }
+.wish-leaves circle { fill: var(--sage); opacity: 0.55; }
+.wish-ribbon { cursor: pointer; transform-box: fill-box; }
+.wish-ribbon path { stroke: rgba(59, 42, 36, 0.35); stroke-width: 0.6; }
+.wish-ribbon.on path { stroke: var(--pink-deep); stroke-width: 1.6; }
+.wish-ribbon:focus-visible { outline: none; }
+.wish-ribbon:focus-visible path { stroke: var(--pink-deep); stroke-width: 2; }
+.wish-read { padding: 0.8rem 1rem; margin: 0.8rem 0 0; }
+.wish-form { padding: 1rem; display: grid; gap: 0.5rem; margin-top: 1rem; }
+.ribbon-pick { display: flex; gap: 0.35rem; padding-bottom: 0.6rem; }

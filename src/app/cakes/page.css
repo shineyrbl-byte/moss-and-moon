@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.cake-pick { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem 0.5rem 0.8rem; text-align: left; font: inherit; color: inherit; cursor: pointer; border: 2px solid transparent; }
+.cake-pick.on { border-color: var(--pink-fill); }
+.cake-ph { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; }
+.cake-ph img { object-fit: cover; }

@@ -1,0 +1,10 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.bo-wrap.hidden .bo-grid { filter: blur(9px); }
+.bo-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 8px; padding: 10px; border-radius: 18px; background: #6b4433; touch-action: none; user-select: none; }
+.bo-cube { aspect-ratio: 1; border-radius: 12px; border: none; background: linear-gradient(160deg, #fffaf6, #ead6c4); color: #3b2720; font-weight: 700; font-size: clamp(1.5rem, 9vw, 2.2rem); cursor: pointer; box-shadow: 0 3px 0 #b97f52; padding: 0; }
+.bo-cube.on { background: linear-gradient(160deg, #f9dce3, #e391a8); }
+.bo-cube.last { box-shadow: 0 3px 0 #b97f52, 0 0 0 3px var(--pink-deep); }
+.bo-cube:disabled { cursor: default; }
+.bo-grid.done .bo-cube { opacity: 0.7; }
+.bo-found { display: flex; flex-wrap: wrap; gap: 0.3rem 0.7rem; justify-content: center; margin: 0.8rem 0; }
+.bo-found sup { color: var(--muted); margin-left: 1px; }

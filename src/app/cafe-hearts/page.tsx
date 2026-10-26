@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
 import { END_AT, HEARTS, NAMES_PASS, PLAYERS, RANKS, SUITS, chooseCard, choosePass, dealHands, doPass, gameOver, handOver, handScores, label, lastWinner, leaders, legal, passTo, playCard, points, same, startHand, type Card, type Hand, type Level } from "@/lib/hearts";

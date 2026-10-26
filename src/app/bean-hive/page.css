@@ -1,0 +1,14 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.hive-rank > b { font-family: var(--font-serif), serif; font-size: 1.3rem; color: var(--brown); }
+.hive-track { position: relative; height: 0.5rem; border-radius: 999px; background: var(--surface-2); margin: 0 0.3rem; }
+.hive-fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--pink-deep); transition: width 0.3s; }
+.hive-track i { position: absolute; top: 50%; width: 0.7rem; height: 0.7rem; margin-left: -0.35rem; transform: translateY(-50%); border-radius: 50%; background: var(--surface); border: 2px solid var(--line); }
+.hive-track i.on { background: var(--pink-deep); border-color: var(--pink-deep); }
+.hive-word { min-height: 2.4rem; text-align: center; font-size: 1.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; word-break: break-all; }
+.hive-word .muted { font-size: 1rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.hive-cell { position: absolute; left: 50%; top: 50%; width: var(--w); height: calc(var(--w) * 0.866); margin: calc(var(--w) * -0.433) 0 0 calc(var(--w) * -0.5); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); border: 0; background: var(--surface-2); color: var(--text); font-size: 1.5rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.hive-cell:active { transform: scale(0.92); }
+.hive-cell.p1 { translate: calc(var(--w) * 0.78) calc(var(--w) * -0.45); }
+.hive-cell.p2 { translate: calc(var(--w) * 0.78) calc(var(--w) * 0.45); }
+.hive-found { margin-top: 1rem; padding: 0.8rem 1rem; display: grid; gap: 0.6rem; justify-items: start; }
+.hive-found ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; text-transform: capitalize; }

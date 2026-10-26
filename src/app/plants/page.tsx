@@ -1,3 +1,4 @@
+import "./page.css";
 import Image from "next/image";
 import { PLANTS } from "@/lib/plants";
 import { photo } from "@/lib/menu";

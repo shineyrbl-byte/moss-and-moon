@@ -1,0 +1,17 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.sm-inner { position: absolute; inset: 7%; }
+:root[data-theme="dark"] .sm-board { background: #2b1e19; }
+.sm-board svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sm-line { stroke: var(--brown); stroke-width: 0.06; stroke-linecap: round; }
+.sm-board .sm-point { position: absolute; transform: translate(-50%, -50%); width: 12.5%; aspect-ratio: 1; border-radius: 50%; border: none; padding: 0; background: transparent; cursor: pointer; display: grid; place-items: center; }
+.sm-point::before { content: ""; width: 34%; aspect-ratio: 1; border-radius: 50%; background: var(--brown); }
+.sm-point.you::before, .sm-point.them::before { display: none; }
+.sm-point i { width: 100%; aspect-ratio: 1; border-radius: 50%; }
+.sm-point.you i { background: radial-gradient(circle at 38% 34%, #fff, #f6c9d4 45%, #e391a8 75%); box-shadow: inset 0 0 0 2px #c25b78; }
+.sm-point.them i { background: radial-gradient(circle at 38% 34%, #8a5a40, #3b2720 70%); box-shadow: inset 0 0 0 2px #6b4433; }
+.sm-point.target::before { width: 46%; background: var(--pink-deep); }
+.sm-point.target.you i, .sm-point.target.them i { box-shadow: 0 0 0 3px #d64545; }
+.sm-point.can i { box-shadow: inset 0 0 0 2px #c25b78, 0 0 0 2px color-mix(in srgb, var(--pink) 50%, transparent); }
+.sm-point.sel i { box-shadow: 0 0 0 3px var(--pink-deep); }
+.sm-point.last { outline: 2.5px solid var(--butter); outline-offset: 1px; border-radius: 50%; }
+.sm-point[aria-disabled="true"] { cursor: default; }

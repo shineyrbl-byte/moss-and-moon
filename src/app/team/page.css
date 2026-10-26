@@ -1,0 +1,8 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.team-card { display: flex; flex-direction: column; gap: 0.6rem; padding: 1.1rem 1.2rem; }
+.team-head { display: flex; align-items: center; gap: 0.9rem; }
+.team-photo { position: relative; width: 72px; height: 72px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; background: var(--pink-soft); }
+.team-photo img { object-fit: cover; }
+.team-photo.emoji { display: grid; place-items: center; font-size: 2rem; }
+.team-fav { display: flex; align-items: center; gap: 0.7rem; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+.team-latte { display: block; margin: 0.3rem 0; }

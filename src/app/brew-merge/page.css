@@ -1,0 +1,6 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.mg-cell { aspect-ratio: 1; border-radius: 12px; background: color-mix(in srgb, var(--surface) 55%, var(--surface-2)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--text); text-align: center; }
+.mg-emoji { font-size: clamp(1.5rem, 8vw, 2.2rem); line-height: 1; }
+.mg-name { font-size: clamp(0.55rem, 2.6vw, 0.72rem); font-weight: 700; line-height: 1.1; padding: 0 2px; }
+.mg-over { position: absolute; inset: 0; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; background: color-mix(in srgb, var(--surface) 80%, transparent); font-size: 1.3rem; }
+.mg-ladder { margin-top: 1rem; }

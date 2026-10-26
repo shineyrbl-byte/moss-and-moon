@@ -1,0 +1,10 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.sl-board svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sl-dot { fill: #5a463b; }
+.sl-string { stroke: var(--butter); stroke-width: 0.06; stroke-linecap: round; filter: drop-shadow(0 0 0.06px #f6da9e); }
+.sl-lamp { position: absolute; width: 11%; aspect-ratio: 1; transform: translate(-50%, -50%); display: grid; place-items: center; padding: 0; border-radius: 50%; border: 2px solid #8a6e60; background: #3b2a22; color: #f3e4da; font-weight: 700; font-size: clamp(0.85rem, 3.6vw, 1.15rem); cursor: pointer; transition: background 0.15s, box-shadow 0.15s; }
+.sl-lamp.lit { background: radial-gradient(circle, #fff3c4, var(--butter) 60%, #e9b95c); border-color: #f0c879; color: #3b2720; box-shadow: 0 0 14px rgba(246, 218, 158, 0.7); }
+.sl-lamp.over { border-color: #ff8a8a; background: #6b2a2a; color: #fff; }
+.sl-lamp.sel { outline: 3px solid var(--pink); outline-offset: 2px; }
+.sl-lamp.near { border-color: var(--pink); border-style: dashed; }
+.sl-lamp:disabled { opacity: 1; cursor: default; }

@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import { useStore } from "@/components/Store";

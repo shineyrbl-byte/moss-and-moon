@@ -1,0 +1,14 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.nono.easy { --cell: min(calc((100vw - 2rem - 3.4rem - 8px) / 5), 3.4rem); }
+.nono-cols { display: grid; grid-template-columns: repeat(var(--n), var(--cell)); gap: 1px; padding: 0 2px; align-items: end; }
+.nono-cols span { display: flex; flex-direction: column; align-items: center; font-size: 0.72rem; line-height: 1.15; padding-bottom: 3px; color: var(--text); }
+.nono-rows { display: grid; grid-template-rows: repeat(var(--n), var(--cell)); gap: 1px; padding: 2px 0; }
+.nono-rows span { display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; color: var(--text); }
+.nono-cols b { font-weight: 700; }
+.nono-cols .ok, .nono-rows .ok { color: var(--muted); opacity: 0.55; }
+.nono-grid { display: grid; grid-template-columns: repeat(var(--n), var(--cell)); border: 2px solid var(--brown); background: var(--line); gap: 1px; touch-action: none; }
+.nono-cell { width: var(--cell); height: var(--cell); padding: 0; border: 0; background: var(--surface); color: var(--muted); font-size: calc(var(--cell) * 0.45); cursor: pointer; display: grid; place-items: center; }
+.nono-cell.on { background: var(--brown); }
+.nono.done .nono-cell { cursor: default; }
+.nono.done .nono-cell.x { color: transparent; }
+.nono.done .nono-cell:not(.on) { background: var(--butter); }

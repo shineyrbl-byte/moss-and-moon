@@ -1,0 +1,17 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.pd-wrap { position: relative; flex: 0 1 auto; width: min(68vw, 17rem, calc(62vh / 2)); }
+.pd-board { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 1px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 2px solid var(--brown); touch-action: none; user-select: none; }
+.pd-board i { aspect-ratio: 1; border-radius: 3px; background: color-mix(in srgb, var(--surface) 55%, transparent); }
+.pd-side { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; min-width: 3.6rem; }
+.pd-mini { display: grid; grid-template-columns: repeat(4, 0.75rem); gap: 1px; padding: 4px; border-radius: 8px; background: var(--surface-2); }
+.pd-mini i { width: 0.75rem; height: 0.75rem; border-radius: 2px; }
+.pd-board i.pd-ghost { background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 35%, transparent); }
+.pd-I { background: #d9a35f !important; }
+.pd-O { background: #6b4433 !important; }
+.pd-T { background: #e8b86a !important; }
+.pd-S { background: #e391a8 !important; }
+.pd-Z { background: #9fae8d !important; }
+.pd-J { background: #c25b78 !important; }
+.pd-L { background: #b97f52 !important; }
+.pd-pad { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.35rem; max-width: 22rem; margin: 0.6rem auto 0; }
+.pd-pad .btn { padding: 0.55rem 0; }

@@ -1,0 +1,18 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.dc-dice { display: flex; justify-content: center; gap: clamp(0.3rem, 2vw, 0.7rem); }
+.dc-die { width: clamp(2.6rem, 14vw, 3.6rem); aspect-ratio: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); box-sizing: border-box; padding: clamp(0.4rem, 2.4vw, 0.6rem); gap: 2px; border-radius: 18%; border: 0; background: #fffaf6; box-shadow: 0 4px 0 #c9ab9c; cursor: pointer; transition: transform 0.15s; }
+.dc-die i { border-radius: 50%; }
+.dc-die i.on { background: #3b2720; }
+.dc-die.held { background: var(--pink-soft); box-shadow: 0 0 0 3px #c25b78, 0 4px 0 #c25b78; transform: translateY(-4px); }
+.dc-die.blank { background: rgba(255, 250, 246, 0.35); box-shadow: none; }
+.dc-die:disabled { cursor: default; opacity: 1; }
+.dc-table .muted { color: #eef0e6; }
+.dc-card { width: 100%; border-collapse: collapse; margin-top: 0.8rem; }
+.dc-card th, .dc-card td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--line); text-align: left; font-weight: 400; }
+.dc-card th b { display: block; }
+.dc-card td { text-align: right; width: 4.5rem; }
+.dc-card tr.filled th b { color: var(--muted); }
+.dc-sub th, .dc-sub td { background: var(--surface-2); }
+.dc-total th, .dc-total td { font-size: 1.1rem; border-bottom: 0; }
+.dc-pick { min-width: 3rem; padding: 0.3rem 0.6rem; border-radius: 999px; border: 1px solid var(--pink-deep); background: var(--pink-soft); color: var(--text); font-weight: 700; cursor: pointer; }
+.dc-pick.zero { border-color: var(--line); background: transparent; color: var(--muted); font-weight: 400; }

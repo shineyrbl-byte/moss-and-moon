@@ -1,0 +1,8 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.slide-tile { position: relative; border: 0; padding: 0; border-radius: 6px; background-repeat: no-repeat; cursor: pointer; }
+.slide-tile:disabled { cursor: default; opacity: 1; }
+.slide-tile:not(:disabled):hover { filter: brightness(1.08); }
+.slide-num { position: absolute; left: 4px; top: 3px; font-size: 0.7rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000a; }
+.slide-gap { border-radius: 6px; background: var(--brown-deep); }
+.slide-full { position: absolute; inset: 3px; z-index: 2; border-radius: 10px; background-size: cover; background-position: center; pointer-events: none; }
+.slide-board.done .slide-full { animation: slide-reveal 0.5s; }

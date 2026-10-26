@@ -1,0 +1,4 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.post-cover { height: 300px; border-radius: 20px; overflow: hidden; margin: 1.2rem 0; }
+.post-more { display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid var(--line); margin-top: 2rem; padding-top: 1rem; }
+.post-more a { color: var(--pink-ink); }

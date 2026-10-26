@@ -1,0 +1,3 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.stamp-ring { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; border: 2px dashed var(--line); color: var(--muted); }
+.stamp.on .stamp-ring { border: 3px solid var(--pink-deep); background: var(--pink-soft); transform: rotate(-8deg); }

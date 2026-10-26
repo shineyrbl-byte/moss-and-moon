@@ -1,0 +1,7 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.pc-top, .pc-piles { display: grid; grid-template-columns: repeat(7, var(--w)); gap: 5px; }
+.pc-top { margin-bottom: 0.7rem; }
+.pc-waste .pc-under, .pc-waste .pc-btn { position: absolute; top: 0; left: 0; }
+.pc-waste.fan > :nth-child(2) { left: calc(var(--w) * 0.22); }
+.pc-waste.fan > :nth-child(3) { left: calc(var(--w) * 0.44); }
+.pc-waste.fan > :last-child { z-index: 2; }

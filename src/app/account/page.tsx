@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import Link from "next/link";
 import BadgesCard from "@/components/BadgesCard";
 import TierDietCards from "@/components/TierDietCards";

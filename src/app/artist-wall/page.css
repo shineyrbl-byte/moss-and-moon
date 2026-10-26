@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.art-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 1.2rem; margin-top: 1rem; }
+.art-piece { display: grid; gap: 0.2rem; }
+.art-frame { padding: 0.6rem; border: 0; border-radius: 4px; background: var(--surface); box-shadow: var(--shadow); cursor: zoom-in; }
+.art-frame img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
+.art-piece.sold .art-frame img { opacity: 0.75; }
+.art-zoom { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; align-content: center; gap: 0.6rem; padding: 1rem; background: var(--overlay); color: #fff; }
+.art-zoom img { max-width: min(92vw, 60rem); max-height: 80vh; object-fit: contain; border-radius: 4px; }
+.art-zoom .btn-ghost { color: #fff; border-color: #fff; }

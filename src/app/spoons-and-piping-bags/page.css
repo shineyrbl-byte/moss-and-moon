@@ -1,0 +1,11 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.sl2-sq { display: flex; align-items: flex-start; justify-content: flex-start; padding: 2px 3px; font-size: 0.55rem; color: #6b4433; background: #fff3e6; }
+.sl2-sq.odd { background: #f9dce3; }
+:root[data-theme="dark"] .sl2-sq { background: #3a2a22; color: #c9ab9c; }
+:root[data-theme="dark"] .sl2-sq.odd { background: #4a2b33; }
+.sl2-board svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.sl2-spoon { stroke: #b97f52; stroke-width: 0.12; stroke-linecap: round; }
+.sl2-bowl { fill: #b97f52; }
+.sl2-bag { fill: none; stroke: #c25b78; stroke-width: 0.16; stroke-linecap: round; opacity: 0.8; }
+.sl2-nozzle { fill: #fffaf6; stroke: #c25b78; stroke-width: 0.06; }
+.sl2-token { stroke: #fffaf6; stroke-width: 0.06; transition: cx 0.3s, cy 0.3s; }

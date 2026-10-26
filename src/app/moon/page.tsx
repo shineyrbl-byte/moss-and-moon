@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AddToCalendar from "@/components/AddToCalendar";

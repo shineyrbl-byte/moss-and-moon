@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.recipe-photo img { object-fit: cover; }
+.recipe-cols { display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.5rem; }
+.recipe-cols ul, .recipe-cols ol { padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.35rem; }
+@media (max-width: 700px) { .recipe-cols { grid-template-columns: 1fr; } }

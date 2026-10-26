@@ -1,0 +1,11 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.ladder-word { display: flex; gap: 0.3rem; font-size: 0; }
+.ladder-word::before { content: none; }
+.ladder-word span, .ladder-word.end:not(.done), .ladder-word.goal { font-size: 1.4rem; }
+.ladder-word span { width: 2.6rem; height: 2.6rem; display: grid; place-items: center; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-weight: 700; text-transform: uppercase; color: var(--text); }
+.ladder-word span.new { background: var(--pink-soft); border-color: var(--pink); }
+.ladder-word.end:not(.done), .ladder-word.goal { letter-spacing: 0.9rem; padding-left: 0.9rem; font-weight: 800; text-transform: uppercase; padding: 0.3rem 0.5rem 0.3rem 1.4rem; border-radius: 10px; background: var(--surface-2); }
+.ladder-word.goal { background: transparent; border: 2px dashed var(--caramel); color: var(--caramel-ink); }
+.ladder-word.done span { background: color-mix(in srgb, var(--moss) 22%, var(--surface)); border-color: var(--moss); }
+.ladder-form { display: flex; gap: 0.4rem; align-items: center; }
+.ladder-input { width: 8.5rem; text-align: center; font-size: 1.3rem; letter-spacing: 0.4rem; text-transform: uppercase; font-weight: 700; }

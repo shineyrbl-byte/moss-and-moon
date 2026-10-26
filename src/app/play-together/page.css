@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.pt-game { display: grid; justify-items: center; gap: 0.25rem; padding: 1.1rem; cursor: pointer; color: var(--text); font: inherit; }
+.pt-game span { font-size: 2.2rem; }
+.pt-game:hover { border-color: var(--pink); }
+.pt-code { font-family: ui-monospace, monospace; font-size: 1.4rem; letter-spacing: 0.16em; font-weight: 700; color: var(--pink-ink); }

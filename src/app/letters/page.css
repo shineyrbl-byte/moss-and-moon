@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.letter-paper { font-family: var(--serif, Georgia, serif); line-height: 1.6; background: repeating-linear-gradient(var(--surface), var(--surface) 1.55rem, var(--line) 1.6rem); resize: vertical; }
+.letter-head { all: unset; cursor: pointer; display: flex; justify-content: space-between; gap: 1rem; width: 100%; }
+.letter-head:focus-visible { outline: 2px solid var(--pink-deep); outline-offset: 4px; border-radius: 4px; }
+.letter-body { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px dashed var(--line); font-family: var(--serif, Georgia, serif); }

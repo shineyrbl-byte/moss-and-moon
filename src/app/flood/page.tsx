@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useMemo, useState } from "react";
 import { gameSettings } from "@/lib/gameSettings";
 import ShareResult from "@/components/ShareResult";

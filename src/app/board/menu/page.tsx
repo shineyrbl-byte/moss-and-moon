@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useStore } from "@/components/Store";

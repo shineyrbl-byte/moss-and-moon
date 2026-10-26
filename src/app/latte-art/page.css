@@ -1,0 +1,8 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.latte-winner img { width: 7rem; height: 7rem; object-fit: cover; border-radius: 12px; flex: none; }
+.latte-winner > div { display: grid; gap: 0.15rem; }
+.latte-winner b { font-family: var(--font-display, serif); font-size: 1.4rem; }
+.latte-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 0.8rem; }
+.latte-card { display: grid; gap: 0.5rem; padding: 0.6rem; }
+.latte-card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
+.latte-card.mine { outline: 2px solid var(--pink); }

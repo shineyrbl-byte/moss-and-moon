@@ -1,0 +1,2 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.tiles-board { --t: min(3.4rem, calc((100vw - 52px) / 8.3)); position: relative; width: calc(var(--cols) * var(--t) + 16px); height: calc(var(--rows) * var(--t) * 1.25 + 16px); }

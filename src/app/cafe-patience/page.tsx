@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
 import { RANK, SUITS, autoMove, canFinish, drawCards, finishStep, isWon, newGame, pinkSuit, type Card, type From, type Game } from "@/lib/patience";

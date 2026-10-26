@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+@media (min-width: 640px) { .spot-pair { grid-template-columns: 1fr 1fr; } }
+.spot-pic { container-type: inline-size; position: relative; aspect-ratio: 6 / 5; overflow: hidden; border-radius: 14px; border: 1px solid var(--line); background: linear-gradient(var(--latte) 0 60%, var(--caramel) 60% 100%); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+:root[data-theme="dark"] .spot-pic { background: linear-gradient(#4a372c 0 60%, #6b4433 60% 100%); }
+.spot-shelf { position: absolute; left: 4%; right: 4%; height: 2.2%; border-radius: 3px; background: color-mix(in srgb, var(--brown) 70%, transparent); }
+.spot-item { position: absolute; font-size: 9.5cqw; line-height: 1; pointer-events: none; }
+.spot-ring { position: absolute; width: 17cqw; height: 17cqw; transform: translate(-50%, -50%); border: 3px solid var(--moss); border-radius: 50%; box-shadow: 0 0 0 2px var(--surface); pointer-events: none; }
+.spot-ring.missed { border-color: var(--pink-deep); border-style: dashed; }
+.spot-flash { color: var(--pink-ink); font-weight: 700; }

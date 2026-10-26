@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { voterId } from "@/components/LabCard";

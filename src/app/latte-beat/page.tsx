@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useRef, useState } from "react";
 import ArcadeBoard from "@/components/ArcadeBoard";
 import { GOOD, LEAD, SONGS, chart, judge, multiplier, points, type Note, type Song } from "@/lib/latteBeat";

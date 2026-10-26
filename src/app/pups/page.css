@@ -1,0 +1,10 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.pup-rules { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.4rem; }
+.pup-menu { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 0.8rem; margin-top: 0.8rem; }
+.pup-treat { overflow: hidden; padding: 0; }
+.pup-photo { position: relative; aspect-ratio: 4 / 3; }
+.pup-wall { columns: 3 200px; column-gap: 0.7rem; margin-top: 0.8rem; }
+.pup-pic { break-inside: avoid; margin: 0 0 0.7rem; border-radius: 16px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); }
+.pup-pic img { width: 100%; display: block; }
+.pup-pic figcaption { padding: 0.5rem 0.7rem; font-size: 0.85rem; }
+@media (max-width: 480px) { .pup-wall { columns: 2 140px; } }

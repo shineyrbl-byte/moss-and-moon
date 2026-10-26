@@ -1,0 +1,14 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.fruit-list { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.fruit-card { display: flex; gap: 0.9rem; align-items: flex-start; padding: 0.8rem 1rem; }
+.fruit-emoji { font-size: 2rem; line-height: 1; }
+.fruit-dishes { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.fruit-table-wrap { overflow-x: auto; position: relative; }
+.fruit-table { border-collapse: separate; border-spacing: 2px; font-size: 0.85rem; min-width: 30rem; width: 100%; }
+.fruit-table th { font-weight: 600; text-align: center; padding: 0.2rem; }
+.fruit-table th[scope="row"] { text-align: left; white-space: nowrap; padding-right: 0.6rem; }
+.fruit-table td { height: 1.4rem; border-radius: 4px; background: var(--surface-2); }
+.fruit-table td.in { background: var(--sage); }
+.fruit-table td.on, .fruit-table th.on { outline: 2px solid var(--brown); outline-offset: -1px; }
+.fruit-table thead th:first-child { text-align: left; }
+.fruit-list + p { margin-top: 0.8rem; }

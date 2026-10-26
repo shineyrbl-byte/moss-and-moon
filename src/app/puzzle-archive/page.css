@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.ar-days { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+.ar-count { font-size: 0.8em; opacity: 0.85; }
+.ar-games { list-style: none; padding: 0; margin: 0.6rem 0 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: 0.5rem; }
+.ar-games a { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 0.8rem; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-decoration: none; }
+.ar-games a:hover { border-color: var(--pink); }
+.ar-games a.done { background: color-mix(in srgb, var(--sage) 22%, var(--surface)); }
+.ar-tick { margin-left: auto; font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.ar-games a.done .ar-tick { color: var(--moss); font-weight: 600; }

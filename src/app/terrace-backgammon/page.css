@@ -1,0 +1,29 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.bg-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) 10px repeat(6, minmax(0, 1fr)); gap: 2px; height: clamp(8rem, 34vw, 11rem); }
+.bg-bar { background: #4a3227; border-radius: 3px; }
+.bg-pt { position: relative; border: none; padding: 0; cursor: pointer; background: transparent; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.bg-pt::before { content: ""; position: absolute; inset: 0; background: #f3e2cf; clip-path: polygon(0 0, 100% 0, 50% 88%); }
+.bg-pt.bottom::before { clip-path: polygon(50% 12%, 100% 100%, 0 100%); }
+.bg-pt.odd::before { background: #c49a78; }
+.bg-pt.bottom { flex-direction: column-reverse; }
+.bg-pt.target::before { background: var(--pink); }
+.bg-pt.can .bg-ck:last-child { box-shadow: 0 0 0 2px #f6da9e; }
+.bg-pt.sel::before { background: var(--butter); }
+.bg-pt.theirs { outline: 2px dashed #f6da9e; outline-offset: -2px; }
+.bg-stack { position: relative; display: flex; flex-direction: inherit; align-items: center; width: 100%; }
+.bg-ck { display: grid; place-items: center; width: min(88%, 2rem); aspect-ratio: 1; border-radius: 50%; font-style: normal; font-size: 0.7rem; font-weight: 700; margin: 1px 0; }
+.bg-ck.you { background: radial-gradient(circle at 38% 34%, #fff, #f6c9d4 45%, #e391a8 80%); box-shadow: inset 0 0 0 1.5px #c25b78; color: #3b2720; }
+.bg-ck.them { background: radial-gradient(circle at 38% 34%, #8a5a40, #3b2720 75%); box-shadow: inset 0 0 0 1.5px #1e140f; color: #f3e2cf; }
+.bg-num { position: absolute; font-size: 0.55rem; color: #f3e2cf; opacity: 0.75; }
+.bg-pt.top .bg-num { bottom: -0.05rem; }
+.bg-pt.bottom .bg-num { top: -0.05rem; }
+.bg-mid { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; min-height: 2.6rem; padding: 0.2rem 0.4rem; }
+.bg-barbox { min-width: 3.4rem; height: 2rem; display: inline-flex; align-items: center; gap: 0.2rem; border: none; background: #4a3227; border-radius: 999px; color: #f3e2cf; padding: 0 0.4rem; font-size: 0.8rem; }
+.bg-barbox .bg-ck { width: 1.3rem; }
+.bg-barbox.can { box-shadow: 0 0 0 2px #f6da9e; cursor: pointer; }
+.bg-barbox.sel { background: var(--butter); color: #3b2720; }
+.bg-dice { display: flex; gap: 0.25rem; font-size: 2rem; color: #fffaf6; line-height: 1; }
+.bg-dice b.used { opacity: 0.3; }
+.bg-off { position: absolute; right: 8px; bottom: 6px; border: none; border-radius: 999px; padding: 0.25rem 0.7rem; background: #4a3227; color: #f3e2cf; font-size: 0.8rem; cursor: pointer; }
+.bg-off.target { background: var(--pink-fill); color: var(--on-pink); }
+.bg-off.them { right: auto; left: 8px; }

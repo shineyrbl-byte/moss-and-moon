@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { QuoteLine } from "@/lib/pricing";

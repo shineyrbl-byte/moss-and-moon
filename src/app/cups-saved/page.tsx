@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import { OWN_CUP_OFF } from "@/lib/pricing";
 import { monthLabel } from "@/lib/comeback";

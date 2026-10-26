@@ -1,0 +1,8 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.gp-cell { aspect-ratio: 1; min-width: 0; padding: 0; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; font-weight: 700; font-size: clamp(1.1rem, 6vw, 1.5rem); display: grid; place-items: center; }
+.gp-cell.clue { background: #e8f0dc; color: #3f5530; cursor: default; }
+:root[data-theme="dark"] .gp-cell.clue { background: #33402a; color: #dfe8d4; }
+.gp-cell.path { background: repeating-linear-gradient(45deg, #8c6a58 0 4px, #7a5b4a 4px 8px); border-color: #6b4433; }
+.gp-cell.bad { box-shadow: inset 0 0 0 3px #d64545; }
+.gp-cell.hint { animation: tilePulse 0.9s 3; }
+.gp-cell:disabled { opacity: 1; }

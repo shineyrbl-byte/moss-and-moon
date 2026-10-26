@@ -1,0 +1,33 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.mboard { min-height: 100dvh; display: flex; flex-direction: column; background: #2a1c16; color: #f6eee7; padding: 3vh 4vw; cursor: none; }
+.mboard-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 2.2vh; color: #c9ab9c; }
+.mboard-head .logo { font-size: 4.5vh; color: #f6eee7; }
+.mboard-head .logo em { color: #e391a8; }
+.mboard-slide { flex: 1; display: flex; flex-direction: column; justify-content: center; animation: mboardIn 0.8s ease both; }
+@media (prefers-reduced-motion: reduce) { .mboard-slide { animation: none; } }
+.mboard-slide h1 { font-family: var(--serif, Georgia, serif); font-weight: 400; font-size: 8vh; margin: 0 0 3vh; color: #f29db5; }
+.mboard-list { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 6vw; font-size: 3.6vh; }
+.mboard-list li { display: flex; align-items: baseline; gap: 1vw; margin-bottom: 2.2vh; break-inside: avoid; }
+.mboard-dots { flex: 1; border-bottom: 2px dotted #6b4433; transform: translateY(-0.6vh); }
+.mboard-list b { color: #f6da9e; }
+.mboard-special { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; align-items: center; }
+.mboard-photo { position: relative; aspect-ratio: 1; border-radius: 3vh; overflow: hidden; }
+.mboard-photo img { object-fit: cover; }
+.mboard-special p { font-size: 3.4vh; color: #e6cfbd; }
+.mboard-eyebrow { text-transform: uppercase; letter-spacing: 0.4vh; color: #b97f52 !important; font-size: 2.4vh !important; }
+.mboard-price { display: inline-block; margin-top: 2vh; font-size: 6vh; background: #b8506e; color: #fff; border-radius: 999px; padding: 1vh 3vw; }
+.mboard-deal { text-align: center; }
+.mboard-deal h1 { font-size: 7vh; line-height: 1.2; }
+.mboard-foot { display: flex; justify-content: space-between; align-items: center; font-size: 2.2vh; color: #c9ab9c; }
+.mboard-dotsrow { display: flex; gap: 0.6vw; }
+.mboard-dotsrow i { width: 1vh; height: 1vh; border-radius: 50%; background: #6b4433; }
+.mboard-dotsrow i.on { background: #f29db5; }
+@media (max-width: 760px) {
+  .mboard { padding: 4vw; }
+  .mboard-list { columns: 1; font-size: 5vw; }
+  .mboard-slide h1 { font-size: 10vw; }
+  .mboard-head { font-size: 3.5vw; gap: 0.8rem; }
+  .mboard-head .logo { font-size: 6vw; }
+  .mboard-special { grid-template-columns: 1fr; }
+  .mboard-foot { font-size: 3.2vw; gap: 1rem; }
+}

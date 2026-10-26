@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";

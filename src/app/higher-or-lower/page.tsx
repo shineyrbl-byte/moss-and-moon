@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useStore } from "@/components/Store";

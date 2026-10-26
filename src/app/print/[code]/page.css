@@ -1,0 +1,13 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.printing-ticket body { background: #fff; color: #000; }
+.printing-ticket body::before { display: none; }
+.kt { width: 72mm; margin: 1.5rem auto; font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: #000; background: #fff; padding: 4mm; }
+.kt-head { display: flex; justify-content: space-between; align-items: baseline; }
+.kt-code { font-size: 22px; letter-spacing: 1px; }
+.kt-where { font-size: 18px; font-weight: 700; margin: 4px 0; }
+.kt-line { margin: 6px 0; font-size: 15px; }
+.kt-small { font-size: 11px; padding-left: 1.6em; }
+.kt-note { font-weight: 700; }
+.kt hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+.kt-btn { font: inherit; padding: 6px 12px; border: 1px solid #000; background: #fff; border-radius: 6px; }
+@media print { @page { size: 80mm auto; margin: 0; } .kt { margin: 0; } .kt-btn { display: none; } }

@@ -1,0 +1,6 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.book-spine { font-size: 2.6rem; line-height: 1; }
+.book-stars { color: var(--caramel-ink); letter-spacing: 0.05em; }
+.book-thoughts { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.book-thoughts li { padding: 0.8rem 1rem; }
+.book-form { padding: 1rem; display: grid; gap: 0.6rem; margin-top: 1rem; }

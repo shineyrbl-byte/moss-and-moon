@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.crack-rows li { display: grid; grid-template-columns: 1.4rem auto 1fr; align-items: center; gap: 0.5rem; }
+.crack-n { font-size: 0.75rem; color: var(--muted); text-align: right; }
+.crack-guess { display: flex; gap: 0.3rem; }
+.crack-slot { width: 2.6rem; height: 2.6rem; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; font-size: 1.45rem; }
+.crack-rows li.live .crack-slot { border: 2px dashed var(--pink); }
+.crack-marks { font-size: 0.95rem; letter-spacing: 0.05em; }
+.crack-pad { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.35rem; }
+.crack-answer { font-size: 1.4rem; letter-spacing: 0.15em; }

@@ -1,0 +1,15 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.sc-board svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+.sc-dot { fill: var(--brown-deep); }
+.sc-hit { stroke: transparent; stroke-width: 0.34; cursor: pointer; }
+.sc-ink { stroke: var(--line); stroke-width: 0.07; stroke-linecap: round; stroke-dasharray: 0.08 0.12; pointer-events: none; }
+.sc-line:hover .sc-ink, .sc-line:focus-visible .sc-ink { stroke: var(--pink); stroke-dasharray: none; }
+.sc-line:focus { outline: none; }
+.sc-line.on .sc-ink { stroke: var(--brown); stroke-width: 0.1; stroke-dasharray: none; }
+.sc-line.on .sc-hit { cursor: default; }
+.sc-line.last .sc-ink { stroke: var(--pink-deep); }
+.sc-box { animation: scPop 0.25s ease-out; }
+.sc-box.you { fill: #e391a8; }
+.sc-box.them { fill: #8c5a35; }
+:root[data-theme="dark"] .sc-dot { fill: #f3e4da; }
+:root[data-theme="dark"] .sc-line.on .sc-ink { stroke: #e6cfbd; }

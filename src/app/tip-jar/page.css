@@ -1,0 +1,11 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.tj-cell { position: relative; aspect-ratio: 1; min-width: 0; padding: 0; border: 0.5px solid color-mix(in srgb, var(--text) 20%, transparent); background: var(--surface); color: var(--text); cursor: pointer; display: grid; place-items: center; }
+.tj-cell.el { border-left: 2.5px solid var(--text); }
+.tj-cell.same { background: color-mix(in srgb, var(--pink-soft) 45%, var(--surface)); }
+.tj-cell.sel { background: var(--pink-soft); box-shadow: inset 0 0 0 2px var(--pink-deep); }
+.tj-cell.bad .tj-num { color: #c43c3c; }
+.tj-cell.hint { animation: tilePulse 0.9s 3; }
+.tj-cell:disabled { opacity: 1; cursor: default; }
+.tj-label { position: absolute; top: 3px; left: 4px; font-size: clamp(0.58rem, 2.6vw, 0.78rem); font-weight: 600; color: var(--muted); line-height: 1; }
+.tj-num { font-size: clamp(1.2rem, 6.5vw, 1.9rem); font-family: var(--font-serif, serif); }
+.tj-grid.done { border-color: var(--moss); }

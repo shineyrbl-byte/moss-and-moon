@@ -1,0 +1,16 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.mc-jar { grid-row: 1 / 3; min-width: 0; font-size: clamp(0.6rem, 2.6vw, 0.8rem); display: grid; place-items: center; align-content: center; gap: 0.2rem; border-radius: 999px; background: #e6cfbd; color: #3b2720; padding: 0.5rem 0.2rem; }
+.mc-jar.them { grid-column: 1; }
+.mc-jar.you { grid-column: 3; grid-row: 1 / 3; }
+.mc-jar b { font-size: 1.3rem; }
+.mc-row { grid-column: 2; min-width: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.mc-row.bottom { grid-row: 2; }
+.mc-cup { position: relative; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: #e6cfbd; color: #3b2720; font: inherit; box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.2); }
+.mc-cup b { position: relative; z-index: 1; min-width: 1.5em; padding: 0 0.2em; border-radius: 999px; background: rgba(255, 250, 246, 0.88); font-size: clamp(0.8rem, 3.4vw, 1.1rem); line-height: 1.4; }
+.mc-cup.can { cursor: pointer; background: #f3e3d4; outline: 2px solid var(--pink-deep); outline-offset: -2px; }
+.mc-cup.can:hover { background: var(--pink-soft); }
+.mc-cup.last { box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.2), 0 0 0 3px var(--butter); }
+.mc-beans { position: absolute; inset: 12%; pointer-events: none; }
+.mc-beans i { position: absolute; left: 50%; top: 50%; width: 22%; height: 15%; border-radius: 50%; background: #5a3a2c; transform: translate(-50%, -50%) rotate(var(--r)) translate(120%) rotate(30deg); }
+:root[data-theme="dark"] .mc-board { background: #6b4433; }
+:root[data-theme="dark"] .mc-cup.can { background: #f0dccb; }

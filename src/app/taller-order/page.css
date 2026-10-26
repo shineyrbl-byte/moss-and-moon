@@ -1,0 +1,14 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.to-cell { aspect-ratio: 1; min-width: 0; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font-size: clamp(1.1rem, 6vw, 1.6rem); font-weight: 600; cursor: pointer; padding: 0; }
+.to-cell.fixed { background: var(--surface-2); cursor: default; }
+.to-cell.sel { background: var(--pink-soft); border-color: var(--pink-deep); }
+.to-cell.bad { color: #c43c3c; box-shadow: inset 0 0 0 2px #d64545; }
+.to-cell.hint { animation: tilePulse 0.9s 3; }
+.to-cell:disabled { opacity: 1; }
+.to-sign { display: grid; place-items: center; font-weight: 700; color: var(--pink-ink); font-size: clamp(0.8rem, 4vw, 1.1rem); }
+.to-sign.bad { color: #c43c3c; }
+.to-grid { grid-template-columns: repeat(var(--s), auto); justify-content: center; }
+.to-grid > .to-cell { width: clamp(2.4rem, 13vw, 3.4rem); }
+.to-grid > .to-sign:not(.v) { width: clamp(0.9rem, 4vw, 1.3rem); }
+.to-grid > .to-sign.v, .to-grid > span:not(.to-sign) { height: clamp(0.9rem, 4vw, 1.3rem); }
+.to-sign { font-size: clamp(1.05rem, 5.5vw, 1.45rem); }

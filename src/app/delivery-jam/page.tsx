@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/components/Store";
 import { EXIT_ROW, LEVELS, N, isOut, parse, range, slide, type Piece } from "@/lib/rushHour";

@@ -1,0 +1,18 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.quiz-tv h1 { font-family: var(--font-display, serif); font-size: clamp(1.8rem, 4vw, 4.4rem); margin: 0; color: #f6da9e; }
+.quiz-tv .muted { color: #c9ab9c; }
+.quiz-tv header { display: flex; justify-content: space-between; gap: 1rem; color: #e391a8; font-weight: 700; letter-spacing: 0.04em; }
+.quiz-tv-lobby { margin: auto; text-align: center; }
+.quiz-tv-big { font-size: clamp(1.6rem, 3vw, 3.2rem); font-weight: 700; text-align: center; }
+.quiz-tv-q { line-height: 1.15; }
+.quiz-tv-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vw; }
+.quiz-tv-choice { position: relative; overflow: hidden; display: flex; align-items: center; gap: 1.2vw; padding: 1.4vw 1.6vw; border-radius: 1.2vw; background: #33241c; font-size: clamp(1.1rem, 2.2vw, 2.6rem); }
+.quiz-tv-choice > span:not(.quiz-tv-bar) { position: relative; z-index: 1; }
+.quiz-tv-choice.right { background: #4a5a3c; box-shadow: 0 0 0 4px #b9c99f inset; }
+.quiz-tv-bar { position: absolute; left: 0; bottom: 0; height: 0.5vw; min-height: 4px; background: #f6da9e; }
+.quiz-tv-bar b { position: absolute; right: 0.8vw; bottom: 0.8vw; font-size: 0.7em; color: #f6da9e; }
+.quiz-tv-time { font-size: clamp(1.4rem, 3vw, 3.4rem); font-weight: 700; text-align: center; margin: 0; }
+.quiz-tv-why { color: #e6cfbd; margin: 0; }
+.quiz-tv-top { list-style: none; padding: 0; margin: 0 auto; width: min(100%, 50rem); display: grid; gap: 0.4vw; }
+.quiz-tv-top li { display: flex; justify-content: space-between; padding: 0.5vw 1vw; border-radius: 0.8vw; background: #261a15; }
+@media (max-width: 700px) { .quiz-tv-choices { grid-template-columns: 1fr; } }

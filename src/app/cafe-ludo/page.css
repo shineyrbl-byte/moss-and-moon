@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.lu-sq { display: grid; place-items: center; font-size: 0.55rem; color: rgba(59, 39, 32, 0.5); }
+.lu-track { background: var(--surface); box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--text) 25%, transparent); }
+.lu-lane { box-shadow: inset 0 0 0 0.5px rgba(59, 39, 32, 0.3); }
+.lu-home { background: conic-gradient(from 45deg, #e391a8 0 25%, #8a5a40 0 50%, #9fae8d 0 75%, #e8b86a 0); }
+.lu-token { position: absolute; width: 5.2%; aspect-ratio: 1; border-radius: 50%; border: 2px solid #fffaf6; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); padding: 0; cursor: default; transition: top 0.25s, left 0.25s; }
+.lu-token.can { cursor: pointer; animation: tilePulse 0.9s infinite; outline: 2px solid var(--pink-deep); }
+.lu-token.last { box-shadow: 0 0 0 3px var(--butter); }
+.lu-token:disabled { opacity: 1; }

@@ -1,0 +1,12 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.ispy-item { width: 100%; display: flex; gap: 0.6rem; align-items: center; text-align: left; padding: 0.6rem 0.8rem; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.ispy-item.on { background: var(--sage); border-color: var(--sage); color: #22301a; }
+.ispy-box { flex: none; width: 1.4rem; height: 1.4rem; display: grid; place-items: center; border-radius: 6px; border: 2px solid currentColor; font-weight: 700; }
+.ispy-cert { margin-top: 1.4rem; padding: 2rem 1.4rem; text-align: center; border: 3px double var(--brown); border-radius: 16px; background: var(--surface); display: grid; gap: 0.4rem; justify-items: center; }
+.ispy-cert p { margin: 0; }
+.ispy-star { font-size: 2.6rem; }
+.ispy-name { font-family: var(--font-display, serif); font-size: 2rem; }
+@media print {
+  .ispy-page .ispy-cert { border-color: #000; background: #fff; }
+  .ispy-print { font-size: 14pt; line-height: 2; }
+}

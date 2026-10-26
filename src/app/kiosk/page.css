@@ -1,0 +1,24 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.kiosk-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; text-align: center; padding: 2rem 16px; }
+.kiosk-start { width: 100%; border: 0; font: inherit; cursor: pointer; background: radial-gradient(circle at 50% 40%, var(--pink-soft), var(--bg) 70%); }
+.kiosk-big { font-family: var(--serif, Georgia, serif); font-size: clamp(2rem, 6vw, 3.5rem); animation: kioskPulse 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .kiosk-big { animation: none; } }
+.kiosk-code { font-family: monospace; font-size: clamp(2.4rem, 8vw, 4.5rem); letter-spacing: 0.3rem; background: var(--pink-soft); padding: 0.5rem 1.4rem; border-radius: 18px; }
+.kiosk-head { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 1rem; padding: 0.8rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.kiosk-tabs { display: flex; gap: 0.5rem; overflow-x: auto; flex: 1; }
+.kiosk-tabs .chip { font-size: 1.05rem; padding: 0.6rem 1.1rem; white-space: nowrap; }
+.kiosk-body { display: grid; grid-template-columns: 1fr minmax(300px, 380px); gap: 1rem; padding: 1rem 16px; align-items: start; }
+.kiosk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; }
+.kiosk-tile { display: flex; flex-direction: column; gap: 0.3rem; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 0.6rem 0.6rem 0.9rem; font: inherit; color: inherit; cursor: pointer; font-size: 1.05rem; }
+.kiosk-tile:active { transform: scale(0.98); }
+.kiosk-tile:disabled { opacity: 0.45; }
+.kiosk-ph { position: relative; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: var(--surface-2); }
+.kiosk-ph img { object-fit: cover; }
+.kiosk-tray { position: sticky; top: 5rem; padding: 1.1rem; display: flex; flex-direction: column; gap: 0.8rem; max-height: calc(100dvh - 6rem); overflow-y: auto; }
+.kiosk-lines { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.kiosk-lines li { display: grid; grid-template-columns: 1fr auto auto; gap: 0.6rem; align-items: center; }
+.kiosk-lines li small { display: block; }
+.kiosk-go { font-size: 1.1rem; padding: 1rem; }
+.kiosk-warn { position: fixed; inset: 0; background: var(--overlay); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.kiosk-warn .card { padding: 2rem; text-align: center; max-width: 360px; }
+@media (max-width: 760px) { .kiosk-body { grid-template-columns: 1fr; } .kiosk-tray { position: static; max-height: none; } .kiosk-grid { grid-template-columns: repeat(2, 1fr); } }

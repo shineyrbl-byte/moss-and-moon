@@ -1,0 +1,14 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.mc-cols { columns: 2; column-gap: 10mm; }
+.mc-section { break-inside: avoid; margin-bottom: 6mm; }
+.mc-section h2 { font-family: var(--serif, Georgia, serif); font-weight: 400; font-size: 15pt; color: #b8506e; margin: 0 0 2mm; }
+.mc-section ul { list-style: none; margin: 0; padding: 0; }
+.mc-section li { margin-bottom: 2.2mm; break-inside: avoid; }
+.mc-line { display: flex; align-items: baseline; gap: 2mm; }
+.mc-dots { flex: 1; border-bottom: 1px dotted #c9ab9c; transform: translateY(-2px); }
+.mc-section li p { margin: 0.5mm 0 0; color: #765749; font-size: 8.5pt; line-height: 1.35; }
+.mc-qr { display: flex; flex-direction: column; align-items: center; gap: 1mm; flex-shrink: 0; }
+.mc-qr svg { width: 26mm; height: 26mm; display: block; }
+@media (max-width: 640px) {
+  .mc-cols { columns: 1; }
+}

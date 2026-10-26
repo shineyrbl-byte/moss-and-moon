@@ -1,0 +1,8 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.memory-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; margin: 1rem 0; }
+.memory-card { position: relative; aspect-ratio: 1; border: none; padding: 0; background: none; cursor: pointer; perspective: 600px; border-radius: 12px; }
+.memory-face { position: absolute; inset: 0; border-radius: 12px; overflow: hidden; backface-visibility: hidden; transition: transform 0.35s; display: grid; place-items: center; }
+.memory-face.back { background: var(--brown); color: var(--butter); font-size: 1.8rem; box-shadow: var(--shadow); }
+.memory-card.up .back { transform: rotateY(180deg); }
+.memory-card:focus-visible { outline: 2px solid var(--pink-deep); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .memory-face { transition: none; } }

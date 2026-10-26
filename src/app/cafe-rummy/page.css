@@ -1,0 +1,8 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.ru-melds { --w: 2rem; --h: 2.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin: 0.4rem 0; }
+.ru-meld { display: flex; padding: 4px 6px; border-radius: 10px; border: 1.5px dashed var(--line); background: var(--surface-2); cursor: pointer; }
+.ru-meld:hover { border-color: var(--pink); }
+.ru-mini { width: 1.3rem; overflow: visible; }
+.ru-mini:last-child { width: var(--w); }
+.ru-mini .pc-card { width: var(--w); height: var(--h); }
+.ru-picked .pc-card { transform: translateY(-8px); }

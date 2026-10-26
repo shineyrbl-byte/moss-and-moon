@@ -1,0 +1,10 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.gift-card {
+  aspect-ratio: 1.6; border-radius: 26px; padding: 1.6rem; display: flex; flex-direction: column; justify-content: space-between;
+  box-shadow: var(--shadow); position: relative; overflow: hidden; transition: background 0.4s; color: #3b2720;
+}
+.gift-card::after { content: ""; position: absolute; width: 60%; aspect-ratio: 1; border-radius: 50%; right: -18%; bottom: -35%; background: rgba(255, 255, 255, 0.22); }
+.gift-card.mocha { background: linear-gradient(135deg, #8a5a43, #3b2720); color: #f9e8dd; }
+.gift-card.mocha .logo span { color: #f29db5; }
+.gift-card.matcha { background: linear-gradient(135deg, #dfe8cf, #9fae8d); }
+.gift-amount { font-family: var(--font-serif), serif; font-size: 3rem; line-height: 1; font-weight: 600; }

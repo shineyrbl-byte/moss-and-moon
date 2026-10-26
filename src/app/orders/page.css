@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.history-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; }
+@media (max-width: 900px) {
+  .history-actions { align-items: flex-start; }
+}

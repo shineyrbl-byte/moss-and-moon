@@ -1,0 +1,8 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.flood-cell { display: grid; place-items: center; font-size: clamp(0.55rem, 2.6vw, 0.95rem); line-height: 1; transition: background 0.25s; }
+.flood-grid.syms .flood-cell.mine { filter: saturate(0.6); }
+.flood-picks { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; max-width: 26rem; margin: 0.6rem auto; }
+.flood-pick { display: grid; justify-items: center; gap: 0.2rem; padding: 0.3rem 0; border: 1px solid transparent; border-radius: 10px; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.flood-pick:disabled { cursor: default; border-color: var(--line); background: var(--surface-2); }
+.flood-swatch { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); font-size: 1rem; }
+.flood-pick:not(:disabled):hover .flood-swatch { box-shadow: 0 0 0 2px var(--pink-deep); }

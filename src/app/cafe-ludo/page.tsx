@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
 import { HOME, LANES, PLAYERS, SAFE, STARTS, TRACK, cellOf, choose, movable, move, newGame, rollDie, type Level, type State } from "@/lib/ludo";

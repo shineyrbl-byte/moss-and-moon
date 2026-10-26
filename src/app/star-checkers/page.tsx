@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import TwoPlayers from "@/components/TwoPlayers";

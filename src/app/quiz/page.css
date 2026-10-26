@@ -1,0 +1,10 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.quiz-join { padding: 1rem 1.2rem; display: grid; gap: 0.5rem; }
+.quiz-wait { text-align: center; font-size: 1.2rem; margin: 2rem 0; }
+.quiz-choices { display: grid; gap: 0.5rem; }
+.quiz-choice { display: flex; align-items: center; gap: 0.7rem; width: 100%; min-height: 3.3rem; padding: 0.5rem 0.8rem; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--pink); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.mine { border-color: var(--pink); background: var(--pink-soft); }
+.quiz-choice.right { border-color: var(--moss); background: color-mix(in srgb, var(--moss) 18%, var(--surface)); }
+.quiz-choice.wrong { border-color: var(--pink-deep); opacity: 0.8; }

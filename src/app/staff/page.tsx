@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import Link from "next/link";
 import NextShift from "@/components/NextShift";
 import ClockButton from "@/components/ClockButton";

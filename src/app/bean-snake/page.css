@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.snake-cell { display: grid; place-items: center; border-radius: 3px; font-size: clamp(0.6rem, 3.2vw, 0.95rem); line-height: 1; }
+.snake-cell.body { background: var(--moss); border-radius: 4px; }
+.snake-cell.head { background: var(--brown); border-radius: 6px; }
+.snake-over { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; border-radius: 14px; background: color-mix(in srgb, var(--surface) 75%, transparent); font-size: 1.2rem; }

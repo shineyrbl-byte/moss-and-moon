@@ -1,0 +1,17 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.fa-board { display: grid; gap: 2px; padding: 4px; border-radius: 10px; background: var(--surface-2); }
+.fa-board.solved { outline: 2px solid var(--sage); }
+.fa-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+.fa-tile { aspect-ratio: 1; display: grid; place-items: center; border-radius: 4px; background: var(--surface); font-weight: 700; font-size: clamp(0.65rem, 3.2vw, 0.95rem); color: var(--text); }
+.fa-tile.typed { box-shadow: inset 0 0 0 1.5px var(--muted); }
+.fa-tile.g { background: #6aa864; color: #fff; }
+.fa-tile.y { background: #d6b13f; color: #fff; }
+.fa-tile.b { background: color-mix(in srgb, var(--muted) 45%, var(--surface)); color: #fff; }
+.fa-keys { display: grid; gap: 5px; margin-top: 0.4rem; }
+.fa-keyrow { display: flex; gap: 4px; justify-content: center; }
+.fa-key { flex: 1 1 0; max-width: 2.6rem; min-width: 0; height: 2.8rem; border: none; border-radius: 6px; background: var(--surface-2); color: var(--text); font-weight: 700; cursor: pointer; padding: 0; }
+.fa-key.wide { max-width: 4.2rem; flex: 1.6 1 0; font-size: 0.75rem; }
+.fa-key.g { background: #6aa864; color: #fff; }
+.fa-key.y { background: #d6b13f; color: #fff; }
+.fa-key.b { opacity: 0.45; }
+.fa-boards { max-width: min(100%, 22rem); margin-left: auto; margin-right: auto; gap: 0.4rem; }

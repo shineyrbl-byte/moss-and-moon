@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";

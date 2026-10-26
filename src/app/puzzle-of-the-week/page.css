@@ -1,0 +1,11 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.s9-cell { aspect-ratio: 1; min-width: 0; padding: 0; border: none; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); color: var(--pink-ink); font-size: clamp(1rem, 5vw, 1.45rem); font-weight: 600; cursor: pointer; display: grid; place-items: center; }
+.s9-cell.br { border-right: 2.5px solid var(--text); }
+.s9-cell.fixed { color: var(--text); font-weight: 700; background: var(--surface-2); }
+.s9-cell.same { background: color-mix(in srgb, var(--pink-soft) 60%, var(--surface)); }
+.s9-cell.sel { background: var(--pink-soft); box-shadow: inset 0 0 0 2px var(--pink-deep); }
+.s9-cell.bad { color: #c43c3c; }
+.s9-cell:disabled { opacity: 1; cursor: default; }
+.s9-notes { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; height: 100%; font-size: clamp(0.42rem, 2vw, 0.6rem); color: var(--muted); font-weight: 500; line-height: 1; }
+.s9-notes i { font-style: normal; display: grid; place-items: center; }
+.s9-grid.done { border-color: var(--moss); }

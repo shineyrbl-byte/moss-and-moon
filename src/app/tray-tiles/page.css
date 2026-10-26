@@ -1,0 +1,7 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.tt-cell { aspect-ratio: 1; min-width: 0; padding: 0; border: 0.5px solid color-mix(in srgb, var(--text) 18%, transparent); background: var(--surface); color: #3b2720; font-weight: 700; font-size: clamp(1rem, 5vw, 1.4rem); cursor: pointer; }
+.tt-cell.el { border-left: 2.5px solid var(--text); }
+.tt-cell.pre { box-shadow: inset 0 0 0 100px color-mix(in srgb, var(--pink) 35%, transparent); }
+.tt-cell.bad { color: #c43c3c; }
+.tt-cell:disabled { opacity: 1; }
+:root[data-theme="dark"] .tt-cell:not([style]) { color: var(--text); }

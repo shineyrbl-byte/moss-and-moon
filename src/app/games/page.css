@@ -1,0 +1,21 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.games-tile { display: grid; gap: 0.2rem; height: 100%; padding: 0.9rem; color: var(--text); text-decoration: none; }
+.games-tile:hover { border-color: var(--pink); }
+.games-tile.done { background: var(--surface-2); }
+.games-emoji { font-size: 1.8rem; }
+.games-status { margin-top: 0.3rem; font-weight: 600; color: var(--pink-ink); }
+.games-tile.done .games-status { color: var(--moss); }
+.five-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.five-list a { display: inline-flex; gap: 0.35rem; align-items: center; padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); text-decoration: none; font-size: 0.9rem; }
+.five-list a:hover { border-color: var(--pink-deep); }
+.five-list a.done { background: color-mix(in srgb, var(--sage) 30%, var(--surface)); border-color: var(--sage); }
+.games-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+.games-li { position: relative; }
+.games-star { position: absolute; top: 0.35rem; right: 0.35rem; z-index: 1; width: 2rem; height: 2rem; border-radius: 50%; border: none; background: transparent; color: var(--muted); font-size: 1.15rem; cursor: pointer; line-height: 1; display: grid; place-items: center; }
+.games-star:hover { color: var(--pink-deep); background: var(--pink-soft); }
+.games-star.on { color: #d4a017; }
+.games-favs { margin: 1rem 0 0; padding: 0.8rem 1rem; border-radius: 16px; background: color-mix(in srgb, var(--butter) 35%, var(--surface)); border: 1px solid var(--line); }
+:root[data-theme="dark"] .games-favs { background: #3a3220; }
+.season-event { display: flex; gap: 0.9rem; align-items: center; padding: 0.9rem 1.1rem; margin-top: 0.8rem; background: color-mix(in srgb, var(--butter) 30%, var(--surface)); }
+.season-emoji { font-size: 2.2rem; }
+.season-event > div { flex: 1; }

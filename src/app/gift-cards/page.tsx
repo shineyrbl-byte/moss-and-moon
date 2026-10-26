@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useState } from "react";
 import { rupees } from "@/lib/pricing";
 import { usePay } from "@/components/Payment";

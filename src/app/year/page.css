@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.year-tile { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.year-tile b { font-family: var(--font-serif), Georgia, serif; font-size: 1.8rem; line-height: 1.1; }
+.year-top { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.3rem; }
+.year-card { display: block; width: min(100%, 360px); aspect-ratio: 4 / 5; margin: 0.8rem auto 0; border-radius: 18px; box-shadow: var(--shadow); }

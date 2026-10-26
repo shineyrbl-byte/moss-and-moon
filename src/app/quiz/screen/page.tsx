@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { LETTERS, secsLeft, useQuiz } from "../useQuiz";
 
 // The TV view: open /quiz/screen on the café screen and go full screen.

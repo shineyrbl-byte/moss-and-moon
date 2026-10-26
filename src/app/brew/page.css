@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.brew-clock { text-align: center; margin-top: 1rem; }
+.brew-time { font-family: var(--font-serif), serif; font-size: clamp(3rem, 12vw, 5rem); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.brew-time small { font-size: 1.2rem; }
+.brew-steps { list-style: none; padding: 0; margin: 1rem 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.brew-steps li { display: flex; gap: 0.8rem; padding: 0.6rem 0.9rem; border-radius: 14px; border: 1px solid var(--line); }
+.brew-steps li.now { border-color: var(--pink-deep); background: var(--pink-soft); font-weight: 600; }
+.brew-steps li.past { opacity: 0.55; }
+.brew-at { font-variant-numeric: tabular-nums; min-width: 3rem; color: var(--muted); }

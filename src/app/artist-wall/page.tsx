@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useState } from "react";
 
 type Art = { id: number; title: string; medium: string; size: string; price: number | null; img: string; sold: number };

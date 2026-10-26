@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MenuEditor from "@/components/admin/MenuEditor";
 import TablesQR from "@/components/admin/TablesQR";

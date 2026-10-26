@@ -1,3 +1,4 @@
+import "./page.css";
 import type { Metadata } from "next";
 import QRCode from "qrcode";
 import { getMenu } from "@/lib/menuStore";

@@ -1,0 +1,12 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.moon-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.moon-wd { font-size: 0.72rem; color: var(--muted); text-align: center; padding-bottom: 0.2rem; }
+.moon-day { aspect-ratio: 1; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; position: relative; }
+.moon-num { position: absolute; top: 3px; left: 5px; font-size: 0.68rem; color: var(--muted); }
+.moon-ic { font-size: clamp(1rem, 4vw, 1.5rem); }
+.moon-day.cortado, .moon-key.cortado { background: var(--butter); border-color: var(--caramel); }
+.moon-day.cortado .moon-num { color: #6b4433; }
+.moon-day.today { outline: 2px solid var(--pink-deep); outline-offset: -2px; }
+.moon-key { display: inline-block; width: 0.9em; height: 0.9em; border-radius: 3px; border: 1px solid; vertical-align: -0.1em; }
+.moon-list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.moon-list li { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap; padding: 0.7rem 1rem; }

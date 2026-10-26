@@ -1,0 +1,17 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.jb-steps li { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-size: 0.85rem; color: var(--muted); }
+.jb-steps li.now { border-color: var(--pink-deep); color: var(--text); font-weight: 700; }
+.jb-steps li.ok { background: color-mix(in srgb, var(--sage) 35%, var(--surface)); color: var(--text); }
+.jb-steps li.skip { background: var(--surface-2); }
+.jb-play { display: grid; gap: 1rem; margin: 1rem 0; }
+.jb-answer { display: flex; justify-content: center; gap: 4px; flex-wrap: nowrap; }
+.jb-answer.wrong { animation: shake 0.4s; }
+.jb-slot { width: min(2.6rem, calc((100vw - 56px) / 9)); aspect-ratio: 1 / 1.1; display: grid; place-items: center; padding: 0; border-radius: 8px; border: 0; border-bottom: 3px solid var(--muted); background: var(--surface-2); color: var(--text); font: inherit; font-size: 1.25rem; font-weight: 700; text-transform: uppercase; }
+.jb-slot.full { background: var(--surface); border-color: var(--caramel); cursor: pointer; }
+.jb-slot.shown { background: var(--pink-soft); border-color: var(--pink-deep); }
+.jb-answer.wrong .jb-slot.full { border-color: var(--pink-deep); }
+.jb-letters { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
+.jb-tile { width: min(2.9rem, calc((100vw - 64px) / 9)); aspect-ratio: 1; border-radius: 50%; border: 0; background: var(--brown); color: var(--btn-fg); font: inherit; font-size: 1.2rem; font-weight: 700; text-transform: uppercase; cursor: pointer; box-shadow: 0 3px 0 var(--brown-deep); }
+.jb-tile:disabled { opacity: 0.2; cursor: default; box-shadow: none; }
+:root[data-theme="dark"] .jb-tile { background: #8c5a35; box-shadow: 0 3px 0 #3b2720; }
+:root[data-theme="dark"] .jb-slot.shown { background: #5a3340; }

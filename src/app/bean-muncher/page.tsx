@@ -1,4 +1,5 @@
 "use client";
+import "./page.css";
 import { useEffect, useRef, useState } from "react";
 import ArcadeBoard from "@/components/ArcadeBoard";
 import { COLS, MAP, ROWS, newGame, nextRound, steer, step, tickSecs, type Dir, type State } from "@/lib/muncher";

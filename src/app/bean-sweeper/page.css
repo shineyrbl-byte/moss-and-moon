@@ -1,0 +1,5 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.bs-cell { aspect-ratio: 1; padding: 0; border: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--caramel) 45%, var(--surface)); color: var(--text); font-weight: 800; font-size: clamp(0.85rem, 4.4vw, 1.2rem); cursor: pointer; }
+.bs-cell:hover:not(.open) { background: color-mix(in srgb, var(--caramel) 60%, var(--surface)); }
+.bs-cell.open { background: var(--surface); cursor: default; }
+.bs-grid.over .bs-cell { cursor: default; }

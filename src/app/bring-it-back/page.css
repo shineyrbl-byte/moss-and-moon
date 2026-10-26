@@ -1,0 +1,10 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.comeback-list { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+.comeback-list li { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0.8rem; }
+.comeback-list li.mine { outline: 2px solid var(--pink-deep); }
+.comeback-thumb { position: relative; width: 64px; height: 64px; border-radius: 12px; overflow: hidden; flex: none; }
+.comeback-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.comeback-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.comeback-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.comeback-bar span { display: block; height: 100%; background: var(--pink-deep); border-radius: 3px; transition: width 0.3s; }
+.comeback-act { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; flex: none; }

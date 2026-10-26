@@ -1,0 +1,15 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.game-ticket { border-left: 6px solid var(--pink-deep); }
+.game-flash { margin: 0.5rem 0; padding: 0.4rem 0.8rem; border-radius: 12px; }
+.game-flash.ok { background: var(--pink-soft); }
+.game-flash.bad { background: color-mix(in srgb, #d9534f 18%, transparent); }
+.game-bench { display: flex; gap: 1.2rem; align-items: center; margin-top: 0.8rem; flex-wrap: wrap; }
+.game-cup { flex: 0 0 auto; display: flex; justify-content: center; min-width: 110px; }
+.game-controls { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 0.6rem; }
+.game-controls .chips { justify-content: flex-start; }
+.game-boards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+.game-boards ol { padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.game-boards li span { margin-right: 0.5rem; }
+.game-boards li b { float: right; }
+.game-boards .card { padding: 0.9rem 1rem; }
+@media (max-width: 560px) { .game-boards { grid-template-columns: 1fr; } }

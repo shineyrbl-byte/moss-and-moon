@@ -1,0 +1,9 @@
+/* Styles only this page uses (kept out of globals.css so other pages don't load them) */
+.mt-theme small { font-size: 0.7rem; color: var(--muted); }
+.mt-theme b { font-family: var(--font-serif), serif; font-size: 1.15rem; }
+.mt-grid { display: grid; grid-template-columns: repeat(var(--c), 1fr); gap: 6px; width: min(100%, 19rem); margin: 0 auto; touch-action: none; user-select: none; }
+.mt-cell { aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--line); background: var(--surface); color: #3b2720; font-weight: 700; font-size: clamp(1rem, 5.5vw, 1.35rem); cursor: pointer; padding: 0; }
+:root[data-theme="dark"] .mt-cell:not([style]) { color: var(--text); }
+.mt-cell.on { background: var(--pink-fill); color: var(--on-pink); border-color: var(--pink-fill); }
+.mt-cell.hint { border: 2.5px dashed var(--pink-deep); }
+.mt-cell:disabled { opacity: 1; cursor: default; }
