@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import HowToPlay from "@/components/HowToPlay";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/components/Store";
@@ -43,7 +44,7 @@ export const viewport: Viewport = {
 };
 
 // Sets the theme before the page paints, so there's no flash of the wrong colours.
-const themeScript = `try{var t=localStorage.getItem('mm-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;var c=JSON.parse(localStorage.getItem('mm-comfort')||'{}');if(c.text==='large')document.documentElement.dataset.text='large';if(c.motion==='reduce')document.documentElement.dataset.motion='reduce'}catch(e){}`;
+const themeScript = `try{var t=localStorage.getItem('mm-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;var c=JSON.parse(localStorage.getItem('mm-comfort')||'{}');if(c.text==='large')document.documentElement.dataset.text='large';if(c.motion==='reduce')document.documentElement.dataset.motion='reduce';var g=JSON.parse(localStorage.getItem('mm-game-settings')||'{}');if(g.patterns)document.documentElement.dataset.patterns='on'}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const season = currentSeason();
@@ -58,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SeasonLayer season={season} />
             <TableBanner />
             <Nav />
-            <main>{children}</main>
+            <main><HowToPlay />{children}</main>
             <Footer />
             <Overlays />
             <PwaSetup />

@@ -50,9 +50,19 @@ export function seededRand(seed: string): () => number {
 
 /** Days in a row you've played, counting back from today (dates as YYYY-MM-DD) */
 export function playStreak(days: string[], today: string): number {
-  const set = new Set(days);
-  let n = 0;
-  const d = new Date(`${today}T12:00:00`);
-  while (set.has(d.toISOString().slice(0, 10))) { n++; d.setDate(d.getDate() - 1); }
-  return n;
+  return streakWithFreeze(days, today).streak;
+}
+/** Days in a row ending today. A streak freeze ❄️ forgives one missed day, at most once a week: the missed day
+ * doesn't count, but it doesn't break the run either. */
+export function streakWithFreeze(days: string[], today: string): { streak: number; frozen: string[] } {
+  const set = new Set(days), frozen: string[] = [];
+  const at = (k: number) => { const d = new Date(`${today}T12:00:00`); d.setDate(d.getDate() - k); return d.toISOString().slice(0, 10); };
+  let n = 0, lastFreeze = -Infinity;
+  for (let k = 0; ; k++) {
+    if (set.has(at(k))) { n++; continue; }
+    // Only a single missed day in the middle of a run, and not within a week of the last one forgiven
+    if (n > 0 && set.has(at(k + 1)) && k - lastFreeze >= 7) { frozen.push(at(k)); lastFreeze = k; continue; }
+    break;
+  }
+  return { streak: n, frozen };
 }

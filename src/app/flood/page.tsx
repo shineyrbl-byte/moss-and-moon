@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { gameSettings } from "@/lib/gameSettings";
 import ShareResult from "@/components/ShareResult";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
@@ -28,7 +29,7 @@ export default function Flood() {
   useEffect(() => {
     const d = playDay();
     setDate(d);
-    try { setName(localStorage.getItem("mm-game-name") ?? ""); setSymbols(localStorage.getItem(SYMS) === "1"); } catch {}
+    try { setName(localStorage.getItem("mm-game-name") ?? ""); const own = localStorage.getItem(SYMS); setSymbols(own === null ? gameSettings().patterns : own === "1"); } catch {}
     let s: { date?: string; picks?: number[]; start?: number; doneMs?: number; saved?: boolean } | null = null;
     try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
     if (s?.date === d) { setPicks(s.picks ?? []); setStart(s.start ?? null); setDoneMs(s.doneMs ?? null); setSaved(!!s.saved); }

@@ -65,6 +65,7 @@ export default function Games() {
         <div><b className="explore-big">{s.done} <span className="muted">of {s.games.length}</span></b><span className="small muted">played today{s.done === s.games.length ? " · the full set! 🏆" : ""}</span></div>
         <div className="explore-bar" role="progressbar" aria-valuemin={0} aria-valuemax={s.games.length} aria-valuenow={s.done} aria-label="Today's games played"><span style={{ width: `${pct}%` }} /></div>
         {s.allStreak > 0 && <span className="small">🔥 {s.allStreak} day{s.allStreak === 1 ? "" : "s"} in a row with the full set</span>}
+        <span className="tiny muted">❄️ Streak freeze: miss a single day once a week and your streaks carry on.</span>
       </section>
       <section className="card five" aria-labelledby="five-h">
         <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "0.4rem" }}>
@@ -113,7 +114,7 @@ export default function Games() {
           </li>
         ))}
       </ul>
-      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link></p>
+      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration and colour-blind patterns: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link></p>
       {anyTime.length > 0 && <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>}
       <ul className="games-more">
         {anyTime.map((g) => (

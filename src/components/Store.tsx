@@ -2,6 +2,7 @@
 // Shared app state: the live menu, the order tray, toasts, the table you're
 // ordering from, and which item is being customised.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { buzz } from "@/lib/gameSettings";
 import type { MenuItem } from "@/lib/menu";
 import { MOONS_KEY, allFound } from "@/lib/secret";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
@@ -162,6 +163,7 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
 
   const toast = useCallback((msg: string) => {
     const id = ++toastId.current;
+    buzz(); // only if vibration is switched on in the game settings
     setToasts((t) => [...t.slice(-2), { id, msg }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2600);
   }, []);

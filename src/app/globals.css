@@ -633,11 +633,12 @@ body:has(.quiz-tv) .nav, body:has(.quiz-tv) .footer, body:has(.quiz-tv) .table-b
 .qr-card .logo span { color: #c25b78; }
 .qr-card strong { font-family: var(--font-serif), serif; font-size: 1.6rem; }
 @media print {
-  body * { visibility: hidden; }
+  /* Only on the QR sheet's own page (this used to blank every other page when printed) */
+  body:has(.qr-sheet) * { visibility: hidden; }
   .qr-sheet, .qr-sheet * { visibility: visible; }
   .qr-sheet { position: absolute; inset: 0; grid-template-columns: repeat(3, 1fr); gap: 0.4in; padding: 0.3in; }
   .qr-card { break-inside: avoid; border: 1px dashed #999; }
-  body::before { display: none; }
+  body:has(.qr-sheet)::before { display: none; }
 }
 
 /* ============ accounts ============ */
@@ -2887,7 +2888,7 @@ button.pc-slot { cursor: pointer; }
 .bg-pt.odd::before { background: #c49a78; }
 .bg-pt.bottom { flex-direction: column-reverse; }
 .bg-pt.target::before { background: var(--pink); }
-.bg-pt.can .bg-ck.you:last-child, .bg-pt.bottom.can .bg-ck.you:last-child { box-shadow: 0 0 0 2px #f6da9e; }
+.bg-pt.can .bg-ck:last-child { box-shadow: 0 0 0 2px #f6da9e; }
 .bg-pt.sel::before { background: var(--butter); }
 .bg-pt.theirs { outline: 2px dashed #f6da9e; outline-offset: -2px; }
 .bg-stack { position: relative; display: flex; flex-direction: inherit; align-items: center; width: 100%; }
@@ -2930,3 +2931,52 @@ button.pc-slot { cursor: pointer; }
 .bt-ops .btn { font-size: 1.4rem; padding: 0.35rem 0; }
 .bt-ops .btn.on { background: var(--pink-fill); color: var(--on-pink); border-color: var(--pink-fill); }
 .bt-steps { margin: 0.8rem auto 0; width: fit-content; font-variant-numeric: tabular-nums; }
+
+.bg-off.them { right: auto; left: 8px; }
+
+/* Colour-blind patterns (Game settings): sections and colours get a texture as well as a colour */
+:root[data-patterns="on"] .tf-latte { background-image: repeating-linear-gradient(45deg, rgba(59, 39, 32, 0.16) 0 2px, transparent 2px 9px); }
+:root[data-patterns="on"] .tf-sage { background-image: radial-gradient(rgba(59, 39, 32, 0.22) 1.5px, transparent 1.6px); background-size: 8px 8px; }
+:root[data-patterns="on"] .tf-butter { background-image: repeating-linear-gradient(0deg, rgba(59, 39, 32, 0.16) 0 2px, transparent 2px 8px); }
+:root[data-patterns="on"] .tf-lilac { background-image: repeating-linear-gradient(-45deg, rgba(59, 39, 32, 0.16) 0 2px, transparent 2px 9px); }
+:root[data-patterns="on"] .tf-sky { background-image: repeating-linear-gradient(90deg, rgba(59, 39, 32, 0.16) 0 2px, transparent 2px 8px); }
+:root[data-patterns="on"] .tf-peach { background-image: repeating-linear-gradient(45deg, rgba(59, 39, 32, 0.14) 0 2px, transparent 2px 6px), repeating-linear-gradient(-45deg, rgba(59, 39, 32, 0.14) 0 2px, transparent 2px 6px); }
+:root[data-patterns="on"] .tf-mint { background-image: radial-gradient(circle, transparent 3px, rgba(59, 39, 32, 0.2) 3.5px, transparent 4.5px); background-size: 11px 11px; }
+
+/* Game settings page */
+.gs-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: 0.6rem; }
+.gs-list li { display: flex; gap: 1rem; align-items: center; justify-content: space-between; padding: 0.9rem 1rem; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+.gs-list li span { display: grid; gap: 0.15rem; }
+
+/* Printable puzzles */
+.pp-head { font-family: var(--font-serif), serif; font-size: 1.2rem; margin: 1.2rem 0 0.6rem; }
+.pp-sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: 1rem; }
+.pp-box { background: #fff; color: #111; border: 1px solid #bbb; border-radius: 10px; padding: 0.8rem; break-inside: avoid; }
+.pp-box h3 { margin: 0 0 0.2rem; font-size: 1.05rem; color: #111; }
+.pp-box p { margin: 0 0 0.6rem; font-size: 0.78rem; color: #333; }
+.pp-grid { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); max-width: 17rem; margin: 0 auto; border: 2px solid #111; }
+.pp-cell { position: relative; aspect-ratio: 1; display: grid; place-items: center; border-right: 1px solid #999; border-bottom: 1px solid #999; font-size: 0.95rem; color: #111; min-width: 0; }
+.pp-cell.et { border-top: 2.5px solid #111; } .pp-cell.el { border-left: 2.5px solid #111; }
+.pp-cell.br { border-right: 2.5px solid #111; } .pp-cell.bb { border-bottom: 2.5px solid #111; }
+.pp-cell.fixed { font-weight: 700; background: #eee; }
+.pp-cell.clue { font-weight: 700; border-color: transparent; }
+.pp-cell.shade { background: #555; color: #ddd; }
+.pp-cell.black { background: #333; color: #fff; }
+.pp-cell small { position: absolute; top: 1px; left: 2px; font-size: 0.55rem; font-weight: 700; }
+.pp-cell.black small.a { top: 2px; right: 3px; left: auto; } .pp-cell.black small.d { top: auto; bottom: 2px; left: 3px; }
+@media print {
+  .pp-screen { display: none !important; }
+  body:has(.pp-page) .nav, body:has(.pp-page) .footer, body:has(.pp-page) .chat-fab, body:has(.pp-page) .toasts, body:has(.pp-page) .season-banner { display: none !important; }
+  .pp-page { max-width: none !important; padding: 0 !important; }
+  .pp-sheet { grid-template-columns: 1fr 1fr; gap: 0.6cm; }
+  .pp-box { border-radius: 0; }
+}
+
+/* How to play */
+.howto { max-width: 40rem; margin: 1rem auto 0; padding: 0.9rem 1.1rem; width: calc(100% - 32px); box-sizing: border-box; border-left: 4px solid var(--pink); }
+.howto-bar { max-width: 52rem; margin: 0.6rem auto -0.6rem; padding: 0 16px; display: flex; justify-content: flex-end; }
+.howto-q { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.78rem; cursor: pointer; }
+.howto-q:hover { color: var(--text); border-color: var(--pink); }
+@media print { .howto, .howto-bar { display: none !important; } }
+.pp-cell.black small { font-size: 0.5rem; }
+@media print { .pp-grid { max-width: 8cm; } .pp-cell { font-size: 11pt; } .pp-cell.black small { font-size: 7pt; } }

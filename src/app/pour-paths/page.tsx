@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { gameSettings } from "@/lib/gameSettings";
 import ShareResult from "@/components/ShareResult";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
@@ -15,6 +16,8 @@ const LABEL: Record<PathMode, string> = { easy: "Easy 5×5", hard: "Hard 7×7" }
 
 export default function PourPaths() {
   const { toast } = useStore();
+  const [patterns, setPatterns] = useState(false);
+  useEffect(() => { setPatterns(gameSettings().patterns); }, []);
   const [date, setDate] = useState("");
   const past = isPast(date);
   const [mode, setMode] = useState<PathMode>("easy");
@@ -113,6 +116,8 @@ export default function PourPaths() {
         onPointerDown={begin} onPointerMove={drag} onPointerUp={end} onPointerCancel={end}>
         {[...Array(size * size).keys()].map((p) => <rect key={p} x={p % size + 0.03} y={Math.floor(p / size) + 0.03} width={0.94} height={0.94} rx={0.12} className="paths-cell" />)}
         {paths.map((p, i) => p.map((cell) => <rect key={`${i}-${cell}`} x={cell % size + 0.03} y={Math.floor(cell / size) + 0.03} width={0.94} height={0.94} rx={0.12} fill={COLOURS[i]} opacity={0.22} />))}
+        {/* Colour-blind patterns: each path's squares carry its cup too */}
+        {patterns && paths.map((p, i) => p.slice(1, -1).map((cell) => <text key={`m${i}-${cell}`} x={cell % size + 0.5} y={Math.floor(cell / size) + 0.55} fontSize={0.3} textAnchor="middle" dominantBaseline="middle" opacity={0.75}>{CUPS[i]}</text>))}
         {paths.map((p, i) => p.length > 1 && <polyline key={i} points={p.map((c) => centre(c).join(",")).join(" ")} fill="none" stroke={COLOURS[i]} strokeWidth={0.34} strokeLinecap="round" strokeLinejoin="round" />)}
         {ends.map((pair, i) => pair.map((cell) => {
           const [cx, cy] = centre(cell);

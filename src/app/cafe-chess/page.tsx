@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/components/Store";
+import TwoPlayers from "@/components/TwoPlayers";
 import { bestMove, colorOf, inCheck, kingAt, moves, name, newGame, play, result, san, type Color, type Level, type Move, type State } from "@/lib/chess";
 
 const STATS = "mm-chess";
@@ -21,6 +22,7 @@ export default function CafeChess() {
   const [promo, setPromo] = useState<Move[] | null>(null);
   const [stats, setStats] = useState(blank());
   const [recorded, setRecorded] = useState(false);
+  const [two, setTwo] = useState(false);
   const logRef = useRef<HTMLOListElement>(null);
   useEffect(() => {
     try { const v = JSON.parse(localStorage.getItem(STATS) ?? "null"); if (v) { setStats({ ...blank(), ...v.stats }); if (v.level === "hard") setLevel("hard"); } } catch {}
@@ -31,18 +33,19 @@ export default function CafeChess() {
   const done = res.over;
   // The computer's move: let the board draw "thinking" first, then work it out
   useEffect(() => {
-    if (done || g.s.turn === me) return;
+    if (done || g.s.turn === me || two) return;
     const id = setTimeout(() => {
       const m = bestMove(g.s, level);
       setG({ s: play(g.s, m), log: [...g.log, san(g.s, m)], last: m });
     }, 120);
     return () => clearTimeout(id);
-  }, [g, level, me, done]);
+  }, [g, level, me, done, two]);
   useEffect(() => { logRef.current?.lastElementChild?.scrollIntoView({ block: "nearest" }); }, [g.log.length]);
   useEffect(() => {
     if (!done || recorded) return;
     setRecorded(true);
     const won = res.winner === me, key = res.winner === null ? "drawn" : won ? "won" : "lost";
+    if (two) { toast(res.why === "checkmate" ? `Checkmate! ${res.winner === "w" ? "White" : "Black"} wins ♟️🎉` : `A draw. ${WHY[res.why]}`); return; }
     saveStats({ ...stats, [level]: { ...stats[level], [key]: stats[level][key] + 1 } });
     toast(res.why === "checkmate" ? (won ? "Checkmate! You win ♟️🎉" : "Checkmate. The computer wins.") : `A draw. ${WHY[res.why]}`);
   }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -53,20 +56,20 @@ export default function CafeChess() {
     setSel(null); setPromo(null);
   }
   function tap(i: number) {
-    if (done || g.s.turn !== me || promo) return;
+    if (done || (g.s.turn !== me && !two) || promo) return;
     const p = g.s.b[i];
     if (sel !== null) {
       const ms = legal.filter((m) => m.from === sel && m.to === i);
       if (ms.length > 1) { setPromo(ms); return; }
       if (ms.length === 1) { go(ms[0]); return; }
     }
-    if (p && colorOf(p) === me) setSel(sel === i ? null : i);
+    if (p && colorOf(p) === g.s.turn) setSel(sel === i ? null : i);
     else setSel(null);
   }
-  function newGame2(lv = level, side = me) {
-    if (!done && history.length) saveStats({ ...stats, [level]: { ...stats[level], lost: stats[level].lost + 1 } }, lv);
+  function newGame2(lv = level, side = me, twoNow = two) {
+    if (!two && !done && history.length) saveStats({ ...stats, [level]: { ...stats[level], lost: stats[level].lost + 1 } }, lv);
     else if (lv !== level) saveStats(stats, lv);
-    setLevel(lv); setMe(side); setG({ s: newGame(), log: [], last: null }); setHistory([]); setSel(null); setPromo(null); setRecorded(false);
+    setLevel(lv); setMe(side); setTwo(twoNow); setG({ s: newGame(), log: [], last: null }); setHistory([]); setSel(null); setPromo(null); setRecorded(false);
   }
   function undo() {
     // Back to before your last move (and the computer's reply)
@@ -83,7 +86,9 @@ export default function CafeChess() {
     for (const p of g.s.b) if (p && colorOf(p) === c) left[p.toUpperCase()] = (left[p.toUpperCase()] ?? 0) + 1;
     return Object.entries(start).flatMap(([t, n]) => Array(Math.max(0, n - (left[t] ?? 0))).fill(GLYPH[t])).join("");
   };
-  const status = done ? (res.why === "checkmate" ? (res.winner === me ? "Checkmate: you win! 🎉" : "Checkmate: the computer wins") : "A draw")
+  const side = g.s.turn === "w" ? "White" : "Black";
+  const status = done ? (res.why === "checkmate" ? (two ? `Checkmate: ${res.winner === "w" ? "white" : "black"} wins! 🎉` : res.winner === me ? "Checkmate: you win! 🎉" : "Checkmate: the computer wins") : "A draw")
+    : two ? `${side} to move${checkSq >= 0 ? ", in check!" : ""}`
     : g.s.turn === me ? (checkSq >= 0 ? "You're in check!" : sel !== null ? "Now pick a square" : "Your move") : "Thinking…";
   return (
     <div className="page" style={{ maxWidth: "36rem" }}>
@@ -91,13 +96,14 @@ export default function CafeChess() {
       <h1 className="h2">Café <em>chess</em></h1>
       <p className="small muted">Chess against the computer, with all the rules: castling, en passant, promotion, check and checkmate. Tap a piece to see where it can go, then tap a square. Easy makes mistakes; hard looks three moves ahead and plays every capture through to the end.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
-        {(["easy", "hard"] as const).map((lv) => <button key={lv} className={`chip ${level === lv ? "on" : ""}`} aria-pressed={level === lv} onClick={() => lv !== level && newGame2(lv)}>{lv === "easy" ? "Easy" : "Hard"}</button>)}
-        <button className="chip" onClick={() => newGame2(level, me === "w" ? "b" : "w")}>Play as {me === "w" ? "black" : "white"}</button>
-        <button className="btn btn-ghost btn-sm" onClick={undo} disabled={!history.length || g.s.turn !== me || done}>↩ Undo</button>
+        {!two && (["easy", "hard"] as const).map((lv) => <button key={lv} className={`chip ${level === lv ? "on" : ""}`} aria-pressed={level === lv} onClick={() => lv !== level && newGame2(lv)}>{lv === "easy" ? "Easy" : "Hard"}</button>)}
+        {!two && <button className="chip" onClick={() => newGame2(level, me === "w" ? "b" : "w")}>Play as {me === "w" ? "black" : "white"}</button>}
+        <TwoPlayers on={two} onChange={(v) => newGame2(level, "w", v)} />
+        <button className="btn btn-ghost btn-sm" onClick={undo} disabled={!history.length || (g.s.turn !== me && !two) || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => newGame2()}>New game</button>
       </div>
       <p className="center small" aria-live="polite" style={{ margin: "0.6rem 0 0.3rem" }}><b>{status}</b>{done && res.why !== "checkmate" ? <span className="muted"> · {WHY[res.why]}</span> : null}</p>
-      <p className="cc-taken" aria-label="Pieces the computer has taken">{taken(me)}</p>
+      <p className="cc-taken" aria-label={two ? "Pieces taken from this side" : "Pieces the computer has taken"}>{taken(me)}</p>
       <div className="cc-board" role="grid" aria-label="Chess board">
         {order.map((i) => {
           const p = g.s.b[i], dark = (Math.floor(i / 8) + (i % 8)) % 2 === 1;
@@ -112,11 +118,11 @@ export default function CafeChess() {
           );
         })}
       </div>
-      <p className="cc-taken" aria-label="Pieces you have taken">{taken(me === "w" ? "b" : "w")}</p>
+      <p className="cc-taken" aria-label={two ? "Pieces taken from the other side" : "Pieces you have taken"}>{taken(me === "w" ? "b" : "w")}</p>
       {promo && (
         <div className="cc-promo" role="dialog" aria-label="Promote your pawn">
           <span className="small">Promote to:</span>
-          {promo.map((m) => <button key={m.promo} className="btn btn-ghost" onClick={() => go(m)} aria-label={WORD[m.promo!.toUpperCase()]}><span className={`cc-piece ${me}`}>{GLYPH[m.promo!.toUpperCase()]}</span></button>)}
+          {promo.map((m) => <button key={m.promo} className="btn btn-ghost" onClick={() => go(m)} aria-label={WORD[m.promo!.toUpperCase()]}><span className={`cc-piece ${g.s.turn}`}>{GLYPH[m.promo!.toUpperCase()]}</span></button>)}
           <button className="btn btn-ghost btn-sm" onClick={() => setPromo(null)}>Cancel</button>
         </div>
       )}
@@ -126,7 +132,7 @@ export default function CafeChess() {
           {g.log.filter((_, k) => k % 2 === 0).map((w, k) => <li key={k}><span>{w}</span><span>{g.log[2 * k + 1] ?? ""}</span></li>)}
         </ol>
       )}
-      <p className="small muted" style={{ marginTop: "1rem" }}>On {level}: won {stats[level].won} · lost {stats[level].lost}{stats[level].drawn ? ` · drawn ${stats[level].drawn}` : ""}</p>
+      <p className="small muted" style={{ marginTop: "1rem" }}>{two ? "Two-player games don't count towards your record. " : ""}On {level}: won {stats[level].won} · lost {stats[level].lost}{stats[level].drawn ? ` · drawn ${stats[level].drawn}` : ""}</p>
       <p className="tiny muted">The last move is shaded, and a king in check is ringed in red. Your record is kept on this device, and leaving a game halfway counts as a loss.</p>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { gameSettings } from "@/lib/gameSettings";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { PADS, beatMs, check, grow } from "@/lib/echo";
@@ -24,7 +25,7 @@ export default function BaristasEcho() {
   // Rounds you've got right: the run grows as soon as you finish one, so it's always one less than its length
   const score = Math.max(0, seq.length - 1);
   useEffect(() => {
-    try { setBest(Number(localStorage.getItem(BEST)) || 0); setName(localStorage.getItem("mm-game-name") ?? ""); setSound(localStorage.getItem(SOUND) !== "off"); } catch {}
+    try { setBest(Number(localStorage.getItem(BEST)) || 0); setName(localStorage.getItem("mm-game-name") ?? ""); const own = localStorage.getItem(SOUND); setSound(own ? own !== "off" : gameSettings().sound); } catch {}
     fetch(`/api/arcade?game=echo&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
     return () => timers.current.forEach(clearTimeout);
   }, []);

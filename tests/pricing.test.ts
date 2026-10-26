@@ -544,7 +544,9 @@ test("daily challenge: the same orders for everyone on a day, and streaks", asyn
   assert.deepEqual(run("moss-moon-2026-10-23"), run("moss-moon-2026-10-23"), "same day, same orders");
   assert.notDeepEqual(run("moss-moon-2026-10-23"), run("moss-moon-2026-10-24"), "a new day, new orders");
   assert.equal(playStreak(["2026-10-21", "2026-10-22", "2026-10-23"], "2026-10-23"), 3);
-  assert.equal(playStreak(["2026-10-20", "2026-10-22", "2026-10-23"], "2026-10-23"), 2);
+  assert.equal(playStreak(["2026-10-20", "2026-10-22", "2026-10-23"], "2026-10-23"), 3, "one missed day is frozen ❄️");
+  assert.equal(playStreak(["2026-10-19", "2026-10-22", "2026-10-23"], "2026-10-23"), 2, "two missed days in a row break it");
+  assert.equal(playStreak(["2026-10-16", "2026-10-18", "2026-10-20", "2026-10-22", "2026-10-23"], "2026-10-23"), 3, "only one freeze a week");
   assert.equal(playStreak(["2026-10-22"], "2026-10-23"), 0, "today not played yet");
 });
 
@@ -2089,4 +2091,18 @@ test("bean boggle and bill total", async () => {
   assert.ok(t > 2.5, `first obstacle reaches you after ${t.toFixed(1)}s`);
   const { TROPHIES } = await import("../src/lib/trophies.ts");
   assert.equal(TROPHIES.length, 69);
+});
+
+test("how to play cards: every one is for a real game page, with a goal and a tip", async () => {
+  const { HOW_TO } = await import("../src/lib/howTo.ts");
+  const { existsSync } = await import("node:fs");
+  const { ANY_TIME } = await import("../src/lib/gameCatalog.ts");
+  for (const [path, h] of Object.entries(HOW_TO)) {
+    assert.ok(existsSync(`src/app${path}/page.tsx`), path);
+    assert.ok(h.goal.endsWith(".") && h.tip.endsWith(".") && h.title, path);
+  }
+  // Every computer opponent and arcade game has one
+  for (const g of ANY_TIME.filter((x) => x.kind === "board" || x.kind === "arcade" || x.kind === "cards")) if (g.id !== "saucers" && g.id !== "rush") assert.ok(HOW_TO[g.href], g.href);
+  const { DEFAULTS } = await import("../src/lib/gameSettings.ts");
+  assert.deepEqual(DEFAULTS, { sound: true, vibrate: false, patterns: false }, "vibration and patterns start off");
 });

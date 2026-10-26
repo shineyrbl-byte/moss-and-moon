@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
+import TwoPlayers, { sides } from "@/components/TwoPlayers";
 import { AI_STORE, MY_STORE, bestPit, legal, sow, start, type Board, type Level, type Side } from "@/lib/mancala";
 
 const STATS = "mm-mancala";
@@ -24,6 +25,8 @@ export default function BeanCounting() {
   const [note, setNote] = useState("Your go. Tap one of your cups along the bottom.");
   const [stats, setStats] = useState(empty());
   const [recorded, setRecorded] = useState(false);
+  const [two, setTwo] = useState(false);
+  const [p1, p2] = sides(two);
   useEffect(() => {
     try { const v = JSON.parse(localStorage.getItem(STATS) ?? "null"); if (v) { setStats({ ...empty(), ...v.stats }); if (v.level === "hard") setLevel("hard"); } } catch {}
   }, []);
@@ -31,22 +34,24 @@ export default function BeanCounting() {
   const over = s.turn === null;
   const me = s.board[MY_STORE], them = s.board[AI_STORE];
 
-  function describe(who: "You" | "The computer", r: NonNullable<ReturnType<typeof sow>>) {
+  function describe(who: string, r: NonNullable<ReturnType<typeof sow>>) {
     if (r.over) return "";
     if (r.captured) return `${who} captured ${r.captured} beans!`;
-    if (r.again) return `${who === "You" ? "Your" : "Its"} last bean landed in the jar, so ${who === "You" ? "you go" : "it goes"} again.`;
+    if (r.again) return who === "You" ? "Your last bean landed in the jar, so you go again." : who === "The computer" ? "Its last bean landed in the jar, so it goes again." : `${who}'s last bean landed in the jar, so ${who} goes again.`;
     return "";
   }
   function move(pit: number) {
-    if (s.turn !== 0) return;
-    const r = sow(s.board, pit, 0);
+    const side = s.turn;
+    if (side === null || (side === 1 && !two)) return;
+    const r = sow(s.board, pit, side);
     if (!r) return;
     setHistory([...history, s]);
     setS({ board: r.board, turn: r.over ? null : r.next, last: pit });
-    setNote(describe("You", r) || "The computer's thinking…");
+    const who = two ? (side === 0 ? p1 : p2) : "You";
+    setNote(describe(who, r) || (two ? `${r.next === 0 ? p1 : p2}'s go.` : "The computer's thinking…"));
   }
   useEffect(() => {
-    if (s.turn !== 1) return;
+    if (s.turn !== 1 || two) return;
     const id = setTimeout(() => {
       const pit = bestPit(s.board, level);
       if (pit === null) return;
@@ -55,30 +60,32 @@ export default function BeanCounting() {
       setNote(describe("The computer", r) || "Your go.");
     }, 700);
     return () => clearTimeout(id);
-  }, [s, level]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [s, level, two]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!over || recorded) return;
     setRecorded(true);
     const r = me > them ? "won" : me < them ? "lost" : "drawn";
+    if (two) { toast(r === "drawn" ? "A draw!" : `${r === "won" ? p1 : p2} wins! 🫘🎉`); return; }
     saveStats({ ...stats, [level]: { ...stats[level], [r]: stats[level][r] + 1 } });
     toast(r === "won" ? "You win! 🫘🎉" : r === "lost" ? "The computer wins this one." : "A draw!");
   }, [over]); // eslint-disable-line react-hooks/exhaustive-deps
-  function newGame(lv = level) {
-    // Leaving a game halfway counts as a loss
-    if (!over && history.length) saveStats({ ...stats, [level]: { ...stats[level], lost: stats[level].lost + 1 } }, lv);
+  function newGame(lv = level, twoNow = two) {
+    // Leaving a game halfway counts as a loss (not in a two-player game)
+    if (!two && !over && history.length) saveStats({ ...stats, [level]: { ...stats[level], lost: stats[level].lost + 1 } }, lv);
     else if (lv !== level) saveStats(stats, lv);
-    setLevel(lv); setS({ board: start(), turn: 0, last: null }); setHistory([]); setRecorded(false); setNote("Your go. Tap one of your cups along the bottom.");
+    setLevel(lv); setTwo(twoNow); setS({ board: start(), turn: 0, last: null }); setHistory([]); setRecorded(false);
+    setNote(twoNow ? "Player 1 goes first, with the cups along the bottom. Player 2 has the top row." : "Your go. Tap one of your cups along the bottom.");
   }
   function undo() {
     const prev = history[history.length - 1];
     if (!prev) return;
-    setS(prev); setHistory(history.slice(0, -1)); setNote("Took that back. Your go.");
+    setS(prev); setHistory(history.slice(0, -1)); setNote(two ? `Took that back. ${prev.turn === 0 ? p1 : p2}'s go.` : "Took that back. Your go.");
   }
-  const can = s.turn === 0 ? legal(s.board, 0) : [];
+  const can = s.turn === 0 || (two && s.turn === 1) ? legal(s.board, s.turn) : [];
   const rec = stats[level];
   const cup = (i: number, mine: boolean) => (
-    <button key={i} className={`mc-cup ${can.includes(i) ? "can" : ""} ${s.last === i ? "last" : ""}`} disabled={!mine || !can.includes(i)} onClick={() => move(i)}
-      aria-label={`${mine ? "Your" : "Computer's"} cup with ${s.board[i]} bean${s.board[i] === 1 ? "" : "s"}`}>
+    <button key={i} className={`mc-cup ${can.includes(i) ? "can" : ""} ${s.last === i ? "last" : ""}`} disabled={!can.includes(i)} onClick={() => move(i)}
+      aria-label={`${mine ? (two ? "Player 1's" : "Your") : two ? "Player 2's" : "Computer's"} cup with ${s.board[i]} bean${s.board[i] === 1 ? "" : "s"}`}>
       <Beans n={s.board[i]} /><b>{s.board[i]}</b>
     </button>
   );
@@ -88,22 +95,23 @@ export default function BeanCounting() {
       <h1 className="h2">Bean <em>counting</em></h1>
       <p className="small muted">Mancala against the computer. Tap one of your cups to scoop up its beans and drop them one at a time into the cups to the right, round into your jar and on into the computer&apos;s row. Land your last bean in your jar to go again. Land it in one of your empty cups and you capture the beans opposite. Most beans in the jar at the end wins.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
-        {(["easy", "hard"] as const).map((lv) => <button key={lv} className={`chip ${level === lv ? "on" : ""}`} aria-pressed={level === lv} onClick={() => lv !== level && newGame(lv)}>{lv === "easy" ? "Easy" : "Hard"}</button>)}
-        <button className="btn btn-ghost btn-sm" onClick={undo} disabled={!history.length || s.turn !== 0}>↩ Undo</button>
+        {!two && (["easy", "hard"] as const).map((lv) => <button key={lv} className={`chip ${level === lv ? "on" : ""}`} aria-pressed={level === lv} onClick={() => lv !== level && newGame(lv)}>{lv === "easy" ? "Easy" : "Hard"}</button>)}
+        <TwoPlayers on={two} onChange={(v) => newGame(level, v)} />
+        <button className="btn btn-ghost btn-sm" onClick={undo} disabled={!history.length || (s.turn !== 0 && !two)}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => newGame()}>New game</button>
       </div>
       <p className="small center" aria-live="polite" style={{ minHeight: "2.6em" }}>
-        {over ? <b>{me > them ? `You win, ${me} to ${them}! 🎉` : me < them ? `The computer wins, ${them} to ${me}.` : `A draw, ${me} each.`}</b> : note}
+        {over ? <b>{me === them ? `A draw, ${me} each.` : two ? `${me > them ? p1 : p2} wins, ${Math.max(me, them)} to ${Math.min(me, them)}! 🎉` : me > them ? `You win, ${me} to ${them}! 🎉` : `The computer wins, ${them} to ${me}.`}</b> : note}
       </p>
       <div className="mc-board">
-        <div className="mc-jar them" aria-label={`Computer's jar: ${them} beans`}><b>{them}</b><span className="tiny">Them</span></div>
+        <div className="mc-jar them" aria-label={`Computer's jar: ${them} beans`}><b>{them}</b><span className="tiny">{two ? p2 : "Them"}</span></div>
         <div className="mc-row top">{[12, 11, 10, 9, 8, 7].map((i) => cup(i, false))}</div>
         <div className="mc-row bottom">{[0, 1, 2, 3, 4, 5].map((i) => cup(i, true))}</div>
-        <div className="mc-jar you" aria-label={`Your jar: ${me} beans`}><b>{me}</b><span className="tiny">You</span></div>
+        <div className="mc-jar you" aria-label={`Your jar: ${me} beans`}><b>{me}</b><span className="tiny">{p1}</span></div>
       </div>
       <p className="tiny muted center">Beans travel to the right along your row, and to the left along the computer&apos;s.</p>
       {over && <p className="center"><button className="btn btn-pink btn-sm" onClick={() => newGame()}>Play again</button></p>}
-      <p className="small muted" style={{ marginTop: "1rem" }}>On {level}: won {rec.won} · lost {rec.lost}{rec.drawn ? ` · drawn ${rec.drawn}` : ""}</p>
+      <p className="small muted" style={{ marginTop: "1rem" }}>{two ? "Two-player games don't count towards your record. " : ""}On {level}: won {rec.won} · lost {rec.lost}{rec.drawn ? ` · drawn ${rec.drawn}` : ""}</p>
       <p className="tiny muted">Easy sometimes slips up. Hard looks seven moves ahead. Your record is kept on this device, and leaving a game halfway counts as a loss.</p>
     </div>
   );

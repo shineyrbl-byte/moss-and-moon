@@ -3426,7 +3426,7 @@ test("bean boggle and bill total boards, and the chess, backgammon and finder pa
   assert.equal(c.mine.ms, 95_000, "spot on beats 3 off");
   const g = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
   assert.ok(g.games.find((x) => x.id === "boggle")!.done && g.games.find((x) => x.id === "bill")!.done);
-  for (const p of ["/cafe-chess", "/terrace-backgammon", "/bean-boggle", "/bill-total", "/games"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+  for (const p of ["/cafe-chess", "/terrace-backgammon", "/bean-boggle", "/bill-total", "/games", "/game-settings", "/print-puzzles", "/print-puzzles?day=2026-10-25"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
