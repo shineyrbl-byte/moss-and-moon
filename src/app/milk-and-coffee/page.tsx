@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { HINT_MS, N, clashes, isSolved, milkFor, nextValue, type Cell } from "@/lib/binairo";
-import { toDateStr } from "@/lib/cafe";
 import { addFlag } from "@/lib/trophyFlags";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
@@ -14,6 +15,7 @@ const NAME: Record<number, string> = { 0: "milk", 1: "coffee", [-1]: "empty" };
 export default function MilkAndCoffee() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [cells, setCells] = useState<Cell[] | null>(null);
   const [history, setHistory] = useState<Cell[][]>([]);
   const [hints, setHints] = useState(0);
@@ -26,7 +28,7 @@ export default function MilkAndCoffee() {
   const [saved, setSaved] = useState(false);
   const puzzle = useMemo(() => (date ? milkFor(date) : null), [date]);
   useEffect(() => {
-    const d = toDateStr(new Date());
+    const d = playDay();
     setDate(d);
     try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
     fetch(`/api/daily-scores?game=milk&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
@@ -34,12 +36,12 @@ export default function MilkAndCoffee() {
   useEffect(() => {
     if (!puzzle) return;
     let s: { date?: string; cells?: Cell[]; hints?: number; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
     if (s?.date === date && s.cells?.length === N * N) { setCells(s.cells); setHints(s.hints ?? 0); setStart(s.start ?? null); setDoneMs(s.doneMs ?? null); setSaved(!!s.saved); }
     else setCells([...puzzle.given]);
     setNow(Date.now());
   }, [puzzle, date]);
-  useEffect(() => { if (date && cells) try { localStorage.setItem(KEY, JSON.stringify({ date, cells, hints, start, doneMs, saved })); } catch {} }, [date, cells, hints, start, doneMs, saved]);
+  useEffect(() => { if (date && cells) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, cells, hints, start, doneMs, saved })); } catch {} }, [date, cells, hints, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -84,6 +86,7 @@ export default function MilkAndCoffee() {
   return (
     <div className="page" style={{ maxWidth: "32rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/milk-and-coffee" />
       <h1 className="h2">Milk &amp; <em>coffee</em></h1>
       <p className="small muted">Fill every square with a glass of milk or a cup of coffee. Never three of the same in a row, across or down, and every row and every column has four of each. Tap a square to go milk, coffee, empty. There&apos;s only one answer.</p>
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -107,7 +110,7 @@ export default function MilkAndCoffee() {
       {done && (
         <section className="card memory-done" aria-live="polite">
           <b>Solved in {clock(doneMs)}{hints ? ` (${hints} hint${hints === 1 ? "" : "s"})` : ", no hints"} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -116,7 +119,7 @@ export default function MilkAndCoffee() {
           <p className="tiny muted" style={{ margin: 0 }}>A new grid tomorrow.</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

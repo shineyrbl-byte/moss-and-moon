@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { isSolved, lineDone, nonogramFor, type NonoMode } from "@/lib/nonogram";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-nonogram";
@@ -13,6 +14,7 @@ const KEY = "mm-nonogram";
 export default function PixelPicture() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [mode, setMode] = useState<NonoMode>("easy");
   const [cells, setCells] = useState<number[]>([]);
   const [tool, setTool] = useState<1 | 2>(1);
@@ -23,20 +25,20 @@ export default function PixelPicture() {
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
   const paint = useRef<number | null>(null);
-  useEffect(() => { setDate(toDateStr(new Date())); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
+  useEffect(() => { setDate(playDay()); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
   const pic = useMemo(() => (date ? nonogramFor(date, mode) : null), [date, mode]);
   const n = pic?.size ?? 5;
   useEffect(() => {
     if (!pic) return;
     let s: { date?: string; cells?: number[]; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(`${KEY}-${mode}`) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(`${KEY}-${mode}`)) ?? "null"); } catch {}
     const fresh = s?.date === date && s.cells?.length === pic.size * pic.size;
     setCells(fresh ? s!.cells! : Array(pic.size * pic.size).fill(0));
     setStart(fresh ? s!.start ?? null : null); setNow(Date.now());
     setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved));
     fetch(`/api/daily-scores?game=nonogram&mode=${mode}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, [pic, mode, date]);
-  useEffect(() => { if (date && cells.length) try { localStorage.setItem(`${KEY}-${mode}`, JSON.stringify({ date, cells, start, doneMs, saved })); } catch {} }, [date, mode, cells, start, doneMs, saved]);
+  useEffect(() => { if (date && cells.length) try { localStorage.setItem(dayKey(`${KEY}-${mode}`), JSON.stringify({ date, cells, start, doneMs, saved })); } catch {} }, [date, mode, cells, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -79,6 +81,7 @@ export default function PixelPicture() {
   return (
     <div className="page" style={{ maxWidth: "38rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/pixel-picture" />
       <h1 className="h2">Pixel <em>picture</em></h1>
       <p className="small muted">The numbers say how many squares in a row are shaded, in order, with at least one gap between each group. Shade them all to reveal today&apos;s picture. You can drag across squares, and ✕ marks squares you know are empty.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -113,7 +116,7 @@ export default function PixelPicture() {
       {doneMs !== null && (
         <section className="card memory-done" aria-live="polite">
           <b>It&apos;s {pic.name}! Solved in {clock(doneMs)} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -122,7 +125,7 @@ export default function PixelPicture() {
           <p className="tiny muted" style={{ margin: 0 }}>A new picture tomorrow{mode === "easy" ? ". Fancy the 10×10?" : "."}</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest · {mode}</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

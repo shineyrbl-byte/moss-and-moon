@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { clashes, ICON_NAMES, ICONS, isComplete, N, sudokuFor, type SudokuMode } from "@/lib/sudoku";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-sudoku";
@@ -12,6 +13,7 @@ const KEY = "mm-sudoku";
 export default function Sudoku() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [mode, setMode] = useState<SudokuMode>("easy");
   const [cells, setCells] = useState<number[]>([]);
   const [at, setAt] = useState<number | null>(null);
@@ -21,19 +23,19 @@ export default function Sudoku() {
   const [board, setBoard] = useState<Board | null>(null);
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
-  useEffect(() => { setDate(toDateStr(new Date())); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
+  useEffect(() => { setDate(playDay()); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
   const puzzle = useMemo(() => (date ? sudokuFor(date, mode).puzzle : null), [date, mode]);
   useEffect(() => {
     if (!puzzle) return;
     let s: { date?: string; cells?: number[]; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(`${KEY}-${mode}`) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(`${KEY}-${mode}`)) ?? "null"); } catch {}
     const fresh = s?.date === date && s.cells?.length === N * N;
     setCells(fresh ? s!.cells! : [...puzzle]);
     setStart(fresh ? s!.start ?? null : null); setNow(Date.now());
     setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved)); setAt(null);
     fetch(`/api/daily-scores?game=sudoku&mode=${mode}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, [puzzle, mode, date]);
-  useEffect(() => { if (date && cells.length) try { localStorage.setItem(`${KEY}-${mode}`, JSON.stringify({ date, cells, start, doneMs, saved })); } catch {} }, [date, mode, cells, start, doneMs, saved]);
+  useEffect(() => { if (date && cells.length) try { localStorage.setItem(dayKey(`${KEY}-${mode}`), JSON.stringify({ date, cells, start, doneMs, saved })); } catch {} }, [date, mode, cells, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -74,6 +76,7 @@ export default function Sudoku() {
   return (
     <div className="page" style={{ maxWidth: "36rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/sudoku" />
       <h1 className="h2">Mini <em>sudoku</em></h1>
       <p className="small muted">Fill the grid so every row, column and box has each of the six treats once. Tap a square, then a treat. Keyboard works too: arrows and 1 to 6.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -102,7 +105,7 @@ export default function Sudoku() {
       {doneMs !== null && (
         <section className="card memory-done" aria-live="polite">
           <b>Solved in {clock(doneMs)} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -111,7 +114,7 @@ export default function Sudoku() {
           <p className="tiny muted" style={{ margin: 0 }}>A new grid tomorrow{mode === "easy" ? ". Fancy trying hard?" : "."}</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest · {mode}</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { COLOURS, SIZE, flood, gridFor, isDone, packScore, par, region, unpackScore } from "@/lib/flood";
-import { toDateStr } from "@/lib/cafe";
 import { addFlag } from "@/lib/trophyFlags";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
@@ -14,6 +15,7 @@ const SYMS = "mm-flood-symbols";
 export default function Flood() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [picks, setPicks] = useState<number[]>([]);
   const [start, setStart] = useState<number | null>(null);
   const [now, setNow] = useState(0);
@@ -23,16 +25,16 @@ export default function Flood() {
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
   useEffect(() => {
-    const d = toDateStr(new Date());
+    const d = playDay();
     setDate(d);
     try { setName(localStorage.getItem("mm-game-name") ?? ""); setSymbols(localStorage.getItem(SYMS) === "1"); } catch {}
     let s: { date?: string; picks?: number[]; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
     if (s?.date === d) { setPicks(s.picks ?? []); setStart(s.start ?? null); setDoneMs(s.doneMs ?? null); setSaved(!!s.saved); }
     setNow(Date.now());
     fetch(`/api/daily-scores?game=flood&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []);
-  useEffect(() => { if (date) try { localStorage.setItem(KEY, JSON.stringify({ date, picks, start, doneMs, saved })); } catch {} }, [date, picks, start, doneMs, saved]);
+  useEffect(() => { if (date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, picks, start, doneMs, saved })); } catch {} }, [date, picks, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -68,6 +70,7 @@ export default function Flood() {
   return (
     <div className="page" style={{ maxWidth: "34rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/flood" />
       <h1 className="h2">Flood the <em>cup</em></h1>
       <p className="small muted">Your patch starts in the top-left corner. Pick a colour and your patch turns that colour, soaking up every square of it that touches. Fill the whole cup with one colour in as few moves as you can. Par is what our helper managed.</p>
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -92,7 +95,7 @@ export default function Flood() {
       {done && (
         <section className="card memory-done" aria-live="polite">
           <b>Filled in {picks.length} moves{picks.length < target ? `, ${target - picks.length} under par` : picks.length === target ? ", right on par" : ""} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
@@ -101,7 +104,7 @@ export default function Flood() {
           <p className="tiny muted" style={{ margin: 0 }}>A new cup tomorrow.</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s best</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => { const u = unpackScore(t.ms); return <li key={i}><span>{t.name}</span><b>{u.moves} moves · {clock(u.ms)}</b></li>; })}</ol> : <p className="small muted">No scores yet today. Set the first one.</p>}

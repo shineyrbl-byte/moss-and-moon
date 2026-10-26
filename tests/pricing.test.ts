@@ -1579,10 +1579,10 @@ test("today's five: the new puzzles only join from their start day, so old days 
   const { todaysFive, NEW_LOGIC_FROM } = await import("../src/lib/todaysFive.ts");
   const before: string[] = [];
   for (let d = 1; d <= 26; d++) before.push(...todaysFive(`2026-10-${String(d).padStart(2, "0")}`));
-  assert.ok(["milk", "lights", "table", "parasols", "tipjar"].every((id) => !before.includes(id)));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners"].every((id) => !before.includes(id)));
   const after: string[] = [];
   for (let d = 0; d < 60; d++) after.push(...todaysFive(new Date(Date.UTC(2026, 9, 27 + d)).toISOString().slice(0, 10)));
-  assert.ok(["milk", "lights", "table", "parasols", "tipjar"].every((id) => after.includes(id)));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners"].every((id) => after.includes(id)));
   assert.equal(NEW_LOGIC_FROM, "2026-10-27");
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
   assert.ok(TROPHIES.length >= 42);
@@ -1698,9 +1698,147 @@ test("barista's echo and bean breaker", async () => {
   assert.ok(B.movePad(B.newGame(), -50).pad >= B.PAD_W / 2, "saucer stays on the table");
   assert.ok(B.wall(3).some((b) => b.hp === 2) && !B.wall(1).some((b) => b.hp === 2));
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
-  assert.equal(TROPHIES.length, 50);
-  assert.equal(new Set(TROPHIES.map((t) => t.name)).size, 50, "no two trophies share a name");
+  assert.ok(TROPHIES.length >= 50);
+  assert.equal(new Set(TROPHIES.map((t) => t.name)).size, TROPHIES.length, "no two trophies share a name");
   const got = earned({ played: {}, five: [], arcade: { echo: 12, breaker: 1990 }, local: { gomoku: { easy: { won: 1 } }, flags: ["table-no-hints"] } });
   for (const id of ["echo", "gomoku", "table"]) assert.ok(got.includes(id), id);
   for (const id of ["breaker", "gomokuHard", "tipjar", "parasols"]) assert.ok(!got.includes(id), id);
+});
+
+test("puzzle archive: the last week only, and its own saved progress", async () => {
+  const { pastDays, validDay, finishedOn, ARCHIVE_GAMES } = await import("../src/lib/archive.ts");
+  assert.deepEqual(pastDays("2026-03-02", 3), ["2026-03-01", "2026-02-28", "2026-02-27"]);
+  assert.equal(pastDays("2026-10-26").length, 7);
+  assert.equal(validDay("2026-10-25", "2026-10-26"), "2026-10-25");
+  for (const bad of ["2026-10-26", "2026-10-27", "2026-10-18", "nonsense", 5]) assert.equal(validDay(bad, "2026-10-26"), null, String(bad));
+  const store: Record<string, string> = {
+    "mm-milk@2026-10-24": JSON.stringify({ date: "2026-10-24", doneMs: 30000 }),
+    "mm-sudoku-hard@2026-10-24": JSON.stringify({ date: "2026-10-24", doneMs: 50000 }),
+    "mm-lights@2026-10-24": JSON.stringify({ date: "2026-10-24", doneMs: null }),
+    "mm-milk": JSON.stringify({ date: "2026-10-26", doneMs: 1 }),
+  };
+  const keys = Object.keys(store), get = (k: string) => store[k] ?? null;
+  assert.ok(finishedOn("mm-milk", "2026-10-24", keys, get));
+  assert.ok(finishedOn("mm-sudoku", "2026-10-24", keys, get), "moded puzzles count too");
+  assert.ok(!finishedOn("mm-lights", "2026-10-24", keys, get), "started, not finished");
+  assert.ok(!finishedOn("mm-milk", "2026-10-23", keys, get));
+  assert.equal(new Set(ARCHIVE_GAMES.map((g) => g.key)).size, ARCHIVE_GAMES.length);
+});
+
+test("cake towers: one answer, and what you can see", async () => {
+  const { towersFor, answers, isSolved, problems, seen, cluesOf, lineFor, N } = await import("../src/lib/skyscrapers.ts");
+  assert.equal(seen([1, 2, 3, 4, 5]), 5); assert.equal(seen([5, 1, 2, 3, 4]), 1); assert.equal(seen([2, 1, 4, 3, 5]), 3);
+  assert.deepEqual(lineFor(0), [0, 5, 10, 15, 20]); assert.deepEqual(lineFor(N), [4, 3, 2, 1, 0]);
+  for (const d of ["2026-10-26", "2026-10-27", "2027-04-04"]) {
+    const { clues, solution } = towersFor(d);
+    assert.equal(answers(clues).length, 1, d);
+    assert.ok(isSolved(clues, solution));
+    assert.ok(clues.filter(Boolean).length >= 10);
+    clues.forEach((c, k) => { if (c) assert.equal(c, cluesOf(solution)[k]); });
+  }
+  const { clues, solution } = towersFor("2026-10-26");
+  const g = [...solution]; [g[0], g[1]] = [g[1], g[0]];
+  const p = problems(clues, g);
+  assert.ok(p.cells.size > 0 || p.clues.size > 0);
+});
+
+test("spare cups: one answer, and the shelf rules", async () => {
+  const { cupsFor, answers, isSolved, problems, joined, repeats, N } = await import("../src/lib/hitori.ts");
+  for (const d of ["2026-10-26", "2026-10-27", "2027-05-05"]) {
+    const { nums, away } = cupsFor(d);
+    assert.equal(answers(nums).length, 1, d);
+    const marks = Array(N * N).fill(0); away.forEach((i) => { marks[i] = 1; });
+    assert.ok(isSolved(nums, marks), d);
+    assert.ok(away.every((i) => repeats(nums).includes(i)), "only repeats get put away");
+    marks[away[0]] = 0;
+    assert.ok(!isSolved(nums, marks), "one short leaves a repeat");
+  }
+  assert.ok(!joined(new Set([1, N])), "the corner cup is cut off");
+  assert.ok(joined(new Set([1])));
+  const nums = Array(N * N).fill(0).map((_, i) => i);
+  nums[1] = 0;
+  const m = Array(N * N).fill(0); m[0] = 2; m[1] = 2;
+  assert.deepEqual([...problems(nums, m)].sort(), [0, 1], "two kept cups with the same number");
+  const m2 = Array(N * N).fill(0); m2[0] = 1; m2[1] = 1;
+  assert.equal(problems(nums, m2).size, 2, "side by side");
+});
+
+test("café corners: a box that can be done, and the word rules", async () => {
+  const { cornersFor, fitsBox, problem, isWord, allUsed, pack, unpack, MIN_SCORE, fewest } = await import("../src/lib/letterBoxed.ts");
+  for (const d of ["2026-10-26", "2026-10-27", "2026-12-31", "2027-06-15"]) {
+    const { box, best } = cornersFor(d);
+    assert.equal(new Set(box.join("")).size, 12, d);
+    assert.ok(box.every((s) => s.length === 3));
+    assert.ok(best.length >= 2 && best.length <= 4, `${d}: ${best.length} words`);
+    assert.ok(best.every((w, i) => fitsBox(box, w) && isWord(w) && (i === 0 || w[0] === best[i - 1].slice(-1))), d);
+    assert.ok(allUsed(box, best));
+    assert.ok((fewest(box) ?? best).length <= best.length);
+  }
+  const box = ["abc", "def", "ghi", "jkl"];
+  assert.ok(fitsBox(box, "dag") && !fitsBox(box, "bad") && !fitsBox(box, "dog"));
+  assert.match(problem(box, [], "dag")!, /4 letters/);
+  assert.match(problem(box, ["jade"], "fake")!, /last letter/);
+  assert.match(problem(box, [], "bade")!, /different sides/);
+  assert.deepEqual(unpack(pack(3, 61234)), { words: 3, ms: 61234 });
+  assert.ok(pack(3, 900_000) < pack(4, 1000) && MIN_SCORE === pack(2, 5000));
+});
+
+test("pastry drop: pieces, clearing rows, holding and the end", async () => {
+  const P = await import("../src/lib/pastryDrop.ts");
+  for (const k of P.KINDS) for (let t = 0; t < 4; t++) assert.equal(new Set(P.cellsOf({ kind: k, turn: t, x: 0, y: 0 }).map(String)).size, 4);
+  assert.deepEqual([...P.bag(() => 0.5)].sort(), [...P.KINDS].sort(), "every bag has one of each");
+  let s = P.newGame(() => 0.3);
+  const g = Array(P.COLS * P.ROWS).fill(null);
+  for (let x = 0; x < 6; x++) { g[19 * P.COLS + x] = "O"; g[18 * P.COLS + x] = "O"; }
+  s = { ...s, grid: g, piece: { kind: "O", turn: 0, x: 5, y: 0 } };
+  s = P.hardDrop(s, () => 0.3);
+  assert.equal(s.lines, 0, "the O fills two of the four gaps");
+  s = { ...s, piece: { kind: "O", turn: 0, x: 7, y: 0 } };
+  s = P.hardDrop(s, () => 0.3);
+  assert.equal(s.lines, 2); assert.ok(s.score >= 300);
+  assert.ok(s.grid.every((x) => x === null), "both rows cleared and nothing left");
+  // Turning against the wall nudges back in
+  let w = { ...P.newGame(() => 0.1), piece: { kind: "I" as const, turn: 1, x: -2, y: 2 } };
+  w = P.shift(w, 0, 1);
+  assert.ok(P.cellsOf(w.piece).every(([x]) => x >= 0 && x < P.COLS));
+  const h = P.hold(P.newGame(() => 0.2));
+  assert.ok(h.hold && h.held); assert.equal(P.hold(h), h, "only once a piece");
+  let idle = P.newGame(() => 0.6), n = 0;
+  while (!idle.over && n < 5000) { idle = P.tick(idle, 0.1, () => 0.6); n++; }
+  assert.ok(idle.over, "a full tray ends it");
+  assert.ok(P.dropSecs(1) > P.dropSecs(10));
+});
+
+test("saucer mill: mills, taking, flying and hard beats easy", async () => {
+  const M = await import("../src/lib/morris.ts");
+  assert.equal(M.NEXT.flat().length, 64, "32 lines between neighbours");
+  let s = M.newGame();
+  assert.equal(M.moves(s).length, 24);
+  // You make a mill on the top row and must take one of theirs
+  for (const [me, them] of [[0, 9], [1, 10]]) { s = M.play(s, { from: null, to: me, take: null }); s = M.play(s, { from: null, to: them, take: null }); }
+  const mill = M.moves(s).filter((m) => m.to === 2);
+  assert.deepEqual(mill.map((m) => m.take).sort((a, b) => a! - b!), [9, 10]);
+  s = M.play(s, mill[0]);
+  assert.equal(M.count(s, 1), 1);
+  // Pieces in a mill are safe unless that's all there is
+  const b = Array(24).fill(null); [0, 1, 2].forEach((i) => { b[i] = 1; }); b[5] = 1;
+  assert.deepEqual(M.takeable(b, 1), [5]);
+  b[5] = null; assert.deepEqual(M.takeable(b, 1), [0, 1, 2]);
+  // Three left and everything placed: you can hop anywhere
+  const f: import("../src/lib/morris.ts").State = { board: Array(24).fill(null), hand: [0, 0], turn: 0, quiet: 0, winner: null };
+  [0, 4, 23].forEach((i) => { f.board[i] = 0; }); [9, 10, 11, 12].forEach((i) => { f.board[i] = 1; });
+  assert.ok(M.flying(f, 0) && M.moves(f).some((m) => m.from === 0 && m.to === 22));
+  let wins = 0;
+  for (let g = 0; g < 4; g++) {
+    let st = M.newGame(), seed = g + 3, n = 0;
+    const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    while (st.winner === null && n < 250) { st = M.play(st, M.bestMove(st, st.turn === 0 ? "easy" : "hard", rand)); n++; }
+    if (st.winner === 1) wins++;
+  }
+  assert.ok(wins >= 3, `hard won ${wins} of 4`);
+  const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
+  assert.equal(TROPHIES.length, 58);
+  const got = earned({ played: {}, five: [], arcade: { pastry: 5000 }, local: { morris: { hard: { won: 1 } }, archive: 5, flags: ["corners-par", "pastry-four"] } });
+  for (const id of ["pastry", "pastryFour", "morris", "morrisHard", "archive", "corners"]) assert.ok(got.includes(id), id);
+  for (const id of ["towers", "cups"]) assert.ok(!got.includes(id), id);
 });

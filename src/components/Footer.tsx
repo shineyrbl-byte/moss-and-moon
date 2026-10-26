@@ -123,6 +123,12 @@ export default function Footer() {
             <li><Link href="/five-in-a-row">{t("footer.gomoku")}</Link></li>
             <li><Link href="/baristas-echo">{t("footer.echo")}</Link></li>
             <li><Link href="/bean-breaker">{t("footer.breaker")}</Link></li>
+            <li><Link href="/cake-towers">{t("footer.towers")}</Link></li>
+            <li><Link href="/spare-cups">{t("footer.spareCups")}</Link></li>
+            <li><Link href="/cafe-corners">{t("footer.corners")}</Link></li>
+            <li><Link href="/pastry-drop">{t("footer.pastry")}</Link></li>
+            <li><Link href="/saucer-mill">{t("footer.mill")}</Link></li>
+            <li><Link href="/puzzle-archive">{t("footer.archive")}</Link></li>
             <li><Link href="/trophies">{t("footer.trophies")}</Link></li>
             <li><Link href="/play">{t("footer.play")}</Link></li>
             <li><Link href="/catering">{t("footer.catering")}</Link></li>

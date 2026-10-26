@@ -386,6 +386,12 @@ const en = {
   "footer.gomoku": "Five in a row",
   "footer.echo": "Barista's echo",
   "footer.breaker": "Bean breaker",
+  "footer.towers": "Cake towers",
+  "footer.spareCups": "Spare cups",
+  "footer.corners": "Café corners",
+  "footer.pastry": "Pastry drop",
+  "footer.mill": "Saucer mill",
+  "footer.archive": "Puzzle archive",
 };
 
 type Key = keyof typeof en;
@@ -772,6 +778,12 @@ const hi: Record<Key, string> = {
   "footer.gomoku": "लगातार पाँच",
   "footer.echo": "बरिस्ता की गूँज",
   "footer.breaker": "बीन ब्रेकर",
+  "footer.towers": "केक की मीनारें",
+  "footer.spareCups": "फ़ालतू कप",
+  "footer.corners": "कैफ़े के कोने",
+  "footer.pastry": "पेस्ट्री ड्रॉप",
+  "footer.mill": "तश्तरी चक्की",
+  "footer.archive": "पहेली संग्रह",
 };
 
 const mr: Record<Key, string> = {
@@ -1156,6 +1168,12 @@ const mr: Record<Key, string> = {
   "footer.gomoku": "सलग पाच",
   "footer.echo": "बरिस्ताचा प्रतिध्वनी",
   "footer.breaker": "बीन ब्रेकर",
+  "footer.towers": "केकचे मनोरे",
+  "footer.spareCups": "जादा कप",
+  "footer.corners": "कॅफेचे कोपरे",
+  "footer.pastry": "पेस्ट्री ड्रॉप",
+  "footer.mill": "बशीची गिरणी",
+  "footer.archive": "कोडी संग्रह",
 };
 
 const kok: Record<Key, string> = {
@@ -1540,6 +1558,12 @@ const kok: Record<Key, string> = {
   "footer.gomoku": "सलग पांच",
   "footer.echo": "बरिस्ताचो पडसाद",
   "footer.breaker": "बीन ब्रेकर",
+  "footer.towers": "केकाचे बुरूज",
+  "footer.spareCups": "चड कप",
+  "footer.corners": "कॅफेचे कोनशे",
+  "footer.pastry": "पेस्ट्री ड्रॉप",
+  "footer.mill": "बशयेची गिरण",
+  "footer.archive": "कोड्यांचो संग्रह",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

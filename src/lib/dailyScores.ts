@@ -21,6 +21,9 @@ import { minMs as lightsMin } from "./bridges";
 import { minMs as tableMin } from "./queens";
 import { minMs as parasolsMin } from "./tents";
 import { minMs as tipjarMin } from "./kenken";
+import { minMs as towersMin } from "./skyscrapers";
+import { minMs as cupsMin } from "./hitori";
+import { MIN_SCORE as cornersMin, MAX_SCORE as cornersMax } from "./letterBoxed";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
 const GAMES = {
@@ -42,6 +45,10 @@ const GAMES = {
   table: { mode: () => "daily", min: () => tableMin },
   parasols: { mode: () => "daily", min: () => parasolsMin },
   tipjar: { mode: () => "daily", min: () => tipjarMin },
+  towers: { mode: () => "daily", min: () => towersMin },
+  cups: { mode: () => "daily", min: () => cupsMin },
+  // Café corners packs words and time into one number (see letterBoxed pack), so fewest words wins
+  corners: { mode: () => "daily", min: () => cornersMin, max: cornersMax },
   // Flood keeps moves and time packed into one number (see packScore), so fewest moves wins
   flood: { mode: () => "daily", min: () => packScore(MIN_MOVES, 2000), max: packScore(MAX_MOVES, 999_999) },
 } as const;

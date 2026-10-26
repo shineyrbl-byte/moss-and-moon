@@ -77,6 +77,7 @@ export default function Games() {
           </li>
         ))}
       </ul>
+      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link></p>
       <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>
       <ul className="games-more">
         <li><Link href="/quiz">🎤 Quiz night</Link><span className="tiny muted"> · when the team hosts one, live on the TV</span></li>
@@ -93,6 +94,8 @@ export default function Games() {
         <li><Link href="/five-in-a-row">⭕ Five in a row</Link><span className="tiny muted"> · gomoku against the computer</span></li>
         <li><Link href="/baristas-echo">🔔 Barista&apos;s echo</Link><span className="tiny muted"> · repeat the café&apos;s sounds, a weekly board</span></li>
         <li><Link href="/bean-breaker">🧱 Bean breaker</Link><span className="tiny muted"> · knock out the sugar cube wall, a weekly board</span></li>
+        <li><Link href="/pastry-drop">🥐 Pastry drop</Link><span className="tiny muted"> · fill the rows as the pastries fall, a weekly board</span></li>
+        <li><Link href="/saucer-mill">⚪ Saucer mill</Link><span className="tiny muted"> · nine men&apos;s morris against the computer</span></li>
         <li><Link href="/tray-pusher">☕ Tray pusher</Link><span className="tiny muted"> · push the cups onto the saucers, 20 levels</span></li>
         <li><Link href="/delivery-jam">🚐 Delivery jam</Link><span className="tiny muted"> · get the cake van out of the yard, 20 levels</span></li>
         <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>

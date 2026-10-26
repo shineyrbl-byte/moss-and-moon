@@ -2,8 +2,8 @@
 import { seededRand } from "./gameOrders.ts";
 
 export const KINDS = {
-  word: ["word", "connections", "hive", "ladder", "wordsearch", "crossword", "cipher", "jumble"],
-  logic: ["sudoku", "nonogram", "sweeper", "crack", "paths", "lamps", "flood", "tiles", "milk", "lights", "table", "parasols", "tipjar"],
+  word: ["word", "connections", "hive", "ladder", "wordsearch", "crossword", "cipher", "jumble", "corners"],
+  logic: ["sudoku", "nonogram", "sweeper", "crack", "paths", "lamps", "flood", "tiles", "milk", "lights", "table", "parasols", "tipjar", "towers", "cups"],
   quick: ["trivia", "dish", "memory", "slide", "jigsaw", "spot"],
 } as const;
 
@@ -14,12 +14,12 @@ const take = (list: readonly string[], n: number, rand: () => number) => {
 };
 // These puzzles joined on this day. Earlier days keep the picks they had, so old streaks still add up.
 export const NEW_LOGIC_FROM = "2026-10-27";
-const NEW_LOGIC: readonly string[] = ["milk", "lights", "table", "parasols", "tipjar"];
-const logicOn = (date: string) => (date < NEW_LOGIC_FROM ? KINDS.logic.filter((id) => !NEW_LOGIC.includes(id)) : KINDS.logic);
+const NEW_GAMES: readonly string[] = ["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners"];
+const on = (list: readonly string[], date: string) => (date < NEW_LOGIC_FROM ? list.filter((id) => !NEW_GAMES.includes(id)) : list);
 
 export function todaysFive(date: string): string[] {
   const rand = seededRand(`five:${date}`);
-  const [w, l, q] = [take(KINDS.word, 2, rand), take(logicOn(date), 2, rand), take(KINDS.quick, 1, rand)];
+  const [w, l, q] = [take(on(KINDS.word, date), 2, rand), take(on(KINDS.logic, date), 2, rand), take(KINDS.quick, 1, rand)];
   // Mix them up so it isn't always words first
   return take([w[0], l[0], q[0], w[1], l[1]], 5, rand);
 }

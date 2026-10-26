@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { CUPS, PATH_MODES, extend, isSolved, pathsFor, type PathMode } from "@/lib/pourPaths";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-paths";
@@ -14,6 +15,7 @@ const LABEL: Record<PathMode, string> = { easy: "Easy 5×5", hard: "Hard 7×7" }
 export default function PourPaths() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [mode, setMode] = useState<PathMode>("easy");
   const [paths, setPaths] = useState<number[][]>([]);
   const [start, setStart] = useState<number | null>(null);
@@ -24,18 +26,18 @@ export default function PourPaths() {
   const [saved, setSaved] = useState(false);
   const drawing = useRef<number | null>(null);
   const svg = useRef<SVGSVGElement>(null);
-  useEffect(() => { setDate(toDateStr(new Date())); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
+  useEffect(() => { setDate(playDay()); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
   const puzzle = useMemo(() => (date ? pathsFor(date, mode) : null), [date, mode]);
   useEffect(() => {
     if (!puzzle) return;
     let s: { date?: string; paths?: number[][]; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(`${KEY}-${mode}`) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(`${KEY}-${mode}`)) ?? "null"); } catch {}
     const fresh = s?.date === date;
     setPaths(fresh && s!.paths?.length === puzzle.ends.length ? s!.paths! : puzzle.ends.map(() => []));
     setStart(fresh ? s!.start ?? null : null); setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved)); setNow(Date.now());
     fetch(`/api/daily-scores?game=paths&mode=${mode}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, [puzzle, date, mode]);
-  useEffect(() => { if (date && paths.length) try { localStorage.setItem(`${KEY}-${mode}`, JSON.stringify({ date, paths, start, doneMs, saved })); } catch {} }, [date, mode, paths, start, doneMs, saved]);
+  useEffect(() => { if (date && paths.length) try { localStorage.setItem(dayKey(`${KEY}-${mode}`), JSON.stringify({ date, paths, start, doneMs, saved })); } catch {} }, [date, mode, paths, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -99,6 +101,7 @@ export default function PourPaths() {
   return (
     <div className="page" style={{ maxWidth: "34rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/pour-paths" />
       <h1 className="h2">Pour <em>paths</em></h1>
       <p className="small muted">Drag from a cup to its matching partner to lay a pipe. Join every pair and fill every square. Pipes can&apos;t cross; drawing over one cuts it back.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -122,7 +125,7 @@ export default function PourPaths() {
       ) : (
         <section className="card memory-done" aria-live="polite">
           <b>All poured in {clock(doneMs)} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -131,7 +134,7 @@ export default function PourPaths() {
           <p className="tiny muted" style={{ margin: 0 }}>New boards tomorrow{mode === "easy" ? ". Try the hard one?" : "."}</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest · {LABEL[mode]}</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

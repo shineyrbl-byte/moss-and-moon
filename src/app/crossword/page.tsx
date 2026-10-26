@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { crosswordFor, isSolved, solutionOf, XW_SIZE as N, type Entry } from "@/lib/crossword";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-crossword";
@@ -13,6 +14,7 @@ const KEYS = ["qwertyuiop", "asdfghjkl", "zxcvbnm⌫"];
 export default function Crossword() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [letters, setLetters] = useState<string[]>([]);
   const [at, setAt] = useState(0);
   const [dir, setDir] = useState<"across" | "down">("across");
@@ -23,13 +25,13 @@ export default function Crossword() {
   const [board, setBoard] = useState<Board | null>(null);
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
-  useEffect(() => { setDate(toDateStr(new Date())); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
+  useEffect(() => { setDate(playDay()); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
   const xw = useMemo(() => (date ? crosswordFor(date) : null), [date]);
   const solution = useMemo(() => (xw ? solutionOf(xw.rows) : []), [xw]);
   useEffect(() => {
     if (!xw) return;
     let s: { date?: string; letters?: string[]; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
     const fresh = s?.date === date && s.letters?.length === N * N;
     setLetters(fresh ? s!.letters! : Array(N * N).fill(""));
     setStart(fresh ? s!.start ?? null : null); setNow(Date.now());
@@ -37,7 +39,7 @@ export default function Crossword() {
     setAt(xw.entries[0].cells[0]); setDir("across");
     fetch(`/api/daily-scores?game=crossword&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, [xw, date]);
-  useEffect(() => { if (date && letters.length) try { localStorage.setItem(KEY, JSON.stringify({ date, letters, start, doneMs, saved })); } catch {} }, [date, letters, start, doneMs, saved]);
+  useEffect(() => { if (date && letters.length) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, letters, start, doneMs, saved })); } catch {} }, [date, letters, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -111,6 +113,7 @@ export default function Crossword() {
   return (
     <div className="page" style={{ maxWidth: "38rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/crossword" />
       <h1 className="h2">Mini <em>crossword</em></h1>
       <p className="small muted">A new five-by-five every day. Tap a square to start; tap it again to switch between across and down.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -144,7 +147,7 @@ export default function Crossword() {
       ) : (
         <section className="card memory-done" aria-live="polite">
           <b>Solved in {clock(doneMs)} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -167,7 +170,7 @@ export default function Crossword() {
           </section>
         ))}
       </div>
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

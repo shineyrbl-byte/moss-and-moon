@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { HIDDEN, lineBetween, SIZE, wordAt, wordSearchFor } from "@/lib/wordSearch";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-wordsearch";
@@ -12,6 +13,7 @@ const KEY = "mm-wordsearch";
 export default function WordSearch() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [found, setFound] = useState<string[]>([]);
   const [sel, setSel] = useState<{ a: number; b: number } | null>(null);
   const [anchor, setAnchor] = useState<number | null>(null);
@@ -23,18 +25,18 @@ export default function WordSearch() {
   const [saved, setSaved] = useState(false);
   const dragging = useRef(false);
   const gridRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { setDate(toDateStr(new Date())); }, []);
+  useEffect(() => { setDate(playDay()); }, []);
   const puzzle = useMemo(() => (date ? wordSearchFor(date) : null), [date]);
   useEffect(() => {
     if (!date) return;
     fetch(`/api/daily-scores?game=wordsearch&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
     try {
       setName(localStorage.getItem("mm-game-name") ?? "");
-      const s = JSON.parse(localStorage.getItem(KEY) ?? "null");
+      const s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null");
       if (s?.date === date) { setFound(s.found ?? []); if (s.start) { setStart(s.start); setNow(Date.now()); } if (s.doneMs) setDoneMs(s.doneMs); if (s.saved) setSaved(true); }
     } catch {}
   }, [date]);
-  useEffect(() => { if (date) try { localStorage.setItem(KEY, JSON.stringify({ date, found, start, doneMs, saved })); } catch {} }, [date, found, start, doneMs, saved]);
+  useEffect(() => { if (date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, found, start, doneMs, saved })); } catch {} }, [date, found, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 100);
@@ -101,6 +103,7 @@ export default function WordSearch() {
   return (
     <div className="page" style={{ maxWidth: "40rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/word-search" />
       <h1 className="h2">Word <em>search</em></h1>
       <p className="small muted">Eight café words are hiding: across, down and diagonal. Drag across a word, or tap its first letter and then its last.</p>
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
@@ -122,7 +125,7 @@ export default function WordSearch() {
       {doneMs !== null && (
         <section className="card memory-done" aria-live="polite">
           <b>All eight in {clock(doneMs)} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -131,7 +134,7 @@ export default function WordSearch() {
           <p className="tiny muted" style={{ margin: 0 }}>New words tomorrow.</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

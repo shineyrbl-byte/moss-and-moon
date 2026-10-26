@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { COLS, FACES, LAYOUT, ROWS, SHUFFLE_MS, freeSpots, hintPair, reshuffle, tilesFor, type Tile } from "@/lib/teaTiles";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-tiles";
@@ -12,6 +13,7 @@ const KEY = "mm-tiles";
 export default function TeaTiles() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [picked, setPicked] = useState<number | null>(null);
   const [hint, setHint] = useState<number[]>([]);
@@ -24,17 +26,17 @@ export default function TeaTiles() {
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
   useEffect(() => {
-    const d = toDateStr(new Date());
+    const d = playDay();
     setDate(d);
     try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
     let s: { date?: string; tiles?: Tile[]; start?: number; extra?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
     const fresh = s?.date === d;
     setTiles(fresh && s!.tiles ? s!.tiles : tilesFor(d));
     setStart(fresh ? s!.start ?? null : null); setExtra(fresh ? s!.extra ?? 0 : 0); setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved)); setNow(Date.now());
     fetch(`/api/daily-scores?game=tiles&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []);
-  useEffect(() => { if (date && tiles.length + (doneMs !== null ? 1 : 0)) try { localStorage.setItem(KEY, JSON.stringify({ date, tiles, start, extra, doneMs, saved })); } catch {} }, [date, tiles, start, extra, doneMs, saved]);
+  useEffect(() => { if (date && tiles.length + (doneMs !== null ? 1 : 0)) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, tiles, start, extra, doneMs, saved })); } catch {} }, [date, tiles, start, extra, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -76,6 +78,7 @@ export default function TeaTiles() {
   return (
     <div className="page" style={{ maxWidth: "40rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/tea-tiles" />
       <h1 className="h2">Tea <em>tiles</em></h1>
       <p className="small muted">Tap two matching tiles to clear them. You can only take a tile with nothing on top of it and a free side on the left or right. Every day&apos;s table can be cleared.</p>
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -99,7 +102,7 @@ export default function TeaTiles() {
       ) : (
         <section className="card memory-done" aria-live="polite">
           <b>Cleared in {clock(doneMs)} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -108,7 +111,7 @@ export default function TeaTiles() {
           <p className="tiny muted" style={{ margin: 0 }}>A new table tomorrow. {LAYOUT.length} tiles, {LAYOUT.length / 2} pairs.</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

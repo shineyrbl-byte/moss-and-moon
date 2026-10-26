@@ -35,6 +35,9 @@ export const DAILY_GAMES = [
   { id: "table", title: "Table for one", emoji: "🪑", href: "/table-for-one", blurb: "Eight guests, nobody touching" },
   { id: "parasols", title: "Parasols", emoji: "⛱️", href: "/parasols", blurb: "Shade for every table" },
   { id: "tipjar", title: "Tip jar", emoji: "🪙", href: "/tip-jar", blurb: "Make every jar add up" },
+  { id: "towers", title: "Cake towers", emoji: "🎂", href: "/cake-towers", blurb: "How many cakes can you see?" },
+  { id: "cups", title: "Spare cups", emoji: "🥤", href: "/spare-cups", blurb: "Put away the repeats" },
+  { id: "corners", title: "Café corners", emoji: "🔤", href: "/cafe-corners", blurb: "Twelve letters, fewest words" },
 ] as const;
 
 /** The days you played each daily game. Signed-in games count you by account; the rest by the id kept in your browser. */
@@ -70,6 +73,9 @@ export function playedMap(customerId: number | null, voter: unknown): Record<str
     table: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'table' AND voter = ?", anon),
     parasols: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'parasols' AND voter = ?", anon),
     tipjar: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'tipjar' AND voter = ?", anon),
+    towers: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'towers' AND voter = ?", anon),
+    cups: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'cups' AND voter = ?", anon),
+    corners: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'corners' AND voter = ?", anon),
   };
   return played;
 }

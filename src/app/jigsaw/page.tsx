@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { JIGSAW_MODES, photoFor, piecePos, pieceCount, trayOrder, type JigsawMode } from "@/lib/jigsaw";
 import { seededRand } from "@/lib/gameOrders";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 type Item = { id: string; name: string; img: string };
@@ -15,6 +16,7 @@ const LABEL: Record<JigsawMode, string> = { small: "12 pieces", medium: "24 piec
 export default function Jigsaw() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [mode, setMode] = useState<JigsawMode>("small");
   const [item, setItem] = useState<Item | null | undefined>(undefined);
   const [placed, setPlaced] = useState<Set<number>>(new Set());
@@ -28,7 +30,7 @@ export default function Jigsaw() {
   const [saved, setSaved] = useState(false);
   const drag = useRef<{ piece: number; el: HTMLElement; x0: number; y0: number; moved: boolean } | null>(null);
   useEffect(() => {
-    const d = toDateStr(new Date());
+    const d = playDay();
     setDate(d);
     try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
     fetch("/api/menu").then((r) => r.json()).then((m: { items: (Item & { pup?: boolean; cat: string })[] }) => setItem(photoFor(d, m.items.filter((x) => !x.pup)))).catch(() => setItem(null));
@@ -38,13 +40,13 @@ export default function Jigsaw() {
   useEffect(() => {
     if (!date) return;
     let s: { date?: string; placed?: number[]; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(`${KEY}-${mode}`) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(`${KEY}-${mode}`)) ?? "null"); } catch {}
     const fresh = s?.date === date;
     setPlaced(new Set(fresh ? s!.placed ?? [] : [])); setStart(fresh ? s!.start ?? null : null); setNow(Date.now());
     setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved)); setHeld(null);
     fetch(`/api/daily-scores?game=jigsaw&mode=${mode}&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, [date, mode]);
-  useEffect(() => { if (date) try { localStorage.setItem(`${KEY}-${mode}`, JSON.stringify({ date, placed: [...placed], start, doneMs, saved })); } catch {} }, [date, mode, placed, start, doneMs, saved]);
+  useEffect(() => { if (date) try { localStorage.setItem(dayKey(`${KEY}-${mode}`), JSON.stringify({ date, placed: [...placed], start, doneMs, saved })); } catch {} }, [date, mode, placed, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -100,6 +102,7 @@ export default function Jigsaw() {
   return (
     <div className="page" style={{ maxWidth: "40rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/jigsaw" />
       <h1 className="h2">Café <em>jigsaw</em></h1>
       <p className="small muted">Put today&apos;s menu photo back together. Drag a piece onto the board, or tap a piece and then tap where it goes. Pieces only stay put in the right spot.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -122,7 +125,7 @@ export default function Jigsaw() {
       ) : (
         <section className="card memory-done" aria-live="polite">
           <b>{item.name}, done in {clock(doneMs)} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -131,7 +134,7 @@ export default function Jigsaw() {
           <p className="tiny muted" style={{ margin: 0 }}>A new photo tomorrow.</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest · {LABEL[mode]}</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

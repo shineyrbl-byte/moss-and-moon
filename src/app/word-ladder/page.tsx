@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { ladderFor, shortest, stepProblem } from "@/lib/wordLadder";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-ladder";
@@ -12,6 +13,7 @@ const KEY = "mm-ladder";
 export default function WordLadder() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [steps, setSteps] = useState<string[]>([]);
   const [word, setWord] = useState("");
   const [start, setStart] = useState<number | null>(null);
@@ -22,18 +24,18 @@ export default function WordLadder() {
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
   const input = useRef<HTMLInputElement>(null);
-  useEffect(() => { setDate(toDateStr(new Date())); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
+  useEffect(() => { setDate(playDay()); try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
   const lad = useMemo(() => (date ? ladderFor(date) : null), [date]);
   useEffect(() => {
     if (!lad) return;
     let s: { date?: string; steps?: string[]; start?: number; doneMs?: number; saved?: boolean; gaveUp?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
     const fresh = s?.date === date;
     setSteps(fresh ? s!.steps ?? [] : []); setStart(fresh ? s!.start ?? null : null); setNow(Date.now());
     setDoneMs(fresh ? s!.doneMs ?? null : null); setSaved(!!(fresh && s!.saved)); setGaveUp(!!(fresh && s!.gaveUp));
     fetch(`/api/daily-scores?game=ladder&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, [lad, date]);
-  useEffect(() => { if (date) try { localStorage.setItem(KEY, JSON.stringify({ date, steps, start, doneMs, saved, gaveUp })); } catch {} }, [date, steps, start, doneMs, saved, gaveUp]);
+  useEffect(() => { if (date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, steps, start, doneMs, saved, gaveUp })); } catch {} }, [date, steps, start, doneMs, saved, gaveUp]);
   useEffect(() => {
     if (!start || doneMs !== null || gaveUp) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -71,6 +73,7 @@ export default function WordLadder() {
   return (
     <div className="page" style={{ maxWidth: "32rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/word-ladder" />
       <h1 className="h2">Word <em>ladder</em></h1>
       <p className="small muted">Turn <b>{lad.from.toUpperCase()}</b> into <b>{lad.to.toUpperCase()}</b> by changing one letter at a time. Every step has to be a real word. Our best is {lad.par} steps.</p>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⏱ {clock(elapsed)}</span><span>Steps <b>{steps.length}</b> · par {lad.par}</span></div>
@@ -101,7 +104,7 @@ export default function WordLadder() {
       {doneMs !== null && (
         <section className="card memory-done" aria-live="polite">
           <b>{steps.length <= lad.par ? `A perfect ${steps.length}-step ladder 🎉` : `Done in ${steps.length} steps 🎉`} · {clock(doneMs)}</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -110,7 +113,7 @@ export default function WordLadder() {
           <button className="btn btn-ghost btn-sm" onClick={share}>Share</button>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

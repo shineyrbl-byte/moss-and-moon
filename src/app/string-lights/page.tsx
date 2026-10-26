@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { SIZE, connected, count, isSolved, key, lightsFor, neighbours, toggle, type Bridges } from "@/lib/bridges";
-import { toDateStr } from "@/lib/cafe";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
 const KEY = "mm-lights";
@@ -13,6 +14,7 @@ const pct = (x: number) => `${((x + 0.5) / SIZE) * 100}%`;
 export default function StringLights() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [br, setBr] = useState<Bridges>({});
   const [history, setHistory] = useState<Bridges[]>([]);
   const [sel, setSel] = useState<number | null>(null);
@@ -24,16 +26,16 @@ export default function StringLights() {
   const [saved, setSaved] = useState(false);
   const puzzle = useMemo(() => (date ? lightsFor(date) : null), [date]);
   useEffect(() => {
-    const d = toDateStr(new Date());
+    const d = playDay();
     setDate(d);
     try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
     let s: { date?: string; br?: Bridges; start?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
     if (s?.date === d) { setBr(s.br ?? {}); setStart(s.start ?? null); setDoneMs(s.doneMs ?? null); setSaved(!!s.saved); }
     setNow(Date.now());
     fetch(`/api/daily-scores?game=lights&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []);
-  useEffect(() => { if (date) try { localStorage.setItem(KEY, JSON.stringify({ date, br, start, doneMs, saved })); } catch {} }, [date, br, start, doneMs, saved]);
+  useEffect(() => { if (date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, br, start, doneMs, saved })); } catch {} }, [date, br, start, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -68,6 +70,7 @@ export default function StringLights() {
   return (
     <div className="page" style={{ maxWidth: "32rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/string-lights" />
       <h1 className="h2">String <em>lights</em></h1>
       <p className="small muted">Hang the fairy lights for the terrace. Each lamp&apos;s number is how many strings it needs. Strings run straight across or down to the next lamp, there can be one or two between a pair, and they can&apos;t cross. Every lamp has to be linked to all the others.</p>
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -102,7 +105,7 @@ export default function StringLights() {
       {done && (
         <section className="card memory-done" aria-live="polite">
           <b>Lit up in {clock(doneMs)} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -111,7 +114,7 @@ export default function StringLights() {
           <p className="tiny muted" style={{ margin: 0 }}>New lights tomorrow.</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}

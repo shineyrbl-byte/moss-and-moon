@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ArchiveNote from "@/components/ArchiveNote";
+import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { HINT_MS, SIZE, allOff, lampsFor, press, solve } from "@/lib/lamps";
-import { toDateStr } from "@/lib/cafe";
 import { addFlag } from "@/lib/trophyFlags";
 
 type Board = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
@@ -13,6 +14,7 @@ const KEY = "mm-lamps";
 export default function LampSwitch() {
   const { toast } = useStore();
   const [date, setDate] = useState("");
+  const past = isPast(date);
   const [presses, setPresses] = useState<number[]>([]);
   const [hint, setHint] = useState<number | null>(null);
   const [start, setStart] = useState<number | null>(null);
@@ -23,16 +25,16 @@ export default function LampSwitch() {
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
   useEffect(() => {
-    const d = toDateStr(new Date());
+    const d = playDay();
     setDate(d);
     try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {}
     let s: { date?: string; presses?: number[]; start?: number; extra?: number; doneMs?: number; saved?: boolean } | null = null;
-    try { s = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+    try { s = JSON.parse(localStorage.getItem(dayKey(KEY)) ?? "null"); } catch {}
     if (s?.date === d) { setPresses(s.presses ?? []); setStart(s.start ?? null); setExtra(s.extra ?? 0); setDoneMs(s.doneMs ?? null); setSaved(!!s.saved); }
     setNow(Date.now());
     fetch(`/api/daily-scores?game=lamps&voter=${voterId()}`).then((r) => r.json()).then(setBoard).catch(() => {});
   }, []);
-  useEffect(() => { if (date) try { localStorage.setItem(KEY, JSON.stringify({ date, presses, start, extra, doneMs, saved })); } catch {} }, [date, presses, start, extra, doneMs, saved]);
+  useEffect(() => { if (date) try { localStorage.setItem(dayKey(KEY), JSON.stringify({ date, presses, start, extra, doneMs, saved })); } catch {} }, [date, presses, start, extra, doneMs, saved]);
   useEffect(() => {
     if (!start || doneMs !== null) return;
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -67,6 +69,7 @@ export default function LampSwitch() {
   return (
     <div className="page" style={{ maxWidth: "30rem" }}>
       <p className="eyebrow">a daily puzzle</p>
+      <ArchiveNote date={date} path="/lamp-switch" />
       <h1 className="h2">Lamp <em>switch</em></h1>
       <p className="small muted">Closing time, and the lamps are all on the same muddled wiring. Tapping a lamp flips it and the lamps right next to it (above, below, left and right). Turn every lamp off.</p>
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -87,7 +90,7 @@ export default function LampSwitch() {
       {done && (
         <section className="card memory-done" aria-live="polite">
           <b>All off in {clock(doneMs)} with {presses.length} taps{presses.length === puzzle.fewest ? ", the fewest possible" : ""} 🎉</b>
-          {!saved ? (
+          {past ? <p className="small" style={{ margin: 0 }}>Archive days don&apos;t go on the board.</p> : !saved ? (
             <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
@@ -96,7 +99,7 @@ export default function LampSwitch() {
           <p className="tiny muted" style={{ margin: 0 }}>New wiring tomorrow.</p>
         </section>
       )}
-      {board && (
+      {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
           <h2 className="h3">Today&apos;s quickest</h2>
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
