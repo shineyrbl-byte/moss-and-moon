@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ShareResult from "@/components/ShareResult";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -150,6 +151,7 @@ export default function CakeTowers() {
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
           <p className="tiny muted" style={{ margin: 0 }}>New towers tomorrow.</p>
+          <ShareResult title="Cake towers" date={date} />
         </section>
       )}
       {board && !past && (

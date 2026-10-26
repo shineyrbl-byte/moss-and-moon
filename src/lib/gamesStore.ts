@@ -38,6 +38,8 @@ export const DAILY_GAMES = [
   { id: "towers", title: "Cake towers", emoji: "🎂", href: "/cake-towers", blurb: "How many cakes can you see?" },
   { id: "cups", title: "Spare cups", emoji: "🥤", href: "/spare-cups", blurb: "Put away the repeats" },
   { id: "corners", title: "Café corners", emoji: "🔤", href: "/cafe-corners", blurb: "Twelve letters, fewest words" },
+  { id: "sums", title: "Bean sums", emoji: "➕", href: "/bean-sums", blurb: "Make every run add up" },
+  { id: "freecell", title: "Café FreeCell", emoji: "🃏", href: "/cafe-freecell", blurb: "Today's deal, every card face up" },
 ] as const;
 
 /** The days you played each daily game. Signed-in games count you by account; the rest by the id kept in your browser. */
@@ -76,6 +78,8 @@ export function playedMap(customerId: number | null, voter: unknown): Record<str
     towers: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'towers' AND voter = ?", anon),
     cups: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'cups' AND voter = ?", anon),
     corners: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'corners' AND voter = ?", anon),
+    sums: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'sums' AND voter = ?", anon),
+    freecell: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'freecell' AND voter = ?", anon),
   };
   return played;
 }

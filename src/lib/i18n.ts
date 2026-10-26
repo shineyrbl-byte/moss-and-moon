@@ -392,6 +392,11 @@ const en = {
   "footer.pastry": "Pastry drop",
   "footer.mill": "Saucer mill",
   "footer.archive": "Puzzle archive",
+  "footer.myStats": "My puzzle stats",
+  "footer.sums": "Bean sums",
+  "footer.freecell": "Café FreeCell",
+  "footer.dash": "Delivery dash",
+  "footer.hearts": "Café hearts",
 };
 
 type Key = keyof typeof en;
@@ -784,6 +789,11 @@ const hi: Record<Key, string> = {
   "footer.pastry": "पेस्ट्री ड्रॉप",
   "footer.mill": "तश्तरी चक्की",
   "footer.archive": "पहेली संग्रह",
+  "footer.myStats": "मेरी पहेली के आँकड़े",
+  "footer.sums": "बीन जोड़",
+  "footer.freecell": "कैफ़े फ़्रीसेल",
+  "footer.dash": "डिलीवरी दौड़",
+  "footer.hearts": "कैफ़े हार्ट्स",
 };
 
 const mr: Record<Key, string> = {
@@ -1174,6 +1184,11 @@ const mr: Record<Key, string> = {
   "footer.pastry": "पेस्ट्री ड्रॉप",
   "footer.mill": "बशीची गिरणी",
   "footer.archive": "कोडी संग्रह",
+  "footer.myStats": "माझी कोडी आकडेवारी",
+  "footer.sums": "बीन बेरीज",
+  "footer.freecell": "कॅफे फ्रीसेल",
+  "footer.dash": "डिलिव्हरी धाव",
+  "footer.hearts": "कॅफे हार्ट्स",
 };
 
 const kok: Record<Key, string> = {
@@ -1564,6 +1579,11 @@ const kok: Record<Key, string> = {
   "footer.pastry": "पेस्ट्री ड्रॉप",
   "footer.mill": "बशयेची गिरण",
   "footer.archive": "कोड्यांचो संग्रह",
+  "footer.myStats": "म्हजे कोड्यांचे आंकडे",
+  "footer.sums": "बीन बेरीज",
+  "footer.freecell": "कॅफे फ्रीसेल",
+  "footer.dash": "डिलिव्हरी धांव",
+  "footer.hearts": "कॅफे हार्ट्स",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

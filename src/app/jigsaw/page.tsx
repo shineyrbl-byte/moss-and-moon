@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ShareResult from "@/components/ShareResult";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
@@ -132,6 +133,7 @@ export default function Jigsaw() {
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓ Your best today is {clock(board?.mine?.ms ?? doneMs)}.</p>}
           <p className="tiny muted" style={{ margin: 0 }}>A new photo tomorrow.</p>
+          <ShareResult title="Café jigsaw" date={date} />
         </section>
       )}
       {board && !past && (

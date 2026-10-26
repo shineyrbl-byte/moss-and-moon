@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ShareResult from "@/components/ShareResult";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -121,6 +122,7 @@ export default function SpareCups() {
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
           <p className="tiny muted" style={{ margin: 0 }}>A new shelf tomorrow.</p>
+          <ShareResult title="Spare cups" date={date} />
         </section>
       )}
       {board && !past && (

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ShareResult from "@/components/ShareResult";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
@@ -117,6 +118,7 @@ export default function MilkAndCoffee() {
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
           <p className="tiny muted" style={{ margin: 0 }}>A new grid tomorrow.</p>
+          <ShareResult title="Milk & coffee" date={date} />
         </section>
       )}
       {board && !past && (

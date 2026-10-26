@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import ShareResult from "@/components/ShareResult";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
 import { useStore } from "@/components/Store";
@@ -106,6 +107,7 @@ export default function SpotTheDifference() {
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
           ) : <p className="small" style={{ margin: 0 }}>Saved ✓</p>}
+          <ShareResult title="Spot the difference" date={date} />
         </section>
       )}
       {timeUp && <p className="small center">You found {found.length} of {DIFFS}. New shelves tomorrow!</p>}

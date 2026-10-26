@@ -23,6 +23,8 @@ import { minMs as parasolsMin } from "./tents";
 import { minMs as tipjarMin } from "./kenken";
 import { minMs as towersMin } from "./skyscrapers";
 import { minMs as cupsMin } from "./hitori";
+import { minMs as sumsMin } from "./kakuro";
+import { minMs as freecellMin } from "./freecell";
 import { MIN_SCORE as cornersMin, MAX_SCORE as cornersMax } from "./letterBoxed";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
@@ -47,6 +49,8 @@ const GAMES = {
   tipjar: { mode: () => "daily", min: () => tipjarMin },
   towers: { mode: () => "daily", min: () => towersMin },
   cups: { mode: () => "daily", min: () => cupsMin },
+  sums: { mode: () => "daily", min: () => sumsMin },
+  freecell: { mode: () => "daily", min: () => freecellMin },
   // Café corners packs words and time into one number (see letterBoxed pack), so fewest words wins
   corners: { mode: () => "daily", min: () => cornersMin, max: cornersMax },
   // Flood keeps moves and time packed into one number (see packScore), so fewest moves wins

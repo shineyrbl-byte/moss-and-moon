@@ -1579,10 +1579,10 @@ test("today's five: the new puzzles only join from their start day, so old days 
   const { todaysFive, NEW_LOGIC_FROM } = await import("../src/lib/todaysFive.ts");
   const before: string[] = [];
   for (let d = 1; d <= 26; d++) before.push(...todaysFive(`2026-10-${String(d).padStart(2, "0")}`));
-  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners"].every((id) => !before.includes(id)));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums"].every((id) => !before.includes(id)));
   const after: string[] = [];
   for (let d = 0; d < 60; d++) after.push(...todaysFive(new Date(Date.UTC(2026, 9, 27 + d)).toISOString().slice(0, 10)));
-  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners"].every((id) => after.includes(id)));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums"].every((id) => after.includes(id)));
   assert.equal(NEW_LOGIC_FROM, "2026-10-27");
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
   assert.ok(TROPHIES.length >= 42);
@@ -1837,8 +1837,130 @@ test("saucer mill: mills, taking, flying and hard beats easy", async () => {
   }
   assert.ok(wins >= 3, `hard won ${wins} of 4`);
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
-  assert.equal(TROPHIES.length, 58);
+  assert.ok(TROPHIES.length >= 58);
   const got = earned({ played: {}, five: [], arcade: { pastry: 5000 }, local: { morris: { hard: { won: 1 } }, archive: 5, flags: ["corners-par", "pastry-four"] } });
   for (const id of ["pastry", "pastryFour", "morris", "morrisHard", "archive", "corners"]) assert.ok(got.includes(id), id);
   for (const id of ["towers", "cups"]) assert.ok(!got.includes(id), id);
+});
+
+test("my puzzle stats: runs, middle times and the calendar", async () => {
+  const { median, timeStats, currentRun, calendar, summary } = await import("../src/lib/stats.ts");
+  assert.equal(median([5, 1, 3]), 3); assert.equal(median([4, 1, 3, 2]), 3); assert.equal(median([]), 0);
+  const ts = timeStats([{ game: "milk", mode: "daily", ms: 30000 }, { game: "milk", mode: "daily", ms: 50000 }, { game: "milk", mode: "daily", ms: 40000 }, { game: "sudoku", mode: "hard", ms: 90000 }]);
+  assert.deepEqual(ts.find((t) => t.game === "milk"), { game: "milk", mode: "daily", n: 3, best: 30000, typical: 40000 });
+  assert.equal(currentRun(["2026-10-24", "2026-10-25", "2026-10-26"], "2026-10-26"), 3);
+  assert.equal(currentRun(["2026-10-24", "2026-10-25"], "2026-10-26"), 2, "today not played yet still counts the run to yesterday");
+  assert.equal(currentRun(["2026-10-23"], "2026-10-26"), 0);
+  const cal = calendar({ "2026-10-26": 4 }, "2026-10-26");
+  assert.equal(cal.length, 12); assert.ok(cal.every((w) => w.length === 7));
+  assert.equal(cal[11][0].date, "2026-10-26", "26 Oct 2026 is a Monday, so it starts the last column");
+  assert.equal(cal[11][0].n, 4); assert.ok(cal[11][1].future);
+  const sm = summary({ milk: ["2026-10-25", "2026-10-26"], sudoku: ["2026-10-26", "2026-10-26"] }, "2026-10-26");
+  assert.equal(sm.days, 2); assert.equal(sm.plays, 3); assert.equal(sm.busiest, 2); assert.equal(sm.longest, 2); assert.equal(sm.first, "2026-10-25");
+  const { shareText } = await import("../src/components/ShareResult.tsx").catch(() => ({ shareText: null }));
+  if (shareText) assert.match(shareText("Tip jar", "2026-10-26", "Counted in  1:23.0, no hints 🎉"), /Moss & Moon · Tip jar · 26 Oct\nCounted in 1:23.0, no hints 🎉/);
+});
+
+test("bean sums: one answer, every run 2 to 5 long, and the rules", async () => {
+  const { sumsFor, answers, isSolved, problems, runsOf, N } = await import("../src/lib/kakuro.ts");
+  for (const d of ["2026-10-26", "2026-10-27", "2027-08-08"]) {
+    const p = sumsFor(d);
+    assert.equal(answers(p.white, p.runs, p.given).length, 1, d);
+    assert.ok(isSolved(p, p.solution));
+    assert.ok(p.runs.every((r) => r.cells.length >= 2 && r.cells.length <= 5));
+    assert.ok(p.runs.every((r) => new Set(r.cells.map((c) => p.solution[c])).size === r.cells.length), "no repeats in a run");
+    assert.ok(p.white.every((w, i) => !w || p.runs.filter((r) => r.cells.includes(i)).length === 2), "every square is in one run each way");
+    assert.ok(p.given.filter(Boolean).length <= 8);
+    // Same picture turned upside down
+    for (let i = 0; i < N * N; i++) { const r = Math.floor(i / N), c = i % N; if (r && c) assert.equal(p.white[i], p.white[(N - r) * N + (N - c)]); }
+  }
+  const p = sumsFor("2026-10-26");
+  const g = [...p.solution]; const r = p.runs[0]; [g[r.cells[0]], g[r.cells[1]]] = [g[r.cells[1]], g[r.cells[1]]];
+  assert.ok(problems(p, g).size > 0, "a repeat shows up");
+  assert.equal(runsOf(Array(N * N).fill(false)).length, 0);
+});
+
+test("café freecell: dealing, moving runs, going home and a solvable deal", async () => {
+  const F = await import("../src/lib/freecell.ts");
+  const s = F.dealFor("2026-10-26");
+  assert.deepEqual(s.cols.map((c) => c.length), [7, 7, 7, 7, 6, 6, 6, 6]);
+  assert.equal(new Set(s.cols.flat().map((c) => c.suit * 13 + c.rank)).size, 52);
+  assert.deepEqual(F.dealFor("2026-10-26"), s, "the same deal all day");
+  assert.equal(F.maxMove({ ...s, cells: [null, null, null, null] }, false), 5);
+  const t = { cells: [{ suit: 0, rank: 5 }, { suit: 1, rank: 4 }, null, null], found: [0, 0, 0, 0], cols: [[], [], [], [], [], [], [], []], moves: 0 } as import("../src/lib/freecell.ts").State;
+  assert.equal(F.maxMove(t, false), 3 * 2 ** 8); assert.equal(F.maxMove(t, true), 3 * 2 ** 7);
+  // A run of three moves together; a broken one doesn't
+  const runState = { cells: [null, null, null, null], found: [0, 0, 0, 0], cols: [[{ suit: 0, rank: 9 }, { suit: 1, rank: 8 }, { suit: 2, rank: 7 }], [{ suit: 3, rank: 10 }], [], [], [], [], [], []], moves: 0 } as import("../src/lib/freecell.ts").State;
+  const moved = F.move(runState, { kind: "col", i: 0, at: 0 }, { kind: "col", i: 1 });
+  assert.ok(moved && moved.cols[1].length === 4 && !moved.cols[0].length);
+  assert.equal(F.move(runState, { kind: "col", i: 0, at: 0 }, { kind: "col", i: 0 }), null);
+  assert.ok(F.isRun(runState.cols[0], 0) && !F.isRun([{ suit: 0, rank: 9 }, { suit: 0, rank: 8 }], 0));
+  // Aces and twos go home on their own
+  const home = F.autoHome({ cells: [{ suit: 2, rank: 1 }, null, null, null], found: [0, 0, 0, 0], cols: [[{ suit: 2, rank: 2 }], [], [], [], [], [], [], []], moves: 0 });
+  assert.equal(home.found[2], 2);
+  assert.ok(F.solve(F.dealFor("2026-10-26")), "today's deal can be won");
+});
+
+test("delivery dash: jumping, ducking and crashing", async () => {
+  const D = await import("../src/lib/dash.ts");
+  let s = D.newGame();
+  s = D.jump(s); assert.ok(s.vy > 0);
+  const mid = D.step(s, 0.1);
+  assert.equal(D.jump(mid), mid, "can't jump again in mid-air");
+  let air = D.step(s, 0.1); assert.ok(air.y > 0);
+  for (let i = 0; i < 200; i++) air = D.step(air, 1 / 120);
+  assert.equal(air.y, 0, "lands again");
+  // A crate in the way: hit it standing, clear it jumping
+  const crate = { ...D.newGame(), things: [{ kind: "crate" as const, x: D.RIDER_X + D.RIDER_W + 6, w: 5, y: 0, h: 5 }] };
+  let a = crate; for (let i = 0; i < 120 && !a.over; i++) a = D.step(a, 1 / 120, () => 0.99);
+  assert.ok(a.over && a.hit === "crate");
+  let b = D.jump(crate); for (let i = 0; i < 120 && !b.over; i++) b = D.step(b, 1 / 120, () => 0.99);
+  assert.ok(!b.over, "jumped it");
+  // An awning: duck under it
+  const awn = { ...D.newGame(), things: [{ kind: "awning" as const, x: D.RIDER_X + 2, w: 12, y: D.DUCK_H + 1.5, h: D.H }] };
+  assert.ok(D.step(awn, 1 / 120, () => 0.99).over, "standing up hits it");
+  assert.ok(!D.step(D.duck(awn, true), 1 / 120, () => 0.99).over, "ducking gets under");
+  const beans = { ...D.newGame(), things: [{ kind: "bean" as const, x: D.RIDER_X, w: 2.5, y: 2, h: 2.5 }] };
+  assert.equal(D.step(beans, 1 / 120, () => 0.99).beans, 1);
+  assert.equal(D.score({ ...D.newGame(), dist: 1234, beans: 3 }), 123 + 30);
+});
+
+test("café hearts: legal cards, scoring, the moon, and hard beats easy", async () => {
+  const H = await import("../src/lib/hearts.ts");
+  const rand = (() => { let x = 7; return () => { x = (x * 16807) % 2147483647; return x / 2147483647; }; })();
+  const hands = H.dealHands(rand);
+  assert.ok(hands.every((h) => h.length === 13));
+  let h = H.startHand(hands);
+  assert.deepEqual(H.legal(h, h.turn), [{ suit: H.CLUBS, rank: 2 }], "the 2♣ leads");
+  assert.equal(H.passTo(0, 0), 1); assert.equal(H.passTo(1, 0), 3); assert.equal(H.passTo(2, 0), 2); assert.equal(H.passTo(3, 0), 0);
+  const passed = H.doPass(hands, hands.map((x) => x.slice(0, 3)), 0);
+  assert.ok(passed.every((x) => x.length === 13));
+  assert.ok(hands[0].slice(0, 3).every((c) => passed[1].some((d) => H.same(c, d))), "passed to the left");
+  while (!H.handOver(h)) h = H.playCard(h, h.turn, H.chooseCard(h, h.turn, "hard", rand));
+  assert.equal(H.handScores(h).reduce((a, b) => a + b, 0) % 26, 0);
+  const moon = { ...h, taken: [[...Array(13).keys()].map((r) => ({ suit: H.HEARTS, rank: r + 2 })).concat([{ suit: H.SPADES, rank: 12 }]), [], [], []] };
+  assert.deepEqual(H.handScores(moon), [0, 26, 26, 26]);
+  assert.throws(() => H.playCard(H.startHand(hands), (H.startHand(hands).turn + 1) % 4, hands[0][0]));
+  // Following suit: you must if you can
+  const t = { hands: [[{ suit: 1, rank: 5 }, { suit: 3, rank: 9 }], [], [], []], trick: [{ p: 3, c: { suit: 1, rank: 9 } }], leader: 3, turn: 0, taken: [[], [], [], []], broken: false, tricks: 4 } as import("../src/lib/hearts.ts").Hand;
+  assert.deepEqual(H.legal(t, 0), [{ suit: 1, rank: 5 }]);
+  let wins = 0;
+  for (let g = 1; g <= 30; g++) {
+    let x = g; const r = () => { x = (x * 16807) % 2147483647; return x / 2147483647; };
+    const totals = [0, 0, 0, 0]; let n = 0;
+    while (!H.gameOver(totals)) {
+      let hs = H.dealHands(r);
+      hs = H.doPass(hs, hs.map((hh, p) => H.choosePass(hh, p ? "easy" : "hard", r)), n);
+      let hd = H.startHand(hs);
+      while (!H.handOver(hd)) hd = H.playCard(hd, hd.turn, H.chooseCard(hd, hd.turn, hd.turn ? "easy" : "hard", r));
+      H.handScores(hd).forEach((v, i) => { totals[i] += v; }); n++;
+    }
+    if (H.leaders(totals).includes(0)) wins++;
+  }
+  assert.ok(wins >= 20, `hard won ${wins} of 30 against three easy players`);
+  const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
+  assert.equal(TROPHIES.length, 63);
+  assert.equal(new Set(TROPHIES.map((x) => x.name)).size, 63);
+  const got = earned({ played: {}, five: [], arcade: { dash: 1000 }, local: { hearts: { hard: { won: 1 } }, flags: ["sums-no-hints", "freecell-win"] } });
+  for (const id of ["dash", "hearts", "heartsHard", "sums", "freecell"]) assert.ok(got.includes(id), id);
 });
