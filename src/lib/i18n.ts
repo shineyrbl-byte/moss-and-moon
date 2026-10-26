@@ -380,6 +380,12 @@ const en = {
   "footer.dice": "Café dice",
   "footer.tray": "Tray pusher",
   "footer.jam": "Delivery jam",
+  "footer.table": "Table for one",
+  "footer.parasols": "Parasols",
+  "footer.tipjar": "Tip jar",
+  "footer.gomoku": "Five in a row",
+  "footer.echo": "Barista's echo",
+  "footer.breaker": "Bean breaker",
 };
 
 type Key = keyof typeof en;
@@ -760,6 +766,12 @@ const hi: Record<Key, string> = {
   "footer.dice": "कैफ़े पासे",
   "footer.tray": "ट्रे सरकाओ",
   "footer.jam": "डिलीवरी जाम",
+  "footer.table": "एक की मेज़",
+  "footer.parasols": "छतरियाँ",
+  "footer.tipjar": "टिप जार",
+  "footer.gomoku": "लगातार पाँच",
+  "footer.echo": "बरिस्ता की गूँज",
+  "footer.breaker": "बीन ब्रेकर",
 };
 
 const mr: Record<Key, string> = {
@@ -1138,6 +1150,12 @@ const mr: Record<Key, string> = {
   "footer.dice": "कॅफे फासे",
   "footer.tray": "ट्रे सरकवा",
   "footer.jam": "डिलिव्हरी जाम",
+  "footer.table": "एकट्यासाठी टेबल",
+  "footer.parasols": "छत्र्या",
+  "footer.tipjar": "टिप जार",
+  "footer.gomoku": "सलग पाच",
+  "footer.echo": "बरिस्ताचा प्रतिध्वनी",
+  "footer.breaker": "बीन ब्रेकर",
 };
 
 const kok: Record<Key, string> = {
@@ -1516,6 +1534,12 @@ const kok: Record<Key, string> = {
   "footer.dice": "कॅफे फासे",
   "footer.tray": "ट्रे सरकय",
   "footer.jam": "डिलिव्हरी जाम",
+  "footer.table": "एकल्याखातीर मेज",
+  "footer.parasols": "छत्र्यो",
+  "footer.tipjar": "टिप जार",
+  "footer.gomoku": "सलग पांच",
+  "footer.echo": "बरिस्ताचो पडसाद",
+  "footer.breaker": "बीन ब्रेकर",
 };
 
 export const DICT: Record<Lang, Record<Key, string>> = { en, hi, mr, kok };

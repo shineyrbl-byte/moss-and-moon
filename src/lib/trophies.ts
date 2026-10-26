@@ -10,7 +10,7 @@ export type TrophyCtx = {
   five: string[]; // days you finished Today's five
   arcade: Record<string, number | null>; // best ever score per arcade game
   local: {
-    reversi?: Record<string, Rec>; saucers?: Record<string, Rec>; mancala?: Record<string, Rec>; draughts?: Record<string, Rec>; dots?: Record<string, Rec>;
+    reversi?: Record<string, Rec>; saucers?: Record<string, Rec>; mancala?: Record<string, Rec>; draughts?: Record<string, Rec>; dots?: Record<string, Rec>; gomoku?: Record<string, Rec>;
     tray?: number; jam?: number; // puzzle pack levels done
     patience?: { won?: number; streak?: number; bestStreak?: number };
     flags?: string[]; // one-off moments, like beating par in Flood
@@ -51,12 +51,17 @@ export const TROPHIES: Trophy[] = [
   { group: "Clever moments", id: "jumble", emoji: "🔀", name: "Unscrambled", how: "Finish a bean jumble with no skips", test: (c) => flag(c, "jumble-no-skips") },
   { group: "Clever moments", id: "milk", emoji: "🥛", name: "Perfect blend", how: "Solve Milk & coffee with no hints", test: (c) => flag(c, "milk-no-hints") },
   { group: "Clever moments", id: "fiveKind", emoji: "🎲", name: "Five of a kind", how: "Roll five of a kind in Café dice", test: (c) => flag(c, "dice-five") },
+  { group: "Clever moments", id: "table", emoji: "🪑", name: "Seating plan", how: "Solve Table for one with no hints", test: (c) => flag(c, "table-no-hints") },
+  { group: "Clever moments", id: "tipjar", emoji: "🪙", name: "Exact change", how: "Solve Tip jar with no hints", test: (c) => flag(c, "tipjar-no-hints") },
+  { group: "Clever moments", id: "parasols", emoji: "⛱️", name: "Made in the shade", how: "Solve Parasols with no hints", test: (c) => flag(c, "parasols-no-hints") },
   { group: "Arcade", id: "stack15", emoji: "🎂", name: "Tall order", how: "Stack 15 layers in Cake stacker", test: (c) => arcade(c, "stacker", 15) },
   { group: "Arcade", id: "stack40", emoji: "💒", name: "Wedding cake", how: "Stack 40 layers in Cake stacker", test: (c) => arcade(c, "stacker", 40) },
   { group: "Arcade", id: "typing", emoji: "⌨️", name: "Quick fingers", how: "Send 20 orders in Call the order", test: (c) => arcade(c, "typing", 20) },
   { group: "Arcade", id: "snake", emoji: "🐍", name: "Bean feast", how: "Eat 25 beans in Bean snake", test: (c) => arcade(c, "snake", 25) },
   { group: "Arcade", id: "higher", emoji: "💸", name: "Price is right", how: "Get 10 right in Higher or lower", test: (c) => arcade(c, "higherlower", 10) },
   { group: "Arcade", id: "dice", emoji: "🎰", name: "High roller", how: "Score 250 in Café dice", test: (c) => arcade(c, "dice", 250) },
+  { group: "Arcade", id: "echo", emoji: "🔔", name: "Good ear", how: "Remember a run of 12 in Barista's echo", test: (c) => arcade(c, "echo", 12) },
+  { group: "Arcade", id: "breaker", emoji: "🧱", name: "Sugar crash", how: "Score 2,000 in Bean breaker", test: (c) => arcade(c, "breaker", 2000) },
   { group: "Arcade", id: "merge", emoji: "🌕", name: "Over the moon", how: "Score 5,000 in Brew merge", test: (c) => arcade(c, "merge", 5000) },
   { group: "Against the computer", id: "reversi", emoji: "⚫", name: "Bean counter", how: "Win a game of Bean reversi", test: (c) => won(c.local.reversi) },
   { group: "Against the computer", id: "reversiHard", emoji: "🏁", name: "Corner office", how: "Win Bean reversi on hard", test: (c) => won(c.local.reversi, "hard") },
@@ -68,6 +73,8 @@ export const TROPHIES: Trophy[] = [
   { group: "Against the computer", id: "draughtsHard", emoji: "👑", name: "King of the table", how: "Win Café draughts on hard", test: (c) => won(c.local.draughts, "hard") },
   { group: "Against the computer", id: "dots", emoji: "🧊", name: "Sweet tooth", how: "Win a game of Sugar cubes", test: (c) => won(c.local.dots) },
   { group: "Against the computer", id: "dotsHard", emoji: "🍬", name: "Sugar rush", how: "Win Sugar cubes on hard", test: (c) => won(c.local.dots, "hard") },
+  { group: "Against the computer", id: "gomoku", emoji: "⭕", name: "Lined up", how: "Win a game of Five in a row", test: (c) => won(c.local.gomoku) },
+  { group: "Against the computer", id: "gomokuHard", emoji: "🧠", name: "Five ahead", how: "Win Five in a row on hard", test: (c) => won(c.local.gomoku, "hard") },
   { group: "Against the computer", id: "patience", emoji: "🃏", name: "Patience pays", how: "Win a game of Café patience", test: (c) => (c.local.patience?.won ?? 0) > 0 },
   { group: "Against the computer", id: "patience3", emoji: "🍀", name: "Lucky streak", how: "Win Café patience 3 times in a row", test: (c) => Math.max(c.local.patience?.streak ?? 0, c.local.patience?.bestStreak ?? 0) >= 3 },
   { group: "Puzzle packs", id: "tray5", emoji: "☕", name: "Steady hands", how: "Finish 5 Tray pusher levels", test: (c) => (c.local.tray ?? 0) >= 5 },

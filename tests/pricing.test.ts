@@ -1579,14 +1579,128 @@ test("today's five: the new puzzles only join from their start day, so old days 
   const { todaysFive, NEW_LOGIC_FROM } = await import("../src/lib/todaysFive.ts");
   const before: string[] = [];
   for (let d = 1; d <= 26; d++) before.push(...todaysFive(`2026-10-${String(d).padStart(2, "0")}`));
-  assert.ok(!before.includes("milk") && !before.includes("lights"));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar"].every((id) => !before.includes(id)));
   const after: string[] = [];
   for (let d = 0; d < 60; d++) after.push(...todaysFive(new Date(Date.UTC(2026, 9, 27 + d)).toISOString().slice(0, 10)));
-  assert.ok(after.includes("milk") && after.includes("lights"));
+  assert.ok(["milk", "lights", "table", "parasols", "tipjar"].every((id) => after.includes(id)));
   assert.equal(NEW_LOGIC_FROM, "2026-10-27");
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
   assert.ok(TROPHIES.length >= 42);
   const got = earned({ played: { word: [] }, five: [], arcade: { dice: 260 }, local: { dots: { hard: { won: 1 } }, tray: 20, jam: 4, flags: ["dice-five", "jam-fewest"] } });
   for (const id of ["dots", "dotsHard", "dice", "fiveKind", "tray5", "trayAll", "jamFewest"]) assert.ok(got.includes(id), id);
   for (const id of ["jam5", "jamAll", "milk"]) assert.ok(!got.includes(id), id);
+});
+
+test("table for one: one answer every day, and the clash rules", async () => {
+  const { tableFor, countSeatings, clashes, isSolved, ruledOut, N } = await import("../src/lib/queens.ts");
+  for (const d of ["2026-10-26", "2026-10-27", "2027-02-14", "2027-07-01"]) {
+    const { regions, seats } = tableFor(d);
+    assert.equal(countSeatings(regions), 1, d);
+    assert.equal(new Set(regions).size, N, "eight sections");
+    const marks = Array(N * N).fill(0); seats.forEach((x) => { marks[x] = 2; });
+    assert.ok(isSolved(regions, marks), d);
+    assert.equal(new Set(seats.map((x) => regions[x])).size, N, "one guest per section");
+  }
+  assert.deepEqual(tableFor("2026-11-01"), tableFor("2026-11-01"), "same floor all day");
+  const { regions } = tableFor("2026-10-26");
+  const m = Array(N * N).fill(0); m[0] = 2; m[N + 1] = 2;
+  assert.deepEqual([...clashes(regions, m)].sort((a, b) => a - b), [0, N + 1], "corner to corner is touching");
+  assert.ok(ruledOut(regions, 0).includes(N + 1) && ruledOut(regions, 0).includes(N - 1) && !ruledOut(regions, 0).includes(0));
+});
+
+test("parasols: one answer, pairing, and counts", async () => {
+  const { terraceFor, answers, isSolved, clashes, paired, N } = await import("../src/lib/tents.ts");
+  for (const d of ["2026-10-26", "2026-12-25", "2027-03-03"]) {
+    const t = terraceFor(d);
+    assert.equal(answers(t.tables, t.rows, t.cols).length, 1, d);
+    assert.equal(t.tables.length, t.parasols.length);
+    const marks = Array(N * N).fill(0); t.parasols.forEach((p) => { marks[p] = 2; });
+    assert.ok(isSolved(t, marks), d);
+    marks[t.parasols[0]] = 0;
+    assert.ok(!isSolved(t, marks), "one short");
+  }
+  // Two parasols both only next to the one table can't both be paired
+  assert.equal(paired([9], [1, 8]), false);
+  assert.equal(paired([9, 20], [1, 21]), true);
+  const m = Array(N * N).fill(0); m[1] = 2; m[N + 2] = 2;
+  assert.equal(clashes([0], m).size, 2, "touching corners, and one with no table");
+});
+
+test("tip jar: one answer, and jars that miss their target", async () => {
+  const { jarFor, answers, isSolved, clashes, makes, label, N } = await import("../src/lib/kenken.ts");
+  for (const d of ["2026-10-26", "2026-11-11", "2027-01-30"]) {
+    const { cages, solution } = jarFor(d);
+    assert.equal(answers(cages).length, 1, d);
+    assert.ok(isSolved(cages, solution));
+    assert.equal(cages.flatMap((c) => c.cells).length, N * N, "every square in exactly one jar");
+    assert.ok(cages.every((c) => (c.op === "−" || c.op === "÷" ? c.cells.length === 2 : true)));
+  }
+  assert.ok(makes("÷", 2, [2, 4]) && makes("−", 3, [1, 4]) && makes("×", 24, [2, 3, 4]) && !makes("+", 7, [3, 3]));
+  assert.equal(label({ cells: [0], op: "=", target: 4 }), "4");
+  const { cages, solution } = jarFor("2026-10-26");
+  const g = [...solution]; [g[0], g[1]] = [g[1], g[0]];
+  assert.ok(clashes(cages, g).size > 0, "a swap breaks the columns");
+});
+
+test("five in a row: wins, blocks, and hard beats easy", async () => {
+  const { empty, play, winLine, bestMove, candidates, N } = await import("../src/lib/gomoku.ts");
+  let b = empty();
+  for (const c of [0, 1, 2, 3]) b = play(b, 5 * N + c, 0)!;
+  assert.equal(winLine(b, 5 * N + 3), null);
+  b = play(b, 5 * N + 4, 0)!;
+  assert.deepEqual(winLine(b, 5 * N + 4), [0, 1, 2, 3, 4].map((c) => 5 * N + c));
+  // Hard blocks four in a row; anyone takes their own win
+  let t = empty();
+  for (const r of [2, 3, 4, 5]) t = play(t, r * N + 6, 0)!;
+  t = play(t, 2 * N + 6 - N, 1)!; // above is taken, so it must block below
+  assert.equal(bestMove(t, 1, "hard"), 6 * N + 6);
+  let w = empty();
+  for (const c of [3, 4, 5, 6]) w = play(w, 9 * N + c, 1)!;
+  w = play(w, 0, 0)!;
+  assert.ok([9 * N + 2, 9 * N + 7].includes(bestMove(w, 1, "easy")));
+  assert.deepEqual(candidates(empty()), [Math.floor(N / 2) * N + Math.floor(N / 2)]);
+  let hardWins = 0;
+  for (let g = 0; g < 12; g++) {
+    let bd = empty(), side: 0 | 1 = 0, seed = g * 7 + 1;
+    const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (;;) {
+      const m = bestMove(bd, side, side === 0 ? "easy" : "hard", rand);
+      bd = play(bd, m, side)!;
+      if (winLine(bd, m)) { if (side === 1) hardWins++; break; }
+      if (bd.every((x) => x !== null)) break;
+      side = (1 - side) as 0 | 1;
+    }
+  }
+  assert.ok(hardWins >= 9, `hard won ${hardWins} of 12 going second`);
+});
+
+test("barista's echo and bean breaker", async () => {
+  const { grow, check, beatMs, PADS } = await import("../src/lib/echo.ts");
+  const s = grow(grow([], () => 0.1), () => 0.9);
+  assert.deepEqual(s, [0, 3]);
+  assert.equal(check(s, [0]), "going"); assert.equal(check(s, [0, 3]), "round"); assert.equal(check(s, [1]), "wrong");
+  assert.ok(beatMs(1) > beatMs(15) && beatMs(100) >= 260);
+  assert.equal(PADS.length, 4);
+  const B = await import("../src/lib/breaker.ts");
+  let g = B.newGame();
+  assert.ok(g.stuck && g.lives === B.LIVES && g.bricks.length > 0);
+  assert.equal(B.step(g, 0.1), g, "nothing moves before launch");
+  g = B.launch(g, () => 0.5);
+  assert.ok(g.balls[0].vy < 0 && Math.abs(g.balls[0].vx) < 1e-9, "straight up");
+  const before = g.bricks.length;
+  for (let i = 0; i < 120 && g.bricks.length === before; i++) g = B.step(g, 1 / 60, () => 0.5);
+  assert.ok(g.bricks.length < before && g.score > 0 && g.score % 10 === 0, "knocked a cube out");
+  // Miss with every life and it's over
+  let m = B.launch(B.newGame(), () => 0.5);
+  m = B.movePad(m, 5);
+  for (let i = 0; i < 60 * 120 && !m.over; i++) { m = B.step(m, 1 / 60, () => 0.5); if (m.stuck) m = B.movePad(B.launch(m, () => 0.95), 5); }
+  assert.ok(m.over && m.lives === 0);
+  assert.ok(B.movePad(B.newGame(), -50).pad >= B.PAD_W / 2, "saucer stays on the table");
+  assert.ok(B.wall(3).some((b) => b.hp === 2) && !B.wall(1).some((b) => b.hp === 2));
+  const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
+  assert.equal(TROPHIES.length, 50);
+  assert.equal(new Set(TROPHIES.map((t) => t.name)).size, 50, "no two trophies share a name");
+  const got = earned({ played: {}, five: [], arcade: { echo: 12, breaker: 1990 }, local: { gomoku: { easy: { won: 1 } }, flags: ["table-no-hints"] } });
+  for (const id of ["echo", "gomoku", "table"]) assert.ok(got.includes(id), id);
+  for (const id of ["breaker", "gomokuHard", "tipjar", "parasols"]) assert.ok(!got.includes(id), id);
 });

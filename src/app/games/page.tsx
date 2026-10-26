@@ -90,6 +90,9 @@ export default function Games() {
         <li><Link href="/draughts">⚪ Café draughts</Link><span className="tiny muted"> · checkers against the computer</span></li>
         <li><Link href="/sugar-cubes">🧊 Sugar cubes</Link><span className="tiny muted"> · dots and boxes against the computer</span></li>
         <li><Link href="/cafe-dice">🎲 Café dice</Link><span className="tiny muted"> · five dice, thirteen turns, a weekly board</span></li>
+        <li><Link href="/five-in-a-row">⭕ Five in a row</Link><span className="tiny muted"> · gomoku against the computer</span></li>
+        <li><Link href="/baristas-echo">🔔 Barista&apos;s echo</Link><span className="tiny muted"> · repeat the café&apos;s sounds, a weekly board</span></li>
+        <li><Link href="/bean-breaker">🧱 Bean breaker</Link><span className="tiny muted"> · knock out the sugar cube wall, a weekly board</span></li>
         <li><Link href="/tray-pusher">☕ Tray pusher</Link><span className="tiny muted"> · push the cups onto the saucers, 20 levels</span></li>
         <li><Link href="/delivery-jam">🚐 Delivery jam</Link><span className="tiny muted"> · get the cake van out of the yard, 20 levels</span></li>
         <li><Link href="/connect-four">🔴 Guests vs the barista</Link><span className="tiny muted"> · vote on the café&apos;s Connect Four</span></li>
