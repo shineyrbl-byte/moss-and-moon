@@ -5,14 +5,14 @@ import { gameSettings } from "@/lib/gameSettings";
 const columns = (grid: Element) => Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length);
 
 /**
- * Keyboard and screen-reader help for every puzzle grid (anything with role="grid"), mounted once for the whole site:
+ * Keyboard and screen-reader help for every puzzle grid (anything with role="group" data-grid=""), mounted once for the whole site:
  * - arrow keys move between squares, Home/End jump to the row's ends (grids with data-own-keys handle keys themselves)
  * - with screen-reader mode on, a grid is a single Tab stop: Tab leaves it instead of visiting every square
  */
 export default function GridKeys() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null, grid = el?.closest?.("[role=grid]");
+      const el = e.target as HTMLElement | null, grid = el?.closest?.("[role=grid], [data-grid]");
       if (!el || !grid || grid.hasAttribute("data-own-keys") || e.metaKey || e.ctrlKey || e.altKey) return;
       const cells = [...grid.querySelectorAll<HTMLElement>("button, [role=gridcell][tabindex]")];
       const i = cells.indexOf(el);

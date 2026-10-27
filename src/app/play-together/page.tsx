@@ -177,7 +177,7 @@ export default function PlayTogether() {
     };
     board = (
       <>
-        <div className="cc-board" role="grid" aria-label="Chess board">
+        <div className="cc-board" role="group" data-grid="" aria-label="Chess board">
           {order.map((i) => { const p = st.s.b[i], dark = (Math.floor(i / 8) + (i % 8)) % 2 === 1, last = st.last && (st.last.from === i || st.last.to === i); return (
             <button key={i} className={`cc-sq ${dark ? "dark" : "light"} ${sel === i ? "sel" : ""} ${targets.has(i) ? (p ? "hit" : "dot") : ""} ${last ? "last" : ""}`} onClick={() => tap(i)} aria-label={`${C.name(i)}${p ? `: ${C.colorOf(p) === "w" ? "white" : "black"} piece` : ""}`}>
               {p && <span className={`cc-piece ${C.colorOf(p)}`} aria-hidden="true">{GLYPH[p.toUpperCase()]}</span>}
@@ -197,7 +197,7 @@ export default function PlayTogether() {
       if (b) void send({ seat: seat === 0 ? 1 : 0, b, last: i, line: G.winLine(b, i) });
     };
     board = (
-      <div className="fr-board" style={{ ["--n" as string]: G.N }} role="grid" aria-label="Tablecloth">
+      <div className="fr-board" style={{ ["--n" as string]: G.N }} role="group" data-grid="" aria-label="Tablecloth">
         {st.b.map((x, i) => <button key={i} className={`fr-cell ${win.has(i) ? "win" : ""} ${st.last === i ? "last" : ""}`} onClick={() => tap(i)} aria-label={`Square ${i + 1}: ${x === null ? "empty" : `${nameOf(x)}'s cup`}`}>{x !== null && <i className={`fr-cup ${x ? "them" : "you"}`} aria-hidden="true" />}</button>)}
       </div>
     );

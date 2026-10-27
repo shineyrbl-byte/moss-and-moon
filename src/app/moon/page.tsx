@@ -28,11 +28,11 @@ export default function MoonCalendar() {
         <h2 className="h3" style={{ margin: 0 }}>{monthLabel(month)}</h2>
         <button className="chip" onClick={() => setMonth(shiftMonth(month, 1))} aria-label="Next month">→</button>
       </div>
-      <div className="moon-grid" role="grid" aria-label={`Moon phases in ${monthLabel(month)}`}>
-        {WEEKDAYS.map((d) => <span key={d} className="moon-wd" role="columnheader">{d}</span>)}
+      <div className="moon-grid" role="group" data-grid="" aria-label={`Moon phases in ${monthLabel(month)}`}>
+        {WEEKDAYS.map((d) => <span key={d} className="moon-wd" aria-hidden="true">{d}</span>)}
         {Array.from({ length: lead }, (_, i) => <span key={`x${i}`} aria-hidden="true" />)}
         {nights.map((n) => (
-          <span key={n.date} role="gridcell" className={`moon-day ${n.date === today ? "today" : ""} ${n.cortado ? "cortado" : ""} ${n.phase === "full" ? "full" : ""}`} aria-label={`${n.date.slice(8)}: ${PHASE_LABEL[n.phase]}${n.cortado ? ", Full Moon Cortado night" : ""}`}>
+          <span key={n.date} role="img" className={`moon-day ${n.date === today ? "today" : ""} ${n.cortado ? "cortado" : ""} ${n.phase === "full" ? "full" : ""}`} aria-label={`${n.date.slice(8)}: ${PHASE_LABEL[n.phase]}${n.cortado ? ", Full Moon Cortado night" : ""}`}>
             <span className="moon-num">{Number(n.date.slice(8))}</span>
             <span className="moon-ic" aria-hidden="true">{n.icon}</span>
           </span>

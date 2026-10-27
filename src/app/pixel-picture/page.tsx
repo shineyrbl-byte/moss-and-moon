@@ -109,7 +109,7 @@ export default function PixelPicture() {
         <div className="nono-rows" aria-hidden="true">
           {pic.clues.rows.map((c, i) => <span key={i} className={lineDone(row(i), c) ? "ok" : ""}>{c.join(" ")}</span>)}
         </div>
-        <div className="nono-grid" role="grid" aria-label={`Pixel picture, ${n} by ${n}`} onPointerMove={move}>
+        <div className="nono-grid" role="group" data-grid="" aria-label={`Pixel picture, ${n} by ${n}`} onPointerMove={move}>
           {cells.map((v, p) => (
             <button key={p} data-p={p} className={`nono-cell ${v === 1 ? "on" : v === 2 ? "x" : ""} ${p % n === 4 && n === 10 ? "edge-r" : ""} ${Math.floor(p / n) === 4 && n === 10 ? "edge-b" : ""}`}
               onPointerDown={(e) => down(p, e)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set(p, cells[p] === tool ? 0 : tool); } }}

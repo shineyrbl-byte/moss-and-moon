@@ -58,7 +58,7 @@ export default function GardenPlots() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`gp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Garden">
+      <div className={`gp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Garden">
         {clues.map((v, i) => (
           <button key={i} className={`gp-cell ${v ? "clue" : marks[i] === 1 ? "path" : marks[i] === 2 ? "bed" : ""} ${bad.has(i) ? "bad" : ""} ${hinted === i ? "hint" : ""}`} onClick={() => tap(i)} disabled={done || !!v}
             aria-label={`Row ${Math.floor(i / N) + 1}, column ${(i % N) + 1}: ${v ? `bed of ${v}` : marks[i] === 1 ? "path" : marks[i] === 2 ? "flower bed" : "empty"}${bad.has(i) ? ", breaks a rule" : ""}`}>

@@ -7,7 +7,7 @@ import { hourText } from "@/lib/cafe";
 import { isLastHour, lastHourLabel } from "@/lib/cafe";
 import { useStore } from "./Store";
 import { fill } from "@/lib/i18n";
-import { weatherPicks, type Weather } from "@/lib/weatherPicks";
+import { timePicks, weatherPicks, type Weather } from "@/lib/weatherPicks";
 import Reveal from "./Reveal";
 import UsualCard from "./Usual";
 import VoiceOrder from "./VoiceOrder";
@@ -17,6 +17,8 @@ export default function Menu() {
   const { menu, setCustomizing, add, toast, soldOut, favs, toggleFav, t, branch, lang } = useStore();
   // What suits the weather outside (hidden if the weather service is off or down)
   const [weather, setWeather] = useState<Weather | null>(null);
+  const [hour, setHour] = useState<number | null>(null); // the guest's own clock, so it's set after the page loads
+  useEffect(() => { setHour(new Date().getHours()); }, []);
   useEffect(() => { fetch("/api/weather").then((r) => r.json()).then((w) => !w.off && typeof w.temp === "number" && setWeather(w)).catch(() => {}); }, []);
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [happy, setHappy] = useState(false);
@@ -136,9 +138,11 @@ export default function Menu() {
         );
         const here = (m: (typeof menu)[number]) => !m.branches?.length || m.branches.includes(branch);
         const wx = weather ? weatherPicks(weather, menu.filter(here)) : null;
+        const tx = hour !== null ? timePicks(hour, menu.filter(here), wx && wx.items.length >= 2 ? wx.items.map((m) => m.id) : []) : null;
         return (
           <>
             {wx && wx.items.length >= 2 && strip(fill(t(`weather.${wx.mood}`), { temp: weather!.temp }), wx.items)}
+            {tx && tx.items.length >= 2 && strip(t(`time.${tx.slot}`), tx.items)}
             {strip(t("menu.staffPicks"), menu.filter((m) => m.staffPick && here(m)))}
             {strip(t("menu.newThisMonth"), menu.filter((m) => m.badge === "new" && !m.staffPick && here(m)).reverse())} {/* newest additions first */}
           </>

@@ -57,9 +57,9 @@ export default function WindowSeats() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>💡 <b>{lit.size}</b>/{open} lit</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`ws-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Café floor">
+      <div className={`ws-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Café floor">
         {walls.map((w, i) => w !== null ? (
-          <span key={i} className={`ws-wall ${bad.walls.has(i) ? "bad" : ""}`} aria-label={w >= 0 ? `Wall, needs ${w} lamp${w === 1 ? "" : "s"}` : "Wall"}>{w >= 0 ? w : ""}</span>
+          <span key={i} className={`ws-wall ${bad.walls.has(i) ? "bad" : ""}`} role="img" aria-label={w >= 0 ? `Wall, needs ${w} lamp${w === 1 ? "" : "s"}` : "Wall"}>{w >= 0 ? w : ""}</span>
         ) : (
           <button key={i} className={`ws-cell ${lit.has(i) ? "lit" : ""} ${bad.lamps.has(i) ? "bad" : ""} ${hinted === i ? "hint" : ""}`} onClick={() => tap(i)} disabled={done}
             aria-label={`Row ${Math.floor(i / N) + 1}, column ${(i % N) + 1}: ${marks[i] === 2 ? "lamp" : marks[i] === 1 ? "crossed off" : "empty"}${lit.has(i) ? ", lit" : ""}`}>

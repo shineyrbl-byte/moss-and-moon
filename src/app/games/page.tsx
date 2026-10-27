@@ -16,7 +16,7 @@ import { huntFor } from "@/lib/puzzleHunt";
 import { ANY_TIME, DAILY_KIND, FAVS_KEY, KIND_LABEL, matches, toggleFav, type Filter, type Kind } from "@/lib/gameCatalog";
 
 type G = { id: string; title: string; emoji: string; href: string; blurb: string; done: boolean; streak: number };
-type S = { date: string; games: G[]; done: number; allStreak: number; five: { ids: string[]; done: number; streak: number } };
+type S = { date: string; games: G[]; done: number; allStreak: number; five: { ids: string[]; done: number; streak: number }; hidden?: string[] };
 type AR = { week: string; top: { name: string; games: number }[]; joined: string | null; mine: number; rank: number | null };
 
 export default function Games() {
@@ -70,9 +70,9 @@ export default function Games() {
   if (!s) return <div className="page"><p className="muted">Setting out the games…</p></div>;
   const pct = Math.round((s.done / s.games.length) * 100);
   const tagged = s.games.map((g) => ({ ...g, ...(DAILY_KIND[g.id] ?? { kind: "logic" as Kind, quick: false }) }));
-  const daily = tagged.filter((g) => matches(g, f)), anyTime = ANY_TIME.filter((g) => matches(g, f));
+  const daily = tagged.filter((g) => matches(g, f)), anyTime = ANY_TIME.filter((g) => !s.hidden?.includes(g.id) && matches(g, f));
   const filtering = !!f.q.trim() || f.kind !== "all" || f.quick;
-  const favs = [...tagged, ...ANY_TIME].filter((g) => f.favs.includes(g.id));
+  const favs = [...tagged, ...ANY_TIME.filter((g) => !s.hidden?.includes(g.id))].filter((g) => f.favs.includes(g.id));
   const Star = ({ id, title }: { id: string; title: string }) => (
     <button type="button" className={`games-star ${f.favs.includes(id) ? "on" : ""}`} onClick={() => star(id, title)} aria-pressed={f.favs.includes(id)} aria-label={`${f.favs.includes(id) ? "Remove" : "Add"} ${title} ${f.favs.includes(id) ? "from" : "to"} favourites`}>{f.favs.includes(id) ? "★" : "☆"}</button>
   );
@@ -174,7 +174,7 @@ export default function Games() {
           </li>
         ))}
       </ul>
-      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />Want more? <Link href="/practice">🎲 Practice puzzles, as many as you like →</Link><br />Past champions: <Link href="/hall-of-fame">👑 Hall of fame →</Link><br />New to logic puzzles? <Link href="/learn">🎓 Learn to play →</Link><br />Make your own: <Link href="/puzzle-maker">✏️ Puzzle maker →</Link> · Your last twelve months: <Link href="/year-in-games">🎮 Year in games →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration, colour-blind patterns and a daily reminder: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/weekly-crossword">🗞️ Weekly crossword</Link> · <Link href="/play-together">🎮 Play a friend live</Link> · <Link href="/tournament">🏆 Mini tournaments</Link> · <Link href="/daily-duel">⚔️ Daily duel</Link> · <Link href="/clubs">👥 Café clubs</Link> · <Link href="/slow-games">🐢 Slow games</Link><br />Seasons and events: <Link href="/season-pack">🪔 Season packs</Link> · <Link href="/advent-puzzles">🎄 Advent picture</Link> · <Link href="/puzzle-hunt">🗝️ Weekend puzzle hunt</Link></p>
+      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />Want more? <Link href="/practice">🎲 Practice puzzles, as many as you like →</Link><br />Past champions: <Link href="/hall-of-fame">👑 Hall of fame →</Link><br />New to logic puzzles? <Link href="/learn">🎓 Learn to play →</Link><br />Make your own: <Link href="/puzzle-maker">✏️ Puzzle maker →</Link> · Your last twelve months: <Link href="/year-in-games">🎮 Year in games →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration, colour-blind patterns and a daily reminder: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/weekly-crossword">🗞️ Weekly crossword</Link> · <Link href="/play-together">🎮 Play a friend live</Link> · <Link href="/tournament">🏆 Mini tournaments</Link> · <Link href="/daily-duel">⚔️ Daily duel</Link> · <Link href="/clubs">👥 Café clubs</Link> · <Link href="/slow-games">🐢 Slow games</Link><br />What&apos;s been added lately: <Link href="/whats-new">✨ What&apos;s new</Link><br />Seasons and events: <Link href="/season-pack">🪔 Season packs</Link> · <Link href="/advent-puzzles">🎄 Advent picture</Link> · <Link href="/puzzle-hunt">🗝️ Weekend puzzle hunt</Link></p>
       {anyTime.length > 0 && <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>}
       <ul className="games-more">
         {anyTime.map((g) => (

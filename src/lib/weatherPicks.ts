@@ -26,3 +26,19 @@ export function weatherPicks<T extends Dish>(w: Weather, menu: T[], n = 4): { mo
   const byId = new Map(menu.filter((m) => !m.soldOut && !m.hidden).map((m) => [m.id, m]));
   return { mood, items: PICKS[mood].map((id) => byId.get(id)).filter((m): m is T => !!m).slice(0, n) };
 }
+
+// What suits the time of day: breakfast, lunch, an afternoon pick-me-up, or something gentle in the evening
+export type Slot = "morning" | "lunch" | "afternoon" | "evening";
+export const slotFor = (hour: number): Slot => (hour < 11 ? "morning" : hour < 15 ? "lunch" : hour < 19 ? "afternoon" : "evening");
+const BY_TIME: Record<Slot, string[]> = {
+  morning: ["akuri-toast", "filter-kaapi", "croissant", "egg-toast", "pancakes", "idli", "flat-white", "overnight-oats", "granola-bowl"],
+  lunch: ["buddha-bowl", "club-sandwich", "pesto-pasta", "paneer-wrap", "xacuti-pie", "mezze-bowl", "lemon-iced-tea", "fresh-orange"],
+  afternoon: ["cold-brew", "chai", "samosa-plate", "banana-bread", "iced-brown-sugar", "cookie", "masala-bhutta", "dalgona"],
+  evening: ["chamomile", "turmeric-latte", "hot-chocolate", "tiramisu", "bebinca", "serradura", "affogato", "rose-kulfi"],
+};
+/** Up to `n` dishes on today's menu for this hour, leaving out any already shown */
+export function timePicks<T extends Dish>(hour: number, menu: T[], skip: string[] = [], n = 4): { slot: Slot; items: T[] } {
+  const slot = slotFor(hour);
+  const byId = new Map(menu.filter((m) => !m.soldOut && !m.hidden && !skip.includes(m.id)).map((m) => [m.id, m]));
+  return { slot, items: BY_TIME[slot].map((id) => byId.get(id)).filter((m): m is T => !!m).slice(0, n) };
+}

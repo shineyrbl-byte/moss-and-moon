@@ -7,7 +7,7 @@ import type { MenuItem } from "@/lib/menu";
 import { MOONS_KEY, allFound } from "@/lib/secret";
 import { lineKey, type CartLine, type Options } from "@/lib/pricing";
 import { TABLE_COUNT, activeBranches, applyConfig, type CafeConfig } from "@/lib/cafe";
-import { DICT, type Lang, type TKey } from "@/lib/i18n";
+import { label, loadLang, type Lang, type TKey } from "@/lib/i18n";
 
 export type Me = {
   name: string | null; email: string; phone: string | null; birthday: string | null; favs: string[]; referralCode: string; credit: number;
@@ -186,18 +186,15 @@ export function StoreProvider({ children, initialMenu, config }: { children: Rea
   useEffect(() => {
     try {
       const l = localStorage.getItem("mm-lang");
-      if (l === "hi" || l === "mr" || l === "kok") {
-        setLangState(l);
-        document.documentElement.lang = l;
-      }
+      if (l === "hi" || l === "mr" || l === "kok") loadLang(l).then(() => { setLangState(l); document.documentElement.lang = l; }).catch(() => {});
     } catch {}
   }, []);
+  // The labels load first, so the page switches language in one go
   const setLang = useCallback((l: Lang) => {
-    setLangState(l);
-    document.documentElement.lang = l;
     try { localStorage.setItem("mm-lang", l); } catch {}
+    loadLang(l).then(() => { setLangState(l); document.documentElement.lang = l; }).catch(() => {});
   }, []);
-  const t = useCallback((k: TKey) => DICT[lang][k] ?? DICT.en[k], [lang]);
+  const t = useCallback((k: TKey) => label(lang, k), [lang]);
 
   // Signed-in guest: load their profile and merge favourites from all their devices
   const refreshMe = useCallback(async () => {

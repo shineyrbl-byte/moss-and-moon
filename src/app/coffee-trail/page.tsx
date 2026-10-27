@@ -73,7 +73,7 @@ export default function CoffeeTrail() {
         <span><b>{placed}</b>/{LAST}</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span>
       </div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`ct-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Coffee trail">
+      <div className={`ct-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Coffee trail">
         {all.map((v, i) => {
           const canGo = !done && !v && curAt >= 0 && touches(curAt, i) && next <= LAST && !given.includes(next);
           return (

@@ -97,8 +97,8 @@ export default function CafeDominoes() {
         <span className="small muted">to {TARGET} · boneyard {r.boneyard.length}</span>
         <span className={r.turn === 1 && r.winner === null ? "on" : ""}><b>{match[1]}</b> Computer</span>
       </div>
-      <div className="dm-hand them" aria-label={`The computer has ${r.hands[1].length} tiles`}>{r.hands[1].map((t, k) => <Domino key={k} t={t} down={r.winner === null} vertical />)}</div>
-      <div className="dm-line" aria-label={r.line.length ? `The line: ${r.line.map((t) => `${t[0]}-${t[1]}`).join(", ")}. Ends ${e![0]} and ${e![1]}` : "The line is empty"}>
+      <div className="dm-hand them" role="img" aria-label={`The computer has ${r.hands[1].length} tiles`}>{r.hands[1].map((t, k) => <Domino key={k} t={t} down={r.winner === null} vertical />)}</div>
+      <div className="dm-line" role="group" aria-label={r.line.length ? `The line: ${r.line.map((t) => `${t[0]}-${t[1]}`).join(", ")}. Ends ${e![0]} and ${e![1]}` : "The line is empty"}>
         {pick && <button className="btn btn-pink btn-sm" onClick={() => { setR(play(r, pick, "left")!); setPick(null); }}>◀ Here ({e![0]})</button>}
         {r.line.map((t, k) => <span key={k} className={r.last && same(r.last.tile, t) && k === (r.last.end === "left" ? 0 : r.line.length - 1) ? "dm-new" : ""}><Domino t={t} vertical={t[0] === t[1]} /></span>)}
         {!r.line.length && <span className="small muted">The table&apos;s empty</span>}

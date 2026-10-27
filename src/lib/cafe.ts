@@ -1,5 +1,5 @@
 // Opening hours, table booking slots, loyalty rules and events.
-import { DICT, fill, type Lang, type TKey } from "./i18n.ts";
+import { fill, label, type Lang, type TKey } from "./i18n.ts";
 
 /** [open hour, close hour], or null for a day the café is closed */
 export type DayHours = [number, number] | null;
@@ -129,7 +129,7 @@ export function slotsFor(dateStr: string, branch?: string | null): string[] {
 }
 
 export function openStatus(now = new Date(), branch?: string | null, lang: Lang = "en") {
-  const say = (k: TKey, v: Record<string, string> = {}) => fill(DICT[lang][k] ?? DICT.en[k], v);
+  const say = (k: TKey, v: Record<string, string> = {}) => fill(label(lang, k), v);
   const closure = closureOn(now);
   const today = hoursOn(now, branch);
   const nextOpen = () => {

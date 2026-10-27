@@ -85,7 +85,7 @@ export default function BeanSweeper() {
           <button className={`chip ${flagMode ? "on" : ""}`} aria-pressed={flagMode} onClick={() => setFlagMode(true)}>🚩 Flag</button>
         </div>
       )}
-      <div className={`bs-grid ${over ? "over" : ""}`} style={{ gridTemplateColumns: `repeat(${w}, 1fr)` }} role="grid" aria-label={`Bean sweeper, ${w} by ${h}`}>
+      <div className={`bs-grid ${over ? "over" : ""}`} style={{ gridTemplateColumns: `repeat(${w}, 1fr)` }} role="group" data-grid="" aria-label={`Bean sweeper, ${w} by ${h}`}>
         {[...Array(w * h).keys()].map((p) => {
           const isOpen = open.has(p), bean = !!beans?.has(p);
           const label = isOpen ? (bean ? "bean" : counts[p] ? `${counts[p]}` : "clear") : flags.has(p) ? "flagged" : "hidden";

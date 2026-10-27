@@ -237,7 +237,7 @@ img { max-width: 100%; display: block; }
 .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
 .opt-group h4 { font-family: var(--font-sans), sans-serif; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 500; }
 .opt-group .chips { justify-content: flex-start; }
-.extra { font-size: 0.75rem; opacity: 0.8; }
+.extra { font-size: 0.75rem; }
 .close-x { position: absolute; top: 0.8rem; right: 0.8rem; z-index: 2; }
 .stepper { display: inline-flex; align-items: center; gap: 0.6rem; }
 .stepper button { width: 2rem; height: 2rem; border-radius: 50%; border: 1.5px solid var(--line); background: transparent; }
@@ -1510,8 +1510,9 @@ button.pc-slot { cursor: pointer; }
 .five { margin: 1rem 0 0; }
 /* Trophy shelf */
 .trophy-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.6rem; }
-.trophy { display: grid; justify-items: center; text-align: center; gap: 0.25rem; padding: 0.9rem 0.6rem; opacity: 0.6; }
-.trophy.has { opacity: 1; border-color: var(--caramel); }
+.trophy { display: grid; justify-items: center; text-align: center; gap: 0.25rem; padding: 0.9rem 0.6rem; border-style: dashed; }
+.trophy:not(.has) .trophy-emoji { opacity: 0.55; }
+.trophy.has { border-style: solid; border-color: var(--caramel); }
 /* Bean jumble */
 .jb-steps { list-style: none; display: flex; justify-content: center; gap: 0.4rem; padding: 0; margin: 0.6rem 0; }
 /* Bean counting */
@@ -1758,7 +1759,7 @@ button.pc-slot { cursor: pointer; }
 .share-result { flex-wrap: wrap; }
 .challenge-result { flex-basis: 100%; text-align: center; }
 /* Screen-reader help (game settings): clear focus rings on puzzle squares, and nothing moving about */
-:root[data-reader="on"] [role="grid"] :focus-visible { outline: 3px solid var(--pink-deep); outline-offset: 2px; z-index: 1; position: relative; }
+:root[data-reader="on"] :is([role="grid"], [data-grid]) :focus-visible { outline: 3px solid var(--pink-deep); outline-offset: 2px; z-index: 1; position: relative; }
 :root[data-reader="on"] *, :root[data-reader="on"] *::before, :root[data-reader="on"] *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 /* Race your ghost (daily puzzles) */
 .ghost-bar { display: grid; gap: 0.15rem; justify-items: center; margin: 0.2rem auto 0.4rem; width: min(100%, 22rem); }
@@ -1774,3 +1775,15 @@ button.pc-slot { cursor: pointer; }
 .hunt-token.found a { color: #3b2720; font-weight: 700; }
 @keyframes hunt-bob { 50% { transform: translateY(-4px) rotate(-8deg); } }
 @media (prefers-reduced-motion: reduce) { .hunt-token { animation: none; } }
+
+/* Board looks (Game settings): each one swaps the colour tokens inside puzzle grids only */
+:root[data-board="contrast"] :is([role="grid"], [data-grid]) { --surface: #ffffff; --text: #000000; --muted: #2b2b2b; --line: #000000; --pink-soft: #ffe14d; --pink: #ffe14d; --pink-deep: #0040a8; --pink-ink: #0040a8; --butter: #ffe14d; --brown-deep: #000000; --surface-2: #e6e6e6; --bg: #ffffff; --brown: #000000; --caramel: #000000; --latte: #f0f0f0; --pink-fill: #0040a8; --on-pink: #ffffff; }
+:root[data-board="garden"] :is([role="grid"], [data-grid]) { --surface: #f4f8ef; --text: #22331f; --muted: #4c5f47; --line: #c9dbbd; --pink-soft: #d9ead0; --pink: #b9d8a8; --pink-deep: #4f7a52; --pink-ink: #3d6340; --butter: #e9efc0; --brown-deep: #2f4a2c; --surface-2: #e3edd8; --bg: #eef4e7; --brown: #4f6b45; --caramel: #6f8f5a; --latte: #dfe8d2; --pink-fill: #4f7a52; --on-pink: #ffffff; }
+:root[data-board="night"] :is([role="grid"], [data-grid]) { --surface: #1f2433; --text: #eef1f8; --muted: #aab3c8; --line: #394159; --pink-soft: #3b3f66; --pink: #6f7fc4; --pink-deep: #9fb4ff; --pink-ink: #9fb4ff; --butter: #e8d48a; --brown-deep: #0d1018; --surface-2: #2c3247; --bg: #171b27; --brown: #7d88a8; --caramel: #9aa6c8; --latte: #2f3650; --pink-fill: #9fb4ff; --on-pink: #141826; }
+
+/* Coming soon countdown on the home page */
+.coming-soon { display: flex; gap: 0.9rem; align-items: center; max-width: 40rem; margin: 1rem auto; padding: 0.8rem 1.1rem; border: 2px dashed var(--pink-deep); border-radius: 18px; background: var(--surface); }
+.coming-soon > span:last-child { display: grid; gap: 0.1rem; }
+.coming-days { display: grid; place-items: center; min-width: 3.6rem; height: 3.6rem; border-radius: 50%; background: var(--pink-fill); color: var(--on-pink); line-height: 1; }
+.coming-days b { font-size: 1.3rem; } .coming-days small { font-size: 0.7rem; }
+@media (max-width: 600px) { .coming-soon { margin: 1rem; } }

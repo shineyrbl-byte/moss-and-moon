@@ -1,5 +1,6 @@
 "use client";
-import { GoaSpotsCard } from "@/components/admin/GamesAdmin";
+import { GamesDashboard, GoaSpotsCard } from "@/components/admin/GamesAdmin";
+import { ComingSoonCard, GameNightCard, GoaEventsCard, RecipeWeekCard } from "@/components/admin/CafeExtrasAdmin";
 import "./page.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MenuEditor from "@/components/admin/MenuEditor";
@@ -554,12 +555,12 @@ export default function AdminPage() {
       )}
       {tab === "Menu" && <><ComebackCard canEdit={me?.role === "owner"} />{me?.role === "owner" && <><MenuTidyCard /><RotationCard /><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
-      {tab === "Games" && me?.role === "owner" && <GoaSpotsCard />}
+      {tab === "Games" && me?.role === "owner" && <><GamesDashboard /><GoaSpotsCard /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Team" && me?.role === "owner" && <><ThanksNotes showEmpty /><TeamProfiles /></>}
       {tab === "Stock" && <><UseByCard />{me?.role === "owner" && <PriceWatch />}<StockTab canEdit={me?.role === "owner"} /></>}
       {tab === "Tables & QR" && <><TableTagsCard canEdit={me?.role === "owner"} /><TablesQR /></>}
-      {tab === "Events" && <><BookClubCard canEdit={me?.role === "owner"} /><EventsTab canEdit={me?.role === "owner"} />{me?.role === "owner" && <><ArtCard /><AdoptCard /></>}</>}
+      {tab === "Events" && <><BookClubCard canEdit={me?.role === "owner"} />{me?.role === "owner" && <GameNightCard />}<EventsTab canEdit={me?.role === "owner"} />{me?.role === "owner" && <><ArtCard /><AdoptCard /></>}</>}
       {tab === "Waste" && <WasteTab />}
       {tab === "Cash-up" && <CashupTab />}
       {tab === "Cakes" && <CakesTab />}
@@ -567,10 +568,10 @@ export default function AdminPage() {
       {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "Companies" && me?.role === "owner" && <CompaniesTab />}
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
-      {tab === "Notices" && <><QuizCard /><ShoutoutsCard /><AskCard /><LostFoundCard /><LatteArtCard me={me ?? null} /><StoryChainCard /><KindNotesCard /><GuestRecipesCard />{me?.role === "owner" && <Connect4Card />}{me?.role === "owner" && <ISpyCard />}<PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
+      {tab === "Notices" && <>{me?.role === "owner" && <><ComingSoonCard /><GoaEventsCard /></>}<QuizCard /><ShoutoutsCard /><AskCard /><LostFoundCard /><LatteArtCard me={me ?? null} /><StoryChainCard /><KindNotesCard /><GuestRecipesCard />{me?.role === "owner" && <Connect4Card />}{me?.role === "owner" && <ISpyCard />}<PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
       {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
-      {tab === "Journal" && me?.role === "owner" && <JournalTab />}
+      {tab === "Journal" && me?.role === "owner" && <><RecipeWeekCard /><JournalTab /></>}
       {tab === "Rota" && <RotaTab canEdit={me?.role === "owner"} />}
       {tab === "Training" && <TrainingTab canEdit={me?.role === "owner"} />}
       {tab === "Health" && me?.role === "owner" && <HealthTab />}

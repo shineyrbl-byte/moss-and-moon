@@ -125,7 +125,7 @@ export default function TableForOne() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>🧑 <b>{seated}</b>/{N} seated</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`tf-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Café floor">
+      <div className={`tf-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Café floor">
         {marks.map((m, i) => (
           <button key={i} className={`tf-cell tf-${SECTION[regions[i]]} ${edge(i)} ${bad.has(i) ? "bad" : ""} ${hinted === i ? "hint" : ""}`} onClick={() => tap(i)} disabled={done}
             aria-label={`Row ${Math.floor(i / N) + 1}, column ${(i % N) + 1}, ${SECTION[regions[i]]} section: ${m === 2 ? "guest" : m === 1 ? "crossed off" : "empty"}${bad.has(i) ? ", breaks a rule" : ""}`}>

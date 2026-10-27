@@ -82,7 +82,7 @@ export default function MenuThreads() {
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Found <b>{st.found.length}</b>/{puzzle.threads.length}</span><span className="mm-clock">⏱ {clock(d.elapsed)}</span></div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <p className="lb-word" aria-live="polite">{live || <span className="muted">{done ? "✓" : " "}</span>}</p>
-      <div className={`mt-grid ${done ? "done" : ""}`} style={{ ["--c" as string]: COLS }} role="grid" aria-label="Letter grid"
+      <div className={`mt-grid ${done ? "done" : ""}`} style={{ ["--c" as string]: COLS }} role="group" data-grid="" aria-label="Letter grid"
         onPointerUp={() => { const go = dragging.current && moved.current && path.length > 1; dragging.current = false; moved.current = false; if (go) send(); }}
         onPointerLeave={() => { dragging.current = false; moved.current = false; }}>
         {puzzle.grid.map((ch, i) => (

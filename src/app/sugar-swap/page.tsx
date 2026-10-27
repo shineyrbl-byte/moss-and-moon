@@ -44,7 +44,7 @@ export default function SugarSwap() {
       <p className="small muted">Swap two neighbouring sweets to make a line of three or more of a kind. Lines clear, everything above drops, and new sweets fall in. Chains score more, and lines of four or five earn a bonus. You have {MOVES} swaps.</p>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Score <b>{s.score}</b></span><span>Swaps <b>{s.moves}</b></span><span>Best <b>{best}</b></span></div>
       <div className="bb-wrap">
-        <div className="sw-grid" style={{ ["--n" as string]: N }} role="grid" aria-label="Sweets">
+        <div className="sw-grid" style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Sweets">
           {s.b.map((v, i) => (
             <button key={i} className={`sw-cell ${sel === i ? "on" : ""}`} aria-label={`Row ${Math.floor(i / N) + 1}, column ${(i % N) + 1}: ${["doughnut", "cupcake", "cookie", "sweet", "chocolate", "croissant"][v]}`} aria-pressed={sel === i}
               onClick={() => { if (swiped.current) { swiped.current = false; return; } tap(i); }}

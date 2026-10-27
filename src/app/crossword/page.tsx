@@ -134,7 +134,7 @@ export default function Crossword() {
           <button className="xw-step" onClick={() => jump(1)} aria-label="Next clue">›</button>
         </div>
       )}
-      <div className={`xw-grid ${doneMs !== null ? "done" : ""}`} role="grid" data-own-keys="" aria-label="Crossword">
+      <div className={`xw-grid ${doneMs !== null ? "done" : ""}`} role="group" data-grid="" data-own-keys="" aria-label="Crossword">
         {solution.map((s, p) => s ? (
           <button key={p} className={`xw-cell ${p === at && doneMs === null ? "at" : current?.cells.includes(p) && doneMs === null ? "line" : ""} ${wrong.has(p) ? "bad" : ""}`} onClick={() => pick(p)}
             aria-label={`Row ${Math.floor(p / N) + 1}, column ${(p % N) + 1}${xw.numbers[p] ? `, ${xw.numbers[p]}` : ""}: ${letters[p] || "empty"}`}>

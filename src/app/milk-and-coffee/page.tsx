@@ -114,7 +114,7 @@ export default function MilkAndCoffee() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{left}</b> to fill</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`mk-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Milk and coffee grid">
+      <div className={`mk-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Milk and coffee grid">
         {cells.map((v, i) => {
           const fixed = puzzle.given[i] !== -1;
           return (

@@ -64,7 +64,7 @@ export default function FourAtOnce() {
           const rows = guesses.slice(0, upto);
           const showCur = at[k] === null && !over;
           return (
-            <div key={k} className={`fa-board ${at[k] !== null ? "solved" : ""}`} aria-label={`Board ${k + 1}${at[k] !== null ? `, solved in ${at[k]}` : ""}`}>
+            <div key={k} className={`fa-board ${at[k] !== null ? "solved" : ""}`} role="group" aria-label={`Board ${k + 1}${at[k] !== null ? `, solved in ${at[k]}` : ""}`}>
               {[...Array(TRIES).keys()].map((r) => {
                 const g = r < rows.length ? rows[r] : r === rows.length && showCur ? cur : "";
                 const marks = r < rows.length ? score(rows[r], w) : null;

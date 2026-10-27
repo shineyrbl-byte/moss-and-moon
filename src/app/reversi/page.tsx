@@ -92,7 +92,7 @@ export default function Reversi() {
         <span className="small muted">{over ? (mine === theirs ? "Draw" : two ? `${mine > theirs ? p1 : p2} wins! 🎉` : mine > theirs ? "You win! 🎉" : "Computer wins") : two ? `${s.turn === 1 ? p1 : p2}'s move` : s.turn === 1 ? "Your move" : "Thinking…"}</span>
         <span className={s.turn === 2 ? "on" : ""}><b>{theirs}</b> {p2} <i className="rv-disc light" /></span>
       </div>
-      <div className="rv-board" role="grid" aria-label="Reversi board">
+      <div className="rv-board" role="group" data-grid="" aria-label="Reversi board">
         {s.board.map((v, i) => {
           const can = moves.includes(i);
           return (

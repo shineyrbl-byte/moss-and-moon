@@ -97,7 +97,7 @@ export default function Draughts() {
         <span className="small muted">{s.result ? (s.result === "drawn" ? "Draw" : two ? `${s.result === "won" ? p1 : p2} wins! 🎉` : s.result === "won" ? "You win! 🎉" : "Computer wins") : s.turn === 1 || two ? `${two ? `${s.turn === 1 ? p1 : p2}: ` : ""}${mustCapture ? "must take" : two ? "your move" : "Your move"}` : "Thinking…"}</span>
         <span className={s.turn === -1 ? "on" : ""}><b>{count(s.board, -1)}</b> {p2} <i className="dr-mini them" /></span>
       </div>
-      <div className="dr-board" role="grid" aria-label="Draughts board">
+      <div className="dr-board" role="group" data-grid="" aria-label="Draughts board">
         {s.board.map((v, i) => {
           const dark = (Math.floor(i / N) + (i % N)) % 2 === 1;
           const movable = mine.some((m) => m.from === i);

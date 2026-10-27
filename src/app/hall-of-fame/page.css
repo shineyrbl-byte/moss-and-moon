@@ -8,5 +8,5 @@
 .hof-when { color: var(--muted); font-size: 0.8rem; }
 .hof-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hof-list b { font-variant-numeric: tabular-nums; text-align: right; }
-.hof-empty { opacity: 0.6; }
+.hof-empty { font-style: italic; }
 .hof-empty .muted { grid-column: span 2; font-size: 0.8rem; }

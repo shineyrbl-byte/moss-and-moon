@@ -162,7 +162,7 @@ export function LiveLetters({ st, me, names, act }: { st: LetView; me: number | 
   return (
     <>
       <Status text={g.over ? `${g.scores[0] === g.scores[1] ? "A draw" : `${names[g.scores[0] > g.scores[1] ? 0 : 1]} wins`}, ${g.scores[0]}–${g.scores[1]}` : mine ? "Your turn" : `${names[g.turn] ? `${names[g.turn]}'s` : "Their"} turn…`} sub={`${names[0]} ${g.scores[0]} · ${names[1] ?? "?"} ${g.scores[1]} · ${g.bag.length} in the bag`} />
-      <div className="cl-board" role="grid" aria-label="Board">
+      <div className="cl-board" role="group" data-grid="" aria-label="Board">
         {g.board.map((l, i) => { const p = placed.find((x) => x.at === i), letter = l || (p ? rack[p.k] : ""), pr = CL.PREMIUM[i]; return (
           <button key={i} className={`cl-sq ${pr ?? ""} ${letter ? "tile" : ""} ${p ? "new" : ""}`} onClick={() => tap(i)} disabled={!mine} aria-label={letter ? letter.toUpperCase() : "empty"}>
             {letter ? <><span className="cl-l">{letter.toUpperCase()}</span><span className="cl-v">{CL.VALUE[letter]}</span></> : i === CL.CENTRE ? "★" : pr ? <span className="cl-p">{({ dl: "2L", tl: "3L", dw: "2W", tw: "3W" } as Record<string, string>)[pr]}</span> : null}

@@ -117,7 +117,7 @@ export default function WordSearch() {
         <span className="memory-stats"><span className="mm-clock">⏱ {clock(elapsed)}</span></span>
       </div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div ref={gridRef} className={`ws-grid ${doneMs !== null ? "done" : ""}`} style={{ gridTemplateColumns: `repeat(${SIZE}, 1fr)` }} onPointerMove={move} onPointerUp={up} onPointerLeave={() => { if (dragging.current) up(); }} role="grid" aria-label="Word search letters">
+      <div ref={gridRef} className={`ws-grid ${doneMs !== null ? "done" : ""}`} style={{ gridTemplateColumns: `repeat(${SIZE}, 1fr)` }} onPointerMove={move} onPointerUp={up} onPointerLeave={() => { if (dragging.current) up(); }} role="group" data-grid="" aria-label="Word search letters">
         {puzzle.grid.map((l, i) => {
           const f = foundCells.get(i);
           return (

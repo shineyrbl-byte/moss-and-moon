@@ -1,6 +1,6 @@
 // Mini crossword: a daily 5×5. Pure, so the page and tests share it.
 // Grids are written row by row ("#" = black square); the numbering and answers are worked out from them.
-import { seededRand } from "./gameOrders.ts";
+import { rotationPick } from "./gameOrders.ts";
 
 export const XW_SIZE = 5;
 export const minMs = 15000;
@@ -44,7 +44,7 @@ export function entriesOf(rows: string[], clues: Record<string, string>) {
 
 /** Today's grid: the same for everyone on a day */
 export function crosswordFor(date: string) {
-  const x = CROSSWORDS[Math.floor(seededRand(`crossword:${date}`)() * CROSSWORDS.length)];
+  const x = rotationPick(CROSSWORDS, "crossword", date);
   return { rows: x.rows, ...entriesOf(x.rows, x.clues) };
 }
 /** The solution as one string per square ("" for black) */

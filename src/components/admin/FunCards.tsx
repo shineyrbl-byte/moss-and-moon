@@ -9,9 +9,17 @@ export function LatteArtCard({ me }: { me: { id: number; role: string } | null }
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
   const [busy, setBusy] = useState(false);
-  const load = () => fetch("/api/latte-art").then((r) => r.json()).then(setW).catch(() => {});
+  const [pending, setPending] = useState<{ id: number; name: string; img: string; caption: string }[]>([]);
+  const load = () => {
+    fetch("/api/latte-art").then((r) => r.json()).then(setW).catch(() => {});
+    fetch("/api/latte-art?pending=1").then((r) => (r.ok ? r.json() : null)).then((d) => d && setPending(d.pending)).catch(() => {});
+  };
   useEffect(() => { load(); }, []);
   if (!w) return null;
+  async function review(id: number, approve: boolean) {
+    await fetch("/api/latte-art", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, approve }) });
+    toast(approve ? "It's in this week's vote ☕" : "Turned down, and the photo is deleted"); load();
+  }
   async function post(e: React.FormEvent) {
     e.preventDefault();
     if (!file) return toast("Choose a photo first.");
@@ -37,6 +45,21 @@ export function LatteArtCard({ me }: { me: { id: number; role: string } | null }
         <label className="field small" style={{ maxWidth: "14rem" }}>Caption <span className="muted">· optional</span><input className="input" maxLength={60} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Swan on oat milk" /></label>
         <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} disabled={busy}>{busy ? "Uploading…" : "Post it"}</button>
       </form>
+      {pending.length > 0 && (
+        <>
+          <p className="small" style={{ margin: "0.6rem 0 0.2rem" }}><b>Guests&apos; pours waiting for a look ({pending.length})</b></p>
+          <ul className="check-list">
+            {pending.map((a) => (
+              <li key={a.id}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={a.img} alt="" className="latte-thumb" />
+                <span style={{ flex: 1 }} className="small"><b>{a.name}</b> (guest){a.caption && <span className="muted"> · {a.caption}</span>}</span>
+                <button className="chip" onClick={() => review(a.id, true)}>Approve</button> <button className="chip" onClick={() => review(a.id, false)}>Turn down</button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       {w.entries.length > 0 && (
         <ul className="check-list">
           {w.entries.map((a) => (

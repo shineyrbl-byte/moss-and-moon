@@ -60,7 +60,7 @@ export default function Stories() {
             </span>
           </li>
         ))}
-        {list?.length === 0 && <p className="muted">No stories yet. Six words. Go.</p>}
+        {list?.length === 0 && <li className="muted" style={{ listStyle: "none" }}>No stories yet. Six words. Go.</li>}
       </ul>
     </div>
   );

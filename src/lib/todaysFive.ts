@@ -18,14 +18,16 @@ const NEW_GAMES: readonly string[] = ["milk", "lights", "table", "parasols", "ti
 // A later group joins a day after, so today's picks (already played by some) don't change under anyone
 export const LATER_FROM = "2026-10-28";
 const LATER_GAMES: readonly string[] = ["wheel", "codeword", "zip", "bikes", "push", "price", "cages", "chain", "colour"];
-const on = (list: readonly string[], date: string) => list.filter((id) => !(date < NEW_LOGIC_FROM && NEW_GAMES.includes(id)) && !(date < LATER_FROM && LATER_GAMES.includes(id)));
+/** Games the owner has hidden, and the day they were hidden from. Earlier days keep their picks, so old streaks still add up. */
+export type Hidden = Record<string, string>;
+const on = (list: readonly string[], date: string, hidden: Hidden = {}) => list.filter((id) => !(date < NEW_LOGIC_FROM && NEW_GAMES.includes(id)) && !(date < LATER_FROM && LATER_GAMES.includes(id)) && !(hidden[id] && date >= hidden[id]));
 
-export function todaysFive(date: string): string[] {
+export function todaysFive(date: string, hidden: Hidden = {}): string[] {
   const rand = seededRand(`five:${date}`);
-  const [w, l, q] = [take(on(KINDS.word, date), 2, rand), take(on(KINDS.logic, date), 2, rand), take(on(KINDS.quick, date), 1, rand)];
+  const [w, l, q] = [take(on(KINDS.word, date, hidden), 2, rand), take(on(KINDS.logic, date, hidden), 2, rand), take(on(KINDS.quick, date, hidden), 1, rand)];
   // Mix them up so it isn't always words first
   return take([w[0], l[0], q[0], w[1], l[1]], 5, rand);
 }
 /** Days where all five of that day's picks were played */
-export const fiveDays = (played: Record<string, string[]>) =>
-  [...new Set(Object.values(played).flat())].filter((d) => todaysFive(d).every((id) => played[id]?.includes(d))).sort();
+export const fiveDays = (played: Record<string, string[]>, hidden: Hidden = {}) =>
+  [...new Set(Object.values(played).flat())].filter((d) => todaysFive(d, hidden).every((id) => played[id]?.includes(d))).sort();

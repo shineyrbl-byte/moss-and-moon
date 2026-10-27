@@ -120,7 +120,7 @@ export default function BeanBoggle() {
       </div>
       <p className="lb-word" aria-live="polite">{shown ? shown.toUpperCase() : <span className="muted">{start && !done ? "Tap or drag across the letters" : " "}</span>}</p>
       <div className={`bo-wrap ${!start ? "hidden" : ""}`}>
-        <div className={`bo-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Letter tray"
+        <div className={`bo-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Letter tray"
           onPointerUp={() => { const sendIt = dragging.current && moved.current && path.length > 1; dragging.current = false; moved.current = false; if (sendIt) send(); }}
           onPointerLeave={() => { dragging.current = false; moved.current = false; }}>
           {grid.map((f, i) => (

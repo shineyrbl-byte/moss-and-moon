@@ -1,5 +1,5 @@
 import { currentStaff, unauthorized } from "@/lib/auth";
-import { nowPlaying, requestSong, songAction, songList } from "@/lib/songs";
+import { nowPlaying, requestSong, songAction, songList, voteSong } from "@/lib/songs";
 import { limited, tooMany } from "@/lib/rateLimit";
 import { publish } from "@/lib/live";
 
@@ -9,13 +9,20 @@ export async function GET(req: Request) {
     if (!(await currentStaff())) return unauthorized();
     return Response.json({ songs: songList() });
   }
-  return Response.json(nowPlaying(), { headers: { "Cache-Control": "no-store" } });
+  return Response.json(nowPlaying(new URL(req.url).searchParams.get("voter")), { headers: { "Cache-Control": "no-store" } });
 }
 
-// Guests: { title, artist?, name?, table? }. It waits for staff to approve it.
+// Guests: { title, artist?, name?, table? }. It waits for staff to approve it. Or { voter, vote: id, undo? } to vote for one up next.
 export async function POST(req: Request) {
-  if (limited(req, "song", 4, 30 * 60_000)) return tooMany();
   const b = (await req.json().catch(() => null)) ?? {};
+  if (b.vote !== undefined) {
+    if (limited(req, "song-vote", 60, 30 * 60_000)) return tooMany();
+    const v = voteSong({ ...b, id: b.vote });
+    if ("error" in v) return Response.json(v, { status: 400 });
+    publish({ type: "song" });
+    return Response.json(v);
+  }
+  if (limited(req, "song", 4, 30 * 60_000)) return tooMany();
   const r = requestSong(b);
   if ("error" in r) return Response.json(r, { status: 400 });
   publish({ type: "song" });

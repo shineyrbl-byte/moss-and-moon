@@ -3,14 +3,16 @@
 import { seededRand, shuffled } from "./gameOrders.ts";
 import { THEMES } from "./data/threads.ts";
 import { isWord } from "./letterBoxed.ts";
+import { makeGrid } from "./grid.ts";
 
 export const ROWS = 8, COLS = 6;
 export const minMs = 20000;
 export const HINT_EVERY = 3; // other real words you find before you earn a hint
 export type Thread = { word: string; cells: number[] };
 
-export const touching = (a: number, b: number) => a !== b && Math.abs(Math.floor(a / COLS) - Math.floor(b / COLS)) <= 1 && Math.abs((a % COLS) - (b % COLS)) <= 1;
-const around = (i: number) => [...Array(ROWS * COLS).keys()].filter((j) => touching(i, j));
+const G = makeGrid(ROWS, COLS);
+export const touching = G.touching;
+const around = G.around;
 export const otherWord = (w: string) => w.length >= 4 && isWord(w);
 
 /** Today's grid: the theme's title, the letters, and where each word lies */
@@ -34,8 +36,11 @@ export function threadsFor(date: string): { title: string; grid: string[]; threa
     };
     if (!fit(0, ROWS * COLS)) throw new Error(`Theme "${theme.title}" can't fill the grid`);
     // One path through every square, always heading for the square with fewest ways on (with a little randomness)
+    // A walk that gets stuck can backtrack for ages, so each try is capped and a stuck one starts again elsewhere
     const path: number[] = [], used = new Set<number>();
+    let steps = 0;
     const walk = (at: number): boolean => {
+      if (++steps > 3000) return false;
       path.push(at); used.add(at);
       if (path.length === ROWS * COLS) return true;
       const next = around(at).filter((j) => !used.has(j)).map((j) => ({ j, n: around(j).filter((k) => !used.has(k)).length + rand() * 0.9 })).sort((a, b) => a.n - b.n);

@@ -74,7 +74,7 @@ export default function RecipeSwap() {
             )}
           </li>
         ))}
-        {list?.length === 0 && <p className="muted">No recipes yet. Be the first to share one!</p>}
+        {list?.length === 0 && <li className="muted" style={{ listStyle: "none" }}>No recipes yet. Be the first to share one!</li>}
       </ul>
     </div>
   );

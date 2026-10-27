@@ -9,6 +9,7 @@ import NoticeboardTeaser from "@/components/NoticeboardTeaser";
 import Reviews from "@/components/Reviews";
 import Visit from "@/components/Visit";
 import Newsletter from "@/components/Newsletter";
+import ComingSoon from "@/components/ComingSoon";
 
 const MARQUEE = ["☕ pour-overs", "🌸 rose lattes", "🍵 ceremonial matcha", "🥐 croissants at 6am", "☾ night café vibes", "✿ oat milk, always"];
 
@@ -16,6 +17,7 @@ export default function Home() {
   return (
     <>
       <Hero />
+      <ComingSoon />
       <div className="marquee" aria-hidden>
         <div className="marquee-track">
           {[...MARQUEE, ...MARQUEE].map((m, i) => <span key={i}>{m}</span>)}

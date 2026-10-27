@@ -23,3 +23,9 @@
 .admin-jump-list button { font: inherit; background: none; border: 0; text-align: left; padding: 0.45rem 0.6rem; border-radius: 8px; color: var(--text); cursor: pointer; }
 .admin-jump-list button:hover, .admin-jump-list button:focus-visible { background: var(--pink-soft); }
 @media (max-width: 640px) { .admin-jump { margin-left: 0; width: 100%; } .admin-section { padding: 0.45rem 0.7rem; font-size: 0.88rem; } }
+/* Games dashboard */
+.gd-spark { display: flex; align-items: flex-end; gap: 2px; height: 3rem; margin: 0.4rem 0 0.8rem; }
+.gd-spark span { flex: 1; min-width: 2px; background: var(--pink-deep); border-radius: 2px 2px 0 0; }
+.gd-low { font-weight: 700; }
+.gd-low::before { content: "⚠ "; }
+.gd-any { columns: 2 14rem; padding-left: 1.1rem; }

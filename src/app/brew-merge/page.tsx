@@ -63,7 +63,7 @@ export default function BrewMerge() {
       <h1 className="h2">Brew <em>merge</em></h1>
       <p className="small muted">Swipe (or use the arrow keys) to slide every tile. Two of the same drink merge into the next one up, from beans all the way to the 🌙 moon brew. A new tile drops in after every move.</p>
       <div className="memory-stats" style={{ justifyContent: "center", display: "flex" }}><span>Score <b>{score}</b></span><span>Best <b>{best}</b></span></div>
-      <div className="mg-grid" role="grid" data-own-keys="" aria-label={`Brew merge board. Biggest drink: ${top ? TILES[top - 1].name : "none"}`}
+      <div className="mg-grid" role="group" data-grid="" data-own-keys="" aria-label={`Brew merge board. Biggest drink: ${top ? TILES[top - 1].name : "none"}`}
         onTouchStart={(e) => (touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
         onTouchEnd={(e) => {
           const t = touch.current; touch.current = null;
@@ -73,7 +73,7 @@ export default function BrewMerge() {
           go(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : dy > 0 ? "down" : "up");
         }}>
         {cells.map((v, p) => (
-          <span key={p} className={`mg-cell ${v ? `l${Math.min(v, 11)}` : ""}`} role="gridcell" aria-label={v ? TILES[v - 1].name : "empty"}>
+          <span key={p} className={`mg-cell ${v ? `l${Math.min(v, 11)}` : ""}`} role="img" aria-label={v ? TILES[v - 1].name : "empty"}>
             {v > 0 && <><span className="mg-emoji" aria-hidden="true">{TILES[v - 1].emoji}</span><span className="mg-name" aria-hidden="true">{TILES[v - 1].name}</span></>}
           </span>
         ))}

@@ -63,7 +63,7 @@ export default function ZipPath() {
         <span className="memory-stats"><span><b>{line.length}</b>/{N * N}</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></span>
       </div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`zp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Zip path"
+      <div className={`zp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Zip path"
         onPointerDown={(e) => { drawing.current = true; const i = cellAt(e); if (i !== null) touch(i); }}
         onPointerMove={(e) => { if (!drawing.current) return; const i = cellAt(e); if (i !== null && i !== line[line.length - 1]) touch(i, true); }}
         onPointerUp={() => { drawing.current = false; }} onPointerLeave={() => { drawing.current = false; }}>

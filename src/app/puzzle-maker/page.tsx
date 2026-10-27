@@ -13,7 +13,7 @@ const cleanText = (s: string | null, n: number) => (s ?? "").replace(/[<>]/g, ""
 
 function Grid({ cells, given, at, setAt, bad, hot, done }: { cells: number[]; given: (p: number) => boolean; at: number | null; setAt: (p: number) => void; bad: Set<number>; hot?: number | null; done?: boolean }) {
   return (
-    <div className={`sd-grid ${done ? "done" : ""}`} role="grid" data-own-keys="" aria-label="Mini sudoku">
+    <div className={`sd-grid ${done ? "done" : ""}`} role="group" data-grid="" data-own-keys="" aria-label="Mini sudoku">
       {cells.map((v, p) => {
         const same = at !== null && (rowOf(p) === rowOf(at) || colOf(p) === colOf(at));
         return (

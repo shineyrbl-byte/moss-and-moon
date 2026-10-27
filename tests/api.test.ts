@@ -2932,7 +2932,7 @@ test("menu explorer: what you've tried, from your own orders", async () => {
 test("latte art of the week: staff post, guests vote once a week, the leader shows on the board", async () => {
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
   const post = (caption: string, cookie = s.cookie()) => { const fd = new FormData(); fd.append("file", new Blob([png], { type: "image/png" }), "art.png"); fd.append("caption", caption); return fetch(`${s.url}/api/latte-art`, { method: "POST", headers: { cookie }, body: fd }); };
-  assert.equal((await post("Swan", "")).status, 401, "staff only");
+  assert.equal((await post("Swan", "")).status, 400, "a guest needs to give their name");
   assert.equal((await post("Swan")).status, 200);
   assert.equal((await post("Tulip")).status, 200);
   const week = (await (await fetch(`${s.url}/api/latte-art`)).json()) as { entries: { id: number; caption: string; votes: number }[] };
@@ -3848,4 +3848,85 @@ test("batch K: profiles, the friend feed, head-to-head and slow games", async ()
   assert.equal(look.seat, null); assert.deepEqual(look.options, []); assert.equal(look.moves, 7);
   assert.equal((await fetch(`${s.url}/api/slow-games?id=nope`)).status, 404);
   for (const p of ["/slow-games", "/profile"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("batch L: the owner's games dashboard and hiding a game", async () => {
+  assert.equal((await fetch(`${s.url}/api/admin/games`)).status, 401, "owners only");
+  await s.login();
+  const voter = "e".repeat(16) + "dash";
+  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.99" }, body: JSON.stringify({ game: "towers", ms: 61000, name: "Ed", voter }) });
+  const r = await s.api("/api/admin/games?days=7");
+  assert.equal(r.status, 200); assert.equal(r.body.days, 7);
+  const towers = r.body.daily.find((g: { id: string }) => g.id === "towers");
+  assert.ok(towers.saves >= 1 && towers.players >= 1); assert.ok(Array.isArray(r.body.anyTime) && Array.isArray(r.body.hard));
+  assert.equal((await s.api("/api/admin/games", { method: "POST", json: { id: "not-a-game", hide: true } })).status, 400);
+  assert.equal((await s.api("/api/admin/games", { method: "POST", json: { id: "towers", hide: true } })).status, 200);
+  const g = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string }[]; five: { ids: string[] }; hidden: string[] };
+  assert.ok(!g.games.some((x) => x.id === "towers"), "hidden from the list"); assert.ok(!g.five.ids.includes("towers")); assert.deepEqual(g.hidden, ["towers"]);
+  assert.equal((await fetch(`${s.url}/cake-towers`)).status, 200, "the page still works by link");
+  assert.equal((await s.api("/api/admin/games", { method: "POST", json: { id: "towers", hide: false } })).status, 200);
+  assert.ok(((await (await fetch(`${s.url}/api/games`)).json()) as { games: { id: string }[] }).games.some((x) => x.id === "towers"), "back again");
+});
+
+test("café extras: song votes, guest latte art, Goa events, coming soon, game night and the recipe of the week", async () => {
+  const j = (p: string, method: string, json: unknown, ip = "10.9.8.1") => fetch(`${s.url}${p}`, { method, headers: { "Content-Type": "application/json", "X-Real-IP": ip }, body: JSON.stringify(json) });
+  await s.login();
+  // Song votes: only for approved songs; most votes go first
+  const a = (await (await j("/api/songs", "POST", { title: "Song A extras" })).json()).id, b = (await (await j("/api/songs", "POST", { title: "Song B extras" }, "10.9.8.2")).json()).id;
+  const v1 = "h".repeat(16) + "songs1", v2 = "i".repeat(16) + "songs2";
+  assert.equal((await j("/api/songs", "POST", { voter: v1, vote: a })).status, 400, "not approved yet");
+  for (const id of [a, b]) await s.api("/api/songs", { method: "PATCH", json: { id, action: "approve" } });
+  await j("/api/songs", "POST", { voter: v1, vote: b }); const after = await (await j("/api/songs", "POST", { voter: v2, vote: b })).json();
+  const ids = after.next.map((x: { id: number }) => x.id);
+  assert.ok(ids.indexOf(b) < ids.indexOf(a), "the most votes play first"); assert.equal(after.next.find((x: { id: number }) => x.id === b).votes, 2);
+  const undo = await (await j("/api/songs", "POST", { voter: v2, vote: b, undo: true })).json();
+  assert.equal(undo.next.find((x: { id: number }) => x.id === b).votes, 1);
+  for (const id of [a, b]) await s.api("/api/songs", { method: "PATCH", json: { id, action: "remove" } });
+  // Guest latte art waits for staff
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  const fd = new FormData(); fd.append("file", new Blob([png], { type: "image/png" }), "mine.png"); fd.append("name", "Zoe"); fd.append("caption", "Home heart");
+  assert.equal((await fetch(`${s.url}/api/latte-art`, { method: "POST", headers: { "X-Real-IP": "10.9.8.3" }, body: fd })).status, 200);
+  const before = (await (await fetch(`${s.url}/api/latte-art`)).json()) as { entries: { caption: string }[] };
+  assert.ok(!before.entries.some((e) => e.caption === "Home heart"), "not shown until approved");
+  assert.equal((await fetch(`${s.url}/api/latte-art?pending=1`)).status, 401);
+  const pend = (await s.api("/api/latte-art?pending=1")).body.pending as { id: number; name: string }[];
+  const mine = pend.find((p) => p.name === "Zoe")!;
+  assert.equal((await s.api("/api/latte-art", { method: "PATCH", json: { id: mine.id, approve: true } })).status, 200);
+  const live = (await (await fetch(`${s.url}/api/latte-art`)).json()) as { entries: { caption: string; guest: number }[] };
+  assert.equal(live.entries.find((e) => e.caption === "Home heart")?.guest, 1);
+  // Goa events: owner only, upcoming ones shown
+  assert.equal((await j("/api/goa-events", "POST", { title: "Night market", date: "2099-01-01" })).status, 401);
+  assert.equal((await s.api("/api/goa-events", { method: "POST", json: { title: "Old fair", date: "2020-01-01" } })).status, 200);
+  assert.equal((await s.api("/api/goa-events", { method: "POST", json: { title: "Night market", date: "2099-01-01", link: "http://x.test" } })).status, 400, "https links only");
+  assert.equal((await s.api("/api/goa-events", { method: "POST", json: { title: "Night market", date: "2099-01-01", end_date: "2099-01-03", place: "Arpora" } })).status, 200);
+  const ev = ((await (await fetch(`${s.url}/api/goa-events`)).json()) as { events: { title: string }[] }).events.map((e) => e.title);
+  assert.ok(ev.includes("Night market") && !ev.includes("Old fair"), "finished events drop off");
+  // Coming soon
+  assert.equal((await fetch(`${s.url}/api/coming-soon`).then((r) => r.json())).soon, null, "nothing until the owner sets it");
+  assert.equal((await s.api("/api/coming-soon", { method: "POST", json: { title: "Winter menu", date: "2020-01-01" } })).status, 400);
+  assert.equal((await s.api("/api/coming-soon", { method: "POST", json: { title: "Winter menu", date: "2099-12-01" } })).status, 200);
+  assert.equal((await fetch(`${s.url}/api/coming-soon`).then((r) => r.json())).soon.title, "Winter menu");
+  await s.api("/api/coming-soon", { method: "POST", json: { clear: true } });
+  // Game night: off until the owner turns it on; seats are capped
+  assert.equal((await fetch(`${s.url}/api/game-night`).then((r) => r.json())).on, false);
+  assert.equal((await s.api("/api/game-night", { method: "PUT", json: { on: true, day: 4, time: "19:00", seats: 4 } })).status, 200);
+  const gn = await fetch(`${s.url}/api/game-night`).then((r) => r.json());
+  assert.equal(gn.nights.length, 4); assert.equal(new Date(`${gn.nights[0].date}T12:00:00Z`).getUTCDay(), 4);
+  const night = gn.nights[0].date, g1 = "j".repeat(16) + "night1", g2 = "k".repeat(16) + "night2";
+  assert.equal((await j("/api/game-night", "POST", { voter: g1, date: night, name: "Asha", party: 3, game: gn.games[0]?.id })).status, 200);
+  assert.equal((await j("/api/game-night", "POST", { voter: g2, date: night, name: "Ben", party: 2 })).status, 400, "only one seat left");
+  assert.equal((await j("/api/game-night", "POST", { voter: g2, date: "2020-01-02", name: "Ben", party: 1 })).status, 400, "not a game night");
+  const ok = await (await j("/api/game-night", "POST", { voter: g2, date: night, name: "Ben", party: 1 })).json();
+  assert.equal(ok.nights[0].left, 0); assert.equal(ok.nights[0].mine.name, "Ben");
+  assert.equal((await s.api("/api/game-night?admin=1")).body.nights[0].rows.length, 2);
+  const cancelled = await (await j("/api/game-night", "POST", { voter: g2, date: night, cancel: true })).json();
+  assert.equal(cancelled.nights[0].left, 1);
+  await s.api("/api/game-night", { method: "PUT", json: { on: false, day: 4, time: "19:00", seats: 4 } });
+  // Recipe of the week
+  assert.equal((await s.api("/api/admin/recipe-week", { method: "POST", json: { id: "not-a-recipe" } })).status, 400);
+  assert.equal((await s.api("/api/admin/recipe-week", { method: "POST", json: { id: "chai", video: "javascript:alert(1)" } })).status, 400);
+  assert.equal((await s.api("/api/admin/recipe-week", { method: "POST", json: { id: "chai", video: "https://example.com/chai", note: "Rainy-day favourite" } })).status, 200);
+  const page = await (await fetch(`${s.url}/recipes`)).text();
+  assert.ok(page.includes("RECIPE OF THE WEEK") && page.includes("https://example.com/chai"));
+  for (const p of ["/game-night", "/whats-new"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });

@@ -12,7 +12,7 @@ const BEST = "mm-pastry-best";
 function Mini({ kind }: { kind: Kind | null }) {
   const cells = kind ? cellsOf({ kind, turn: 0, x: 0, y: 0 }) : [];
   return (
-    <span className="pd-mini" aria-label={kind ? NAMES[kind] : "empty"}>
+    <span className="pd-mini" role="img" aria-label={kind ? NAMES[kind] : "empty"}>
       {[...Array(8).keys()].map((i) => <i key={i} className={cells.some(([x, y]) => x === i % 4 && y === Math.floor(i / 4)) ? `pd-${kind}` : ""} />)}
     </span>
   );

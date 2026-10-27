@@ -48,7 +48,7 @@ export default function Battleship() {
   }
   const won = turn === "over" && allSunk(theirs);
   const grid = (b: Board, enemy: boolean) => (
-    <div className="bs-grid" style={{ ["--n" as string]: N }} role="grid" aria-label={enemy ? "Their sea" : "Your sea"}>
+    <div className="bs-grid" style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label={enemy ? "Their sea" : "Your sea"}>
       {[...Array(N * N).keys()].map((i) => {
         const k = shipAt(b, i), shot = b.shots[i], showShip = !enemy || turn === "over";
         const cls = shot ? (k >= 0 ? (sunk(b, k) ? "sunk" : "hit") : "miss") : k >= 0 && showShip ? "ship" : "";

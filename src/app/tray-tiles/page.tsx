@@ -75,7 +75,7 @@ export default function TrayTiles() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{owner.filter((o) => o === -1).length}</b> squares left</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`tt-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Tray"
+      <div className={`tt-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Tray"
         onPointerUp={() => {
           // Let go on another square: that's a drag. On the same square: a tap.
           const a = dragging.current; dragging.current = null;

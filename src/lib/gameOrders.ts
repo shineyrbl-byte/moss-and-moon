@@ -73,3 +73,11 @@ export function streakWithFreeze(days: string[], today: string): { streak: numbe
   }
   return { streak: n, frozen };
 }
+/** For puzzles picked from a fixed list: goes through the whole list (in a shuffled order) before any comes back.
+ * Before `from`, the old pick (a random draw each day) is kept, so past days and the archive don't change. */
+export const ROTATE_FROM = "2026-10-28";
+export function rotationPick<T>(list: readonly T[], key: string, date: string, from = ROTATE_FROM): T {
+  if (date < from) return list[Math.floor(seededRand(`${key}:${date}`)() * list.length)];
+  const day = Math.floor(Date.parse(`${date}T00:00:00Z`) / 86_400_000), order = shuffled(list, seededRand(`${key}:rotation`));
+  return order[((day % order.length) + order.length) % order.length];
+}

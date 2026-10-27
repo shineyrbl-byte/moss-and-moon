@@ -121,7 +121,7 @@ export default function BeanSums() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{left}</b> to fill</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`ks-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" data-own-keys="" aria-label="Bean sums">
+      <div className={`ks-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" data-own-keys="" aria-label="Bean sums">
         {[...Array(N * N).keys()].map((i) => {
           if (!white[i]) {
             const a = clueAt(i, true), d = clueAt(i, false);

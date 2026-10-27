@@ -50,7 +50,7 @@ export default function TriPeaks() {
       </div>
       <div className="gs-bottom">
         <button className="tp-stock" onClick={() => { const n = peaksDraw(p); if (n) setP(n); }} disabled={!p.stock.length} aria-label={`Turn a card, ${p.stock.length} left`}>{p.stock.length ? <PeakCard down /> : <span className="pk-card" style={{ opacity: 0.3 }} />}<small className="tiny muted">{p.stock.length}</small></button>
-        <span aria-label={`Pile: ${cardName(top)}`}><PeakCard c={top} /></span>
+        <span role="img" aria-label={`Pile: ${cardName(top)}`}><PeakCard c={top} /></span>
       </div>
       {over && <p className="center"><b>{peaksLeft(p) ? `No more moves: ${p.score} points, ${peaksLeft(p)} cards left.` : `All three peaks cleared! ${p.score} points 🏔️🎉`}</b><br /><button className="btn btn-pink btn-sm" style={{ marginTop: "0.5rem" }} onClick={() => { setP(newPeaks(Math.random)); setCounted(false); }}>Deal again</button></p>}
       <p className="small muted">Cleared {rec.won} of {rec.played} on this device.</p>

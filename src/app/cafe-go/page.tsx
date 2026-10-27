@@ -81,7 +81,7 @@ export default function CafeGo() {
         <span className={s.turn === 2 && !s.over ? "on" : ""}><b>{sc.white}</b> {who(2)} ⚪</span>
       </div>
       <p className="center small" style={{ margin: "0 0 0.4rem" }}><b>{status}</b></p>
-      <div className="go-board" role="grid" aria-label="Go board">
+      <div className="go-board" role="group" data-grid="" aria-label="Go board">
         {s.b.map((x, i) => (
           <button key={i} className={`go-pt ${STAR.has(i) ? "star" : ""} ${s.last === i ? "last" : ""} ${area && !x && area[i] ? `own${area[i]}` : ""} ${i % N === 0 ? "l" : ""} ${i % N === N - 1 ? "r" : ""} ${i < N ? "t" : ""} ${i >= N * (N - 1) ? "b" : ""}`}
             onClick={() => tap(i)} aria-label={`Row ${Math.floor(i / N) + 1}, column ${(i % N) + 1}: ${x === 1 ? "black" : x === 2 ? "white" : "empty"}`}>

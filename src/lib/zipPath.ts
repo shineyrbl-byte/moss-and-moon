@@ -1,13 +1,14 @@
 // Zip path: draw one line that visits every square exactly once, moving up, down, left or right, and passes the
 // numbered squares in order (1 first, the last number at the end). Each day's grid has one answer. Pure.
 import { seededRand, shuffled } from "./gameOrders.ts";
+import { makeGrid } from "./grid.ts";
 
 export const N = 6;
 export const minMs = 5000;
 export const HINT_MS = 10000;
-const rowOf = (i: number) => Math.floor(i / N), colOf = (i: number) => i % N;
-export const next = (i: number) => [i - N, i + N, colOf(i) > 0 ? i - 1 : -1, colOf(i) < N - 1 ? i + 1 : -1].filter((j) => j >= 0 && j < N * N);
-export const touches = (a: number, b: number) => Math.abs(rowOf(a) - rowOf(b)) + Math.abs(colOf(a) - colOf(b)) === 1;
+const G = makeGrid(N);
+export const next = G.side;
+export const touches = G.beside;
 
 function randomPath(rand: () => number): number[] | null {
   const used = Array(N * N).fill(false), path = [Math.floor(rand() * N * N)];

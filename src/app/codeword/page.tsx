@@ -60,7 +60,7 @@ export default function Codeword() {
         <span className="memory-stats"><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span><span><b>{Object.keys(c.key).filter((n) => guess[+n]).length}</b>/{c.n} letters</span></span>
       </div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`cw-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: SIZE }} role="grid" aria-label="Codeword grid">
+      <div className={`cw-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: SIZE }} role="group" data-grid="" aria-label="Codeword grid">
         {c.code.map((n, i) => n ? (
           <button key={i} className={`cw-cell ${sel === n ? "on" : ""} ${c.given.includes(n) ? "given" : ""} ${bad.has(n) ? "bad" : ""}`} onClick={() => setSel(n)}
             aria-label={`Number ${n}: ${guess[n] ? guess[n].toUpperCase() : "unknown"}${c.given.includes(n) ? ", given" : ""}`}>

@@ -115,7 +115,7 @@ export default function TallerOrder() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{g.filter((v) => !v).length}</b> to fill</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`to-grid ${done ? "done" : ""}`} style={{ ["--s" as string]: S }} role="grid" data-own-keys="" aria-label="Taller order">
+      <div className={`to-grid ${done ? "done" : ""}`} style={{ ["--s" as string]: S }} role="group" data-grid="" data-own-keys="" aria-label="Taller order">
         {[...Array(S * S).keys()].map((k) => {
           const R = Math.floor(k / S), C = k % S;
           if (R % 2 === 0 && C % 2 === 0) {

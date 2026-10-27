@@ -74,7 +74,7 @@ export default function CafeRummy() {
         <button className="btn btn-ghost btn-sm" onClick={() => newGame()}>New game</button>
       </div>
       <p className="center small" aria-live="polite" style={{ margin: "0.8rem 0 0.4rem" }}><b>{status}</b></p>
-      <div className="ce-them" aria-label={`The computer has ${s.hands[1].length} cards`}>{s.hands[1].map((_, k) => <span key={k} className="pc-card down" />)}</div>
+      <div className="ce-them" role="img" aria-label={`The computer has ${s.hands[1].length} cards`}>{s.hands[1].map((_, k) => <span key={k} className="pc-card down" />)}</div>
       <div className="ce-middle">
         <button className="pc-slot" onClick={() => draw("stock")} aria-label={`Draw from the pile, ${s.stock.length} left`}><span className="pc-card down" /></button>
         <button className="pc-slot" onClick={() => draw("discard")} aria-label={top ? `Take the ${name(top)} from the discards` : "No discards"}>{top ? <Face c={top} /> : <span className="pc-empty"> </span>}</button>

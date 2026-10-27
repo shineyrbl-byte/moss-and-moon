@@ -1,6 +1,7 @@
 // Café rewards: finish today's five puzzles seven days running and you earn a stamp on your loyalty card
 // (one for every seven days of the run). It needs an account with a phone number, since cards go by phone.
 import "server-only";
+import { hiddenGames } from "./gameVisibility";
 import { db } from "./db";
 import { toDateStr } from "./cafe";
 import { streakWithFreeze } from "./gameOrders";
@@ -13,7 +14,7 @@ const daysAgo = (today: string, n: number) => { const d = new Date(`${today}T12:
 
 export function rewardStatus(customer: Customer | null, voter: unknown, now = new Date()) {
   const today = toDateStr(now);
-  const { streak, frozen } = streakWithFreeze(fiveDays(playedMap(customer?.id ?? null, voter)), today);
+  const { streak, frozen } = streakWithFreeze(fiveDays(playedMap(customer?.id ?? null, voter), hiddenGames()), today);
   const earned = Math.floor(streak / DAYS_PER_STAMP);
   // Stamps already claimed during this run (it started about streak + frozen days ago)
   const runStart = daysAgo(today, streak + frozen.length);

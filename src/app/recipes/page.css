@@ -1,3 +1,4 @@
 /* Styles only this page uses (kept out of globals.css so other pages don't load them) */
 .guest-recipe-row { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 0.6rem; }
 .guest-recipe-row li { display: grid; gap: 0.2rem; padding: 0.8rem 1rem; }
+.recipe-week { padding: 1rem 1.2rem; margin: 1rem 0 1.4rem; border-color: var(--pink-deep); }

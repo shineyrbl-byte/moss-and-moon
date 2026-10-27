@@ -126,7 +126,7 @@ export default function CakeTowers() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{left}</b> to bake</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`ct-grid ${done ? "done" : ""}`} role="grid" data-own-keys="" aria-label="Cake towers">
+      <div className={`ct-grid ${done ? "done" : ""}`} role="group" data-grid="" data-own-keys="" aria-label="Cake towers">
         {[...Array(N + 2).keys()].flatMap((r) => [...Array(N + 2).keys()].map((c) => {
           const k = clueAt(r, c);
           if (k !== null) return (

@@ -114,7 +114,7 @@ export default function Jigsaw() {
         <span className="memory-stats"><span className="mm-clock">⏱ {clock(elapsed)}</span><span>{placed.size}/{n}</span></span>
       </div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`jig-board ${doneMs !== null ? "done" : ""}`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, aspectRatio: `${cols} / ${rows}` }} role="grid" aria-label="Jigsaw board">
+      <div className={`jig-board ${doneMs !== null ? "done" : ""}`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, aspectRatio: `${cols} / ${rows}` }} role="group" data-grid="" aria-label="Jigsaw board">
         {[...Array(n).keys()].map((s) => (
           <button key={s} data-slot={s} className={`jig-slot ${placed.has(s) ? "in" : ""} ${miss === s ? "miss" : ""}`} style={placed.has(s) ? piece(s) : undefined}
             onClick={() => held !== null && drop(held, s)} disabled={placed.has(s) || doneMs !== null} aria-label={`Space ${s + 1}${placed.has(s) ? ", filled" : ""}`} />

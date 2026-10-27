@@ -1,17 +1,24 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { HOWTO_KEY, HOW_TO } from "@/lib/howTo";
-import { HOWTO_UI, HOW_TO_I18N } from "@/lib/howToI18n";
 import { useStore } from "@/components/Store";
+import type { HowTo } from "@/lib/howTo";
+
+// The guides (and their translations) load after the page is up, so pages that aren't games don't carry them
+const HOWTO_KEY = "mm-howto-seen";
+type Guides = { en: typeof import("@/lib/howTo").HOW_TO; i18n: typeof import("@/lib/howToI18n").HOW_TO_I18N; ui: typeof import("@/lib/howToI18n").HOWTO_UI };
+let cache: Promise<Guides> | null = null;
+const loadGuides = () => (cache ??= Promise.all([import("@/lib/howTo"), import("@/lib/howToI18n")]).then(([a, b]) => ({ en: a.HOW_TO, i18n: b.HOW_TO_I18N, ui: b.HOWTO_UI })));
 
 /** The first time you open a game, a small card says what you're aiming for and the tip that helps most. The ? brings it back. */
 export default function HowToPlay() {
   const path = usePathname();
   const { lang } = useStore();
   // The word games' cards come in Hindi, Marathi and Konkani too
-  const how = (lang !== "en" && HOW_TO_I18N[lang][path]) || HOW_TO[path];
-  const ui = lang !== "en" && HOW_TO_I18N[lang][path] ? HOWTO_UI[lang] : null;
+  const [g, setG] = useState<Guides | null>(null);
+  useEffect(() => { let on = true; loadGuides().then((x) => on && setG(x)).catch(() => {}); return () => { on = false; }; }, []);
+  const how: HowTo | undefined = g ? (lang !== "en" && g.i18n[lang][path]) || g.en[path] : undefined;
+  const ui = g && lang !== "en" && g.i18n[lang][path] ? g.ui[lang] : null;
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!how) return;

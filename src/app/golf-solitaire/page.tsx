@@ -41,7 +41,7 @@ export default function GolfSolitaire() {
       </div>
       <div className="gs-bottom">
         <button className="gs-card" onClick={() => { const n = golfDraw(g); if (n) setG(n); }} disabled={!g.stock.length} aria-label={`Turn a card, ${g.stock.length} left`}>{g.stock.length ? <PeakCard down /> : <span className="pk-card" style={{ opacity: 0.3 }} />}</button>
-        <span className="gs-card" aria-label={`Pile: ${cardName(top)}`}><PeakCard c={top} /></span>
+        <span className="gs-card" role="img" aria-label={`Pile: ${cardName(top)}`}><PeakCard c={top} /></span>
       </div>
       {over && <p className="center"><b>{golfLeft(g) ? `No more moves: ${golfLeft(g)} left.` : "Every column cleared! ⛳🎉"}</b><br /><button className="btn btn-pink btn-sm" style={{ marginTop: "0.5rem" }} onClick={() => { setG(newGolf(Math.random)); setCounted(false); }}>Deal again</button></p>}
       <p className="small muted">Cleared {rec.won} of {rec.played} on this device.</p>

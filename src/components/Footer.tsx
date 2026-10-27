@@ -143,6 +143,7 @@ export default function Footer() {
             <li><Link href="/catering">{t("footer.catering")}</Link></li>
             <li><Link href="/cakes">{t("footer.cakes")}</Link></li>
             {whatsappUrl() && <li><a href={whatsappUrl()!} target="_blank" rel="noopener noreferrer">{t("footer.whatsapp")}</a></li>}
+            <li><Link href="/whats-new">✨ {t("footer.new")}</Link></li>
             <li><Link href="/privacy">{t("footer.privacy")}</Link> · <Link href="/terms">{t("footer.terms")}</Link></li>
             <li><Link href="/orders">{t("footer.orders")}</Link></li>
           </ul>

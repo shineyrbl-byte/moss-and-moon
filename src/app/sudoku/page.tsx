@@ -112,7 +112,7 @@ export default function Sudoku() {
         <span className="memory-stats"><span className="mm-clock">⏱ {clock(elapsed)}</span></span>
       </div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`sd-grid ${doneMs !== null ? "done" : ""}`} role="grid" data-own-keys="" aria-label="Mini sudoku">
+      <div className={`sd-grid ${doneMs !== null ? "done" : ""}`} role="group" data-grid="" data-own-keys="" aria-label="Mini sudoku">
         {cells.map((v, p) => {
           const given = !!puzzle[p];
           const same = at !== null && (rowOf(p) === rowOf(at) || colOf(p) === colOf(at));

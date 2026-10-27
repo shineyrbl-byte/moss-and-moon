@@ -31,7 +31,7 @@ export default function GameRewards() {
         </div>
         {r.ready > 0 && (r.signedIn ? (r.hasPhone ? <button className="btn btn-pink btn-sm" onClick={claim}>Collect</button> : <Link className="btn btn-ghost btn-sm" href="/account">Add your phone</Link>) : <Link className="btn btn-pink btn-sm" href="/account">Sign in to collect</Link>)}
       </div>
-      <div className="gr-dots" aria-label={`${into} of ${PER} days towards the next stamp`}>{[...Array(PER).keys()].map((k) => <i key={k} className={k < into || r.ready ? "on" : ""} />)}</div>
+      <div className="gr-dots" role="img" aria-label={`${into} of ${PER} days towards the next stamp`}>{[...Array(PER).keys()].map((k) => <i key={k} className={k < into || r.ready ? "on" : ""} />)}</div>
     </section>
   );
 }

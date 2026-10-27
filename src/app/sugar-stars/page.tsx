@@ -60,7 +60,7 @@ export default function SugarStars() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⭐ <b>{mine.length}</b>/{N * STARS}</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`sb-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Sugar stars">
+      <div className={`sb-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Sugar stars">
         {region.map((g, i) => {
           const b = borders(region, i), m = marks[i];
           return (

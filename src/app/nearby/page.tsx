@@ -8,6 +8,8 @@ import { OWN_CUP_OFF } from "@/lib/pricing";
 
 export default function Nearby() {
   const [spots, setSpots] = useState<Spot[] | null>(null);
+  const [events, setEvents] = useState<{ id: number; title: string; date: string; end_date: string; place: string; link: string; note: string }[]>([]);
+  useEffect(() => { fetch("/api/goa-events").then((r) => r.json()).then((d) => setEvents(d.events ?? [])).catch(() => {}); }, []);
   const [kind, setKind] = useState<string>("all");
   const [dog, setDog] = useState(false);
   useEffect(() => { fetch("/api/nearby").then((r) => r.json()).then((d) => setSpots(d.spots ?? [])).catch(() => setSpots([])); }, []);
@@ -19,6 +21,18 @@ export default function Nearby() {
       <h1 className="h2">Around the <em>corner</em></h1>
       <p className="lead">The places our team loves near the café, with how long it takes to walk there<HiddenMoon id="m-nearby-6w" style={{ marginLeft: "0.25rem" }} />.</p>
       <p className="small" style={{ margin: "0.4rem 0 0" }}><Link href="/sunset">🌅 Tonight&apos;s sunset and golden hour →</Link></p>
+      {events.length > 0 && (
+        <section className="card" style={{ padding: "0.9rem 1.1rem", margin: "0.8rem 0" }} aria-labelledby="goa-ev">
+          <h2 className="h3" id="goa-ev" style={{ margin: "0 0 0.4rem" }}>📅 What&apos;s on around Goa</h2>
+          <ul className="small" style={{ margin: 0, paddingLeft: "1.1rem" }}>
+            {events.map((e) => {
+              const d = (x: string) => new Date(`${x}T12:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+              return <li key={e.id} style={{ marginBottom: "0.3rem" }}><b>{e.link ? <a href={e.link} target="_blank" rel="noreferrer noopener">{e.title}</a> : e.title}</b> · {d(e.date)}{e.end_date && e.end_date !== e.date ? `–${d(e.end_date)}` : ""}{e.place ? ` · ${e.place}` : ""}{e.note && <><br /><span className="muted">{e.note}</span></>}</li>;
+            })}
+          </ul>
+          <p className="tiny muted" style={{ margin: "0.4rem 0 0" }}>Picked by the café team. Check times with the organisers before you go.</p>
+        </section>
+      )}
       <div className="row" style={{ gap: "0.4rem", flexWrap: "wrap", margin: "0.6rem 0 1rem" }}>
         <button className={`chip ${kind === "all" ? "on" : ""}`} aria-pressed={kind === "all"} onClick={() => setKind("all")}>All</button>
         {kinds.map((k) => <button key={k.id} className={`chip ${kind === k.id ? "on" : ""}`} aria-pressed={kind === k.id} onClick={() => setKind(k.id)}>{k.icon} {k.label}</button>)}

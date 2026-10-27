@@ -10,7 +10,7 @@ const STATS = "mm-eights";
 type Rec = { won: number; lost: number };
 function Face({ c, dim }: { c: Card; dim?: boolean }) {
   return (
-    <span className={`pc-card ${pinkSuit(c.suit) ? "pink" : "brown"}`} style={dim ? { opacity: 0.45 } : undefined}>
+    <span className={`pc-card ${pinkSuit(c.suit) ? "pink" : "brown"}`} style={dim ? { filter: "grayscale(0.9)", transform: "translateY(0.45rem)" } : undefined}>
       <span className="pc-corner">{RANK[c.rank]}<i>{SUITS[c.suit]}</i></span>
       <span className="pc-mid" aria-hidden="true">{SUITS[c.suit]}</span>
     </span>
@@ -72,7 +72,7 @@ export default function CrazyEights() {
         <button className="btn btn-ghost btn-sm" onClick={() => newGame()}>New game</button>
       </div>
       <p className="center small" aria-live="polite" style={{ margin: "0.8rem 0 0.4rem" }}><b>{status}</b></p>
-      <div className="ce-them" aria-label={`The computer has ${s.hands[1].length} cards`}>
+      <div className="ce-them" role="img" aria-label={`The computer has ${s.hands[1].length} cards`}>
         {s.hands[1].map((_, k) => <span key={k} className="pc-card down" />)}
       </div>
       <div className="ce-middle">

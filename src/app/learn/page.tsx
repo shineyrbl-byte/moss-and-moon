@@ -41,7 +41,7 @@ function LessonBoard({ l, onSolved }: { l: Lesson; onSolved: () => void }) {
   return (
     <div className="ln-lesson">
       <p className="small">{l.intro}</p>
-      <div className="ln-board" style={{ ["--n" as string]: n + (counts ? 1 : 0) }} role="grid" aria-label={`${l.title} lesson`}>
+      <div className="ln-board" style={{ ["--n" as string]: n + (counts ? 1 : 0) }} role="group" data-grid="" aria-label={`${l.title} lesson`}>
         {counts && <span />}
         {counts && l.cols!.map((c, k) => <span key={`c${k}`} className="ln-count">{c}</span>)}
         {[...Array(n * n).keys()].map((i) => {

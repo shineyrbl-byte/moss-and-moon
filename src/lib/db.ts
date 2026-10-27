@@ -776,6 +776,12 @@ function open() {
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     played_at TEXT
   );`);
+  // Guests upvote songs on the list; the most wanted play first
+  db.exec(`CREATE TABLE IF NOT EXISTS song_votes (
+    song_id INTEGER NOT NULL,
+    voter TEXT NOT NULL,
+    PRIMARY KEY (song_id, voter)
+  );`);
   addColumn(db, "bookings", "dog", "INTEGER NOT NULL DEFAULT 0");
   db.exec(`CREATE TABLE IF NOT EXISTS trivia_answers (
     date TEXT NOT NULL,
@@ -939,6 +945,9 @@ function open() {
     week TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
   );`);
+  // Guests can send their own pours too; they wait for staff to approve them
+  addColumn(db, "latte_art", "status", "TEXT NOT NULL DEFAULT 'live'");
+  addColumn(db, "latte_art", "guest", "INTEGER NOT NULL DEFAULT 0");
   db.exec(`CREATE TABLE IF NOT EXISTS latte_votes (
     week TEXT NOT NULL,
     voter TEXT NOT NULL,
@@ -1118,6 +1127,26 @@ function open() {
     name2 TEXT NOT NULL DEFAULT '',
     created TEXT NOT NULL DEFAULT (datetime('now')),
     updated TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
+  // Café extras: the owner's list of Goa events, and board-game night bookings
+  db.exec(`CREATE TABLE IF NOT EXISTS goa_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    date TEXT NOT NULL,
+    end_date TEXT NOT NULL DEFAULT '',
+    place TEXT NOT NULL DEFAULT '',
+    link TEXT NOT NULL DEFAULT '',
+    note TEXT NOT NULL DEFAULT ''
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS game_night (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    name TEXT NOT NULL,
+    party INTEGER NOT NULL,
+    game TEXT NOT NULL DEFAULT '',
+    voter TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    UNIQUE (date, voter)
   );`);
   // The puzzle of the week's board
   db.exec(`CREATE TABLE IF NOT EXISTS weekly_scores (

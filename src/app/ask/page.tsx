@@ -47,7 +47,7 @@ export default function Ask() {
             <span className="tiny muted">{x.answered_by ? `${x.answered_by} from the team` : "The team"}{x.name ? ` · asked by ${x.name}` : ""}</span>
           </li>
         ))}
-        {list && !shown.length && <p className="muted small">{list.length ? "Nothing matches that. Ask it above!" : "No questions yet. Be the first!"}</p>}
+        {list && !shown.length && <li className="muted small" style={{ listStyle: "none" }}>{list.length ? "Nothing matches that. Ask it above!" : "No questions yet. Be the first!"}</li>}
       </ul>
     </div>
   );

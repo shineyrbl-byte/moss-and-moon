@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../Store";
 
-type S = { id: number; title: string; artist: string; name: string; table_no: number | null; status: "pending" | "queued" | "playing" | "played"; created_at: string };
+type S = { id: number; title: string; artist: string; name: string; table_no: number | null; status: "pending" | "queued" | "playing" | "played"; created_at: string; votes?: number };
 
 /** Orders tab: song requests. Approve, play (the TV board shows it), or remove. */
 export default function SongsCard() {
@@ -25,7 +25,7 @@ export default function SongsCard() {
         {live.map((s) => (
           <li key={s.id} className={s.status}>
             <span>
-              <b>{s.status === "playing" ? "▶ " : ""}{s.title}</b>{s.artist && <span className="muted"> · {s.artist}</span>}
+              <b>{s.status === "playing" ? "▶ " : ""}{s.title}</b>{s.artist && <span className="muted"> · {s.artist}</span>}{!!s.votes && <span className="tiny"> · ▲ {s.votes} vote{s.votes === 1 ? "" : "s"}</span>}
               <br /><span className="tiny muted">{s.name}{s.table_no ? ` · table ${s.table_no}` : ""} · {s.created_at.slice(11, 16)} · {s.status === "pending" ? "waiting for a yes" : s.status === "queued" ? "on the list" : "playing now"}</span>
             </span>
             <span className="row" style={{ gap: "0.3rem", flexWrap: "wrap" }}>

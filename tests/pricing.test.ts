@@ -410,11 +410,13 @@ test("CSV reading and item notes", async () => {
 });
 
 test("every language has every label, and the opening status is translated", async () => {
-  const { DICT } = await import("../src/lib/i18n.ts");
+  const { DICT, loadLang } = await import("../src/lib/i18n.ts");
   const keys = Object.keys(DICT.en).sort();
+  assert.equal(DICT.hi, undefined, "other languages load on demand");
   for (const lang of ["hi", "mr", "kok"] as const) {
-    assert.deepEqual(Object.keys(DICT[lang]).sort(), keys, lang);
-    for (const k of keys) assert.ok(DICT[lang][k as keyof typeof DICT.en].trim(), `${lang} ${k} is empty`);
+    await loadLang(lang);
+    assert.deepEqual(Object.keys(DICT[lang]!).sort(), keys, lang);
+    for (const k of keys) assert.ok(DICT[lang]![k as keyof typeof DICT.en].trim(), `${lang} ${k} is empty`);
   }
   const noon = new Date(2026, 9, 20, 12); // a Tuesday, open
   assert.match(openStatus(noon).text, /^Open now/);
@@ -2108,7 +2110,7 @@ test("how to play cards: every one is for a real game page, with a goal and a ti
   // Every computer opponent and arcade game has one
   for (const g of ANY_TIME.filter((x) => x.kind === "board" || x.kind === "arcade" || x.kind === "cards")) if (g.id !== "saucers" && g.id !== "rush") assert.ok(HOW_TO[g.href], g.href);
   const { DEFAULTS } = await import("../src/lib/gameSettings.ts");
-  assert.deepEqual(DEFAULTS, { sound: true, vibrate: false, patterns: false, reader: false, zen: false }, "vibration, patterns, screen-reader help and zen start off");
+  assert.deepEqual(DEFAULTS, { sound: true, vibrate: false, patterns: false, reader: false, zen: false, board: "cafe" }, "vibration, patterns, screen-reader help and zen start off");
 });
 
 test("account sync: what follows you, and merging two devices", async () => {
@@ -2750,4 +2752,45 @@ test("batch K: head-to-head, profiles and slow games rules", async () => {
   let c = S.newState("connect4");
   for (let k = 0; k < 6; k++) c = S.apply(c, (k % 2 + 1) as 1 | 2, 0) as typeof c;
   assert.ok("error" in S.apply(c, 1, 0), "a full column");
+});
+
+test("batch L: the shared grid, rotations, hidden games and board looks", async () => {
+  const { makeGrid } = await import("../src/lib/grid.ts");
+  const g = makeGrid(3, 4);
+  assert.deepEqual(g.side(5), [1, 9, 4, 6]); assert.deepEqual(g.side(0), [4, 1]);
+  assert.deepEqual(g.block(0), [0, 1, 4, 5]); assert.deepEqual(g.around(5), [0, 1, 2, 4, 6, 8, 9, 10]);
+  assert.ok(g.touching(0, 5) && !g.touching(0, 0) && !g.beside(0, 5) && g.beside(0, 4));
+  const { rotationPick, ROTATE_FROM } = await import("../src/lib/gameOrders.ts");
+  const list = ["a", "b", "c", "d", "e", "f", "g", "h"], days = [...Array(16).keys()].map((k) => new Date(Date.UTC(2026, 10, 1 + k)).toISOString().slice(0, 10));
+  const picks = days.map((d) => rotationPick(list, "t", d));
+  assert.equal(new Set(picks.slice(0, 8)).size, 8, "every one before a repeat"); assert.deepEqual(picks.slice(8), picks.slice(0, 8));
+  assert.ok(ROTATE_FROM > "2026-10-27", "today's puzzles don't change");
+  const { todaysFive, fiveDays } = await import("../src/lib/todaysFive.ts");
+  const d = "2026-11-03", five = todaysFive(d);
+  const hid = { [five[0]]: "2026-11-01" };
+  assert.ok(!todaysFive(d, hid).includes(five[0]), "a hidden game leaves Today's five"); assert.equal(todaysFive(d, hid).length, 5);
+  assert.deepEqual(todaysFive("2026-10-30", hid), todaysFive("2026-10-30"), "days before it was hidden keep their picks");
+  const played = Object.fromEntries(five.map((id) => [id, [d]]));
+  assert.deepEqual(fiveDays(played), [d]);
+  const { BOARD_THEMES, isBoardTheme } = await import("../src/lib/gameSettings.ts");
+  assert.equal(BOARD_THEMES[0].id, "cafe"); assert.ok(isBoardTheme("night") && !isBoardTheme("neon"));
+  const fs = await import("node:fs"), css = fs.readFileSync("src/app/globals.css", "utf8");
+  for (const t of BOARD_THEMES.slice(1)) assert.ok(css.includes(`[data-board="${t.id}"]`), `${t.id} has styles`);
+});
+
+test("café extras: time-of-day picks are real dishes, and what's new links to real pages", async () => {
+  const W = await import("../src/lib/weatherPicks.ts"), M = await import("../src/lib/menu.ts");
+  const MENU = Object.entries(M).filter(([k, v]) => /^(SEED_MENU|MENU_V\d+)$/.test(k) && Array.isArray(v)).flatMap(([, v]) => v as { id: string }[]);
+  assert.deepEqual([7, 12, 16, 21].map(W.slotFor), ["morning", "lunch", "afternoon", "evening"]);
+  for (const h of [8, 12, 16, 21]) {
+    const t = W.timePicks(h, MENU, [], 99);
+    assert.ok(t.items.length >= 4, `${t.slot} has picks`);
+  }
+  const src = (await import("node:fs")).readFileSync("src/lib/weatherPicks.ts", "utf8");
+  const ids = [...src.slice(src.indexOf("BY_TIME")).matchAll(/"([a-z-]+)"/g)].map((m) => m[1]).filter((x) => !["morning", "lunch", "afternoon", "evening"].includes(x));
+  for (const id of ids) assert.ok(MENU.some((m) => m.id === id), `${id} is on the menu`);
+  assert.ok(!W.timePicks(8, MENU, ["akuri-toast"]).items.some((m) => m.id === "akuri-toast"), "skips what the weather picks already show");
+  const { NEWS } = await import("../src/lib/whatsNew.ts"), fs = await import("node:fs");
+  assert.ok(NEWS.every((n, k) => k === 0 || n.date <= NEWS[k - 1].date), "newest first");
+  for (const n of NEWS) for (const x of n.items) if (x.href) { const p = x.href.split("#")[0]; assert.ok(p === "/" || fs.existsSync(`src/app${p}/page.tsx`), `${x.href} exists`); }
 });

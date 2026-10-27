@@ -93,7 +93,7 @@ export default function CafeLetters() {
       <p className="center small" style={{ margin: "0.3rem 0 0.5rem", minHeight: "1.3em" }}>
         {g.over ? <b>Game over</b> : !myTurn ? "The computer's thinking…" : last ? <>{last.who === 1 ? "The computer" : "You"} {last.words.length ? <>played <b>{last.words.map((w) => w.toUpperCase()).join(", ")}</b> for {last.points}</> : "passed"}</> : "You go first."}
       </p>
-      <div className="cl-board" role="grid" aria-label="Board">
+      <div className="cl-board" role="group" data-grid="" aria-label="Board">
         {g.board.map((l, i) => {
           const mine = placed.find((p) => p.at === i), letter = l || (mine ? rack[mine.k] : ""), pr = PREMIUM[i];
           return (

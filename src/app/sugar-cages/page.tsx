@@ -67,7 +67,7 @@ export default function SugarCages() {
         <span className="memory-stats"><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></span>
       </div>
       <Ghost elapsed={d.elapsed} done={done} />
-      <div className={`kc-grid ${done ? "done" : ""}`} role="grid" aria-label="Sugar cages">
+      <div className={`kc-grid ${done ? "done" : ""}`} role="group" data-grid="" aria-label="Sugar cages">
         {cells.map((v, i) => (
           <button key={i} className={`kc-cell ${edge(i)} ${p.given[i] ? "given" : ""} ${at === i ? "at" : ""} ${bad.has(i) ? "bad" : ""} ${i % N === 2 ? "box-r" : ""} ${Math.floor(i / N) % 2 === 1 && i < N * (N - 1) ? "box-b" : ""}`} onClick={() => setAt(i)}
             aria-label={`Row ${Math.floor(i / N) + 1}, column ${(i % N) + 1}: ${v || "empty"}, cage of ${p.cages[cageOf[i]].cells.length} adding to ${p.cages[cageOf[i]].sum}`}>

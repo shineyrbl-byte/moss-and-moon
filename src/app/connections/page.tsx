@@ -58,7 +58,7 @@ export default function Connections() {
           <div className={`conn-grid ${shake ? "shake" : ""}`} role="group" aria-label="Words left">
             {order.map((w) => <button key={w} className={`conn-tile ${pick.includes(w) ? "on" : ""} ${w.length > 8 ? "long" : ""}`} aria-pressed={pick.includes(w)} onClick={() => toggle(w)}>{w}</button>)}
           </div>
-          <p className="small center" aria-live="polite">Mistakes left: <span className="conn-dots" aria-label={`${left} of ${s.mistakesAllowed}`}>{[...Array(s.mistakesAllowed)].map((_, i) => <span key={i} className={i < left ? "on" : ""} />)}</span></p>
+          <p className="small center" aria-live="polite">Mistakes left: <span className="conn-dots" role="img" aria-label={`${left} of ${s.mistakesAllowed}`}>{[...Array(s.mistakesAllowed)].map((_, i) => <span key={i} className={i < left ? "on" : ""} />)}</span></p>
           <div className="row" style={{ justifyContent: "center", gap: "0.4rem", flexWrap: "wrap" }}>
             <button className="btn btn-ghost btn-sm" onClick={mix}>Shuffle</button>
             <button className="btn btn-ghost btn-sm" onClick={() => setPick([])} disabled={!pick.length}>Deselect all</button>

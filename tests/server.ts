@@ -4,6 +4,10 @@ import { spawn, type ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import net from "node:net";
+
+/** A port nothing is using right now (asked of the system, so test files running side by side never clash) */
+export const freePort = () => new Promise<number>((ok, fail) => { const srv = net.createServer(); srv.unref(); srv.on("error", fail); srv.listen(0, () => { const p = (srv.address() as net.AddressInfo).port; srv.close(() => ok(p)); }); });
 
 export const PASSCODE = "test-passcode";
 
@@ -18,7 +22,8 @@ export type TestServer = {
   cookie: () => string;
 };
 
-export async function startServer(port = 3900 + Math.floor(Math.random() * 90), extraEnv: Record<string, string> = {}): Promise<TestServer> {
+export async function startServer(portIn?: number, extraEnv: Record<string, string> = {}): Promise<TestServer> {
+  const port = portIn ?? (await freePort());
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "mm-test-"));
   const child: ChildProcess = spawn(process.execPath, [path.join("node_modules", "next", "dist", "bin", "next"), "start", "-p", String(port)], {
     env: { ...process.env, DATA_DIR: dataDir, ADMIN_PASSCODE: PASSCODE, SITE_URL: `http://localhost:${port}`, ANTHROPIC_API_KEY: "", GEMINI_API_KEY: "", DEMO_BARISTA: "off", RATE_LIMIT_SCALE: "50", HAPPY_HOUR: "off", WEATHER: "fake", C4_ROUND_MS: "1200", QUIZ_Q_MS: "1500", RESEND_API_KEY: "", RAZORPAY_KEY_ID: "", RAZORPAY_KEY_SECRET: "", NODE_ENV: "production", ...extraEnv },

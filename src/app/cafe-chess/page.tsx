@@ -104,8 +104,8 @@ export default function CafeChess() {
         <button className="btn btn-ghost btn-sm" onClick={() => newGame2()}>New game</button>
       </div>
       <p className="center small" aria-live="polite" style={{ margin: "0.6rem 0 0.3rem" }}><b>{status}</b>{done && res.why !== "checkmate" ? <span className="muted"> · {WHY[res.why]}</span> : null}</p>
-      <p className="cc-taken" aria-label={two ? "Pieces taken from this side" : "Pieces the computer has taken"}>{taken(me)}</p>
-      <div className="cc-board" role="grid" aria-label="Chess board">
+      <p className="cc-taken" role="group" aria-label={two ? "Pieces taken from this side" : "Pieces the computer has taken"}>{taken(me)}</p>
+      <div className="cc-board" role="group" data-grid="" aria-label="Chess board">
         {order.map((i) => {
           const p = g.s.b[i], dark = (Math.floor(i / 8) + (i % 8)) % 2 === 1;
           const last = g.last && (g.last.from === i || g.last.to === i);
@@ -119,7 +119,7 @@ export default function CafeChess() {
           );
         })}
       </div>
-      <p className="cc-taken" aria-label={two ? "Pieces taken from the other side" : "Pieces you have taken"}>{taken(me === "w" ? "b" : "w")}</p>
+      <p className="cc-taken" role="group" aria-label={two ? "Pieces taken from the other side" : "Pieces you have taken"}>{taken(me === "w" ? "b" : "w")}</p>
       {promo && (
         <div className="cc-promo" role="dialog" aria-label="Promote your pawn">
           <span className="small">Promote to:</span>

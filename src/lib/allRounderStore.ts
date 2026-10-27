@@ -1,5 +1,6 @@
 // The all-rounder board: who finished the most daily games this week. You join it with a name; nobody's on it otherwise.
 import "server-only";
+import { hiddenGames } from "./gameVisibility";
 import { votersFor } from "./syncStore";
 import { db, cleanText } from "./db";
 import { toDateStr } from "./cafe";
@@ -55,5 +56,5 @@ export function trophyData(customerId: number | null, voter: unknown) {
     const best = vs.map((x) => (db.prepare("SELECT MAX(score) AS s FROM arcade_scores WHERE game = ? AND voter = ?").get(g, x) as { s: number | null }).s).filter((x): x is number => x !== null);
     arcade[g] = best.length ? Math.max(...best) : null;
   }
-  return { played, five: fiveDays(played), arcade };
+  return { played, five: fiveDays(played, hiddenGames()), arcade };
 }

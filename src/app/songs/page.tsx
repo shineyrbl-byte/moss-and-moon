@@ -3,8 +3,9 @@ import "./page.css";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
 import { useLive } from "@/components/useLive";
+import { voterId } from "@/components/LabCard";
 
-type S = { id: number; title: string; artist: string; name: string };
+type S = { id: number; title: string; artist: string; name: string; votes?: number; mine?: boolean };
 type NP = { playing: S | null; next: S[] };
 
 export default function Songs() {
@@ -16,7 +17,13 @@ export default function Songs() {
   const [err, setErr] = useState("");
   const [sent, setSent] = useState(false);
   useLive("/api/live?topic=board", () => setKick((k) => k + 1));
-  useEffect(() => { fetch("/api/songs").then((r) => r.json()).then(setNp).catch(() => {}); }, [kick]);
+  useEffect(() => { fetch(`/api/songs?voter=${voterId()}`).then((r) => r.json()).then(setNp).catch(() => {}); }, [kick]);
+  async function vote(s: S) {
+    const r = await fetch("/api/songs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voter: voterId(), vote: s.id, undo: s.mine }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) return toast(d.error ?? "That vote didn't go through.");
+    setNp(d);
+  }
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +50,8 @@ export default function Songs() {
         {!!np?.next.length && (
           <>
             <span className="tiny muted" style={{ marginTop: "0.8rem" }}>UP NEXT</span>
-            <ol className="song-next">{np.next.map((s) => <li key={s.id}><b>{s.title}</b> <span className="small muted">{who(s)}</span></li>)}</ol>
+            <ol className="song-next">{np.next.map((s) => <li key={s.id}><span><b>{s.title}</b> <span className="small muted">{who(s)}</span></span> <button className={`chip song-vote ${s.mine ? "on" : ""}`} aria-pressed={!!s.mine} onClick={() => vote(s)} aria-label={`${s.mine ? "Take back your vote for" : "Vote for"} ${s.title}, ${s.votes ?? 0} vote${s.votes === 1 ? "" : "s"}`}>▲ {s.votes ?? 0}</button></li>)}</ol>
+            <span className="tiny muted">Vote for the songs you&apos;d like to hear next: the most votes go first.</span>
           </>
         )}
       </section>

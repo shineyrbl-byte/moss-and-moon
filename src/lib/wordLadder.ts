@@ -1,5 +1,5 @@
 // Word ladder: change one letter at a time to turn one word into another. Pure, so the page and tests share it.
-import { seededRand } from "./gameOrders.ts";
+import { rotationPick } from "./gameOrders.ts";
 import { COMMON4, MORE4 } from "./data/words4.ts";
 
 export const minMs = 5000;
@@ -29,7 +29,7 @@ export function shortest(a: string, b: string): string[] | null {
 }
 /** Today's ladder and its par (the fewest steps we know) */
 export function ladderFor(date: string) {
-  const [from, to] = LADDERS[Math.floor(seededRand(`ladder:${date}`)() * LADDERS.length)];
+  const [from, to] = rotationPick(LADDERS, "ladder", date);
   return { from, to, par: shortest(from, to)!.length - 1 };
 }
 /** Why a next word isn't allowed, or null if it's fine */

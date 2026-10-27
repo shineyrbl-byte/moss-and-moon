@@ -80,7 +80,7 @@ export default function SlowGames() {
       <p role="status"><b>{status}</b></p>
       {canJoin && <div className="row" style={{ alignItems: "end", gap: "0.5rem", flexWrap: "wrap" }}><label className="field" style={{ marginBottom: 0, maxWidth: "12rem" }}>Your name<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label><button className="btn btn-pink btn-sm" onClick={async () => { const d = await post({ id: g.id, join: true, name }); if (d) setG(d); }}>Take the seat</button></div>}
       {g.kind === "connect4" && me && g.options.length > 0 && <div className="sg-cols" role="group" aria-label="Drop in a column">{[...Array(7).keys()].map((c) => <button key={c} className="sg-col" disabled={!g.options.includes(c)} onClick={() => move(c)} aria-label={`Column ${c + 1}`}>↓</button>)}</div>}
-      <div className={`sg-board ${g.kind}`} role="grid" aria-label={`${g.title} board`}>
+      <div className={`sg-board ${g.kind}`} role="group" data-grid="" aria-label={`${g.title} board`}>
         {g.board.map((v, i) => {
           const can = g.kind === "reversi" && g.options.includes(i);
           return <button key={i} className={`sg-cell ${v ? `p${v}` : ""} ${can ? "can" : ""} ${g.last === i ? "last" : ""} ${g.line.includes(i) ? "win" : ""}`} disabled={!can} onClick={() => can && move(i)}

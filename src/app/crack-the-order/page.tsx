@@ -57,7 +57,7 @@ export default function CrackTheOrder() {
         {rows.map((r, i) => (
           <li key={i} className={r.live ? "live" : ""}>
             <span className="crack-n" aria-hidden="true">{i + 1}</span>
-            <span className="crack-guess" aria-label={r.guess.map((d) => DRINK_NAMES[d]).join(", ") || "empty"}>
+            <span className="crack-guess" role="img" aria-label={r.guess.map((d) => DRINK_NAMES[d]).join(", ") || "empty"}>
               {[...Array(CODE_LEN).keys()].map((k) => <span key={k} className="crack-slot" aria-hidden="true">{r.guess[k] !== undefined ? DRINKS[r.guess[k]] : ""}</span>)}
             </span>
             {!r.live && <span className="crack-marks" aria-label={`${r.right} right spot, ${r.near} wrong spot`}>{"✅".repeat(r.right)}{"🔄".repeat(r.near)}{r.right + r.near === 0 && <span className="muted">none</span>}</span>}

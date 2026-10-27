@@ -28,7 +28,7 @@ export function LiveReversi({ st, me, joined, send }: Props<ReversiState>) {
   return (
     <>
       <Status text={text} sub={`you're ${p === 1 ? "the dark beans" : "the milk"} · ${a}–${b}`} />
-      <div className="rv-board" role="grid" aria-label="Reversi board">
+      <div className="rv-board" role="group" data-grid="" aria-label="Reversi board">
         {st.b.map((v, i) => (
           <button key={i} className={`rv-sq ${moves.includes(i) ? "can" : ""} ${st.last === i ? "last" : ""}`} onClick={() => tap(i)} disabled={!moves.includes(i)}
             aria-label={`Row ${Math.floor(i / RV.N) + 1}, column ${(i % RV.N) + 1}: ${v === p ? "yours" : v ? "theirs" : moves.includes(i) ? "you can play here" : "empty"}`}>
@@ -66,7 +66,7 @@ export function LiveDraughts({ st, me, joined, send }: Props<DraughtsState>) {
   return (
     <>
       <Status text={text} sub={`you're ${me === 0 ? "pink" : "brown"} · ${DR.count(st.b, side)} vs ${DR.count(st.b, (-side) as 1 | -1)}`} />
-      <div className="dr-board" role="grid" aria-label="Draughts board">
+      <div className="dr-board" role="group" data-grid="" aria-label="Draughts board">
         {order.map((i) => {
           const v = st.b[i], dark = (Math.floor(i / DR.N) + (i % DR.N)) % 2 === 1;
           return (

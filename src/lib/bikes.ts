@@ -2,6 +2,7 @@
 // squares in each row and column are bike; bikes never touch, not even corner to corner. A few squares are shown to
 // start you off. Each day's lane has one answer. Pure, so the page and tests share it.
 import { seededRand } from "./gameOrders.ts";
+import { makeGrid } from "./grid.ts";
 
 export const N = 8;
 export const FLEET = [4, 3, 3, 2, 2, 1, 1]; // 16 squares of bike
@@ -10,8 +11,8 @@ export const HINT_MS = 15000;
 export type Mark = 0 | 1 | 2; // 0 unknown, 1 water, 2 bike
 type Ship = { cells: number[] };
 
-const rowOf = (i: number) => Math.floor(i / N), colOf = (i: number) => i % N;
-const around = (i: number) => { const out: number[] = []; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const r = rowOf(i) + dr, c = colOf(i) + dc; if (r >= 0 && r < N && c >= 0 && c < N) out.push(r * N + c); } return out; };
+const G = makeGrid(N), { rowOf, colOf } = G;
+const around = G.block; // the square itself and the ones touching it
 /** Every place a bike of this length could go, as square lists (each placement once) */
 function spots(len: number): number[][] {
   const out: number[][] = [];

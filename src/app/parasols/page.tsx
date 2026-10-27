@@ -110,7 +110,7 @@ export default function Parasols() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⛱️ <b>{placed}</b>/{tables.length} up</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`ps-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Terrace">
+      <div className={`ps-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Terrace">
         <span aria-hidden="true" />
         {cols.map((n, c) => (
           <button key={`c${c}`} className={`ps-count ${countCls(lineCount(marks, c, false), n)}`} onClick={() => fillLine(c, false)} disabled={done}

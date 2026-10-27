@@ -71,7 +71,7 @@ export default function BeanSnake() {
       <h1 className="h2">Bean <em>snake</em></h1>
       <p className="small muted">Eat the coffee beans to grow. Don&apos;t run into yourself. The edges wrap around, like a round café table. Swipe, use the arrow keys or the buttons. Space pauses.</p>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Beans <b>{s.score}</b></span><span>Best <b>{best}</b></span></div>
-      <div className="snake-grid" style={{ gridTemplateColumns: `repeat(${GRID}, 1fr)` }} role="img" aria-label={`Snake ${s.body.length} long, ${s.score} beans eaten`}
+      <div className="snake-grid" style={{ gridTemplateColumns: `repeat(${GRID}, 1fr)` }} role="group" aria-label={`Snake ${s.body.length} long, ${s.score} beans eaten`}
         onTouchStart={(e) => (touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
         onTouchMove={(e) => {
           const t = touch.current;

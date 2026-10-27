@@ -12,7 +12,7 @@ const cellName = (c: number) => `${"ABCDEFGH"[c % SIZE]}${Math.floor(c / SIZE) +
 
 function Grid({ ships, shots, show, onShoot, label, last }: { ships: Ship[]; shots: number[]; show: boolean; onShoot?: (c: number) => void; label: string; last: number | null }) {
   return (
-    <div className="ss-grid" role="grid" aria-label={label}>
+    <div className="ss-grid" role="group" data-grid="" aria-label={label}>
       {[...Array(SIZE * SIZE).keys()].map((c) => {
         const k = shipAt(ships, c), shot = shots.includes(c), sunk = k >= 0 && isSunk(ships[k], shots);
         const state = shot ? (k >= 0 ? (sunk ? "sunk" : "hit") : "miss") : "";

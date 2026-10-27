@@ -41,7 +41,7 @@ export default function CafeHangman() {
         <path d="M74 42 q14 2 10 16 q-3 8 -12 8" fill="none" stroke="currentColor" strokeWidth="3" />
       </svg>
       <p className="center small muted">Clue: {clueFor(s.word)}</p>
-      <p className="hm-word" aria-label={s.over ? `The word was ${s.word}` : `${shown(s).filter((c) => c === "_").length} letters still hidden`}>{shown(s).map((c, k) => <span key={k} className={!s.guessed.includes(s.word[k]) && s.over ? "missed" : ""}>{c === "_" ? "" : c}</span>)}</p>
+      <p className="hm-word" role="img" aria-label={s.over ? `The word was ${s.word}` : `${shown(s).map((c) => (c === "_" ? "blank" : c)).join(" ")}: ${shown(s).filter((c) => c === "_").length} letters still hidden`}>{shown(s).map((c, k) => <span key={k} className={!s.guessed.includes(s.word[k]) && s.over ? "missed" : ""}>{c === "_" ? "" : c}</span>)}</p>
       {s.over ? (
         <p className="center"><b>{s.won ? "Got it! ☕🎉" : `The cup's empty. It was ${s.word.toUpperCase()}.`}</b><br /><button className="btn btn-pink btn-sm" style={{ marginTop: "0.6rem" }} onClick={() => setS(newWord(Math.random, rec.played))}>Next word</button></p>
       ) : (

@@ -135,7 +135,7 @@ export default function TipJar() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{left}</b> to fill</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`tj-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" data-own-keys="" aria-label="Tip jar grid">
+      <div className={`tj-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" data-own-keys="" aria-label="Tip jar grid">
         {g.map((v, i) => {
           const cage = cages[cageOf[i]], first = cage.cells[0] === i;
           return (

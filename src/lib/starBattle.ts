@@ -1,6 +1,7 @@
 // Sugar stars (star battle): put two stars in every row, every column and every outlined tray, with no two stars touching,
 // not even corner to corner. Each day's 10×10 has exactly one answer. Pure, so the page and tests share it.
 import { seededRand, shuffled } from "./gameOrders.ts";
+import { makeGrid } from "./grid.ts";
 
 export const N = 10;
 export const STARS = 2;
@@ -8,9 +9,9 @@ export const minMs = 20000;
 export const HINT_MS = 15000;
 export type Mark = 0 | 1 | 2; // 0 empty, 1 crossed off, 2 star
 
-const rowOf = (i: number) => Math.floor(i / N), colOf = (i: number) => i % N;
-export const touching = (a: number, b: number) => a !== b && Math.abs(rowOf(a) - rowOf(b)) <= 1 && Math.abs(colOf(a) - colOf(b)) <= 1;
-const side = (i: number) => [[-1, 0], [1, 0], [0, -1], [0, 1]].map(([dr, dc]) => [rowOf(i) + dr, colOf(i) + dc]).filter(([r, c]) => r >= 0 && r < N && c >= 0 && c < N).map(([r, c]) => r * N + c);
+const G = makeGrid(N), { rowOf, colOf } = G;
+export const touching = G.touching;
+const side = G.side;
 
 // Every way to put two non-touching stars in a row: pairs of columns at least two apart
 const ROW_PAIRS: [number, number][] = [];

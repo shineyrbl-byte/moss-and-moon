@@ -61,7 +61,7 @@ export default function SteamPipes() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>♨️ <b>{reached.size}</b>/{N * N}</span><span>Open ends <b>{leaks}</b></span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`sp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Pipes">
+      <div className={`sp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Pipes">
         {tiles.map((_, i) => {
           const m = sidesNow(tiles, spins, turns, i), cup = i !== SOURCE && SIDES(tiles[i]) === 1;
           return (

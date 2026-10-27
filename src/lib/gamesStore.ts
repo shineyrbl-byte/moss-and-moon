@@ -1,5 +1,6 @@
 // Games corner: has this person played each daily game today, and their streak for each.
 import "server-only";
+import { hiddenGames } from "./gameVisibility";
 import { db } from "./db";
 import { votersFor } from "./syncStore";
 import { toDateStr } from "./cafe";
@@ -141,10 +142,12 @@ export function playedMap(customerId: number | null, voter: unknown): Record<str
 export function gamesFor(customerId: number | null, voter: unknown, now = new Date()) {
   const today = toDateStr(now);
   const played = playedMap(customerId, voter);
-  const games = DAILY_GAMES.map((g) => ({ ...g, done: played[g.id].includes(today), streak: playStreak(played[g.id], today) }));
+  const hidden = hiddenGames(), shown = (id: string, d: string) => !(hidden[id] && d >= hidden[id]);
+  // Games the owner has hidden drop out of the list (and out of the full set) from the day they were hidden
+  const games = DAILY_GAMES.filter((g) => shown(g.id, today)).map((g) => ({ ...g, done: played[g.id].includes(today), streak: playStreak(played[g.id], today) }));
   // Days you finished every one of them
-  const all = [...new Set(Object.values(played).flat())].filter((d) => DAILY_GAMES.every((g) => played[g.id].includes(d)));
-  const ids = todaysFive(today);
-  const five = { ids, done: ids.filter((id) => played[id].includes(today)).length, streak: playStreak(fiveDays(played), today) };
-  return { date: today, games, done: games.filter((g) => g.done).length, allStreak: playStreak(all, today), five };
+  const all = [...new Set(Object.values(played).flat())].filter((d) => DAILY_GAMES.every((g) => !shown(g.id, d) || played[g.id].includes(d)));
+  const ids = todaysFive(today, hidden);
+  const five = { ids, done: ids.filter((id) => played[id].includes(today)).length, streak: playStreak(fiveDays(played, hidden), today) };
+  return { date: today, games, done: games.filter((g) => g.done).length, allStreak: playStreak(all, today), five, hidden: Object.keys(hidden) };
 }

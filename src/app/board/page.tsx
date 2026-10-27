@@ -7,7 +7,7 @@ import TodayLine from "@/components/TodayLine";
 
 type Entry = { code: string; name: string; table: number | null };
 type Board = { preparing: Entry[]; ready: Entry[] };
-type Song = { id: number; title: string; artist: string; name: string };
+type Song = { id: number; title: string; artist: string; name: string; votes?: number };
 
 // Two soft notes when an order turns ready
 function ding() {
@@ -128,7 +128,7 @@ export default function BoardPage() {
       {(songs.playing || songs.next.length > 0) && (
         <div className="board-songs" aria-live="polite">
           {songs.playing && <span>🎵 <b>{songs.playing.title}</b>{songs.playing.artist ? ` · ${songs.playing.artist}` : ""} <span className="muted">for {songs.playing.name}</span></span>}
-          {songs.next.length > 0 && <span className="muted">Up next: {songs.next.slice(0, 3).map((x) => x.title).join(" · ")}</span>}
+          {songs.next.length > 0 && <span className="muted">Up next: {songs.next.slice(0, 3).map((x) => `${x.title}${x.votes ? ` ▲${x.votes}` : ""}`).join(" · ")} · vote at mossandmoon → Song requests</span>}
           <span className="muted">Request one: table QR → 🔔 → 🎵</span>
         </div>
       )}

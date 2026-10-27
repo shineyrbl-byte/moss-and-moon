@@ -106,7 +106,7 @@ export default function SpareCups() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>🥤 <b>{shaded.size}</b> put away</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`hc-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Cup shelf">
+      <div className={`hc-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Cup shelf">
         {nums.map((v, i) => {
           const m = marks[i];
           return (

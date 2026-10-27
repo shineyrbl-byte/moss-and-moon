@@ -6,6 +6,7 @@ import { photo } from "@/lib/menu";
 import { getMenu } from "@/lib/menuStore";
 import { HOME_RECIPES } from "@/lib/homeRecipes";
 import { listRecipes } from "@/lib/guestRecipeStore";
+import { recipeWeek } from "@/lib/recipeWeek";
 
 export const metadata: Metadata = { title: "Make it at home", description: "Home versions of our favourite drinks. No espresso machine needed." };
 export const dynamic = "force-dynamic";
@@ -13,11 +14,20 @@ export const dynamic = "force-dynamic";
 export default function Recipes() {
   const menu = new Map(getMenu({ includeHidden: true }).map((m) => [m.id, m]));
   const guests = listRecipes(null, "top", 3);
+  const week = recipeWeek();
   return (
     <div className="page" style={{ maxWidth: "62rem" }}>
       <p className="eyebrow">from our counter to your kitchen</p>
       <h1 className="h2">Make it <em>at home</em></h1>
       <p className="lead">Our favourite drinks, rewritten for a home kitchen. No espresso machine needed. Brewing plain coffee? Use the <Link href="/brew" className="link-btn">brew timer</Link>, and see <Link href="/origins" className="link-btn">where our beans grow</Link>.</p>
+      {week && (
+        <section className="card recipe-week" aria-labelledby="rw-h">
+          <span className="tiny muted">⭐ RECIPE OF THE WEEK</span>
+          <h2 className="h3" id="rw-h" style={{ margin: "0.1rem 0" }}><Link href={`/recipes/${week.id}`}>{week.title}</Link></h2>
+          {week.note && <p className="small" style={{ margin: "0.2rem 0" }}>{week.note}</p>}
+          <p className="small" style={{ margin: "0.3rem 0 0" }}><Link href={`/recipes/${week.id}`}>Read the recipe →</Link>{week.video && <> · <a href={week.video} target="_blank" rel="noreferrer noopener">▶ Watch the video</a></>}</p>
+        </section>
+      )}
       <div className="journal-grid">
         {HOME_RECIPES.map((r) => {
           const m = menu.get(r.id);

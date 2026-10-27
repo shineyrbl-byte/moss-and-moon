@@ -84,7 +84,7 @@ export default function LampSwitch() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>💡 <b>{on}</b> on</span><span>Taps <b>{presses.length}</b></span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <Ghost elapsed={elapsed} done={doneMs !== null} />
-      <div className={`lamps ${done ? "out" : ""}`} style={{ ["--n" as string]: SIZE }} role="grid" aria-label="Lamps">
+      <div className={`lamps ${done ? "out" : ""}`} style={{ ["--n" as string]: SIZE }} role="group" data-grid="" aria-label="Lamps">
         {lit.map((v, i) => (
           <button key={i} className={`lamp ${v ? "lit" : ""} ${hint === i ? "hint" : ""}`} onClick={() => tap(i)} disabled={done}
             aria-label={`Row ${Math.floor(i / SIZE) + 1}, lamp ${(i % SIZE) + 1}: ${v ? "on" : "off"}`} aria-pressed={v}>

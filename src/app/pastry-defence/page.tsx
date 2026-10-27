@@ -59,7 +59,7 @@ export default function PastryDefence() {
         <button className={`chip ${fast ? "on" : ""}`} onClick={() => setFast(!fast)} aria-pressed={fast}>⏩ Fast</button>
       </div>
       <div className="bb-wrap">
-        <div className="pd-field" style={{ ["--c" as string]: COLS, ["--r" as string]: ROWS }} role="grid" aria-label={`Wave ${s.wave}, ${s.ants.length} ants on the path, ${s.pastries} pastries left`}>
+        <div className="pd-field" style={{ ["--c" as string]: COLS, ["--r" as string]: ROWS }} role="group" data-grid="" aria-label={`Wave ${s.wave}, ${s.ants.length} ants on the path, ${s.pastries} pastries left`}>
           {[...Array(COLS * ROWS).keys()].map((i) => {
             const t = s.towers.find((x) => x.at === i), path = onPath.has(i), end = i === PATH[PATH.length - 1][1] * COLS + PATH[PATH.length - 1][0];
             return <button key={i} className={`pd-sq ${path ? "path" : ""} ${!path && !t && canBuild(s, i, kind) ? "can" : ""}`} onClick={() => !path && tap(i)} disabled={path} aria-label={path ? "Path" : t ? `${TOWERS[t.kind].name}: tap to sell` : "Empty: tap to build"}>{end ? "🥐" : t ? TOWERS[t.kind].emoji : ""}</button>;

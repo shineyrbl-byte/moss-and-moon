@@ -98,7 +98,7 @@ export default function CookieCutters() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>🍪 <b>{s.placed.length - left}</b>/{s.placed.length} in</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
       <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
-      <div className={`cu-board ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Dough" onPointerLeave={() => setHover(null)}>
+      <div className={`cu-board ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="group" data-grid="" aria-label="Dough" onPointerLeave={() => setHover(null)}>
         {puzzle.dough.map((dough, i) => {
           const k = owner[i], inPreview = preview?.includes(i);
           return (

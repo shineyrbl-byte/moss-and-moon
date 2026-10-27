@@ -21,16 +21,31 @@ export function requestSong(b: Record<string, unknown>): { ok: true; id: number 
   return { ok: true, id: Number(r.lastInsertRowid) };
 }
 
-/** For guests and the TV: what's on and the next few approved songs */
-export function nowPlaying() {
-  const playing = (db.prepare(`SELECT ${COLS} FROM song_requests WHERE status = 'playing' ORDER BY played_at DESC LIMIT 1`).get() as Song | undefined) ?? null;
-  const next = db.prepare(`SELECT ${COLS} FROM song_requests WHERE status = 'queued' ORDER BY id LIMIT 5`).all() as Song[];
-  const pub = (s: Song) => ({ id: s.id, title: s.title, artist: s.artist, name: s.name });
+const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
+const VOTES = "(SELECT COUNT(*) FROM song_votes v WHERE v.song_id = song_requests.id)";
+
+/** For guests and the TV: what's on and the next approved songs, most votes first (then the order they were asked for) */
+export function nowPlaying(voterIn?: unknown) {
+  const voter = cleanVoter(voterIn);
+  const playing = (db.prepare(`SELECT ${COLS}, ${VOTES} AS votes FROM song_requests WHERE status = 'playing' ORDER BY played_at DESC LIMIT 1`).get() as (Song & { votes: number }) | undefined) ?? null;
+  const next = db.prepare(`SELECT ${COLS}, ${VOTES} AS votes FROM song_requests WHERE status = 'queued' ORDER BY votes DESC, id LIMIT 8`).all() as (Song & { votes: number })[];
+  const mine = new Set(voter ? (db.prepare("SELECT song_id FROM song_votes WHERE voter = ?").all(voter) as { song_id: number }[]).map((r) => r.song_id) : []);
+  const pub = (s: Song & { votes: number }) => ({ id: s.id, title: s.title, artist: s.artist, name: s.name, votes: s.votes, mine: mine.has(s.id) });
   return { playing: playing && pub(playing), next: next.map(pub) };
+}
+/** A guest's vote for a song on the list (tap again to take it back) */
+export function voteSong(b: Record<string, unknown>) {
+  const voter = cleanVoter(b.voter), id = Math.floor(Number(b.id));
+  if (!voter) return { error: "Something went wrong. Refresh and try again." };
+  const s = db.prepare("SELECT status FROM song_requests WHERE id = ?").get(id) as { status: string } | undefined;
+  if (!s || s.status !== "queued") return { error: "You can vote for songs that are up next." };
+  if (b.undo) db.prepare("DELETE FROM song_votes WHERE song_id = ? AND voter = ?").run(id, voter);
+  else db.prepare("INSERT OR IGNORE INTO song_votes (song_id, voter) VALUES (?, ?)").run(id, voter);
+  return nowPlaying(voter);
 }
 
 /** Staff: everything not yet played, plus the last few played */
-export const songList = () => db.prepare(`SELECT ${COLS} FROM song_requests WHERE status != 'played' OR played_at >= datetime('now','localtime','-3 hours') ORDER BY CASE status WHEN 'playing' THEN 0 WHEN 'queued' THEN 1 WHEN 'pending' THEN 2 ELSE 3 END, id LIMIT 80`).all() as Song[];
+export const songList = () => db.prepare(`SELECT ${COLS}, ${VOTES} AS votes FROM song_requests WHERE status != 'played' OR played_at >= datetime('now','localtime','-3 hours') ORDER BY CASE status WHEN 'playing' THEN 0 WHEN 'queued' THEN 1 WHEN 'pending' THEN 2 ELSE 3 END, CASE status WHEN 'queued' THEN -${VOTES} ELSE 0 END, id LIMIT 80`).all() as (Song & { votes: number })[];
 
 /** approve → on the list · play → now playing (the last one counts as played) · done → played · remove → gone */
 export function songAction(id: number, action: string) {
@@ -41,7 +56,7 @@ export function songAction(id: number, action: string) {
     db.prepare("UPDATE song_requests SET status = 'played' WHERE status = 'playing'").run();
     db.prepare("UPDATE song_requests SET status = 'playing', played_at = datetime('now','localtime') WHERE id = ?").run(id);
   } else if (action === "done") db.prepare("UPDATE song_requests SET status = 'played', played_at = COALESCE(played_at, datetime('now','localtime')) WHERE id = ?").run(id);
-  else if (action === "remove") db.prepare("DELETE FROM song_requests WHERE id = ?").run(id);
+  else if (action === "remove") { db.prepare("DELETE FROM song_requests WHERE id = ?").run(id); db.prepare("DELETE FROM song_votes WHERE song_id = ?").run(id); }
   else return false;
   return true;
 }
