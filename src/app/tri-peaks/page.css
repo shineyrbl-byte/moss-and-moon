@@ -1,0 +1,9 @@
+/* Styles only this page uses */
+.tp-peaks { position: relative; margin: 1rem 0 0.4rem; }
+.tp-card { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; transform: translateX(-50%); }
+.tp-card .pk-card { width: min(2.6rem, 9vw); height: min(3.5rem, 12vw); font-size: min(0.9rem, 3.2vw); }
+.tp-card.can .pk-card { box-shadow: 0 0 0 3px #f6da9e; }
+.tp-card:disabled { cursor: default; }
+.tp-stock { display: grid; justify-items: center; padding: 0; border: 0; background: none; cursor: pointer; }
+.gs-bottom { display: flex; justify-content: center; gap: 1rem; margin: 0.6rem 0; align-items: start; }
+.gs-bottom .pk-card { width: 3rem; height: 4.2rem; font-size: 1.1rem; }

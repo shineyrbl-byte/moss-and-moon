@@ -1,4 +1,5 @@
 "use client";
+import { GoaSpotsCard } from "@/components/admin/GamesAdmin";
 import "./page.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MenuEditor from "@/components/admin/MenuEditor";
@@ -92,19 +93,20 @@ type Email = { id: number; to_email: string; subject: string; html: string; stat
 type Booking = { id: number; code: string; name: string; phone: string; date: string; time: string; guests: number; note: string; status: string; branch?: string; high_chairs?: number; deposit?: number; deposit_status?: string | null; table_no: number | null; preorder: string | null; preorder_code: string | null };
 type Review = { id: number; name: string; rating: number; text: string; created_at: string; private?: number };
 
-const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Cakes", "Events", "Catering", "Companies", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Health", "Settings"] as const;
+const TABS = ["Overview", "Analytics", "Orders", "Bookings", "Cakes", "Events", "Catering", "Companies", "Menu", "Stock", "Waste", "Checklists", "Cash-up", "P&L", "Tables & QR", "Team", "Rota", "Training", "Promos", "Guests", "Gift cards", "Newsletter", "Journal", "Emails", "Reviews", "Notices", "Games", "Health", "Settings"] as const;
 type Tab = (typeof TABS)[number];
 // The tabs, grouped so there's less to scan
 const SECTIONS: { label: string; icon: string; tabs: Tab[] }[] = [
   { label: "Today", icon: "☀︎", tabs: ["Overview", "Orders", "Bookings", "Cakes", "Checklists", "Cash-up"] },
   { label: "Menu & stock", icon: "☕", tabs: ["Menu", "Stock", "Waste", "Tables & QR"] },
-  { label: "Guests", icon: "💌", tabs: ["Guests", "Reviews", "Events", "Catering", "Companies", "Promos", "Gift cards", "Newsletter", "Notices", "Journal"] },
+  { label: "Guests", icon: "💌", tabs: ["Guests", "Reviews", "Events", "Catering", "Companies", "Promos", "Gift cards", "Newsletter", "Notices", "Journal", "Games"] },
   { label: "Team", icon: "👥", tabs: ["Team", "Rota", "Training"] },
   { label: "Money", icon: "📈", tabs: ["Analytics", "P&L"] },
   { label: "Settings", icon: "⚙︎", tabs: ["Settings", "Emails", "Health"] },
 ];
 /** Words that find a tab in "Jump to…" */
 const KEYWORDS: Partial<Record<Tab, string>> = {
+  Games: "puzzles games players where in goa photos dashboard",
   Orders: "swiggy zomato aggregator delivery apps songs music requests playlist pay it forward suspended coffee cups saved own cup reusable",
   Settings: "simulate simulation day in the life fake orders import csv spreadsheet excel demo reset alerts notifications push phone hours holidays golden hour last-hour branches delivery areas pincode google whatsapp gmail email gst invoice wifi wi-fi backups two-step 2fa owner email",
   Analytics: "profit menu engineering missed sales price what if retention coming back visitors insights",
@@ -552,6 +554,7 @@ export default function AdminPage() {
       )}
       {tab === "Menu" && <><ComebackCard canEdit={me?.role === "owner"} />{me?.role === "owner" && <><MenuTidyCard /><RotationCard /><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
       {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
+      {tab === "Games" && me?.role === "owner" && <GoaSpotsCard />}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Team" && me?.role === "owner" && <><ThanksNotes showEmpty /><TeamProfiles /></>}
       {tab === "Stock" && <><UseByCard />{me?.role === "owner" && <PriceWatch />}<StockTab canEdit={me?.role === "owner"} /></>}

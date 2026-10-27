@@ -1,0 +1,14 @@
+/* Styles only this page uses */
+.kc-grid { display: grid; grid-template-columns: repeat(6, 1fr); width: min(100%, 24rem); margin: 0.8rem auto; border: 3px solid var(--brown-deep); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.kc-cell { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); color: var(--text); font-weight: 800; font-size: clamp(1.1rem, 5.6vw, 1.6rem); cursor: pointer; }
+.kc-cell::after { content: ""; position: absolute; inset: 3px; border: 0 dashed rgba(138, 90, 64, 0.7); pointer-events: none; }
+.kc-cell.ct::after { border-top-width: 1.5px; } .kc-cell.cb::after { border-bottom-width: 1.5px; } .kc-cell.cl::after { border-left-width: 1.5px; } .kc-cell.cr::after { border-right-width: 1.5px; }
+.kc-cell.box-r { border-right: 2.5px solid var(--brown-deep); }
+.kc-cell.box-b { border-bottom: 2.5px solid var(--brown-deep); }
+.kc-cell.given { color: var(--pink-ink); }
+.kc-cell.at { background: var(--pink-soft); }
+.kc-cell.bad { color: #d64545; }
+.kc-sum { position: absolute; top: 4px; left: 5px; font-size: clamp(0.5rem, 2.2vw, 0.66rem); font-weight: 700; color: var(--muted); line-height: 1; }
+.kc-grid.done .kc-cell { background: var(--butter); color: #3b2720; }
+.kc-pad { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; }
+.kc-key { width: 2.8rem; height: 2.8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); font-weight: 800; font-size: 1.2rem; cursor: pointer; }

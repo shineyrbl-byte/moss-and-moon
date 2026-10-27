@@ -17,6 +17,7 @@ export const DAILY_KIND: Record<string, { kind: Kind; quick: boolean }> = {
   taller: { kind: "logic", quick: true }, traytiles: { kind: "logic", quick: true }, seats: { kind: "logic", quick: true }, four: { kind: "word", quick: true }, threads: { kind: "word", quick: false }, garden: { kind: "logic", quick: false }, rope: { kind: "logic", quick: false }, necklace: { kind: "logic", quick: false },
   trail: { kind: "logic", quick: false }, pipes: { kind: "logic", quick: true }, cutters: { kind: "logic", quick: false }, cryptic: { kind: "word", quick: true }, stars: { kind: "logic", quick: false },
   wheel: { kind: "word", quick: true }, codeword: { kind: "word", quick: false }, zip: { kind: "logic", quick: true }, bikes: { kind: "logic", quick: false }, push: { kind: "logic", quick: false }, price: { kind: "logic", quick: true },
+  cages: { kind: "logic", quick: false }, chain: { kind: "word", quick: true }, colour: { kind: "logic", quick: false },
 };
 
 /** Games you can play any time */
@@ -61,6 +62,11 @@ export const ANY_TIME: Entry[] = [
   { id: "road", href: "/market-road", title: "Cross the market road", emoji: "🛵", blurb: "hop across the traffic to the café, a weekly board", kind: "arcade", quick: true },
   { id: "cupcakes", href: "/pop-the-cupcakes", title: "Pop the cupcakes", emoji: "🧁", blurb: "thirty seconds of tapping, a weekly board", kind: "arcade", quick: true },
   { id: "slice", href: "/slice-the-cake", title: "Slice the cake", emoji: "🍰", blurb: "swipe the treats, dodge the chillies, a weekly board", kind: "arcade", quick: true },
+  { id: "golfcards", href: "/golf-solitaire", title: "Golf solitaire", emoji: "⛳", blurb: "one up or one down, clear the columns", kind: "cards", quick: true },
+  { id: "tripeaks", href: "/tri-peaks", title: "TriPeaks", emoji: "🏔️", blurb: "clear the three peaks of cards", kind: "cards", quick: true },
+  { id: "defence", href: "/pastry-defence", title: "Pastry defence", emoji: "🐜", blurb: "keep the ants off the pastries, a weekly board", kind: "arcade", quick: false },
+  { id: "run", href: "/market-run", title: "Market run", emoji: "🏃", blurb: "jump the crates, duck the awnings, a weekly board", kind: "arcade", quick: true },
+  { id: "goa", href: "/where-in-goa", title: "Where in Goa?", emoji: "🌴", blurb: "a daily photo: where was it taken?", kind: "together", quick: true },
   { id: "swap", href: "/sugar-swap", title: "Sugar swap", emoji: "🍬", blurb: "match three sweets in a row, a weekly board", kind: "arcade", quick: true },
   { id: "bubble", href: "/bubble-pop", title: "Bubble pop", emoji: "🫧", blurb: "aim, fire and pop the syrup bubbles, a weekly board", kind: "arcade", quick: true },
   { id: "golf", href: "/mini-golf", title: "Mini golf", emoji: "⛳", blurb: "nine little holes round the café", kind: "arcade", quick: false },

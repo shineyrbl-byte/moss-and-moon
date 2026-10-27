@@ -1,0 +1,11 @@
+/* Styles only this page uses */
+.pd-shop { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: center; margin: 0.4rem 0; }
+.pd-field { position: relative; display: grid; grid-template-columns: repeat(var(--c), 1fr); width: 100%; aspect-ratio: 10 / 12; border-radius: 14px; overflow: hidden; background: #a8c495; user-select: none; -webkit-user-select: none; }
+.pd-sq { padding: 0; border: 0; background: transparent; font-size: clamp(0.9rem, 5vw, 1.4rem); cursor: pointer; display: grid; place-items: center; }
+.pd-sq.path { background: #e6cfa4; cursor: default; }
+.pd-sq.can:hover { background: rgba(255, 255, 255, 0.35); }
+.pd-ant { position: absolute; transform: translate(-50%, -50%); font-size: clamp(0.8rem, 4vw, 1.1rem); display: grid; justify-items: center; pointer-events: none; transition: none; }
+.pd-ant.big { font-size: clamp(1.1rem, 6vw, 1.6rem); }
+.pd-ant i { display: block; height: 3px; background: #c94c4c; border-radius: 2px; margin-top: -2px; }
+.pd-shot { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pd-shot line { stroke: #fffaf6; stroke-width: 0.08; stroke-linecap: round; }

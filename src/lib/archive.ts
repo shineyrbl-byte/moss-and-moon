@@ -91,6 +91,9 @@ export const ARCHIVE_GAMES = [
   { id: "bikes", href: "/delivery-bikes", title: "Delivery bikes", emoji: "🚲", key: "mm-bikes" },
   { id: "push", href: "/bean-push", title: "Bean push", emoji: "🫘", key: "mm-push" },
   { id: "price", href: "/price-order", title: "Price order", emoji: "💸", key: "mm-price" },
+  { id: "cages", href: "/sugar-cages", title: "Sugar cages", emoji: "🍬", key: "mm-cages" },
+  { id: "chain", href: "/word-chain", title: "Word chain", emoji: "⛓️", key: "mm-chain" },
+  { id: "colour", href: "/colour-pixels", title: "Colour pixels", emoji: "🎨", key: "mm-colour" },
 ] as const;
 
 /** Has a past day been finished? `keys` is every saved key in this browser, `get` reads one. */

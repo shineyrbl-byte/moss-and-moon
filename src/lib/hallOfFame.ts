@@ -28,6 +28,8 @@ export const ARCADE = [
   { id: "slice", title: "Slice the cake", href: "/slice-the-cake" },
   { id: "swap", title: "Sugar swap", href: "/sugar-swap" },
   { id: "bubble", title: "Bubble pop", href: "/bubble-pop" },
+  { id: "defence", title: "Pastry defence", href: "/pastry-defence" },
+  { id: "run", title: "Market run", href: "/market-run" },
 ] as const;
 
 /** The Mondays of the last `n` finished weeks, latest first */

@@ -2671,3 +2671,28 @@ test("batch H: proofs, the friends league and the learn-to-play lessons", async 
   walk([zipL.marks!.indexOf(1)]); assert.equal(zn, 1, "one zip answer");
   assert.deepEqual(lessonWrong(sud, sud.given.map((v, i) => v || (i === 2 ? 1 : 0))), [2]);
 });
+
+test("batch I games: killer sudoku, word chain, colour pixels, golf and TriPeaks, pastry defence and market run", async () => {
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  const K = await import("../src/lib/killerSudoku.ts");
+  for (const d of ["2026-10-28", "2025-06-01"]) { const p = K.cagesFor(d); assert.equal(K.answers(p.cages, p.given, 3).length, 1, d); assert.equal(K.clashes(p.cages, p.answer).size, 0); assert.equal(p.cages.reduce((n, c) => n + c.cells.length, 0), 36); }
+  const C = await import("../src/lib/colourPixels.ts"), { PICTURES } = await import("../src/lib/data/pixels.ts");
+  for (const pic of PICTURES) { const solved = C.lineSolve(pic.rows.map(C.runs), [...Array(8).keys()].map((c) => C.runs(C.colOf(pic.rows, c)))); assert.equal(solved.join(""), pic.rows.join(""), `${pic.name} solves line by line`); }
+  assert.deepEqual(C.runs("pp.ppbb."), [{ c: "p", n: 2 }, { c: "p", n: 2 }, { c: "b", n: 2 }]);
+  const W = await import("../src/lib/wordChain.ts");
+  assert.ok("why" in W.judge(["latte"], "apple"), "must start with E"); assert.ok("ok" in W.judge(["latte"], "eat"));
+  assert.ok(W.pack(10, 40) < W.pack(9, 45), "more words beats more letters");
+  const P = await import("../src/lib/peaks.ts");
+  const golf = P.newGolf(seededRand("g")); assert.equal(P.golfLeft(golf) + golf.stock.length + golf.pile.length, 52);
+  const pk = P.newPeaks(seededRand("p")); assert.equal(pk.cards.length + pk.stock.length + pk.pile.length, 52);
+  assert.ok(P.fits({ r: 13, s: 0 }, { r: 1, s: 1 }, true) && !P.fits({ r: 13, s: 0 }, { r: 1, s: 1 }, false), "kings and aces join up only in TriPeaks");
+  const D = await import("../src/lib/pastryDefence.ts");
+  let dd = D.newGame(); assert.equal(D.build(dd, D.PATH[3][1] * D.COLS + D.PATH[3][0], "cannon"), null, "no building on the path");
+  for (let k = 0; k < 30 * 60 && !dd.over; k++) dd = D.step(dd, 1 / 30);
+  assert.ok(dd.over && dd.score % 10 === 0, "with no helpers the ants win");
+  const R = await import("../src/lib/marketRun.ts");
+  let r = R.newGame(3); for (let k = 0; k < 600 && !r.over; k++) r = R.step(r, 1 / 60);
+  assert.ok(r.over, "standing still, a crate gets you"); assert.equal(r.score % 10, 0);
+  const B = await import("../src/lib/latteBeat.ts");
+  assert.ok(B.chart(B.SONGS.find((x) => x.level === 3)!, () => 0.4).length > B.chart(B.SONGS.find((x) => x.id === "espresso")!, () => 0.4).length, "level 3 is busier than hard");
+});

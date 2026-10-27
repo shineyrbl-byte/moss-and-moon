@@ -47,6 +47,9 @@ import { minMs as zipMin } from "./zipPath";
 import { minMs as bikesMin } from "./bikes";
 import { MIN_SCORE as pushMin, MAX_SCORE as pushMax } from "./beanPush";
 import { MIN_SCORE as priceMin, MAX_SCORE as priceMax } from "./priceOrder";
+import { minMs as cagesMin } from "./killerSudoku";
+import { MIN_SCORE as chainMin, MAX_SCORE as chainMax } from "./wordChain";
+import { minMs as colourMin } from "./colourPixels";
 import { MIN_SCORE as fourMin, MAX_SCORE as fourMax } from "./quordle";
 import { MIN_SCORE as cornersMin, MAX_SCORE as cornersMax } from "./letterBoxed";
 
@@ -98,6 +101,10 @@ const GAMES = {
   bikes: { mode: () => "daily", min: () => bikesMin },
   push: { mode: () => "daily", min: () => pushMin, max: pushMax },
   price: { mode: () => "daily", min: () => priceMin, max: priceMax },
+  cages: { mode: () => "daily", min: () => cagesMin },
+  // Word chain packs words (more is better) and letters
+  chain: { mode: () => "daily", min: () => chainMin, max: chainMax },
+  colour: { mode: () => "daily", min: () => colourMin },
   // Four at once packs tries and time together, so fewest tries wins
   four: { mode: () => "daily", min: () => fourMin, max: fourMax },
   // Café corners packs words and time into one number (see letterBoxed pack), so fewest words wins

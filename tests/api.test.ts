@@ -27,6 +27,7 @@ async function solvedProof(game: string, mode: string | undefined, ms: number): 
     case "codeword": { const C = await import("../src/lib/codeword.ts"); return { proof: C.codewordFor(day).key, ms }; }
     case "pipes": { const P = await import("../src/lib/pipes.ts"); const p = P.pipesFor(day), zero = p.tiles.map(() => 0); return { proof: p.tiles.map((_, i) => P.fixTurns(p.tiles, p.spins, zero, i)), ms }; }
     case "cutters": { const C = await import("../src/lib/cutters.ts"); return { proof: C.cuttersFor(day).answer, ms }; }
+    case "cages": { const K = await import("../src/lib/killerSudoku.ts"); return { proof: K.cagesFor(day).answer, ms }; }
     case "push": {
       const B = await import("../src/lib/beanPush.ts"); const l = B.levelFor(day);
       const key = (x: { player: number; boxes: number[] }) => `${x.player}:${[...x.boxes].sort((a, b) => a - b)}`;
@@ -3088,7 +3089,7 @@ test("artist wall and where guests are visiting from", async () => {
 test("games corner: knows which daily games you've played today", async () => {
   const voter = "r".repeat(16) + "games1";
   const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
-  assert.equal(before.games.length, 53);
+  assert.equal(before.games.length, 56);
   assert.equal(before.done, 0);
   await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
   await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
@@ -3435,7 +3436,7 @@ test("my puzzle stats, bean sums and freecell times, and the delivery dash board
   const post = (p: string, json: Record<string, unknown>) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.38" }, body: JSON.stringify({ voter, name: "Sam", ...json }) });
   let st = (await (await fetch(`${s.url}/api/my-stats?voter=${voter}`)).json()) as { days: number; plays: number; games: { id: string; days: number }[]; times: unknown[] };
   assert.equal(st.days, 0); assert.equal(st.times.length, 0);
-  assert.equal(st.games.length, 53);
+  assert.equal(st.games.length, 56);
   assert.equal((await post("/api/daily-scores", { game: "sums", ms: 4000 })).status, 400, "too quick");
   assert.equal((await post("/api/daily-scores", { game: "sums", ms: 90000 })).status, 200);
   assert.equal((await post("/api/daily-scores", { game: "freecell", ms: 20000 })).status, 400, "nobody clears FreeCell in 20s");
@@ -3755,6 +3756,37 @@ test("batch H: today's difficulty, times over time and the new pages", async () 
   const st = await (await fetch(`${s.url}/api/my-stats?voter=${v}`)).json();
   assert.equal(st.history.sudoku.length, 1); assert.equal(st.history.sudoku[0].ms, 70_000);
   for (const p of ["/learn", "/my-stats", "/game-settings", "/games"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("batch I: sugar cages, word chain, colour pixels, the new arcade boards and Where in Goa", async () => {
+  const v = "i".repeat(16) + "batchi";
+  const daily = (json: Record<string, unknown>) => fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.63" }, body: JSON.stringify({ voter: v, name: "Ivy", ...json }) });
+  assert.equal((await daily({ game: "cages", ms: 90_000 })).status, 200);
+  assert.equal((await daily({ game: "colour", ms: 80_000 })).status, 200);
+  // A real chain from today's word
+  const W = await import("../src/lib/wordChain.ts"), L = await import("../src/lib/cafeLetters.ts");
+  const chain = [W.startFor(localDay())], words: string[] = [];
+  for (let k = 0; k < 4; k++) { const last = chain[chain.length - 1], next = L.COMPUTER_WORDS.find((w) => w.length >= 3 && w[0] === last[last.length - 1] && !chain.includes(w) && "ok" in W.judge(chain, w)); if (!next) break; chain.push(next); words.push(next); }
+  assert.ok(words.length >= 2);
+  const good = W.pack(words.length, words.join("").length);
+  assert.equal((await daily({ game: "chain", ms: good, proof: [...words, "zzzzz"] })).status, 400, "every link must be real");
+  assert.equal((await daily({ game: "chain", ms: good, proof: words })).status, 200);
+  const arcade = (json: Record<string, unknown>) => fetch(`${s.url}/api/arcade`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.64" }, body: JSON.stringify({ voter: v, name: "Ivy", ...json }) });
+  for (const [game, ok, bad] of [["defence", 4_210, 4_215], ["run", 2_660, 2_665]] as const) { assert.equal((await arcade({ game, score: ok })).status, 200, game); assert.equal((await arcade({ game, score: bad })).status, 400, `${game} ${bad}`); }
+  // Where in Goa: empty until the owner adds a photo
+  assert.equal((await (await fetch(`${s.url}/api/goa-spots`)).json()).spot, null);
+  await s.login();
+  const form = new FormData();
+  form.set("file", new Blob([Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0))], { type: "image/png" }), "spot.png");
+  for (const [k, val] of Object.entries({ answer: "Fontainhas", wrong1: "Margao", wrong2: "Mapusa", wrong3: "Vasco" })) form.set(k, val);
+  const added = await realFetch(`${s.url}/api/goa-spots`, { method: "POST", body: form, headers: { cookie: s.cookie() } });
+  assert.equal(added.status, 200, await added.clone().text());
+  const today = (await (await fetch(`${s.url}/api/goa-spots`)).json()).spot;
+  assert.equal(today.options.length, 4); assert.ok(!("answer" in today), "the answer isn't sent");
+  const g = await (await fetch(`${s.url}/api/goa-spots/guess`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: today.id, guess: "Fontainhas" }) })).json();
+  assert.equal(g.right, true);
+  assert.equal((await fetch(`${s.url}/api/goa-spots`, { method: "POST", body: new FormData() })).status, 401, "only the owner adds photos");
+  for (const p of ["/sugar-cages", "/word-chain", "/colour-pixels", "/golf-solitaire", "/tri-peaks", "/pastry-defence", "/market-run", "/where-in-goa", "/latte-beat"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

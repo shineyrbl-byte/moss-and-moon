@@ -1,0 +1,11 @@
+/* Styles only this page uses */
+.cp-board { display: grid; grid-template-columns: auto repeat(8, 1fr); gap: 2px; width: min(100%, 28rem); margin: 0.8rem auto; align-items: end; }
+.cp-cell { aspect-ratio: 1; padding: 0; border: 1px solid var(--line); border-radius: 3px; background: var(--surface); color: var(--muted); font-size: 0.8rem; cursor: pointer; }
+.cp-cell.x { background: var(--surface); }
+.cp-clue { display: flex; gap: 1px; justify-content: flex-end; align-items: center; font-size: 0.62rem; }
+.cp-clue.col { flex-direction: column; justify-content: flex-end; }
+.cp-clue b { min-width: 0.95rem; padding: 0 0.15rem; border-radius: 3px; color: #fff; text-align: center; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35); line-height: 1.2; }
+.cp-clue i { color: var(--muted); font-style: normal; }
+.cp-pen { width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; background: var(--surface); color: var(--text); }
+.cp-pen.on { outline: 3px solid var(--text); outline-offset: 2px; }
+.cp-board.done .cp-cell.x { opacity: 0.3; }

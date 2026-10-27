@@ -15,9 +15,11 @@ import { cuttersFor, isSolved as cuttersSolved, type Placed } from "./cutters.ts
 import { levelFor, move as pushMove, start as pushStart, isSolved as pushSolved, type Dir } from "./beanPush.ts";
 import { wheelFor, MAX_MAIN } from "./wordWheel.ts";
 import { priceFor, isRight as priceRight, type PItem } from "./priceOrder.ts";
+import { cagesFor } from "./killerSudoku.ts";
+import { validChain } from "./wordChain.ts";
 
 /** The puzzles the server checks */
-export const CHECKED = ["sudoku", "crossword", "trail", "stars", "seats", "garden", "zip", "bikes", "codeword", "pipes", "cutters", "push", "wheel", "price"] as const;
+export const CHECKED = ["sudoku", "crossword", "trail", "stars", "seats", "garden", "zip", "bikes", "codeword", "pipes", "cutters", "push", "wheel", "price", "cages", "chain"] as const;
 export const isChecked = (g: string) => (CHECKED as readonly string[]).includes(g);
 
 // Some puzzles take a moment to build, so keep the day's copy
@@ -57,6 +59,8 @@ export function verify(game: string, mode: string, date: string, proof: unknown,
         const w = once(`ww:${date}`, () => wheelFor(date)), found = [...new Set(proof.map(String))];
         return found.length === proof.length && found.every((x) => w.main.includes(x)) && found.length === MAX_MAIN - Math.floor(score / 1_000_000);
       }
+      case "cages": { if (!nums(proof)) return false; const p = once(`kc:${date}`, () => cagesFor(date)); return p.answer.every((v, i) => proof[i] === v); }
+      case "chain": return validChain(date, proof, score);
       case "price": {
         if (!arr(proof) || !proof.length || proof.length !== Math.floor(score / 1_000_000)) return false;
         const items = priceFor(date, menu());

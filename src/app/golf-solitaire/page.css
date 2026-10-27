@@ -1,0 +1,10 @@
+/* Styles only this page uses */
+.gs-cols { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.3rem; margin: 0.8rem 0; }
+.gs-col { display: flex; flex-direction: column; align-items: center; }
+.gs-col .gs-card + .gs-card { margin-top: -1.9rem; }
+.gs-card { padding: 0; border: 0; background: none; cursor: pointer; display: inline-block; }
+.gs-card .pk-card { width: 2.5rem; height: 3.4rem; }
+.gs-card.can .pk-card { box-shadow: 0 0 0 3px #f6da9e; }
+.gs-bottom { display: flex; justify-content: center; gap: 1rem; margin: 0.6rem 0; }
+.gs-bottom .pk-card { width: 3rem; height: 4.2rem; font-size: 1.1rem; }
+@media (max-width: 420px) { .gs-card .pk-card { width: 2.2rem; height: 3rem; font-size: 0.8rem; } }

@@ -1122,6 +1122,15 @@ function open() {
     guest TEXT,
     updated_at INTEGER NOT NULL
   );`);
+  // Where in Goa? The owner's photos of places, with the right answer and three wrong ones
+  db.exec(`CREATE TABLE IF NOT EXISTS goa_spots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    photo TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    wrong TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
   // Daily duels: you against a random player who's already done today's puzzle
   db.exec(`CREATE TABLE IF NOT EXISTS duels (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

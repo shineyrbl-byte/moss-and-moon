@@ -10,6 +10,7 @@ export function showDaily(game: string, v: number): string {
   if (game === "bill") { const { n, ms } = split(v); return `${n ? `${n} off` : "spot on"}, ${clock(ms)}`; }
   if (game === "wheel") { const { n, ms } = split(v); return `${40 - n} words, ${clock(ms)}`; }
   if (game === "push") { const { n, ms } = split(v); return `${n} moves, ${clock(ms)}`; }
+  if (game === "chain") { const { n } = split(v); return `${200 - n} words`; }
   if (game === "price") { const { n, ms } = split(v); return `${n} go${n === 1 ? "" : "es"}, ${clock(ms)}`; }
   return clock(v);
 }
