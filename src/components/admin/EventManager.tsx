@@ -111,7 +111,7 @@ export default function EventManager({ onChange }: { onChange?: () => void }) {
             <span><b>{e.title}</b> · {new Date(`${e.date}T${e.time}`).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}{e.date < today ? " · past" : ""}</span>
             <span className="small">{e.price ? rupees(e.price) : "free"} · {e.capacity - e.spotsLeft}/{e.capacity}</span>
             <button className="link-btn" onClick={() => setF({ id: e.id, title: e.title, date: e.date, time: e.time, desc: e.desc, img: e.img, capacity: e.capacity, price: e.price, repeat: "none", times: 4, packages: (e.packages ?? []).map((p) => `${p.label} | ${p.price}`).join("\n") })}>Edit</button>
-            <a className="link-btn" href={`/api/admin/story?event=${encodeURIComponent(e.id)}`} target="_blank" title="Instagram story image">📸 Story</a>
+            <a className="link-btn" href={`/api/admin/story?event=${encodeURIComponent(e.id)}`} target="_blank" title="Instagram story image">📸 Story</a> <a className="link-btn" href={`/admin/print?event=${encodeURIComponent(e.id)}`} target="_blank" rel="noreferrer">🖨 Guest list</a>
             {e.series && <button className="link-btn" onClick={() => removeSeries(e.id)} title="Remove this and every later date in the series">Remove series</button>}
           </li>
         ))}

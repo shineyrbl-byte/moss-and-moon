@@ -3987,3 +3987,29 @@ test("quiz season standings, the kids' corner and the café map", async () => {
   const map = await (await fetch(`${s.url}/cafe-map`)).text();
   assert.ok(map.includes("Counter") && map.includes("Power socket"));
 });
+
+test("owner tools: one approval queue, the monthly report and printable guest lists", async () => {
+  const post = (p: string, json: unknown) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.6.1" }, body: JSON.stringify(json) });
+  assert.equal((await post("/api/stories", { text: "Queue test story about warm chai", name: "Qi" })).status, 200);
+  const song = (await (await post("/api/songs", { title: "Queue test song" })).json()).id;
+  assert.equal((await fetch(`${s.url}/api/admin/approvals`)).status, 401, "staff only");
+  await s.login();
+  const q = (await s.api("/api/admin/approvals")).body as { items: { kind: string; id: number; text: string }[]; questions: number };
+  const story = q.items.find((i) => i.kind === "story" && i.text === "Queue test story about warm chai")!, req = q.items.find((i) => i.kind === "song" && i.id === song)!;
+  assert.ok(story && req, "both kinds show up"); assert.equal(typeof q.questions, "number");
+  assert.equal((await s.api("/api/admin/approvals", { method: "POST", json: { kind: "nope", id: 1, approve: true } })).status, 400);
+  const after = (await s.api("/api/admin/approvals", { method: "POST", json: { kind: "story", id: story.id, approve: true } })).body as typeof q;
+  assert.ok(!after.items.some((i) => i.kind === "story" && i.id === story.id), "gone from the queue");
+  assert.equal((await s.api("/api/admin/approvals", { method: "POST", json: { kind: "story", id: story.id, approve: true } })).status, 400, "already dealt with");
+  assert.ok(((await (await fetch(`${s.url}/api/stories`)).json()).stories as { text: string }[]).some((x) => x.text === "Queue test story about warm chai"), "approved stories show");
+  await s.api("/api/admin/approvals", { method: "POST", json: { kind: "song", id: req.id, approve: false } });
+  // Monthly report
+  const m = (await s.api("/api/admin/monthly")).body;
+  assert.match(m.month, /^\d{4}-\d{2}$/); assert.ok("orders" in m.now && "takings" in m.before && Array.isArray(m.now.topDishes));
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  assert.equal((await s.api(`/api/admin/monthly?month=${thisMonth}`)).body.month, thisMonth);
+  // Printable lists
+  const sheet = await (await fetch(`${s.url}/admin/print?night=2026-10-29`, { headers: { cookie: s.cookie() } })).text();
+  assert.ok(sheet.includes("Board-game night") && sheet.includes("🖨 Print"));
+  assert.ok((await (await fetch(`${s.url}/admin/print?night=2026-10-29`)).text()).includes("sign in"), "staff only");
+});

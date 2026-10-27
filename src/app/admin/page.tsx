@@ -1,6 +1,6 @@
 "use client";
 import { GamesDashboard, GoaSpotsCard } from "@/components/admin/GamesAdmin";
-import { ComingSoonCard, GameNightCard, GoaEventsCard, RecipeWeekCard } from "@/components/admin/CafeExtrasAdmin";
+import { ComingSoonCard, GameNightCard, GoaEventsCard, MonthlyCard, RecipeWeekCard } from "@/components/admin/CafeExtrasAdmin";
 import "./page.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MenuEditor from "@/components/admin/MenuEditor";
@@ -55,6 +55,7 @@ import ForwardCard from "@/components/admin/ForwardCard";
 import TableTagsCard from "@/components/admin/TableTagsCard";
 import ComebackCard from "@/components/admin/ComebackCard";
 import NearbyCard from "@/components/admin/NearbyCard";
+import ApprovalQueue, { ApprovalCount } from "@/components/admin/ApprovalQueue";
 import ThanksNotes from "@/components/ThanksNotes";
 import BookClubCard from "@/components/admin/BookClubCard";
 import WishesCard from "@/components/admin/WishesCard";
@@ -359,6 +360,7 @@ export default function AdminPage() {
       {tab === "Overview" && stats && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           {me?.role === "owner" && <SetupCard go={(t) => setTab(t as Tab)} />}
+          <ApprovalCount go={() => setTab("Notices")} />
           {mail && (
             <div className="mode-banner">
               <span>💳 Payments: <b>{mail.paymentMode === "razorpay" ? "Razorpay (live)" : "demo mode"}</b></span>
@@ -554,7 +556,7 @@ export default function AdminPage() {
         </div>
       )}
       {tab === "Menu" && <><ComebackCard canEdit={me?.role === "owner"} />{me?.role === "owner" && <><MenuTidyCard /><RotationCard /><SpecialsCard /><CombosCard /></>}<MenuEditor canEdit={me?.role === "owner"} /></>}
-      {tab === "Analytics" && me?.role === "owner" && <><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
+      {tab === "Analytics" && me?.role === "owner" && <><MonthlyCard /><InsightsCard kind="business" /><VisitorsPanel /><RetentionPanel /><ProfitPanel /><MenuEngineering /><MissedSales /><PriceWhatIf /><Analytics /></>}
       {tab === "Games" && me?.role === "owner" && <><GamesDashboard /><GoaSpotsCard /></>}
       {tab === "Team" && me?.role === "owner" && <Team />}
       {tab === "Team" && me?.role === "owner" && <><ThanksNotes showEmpty /><TeamProfiles /></>}
@@ -568,7 +570,7 @@ export default function AdminPage() {
       {tab === "Catering" && me?.role === "owner" && <CateringTab />}
       {tab === "Companies" && me?.role === "owner" && <CompaniesTab />}
       {tab === "P&L" && me?.role === "owner" && <PnlTab />}
-      {tab === "Notices" && <>{me?.role === "owner" && <><ComingSoonCard /><GoaEventsCard /></>}<QuizCard /><ShoutoutsCard /><AskCard /><LostFoundCard /><LatteArtCard me={me ?? null} /><StoryChainCard /><KindNotesCard /><GuestRecipesCard />{me?.role === "owner" && <Connect4Card />}{me?.role === "owner" && <ISpyCard />}<PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
+      {tab === "Notices" && <><ApprovalQueue />{me?.role === "owner" && <><ComingSoonCard /><GoaEventsCard /></>}<QuizCard /><ShoutoutsCard /><AskCard /><LostFoundCard /><LatteArtCard me={me ?? null} /><StoryChainCard /><KindNotesCard /><GuestRecipesCard />{me?.role === "owner" && <Connect4Card />}{me?.role === "owner" && <ISpyCard />}<PollCard /><StoriesCard /><WishesCard /><NoticesTab /><NearbyCard canEdit={me?.role === "owner"} /></>}
       {tab === "Newsletter" && me?.role === "owner" && <NewsletterTab />}
       {tab === "Guests" && me?.role === "owner" && <><WinbackCard /><GuestsTab /></>}
       {tab === "Journal" && me?.role === "owner" && <><RecipeWeekCard /><JournalTab /></>}

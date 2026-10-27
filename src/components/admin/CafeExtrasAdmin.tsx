@@ -2,6 +2,7 @@
 // Owner cards for the café extras: recipe of the week, coming soon, Goa events and board-game night
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
+import { rupees } from "@/lib/pricing";
 
 const box = { padding: "1rem 1.1rem", marginBottom: "1rem" } as const;
 async function send(url: string, method: string, body?: unknown) {
@@ -123,7 +124,7 @@ export function GameNightCard() {
         {s.on && <button className="btn btn-ghost btn-sm" onClick={() => save({ ...s, on: false })}>Turn it off</button>}
       </div>
       {s.on && d.upcoming.map((n) => (
-        <p key={n.date} className="small" style={{ margin: "0.5rem 0 0" }}><b>{n.date}</b>: {n.rows.length ? n.rows.map((r) => `${r.name} (${r.party})${r.game ? ` · ${r.game}` : ""}`).join("; ") : <span className="muted">no bookings yet</span>}</p>
+        <p key={n.date} className="small" style={{ margin: "0.5rem 0 0" }}><b>{n.date}</b> <a className="link-btn tiny" href={`/admin/print?night=${n.date}`} target="_blank" rel="noreferrer">🖨 Print</a>: {n.rows.length ? n.rows.map((r) => `${r.name} (${r.party})${r.game ? ` · ${r.game}` : ""}`).join("; ") : <span className="muted">no bookings yet</span>}</p>
       ))}
       {d.past.length > 0 && (
         <>
@@ -133,6 +134,35 @@ export function GameNightCard() {
               <label key={r.id} style={{ marginRight: "0.8rem", whiteSpace: "nowrap" }}><input type="checkbox" checked={!!r.came} onChange={async (e) => { const x = await send("/api/game-night", "PATCH", { id: r.id, came: e.target.checked }); if (x.error) toast(x.error); void load(); }} /> {r.name} ({r.party})</label>
             ))}</p>
           ))}
+        </>
+      )}
+    </section>
+  );
+}
+
+type MT = { orders: number; takings: number; topDishes: { name: string; qty: number }[]; bookings: { n: number; g: number }; tickets: number; reviews: { n: number; avg: number | null }; puzzles: { n: number; p: number }; photos: number };
+/** Analytics tab: the monthly report (also emailed to you on the 1st) */
+export function MonthlyCard() {
+  const months = [...Array(6).keys()].map((k) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1 - k); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; });
+  const [m, setM] = useState(months[0]);
+  const [r, setR] = useState<{ label: string; now: MT; before: MT } | null>(null);
+  useEffect(() => { fetch(`/api/admin/monthly?month=${m}`).then((x) => (x.ok ? x.json() : null)).then(setR).catch(() => {}); }, [m]);
+  const diff = (a: number, b: number) => (b ? <small className="muted"> {a >= b ? "▲" : "▼"} {Math.abs(Math.round(((a - b) / b) * 100))}%</small> : null);
+  return (
+    <section className="card" style={box}>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "0.4rem" }}>
+        <h2 className="h3" style={{ margin: 0 }}>📅 Monthly report</h2>
+        <label className="field small" style={{ marginBottom: 0 }}><span className="sr-only">Month</span><select className="input" value={m} onChange={(e) => setM(e.target.value)}>{months.map((x) => <option key={x} value={x}>{new Date(`${x}-15T12:00:00`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</option>)}</select></label>
+      </div>
+      <p className="small muted">Emailed to you on the 1st of each month (with the nightly summary setting). ▲ and ▼ compare with the month before.</p>
+      {r && (
+        <>
+          <p className="memory-stats" style={{ display: "flex", flexWrap: "wrap" }}>
+            <span><b>{r.now.orders}</b> orders{diff(r.now.orders, r.before.orders)}</span><span><b>{rupees(r.now.takings)}</b> takings{diff(r.now.takings, r.before.takings)}</span>
+            <span><b>{r.now.bookings.n}</b> bookings ({r.now.bookings.g} guests)</span><span><b>{r.now.tickets}</b> event places</span>
+            <span><b>{r.now.reviews.n}</b> reviews{r.now.reviews.n ? ` · ${(r.now.reviews.avg ?? 0).toFixed(1)} ★` : ""}</span><span><b>{r.now.puzzles.n}</b> puzzles by {r.now.puzzles.p} players</span>
+          </p>
+          {r.now.topDishes.length > 0 && <p className="small" style={{ margin: 0 }}>Most ordered: {r.now.topDishes.map((d) => `${d.name} (${d.qty})`).join(", ")}</p>}
         </>
       )}
     </section>
