@@ -1,0 +1,19 @@
+/* Styles only this page uses */
+.sg-board { display: grid; gap: 4px; width: min(100%, 26rem); margin: 0.8rem auto; padding: 6px; border-radius: 14px; }
+.sg-board.connect4 { grid-template-columns: repeat(7, 1fr); background: #6b8fc4; }
+.sg-board.reversi { grid-template-columns: repeat(8, 1fr); background: #4f7a52; gap: 2px; }
+.sg-cell { aspect-ratio: 1; border: 0; border-radius: 50%; background: var(--surface); padding: 0; position: relative; }
+.sg-board.reversi .sg-cell { border-radius: 4px; background: #5f8f62; }
+.sg-cell.p1 { background: #c94c4c; } .sg-cell.p2 { background: #e8b86a; }
+.sg-board.reversi .sg-cell.p1::after, .sg-board.reversi .sg-cell.p2::after { content: ""; position: absolute; inset: 12%; border-radius: 50%; }
+.sg-board.reversi .sg-cell.p1 { background: #5f8f62; } .sg-board.reversi .sg-cell.p1::after { background: #2b1d1a; }
+.sg-board.reversi .sg-cell.p2 { background: #5f8f62; } .sg-board.reversi .sg-cell.p2::after { background: #fbf6ef; }
+.sg-cell.can { cursor: pointer; outline: 2px dashed rgba(255, 255, 255, 0.7); outline-offset: -4px; }
+.sg-cell.last { box-shadow: 0 0 0 3px #fff8d6 inset; }
+.sg-cell.win { box-shadow: 0 0 0 4px #fff inset; }
+.sg-cols { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: min(100%, 26rem); margin: 0 auto; padding: 0 6px; }
+.sg-col { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); padding: 0.3rem 0; cursor: pointer; }
+.sg-dot { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 50%; vertical-align: -0.05em; border: 1px solid var(--brown-deep); }
+.sg-list { list-style: none; padding: 0; display: grid; gap: 0.4rem; }
+.sg-list li { display: flex; justify-content: space-between; gap: 0.5rem; align-items: center; padding: 0.5rem 0.8rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.sg-list li.turn { border-color: var(--pink-deep); }

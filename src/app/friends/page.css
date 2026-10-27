@@ -7,3 +7,11 @@
 .fr-league li.me { border-color: var(--pink-deep); }
 .fr-league .tiny { grid-column: 2 / 4; }
 .fr-rank { font-weight: 800; color: var(--pink-ink); }
+.fr-edit { display: grid; gap: 0.5rem; margin-top: 0.8rem; padding: 0.9rem 1rem; }
+.fr-avatars { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.fr-av { width: 2.4rem; height: 2.4rem; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-size: 1.2rem; cursor: pointer; }
+.fr-av.on { border: 2px solid var(--pink-deep); background: var(--pink-soft); }
+.fr-show { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.fr-feed { list-style: none; padding: 0; margin: 0.4rem 0; display: grid; gap: 0.3rem; }
+.fr-feed li { display: grid; grid-template-columns: 2rem 1fr auto; gap: 0.5rem; align-items: center; padding: 0.4rem 0.7rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 0.92rem; }
+.fr-feed-av { font-size: 1.3rem; text-align: center; }

@@ -3810,3 +3810,42 @@ test("batch J: season pack board and the event pages", async () => {
   assert.equal((await fetch(`${s.url}/api/weekly-games?game=season`)).status, 200);
   for (const p of ["/season-pack", "/advent-puzzles", "/puzzle-hunt"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
+
+test("batch K: profiles, the friend feed, head-to-head and slow games", async () => {
+  const post = (p: string, json: Record<string, unknown>, ip = "10.9.9.98") => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": ip }, body: JSON.stringify(json) });
+  const a = "c".repeat(16) + "prof", b = "d".repeat(16) + "prof";
+  assert.equal((await post("/api/friends", { voter: a, profile: { avatar: "🐈" } })).status, 400, "needs a code first");
+  await post("/api/friends", { voter: a, name: "Cy" });
+  const cb = (await (await post("/api/friends", { voter: b, name: "Di" })).json()).me.code as string;
+  const set = await (await post("/api/friends", { voter: b, profile: { avatar: "🦉", fav: "sudoku", showcase: ["hunt", "hunt", "nope", "advent", "slowGame", "duels"] } })).json();
+  assert.equal(set.me.avatar, "🦉"); assert.equal(set.me.fav, "sudoku"); assert.deepEqual(set.me.showcase, ["hunt", "advent", "slowGame"], "real trophies, no repeats, three at most");
+  const bad = await (await post("/api/friends", { voter: b, profile: { avatar: "<b>", fav: "chess-cheat", showcase: "x" } })).json();
+  assert.equal(bad.me.avatar, ""); assert.equal(bad.me.fav, ""); assert.deepEqual(bad.me.showcase, []);
+  await post("/api/friends", { voter: b, profile: { avatar: "🦉", fav: "sudoku" } });
+  await post("/api/daily-scores", { game: "towers", ms: 70000, name: "Cy", voter: a });
+  await post("/api/daily-scores", { game: "towers", ms: 65000, name: "Di", voter: b });
+  const fb = await (await post("/api/friends", { voter: a, add: cb })).json();
+  assert.equal(fb.feed.length, 1); assert.equal(fb.feed[0].name, "Di"); assert.equal(fb.feed[0].game.id, "towers"); assert.equal(fb.feed[0].avatar, "🦉");
+  assert.deepEqual(fb.people.find((p: { name: string }) => p.name === "Di").h2h, { won: 0, lost: 1, drawn: 0 });
+  const prof = await (await fetch(`${s.url}/api/friends?profile=${cb}&voter=${a}`)).json();
+  assert.equal(prof.name, "Di"); assert.equal(prof.fav.id, "sudoku"); assert.equal(prof.puzzles, 1); assert.equal(prof.isFriend, true);
+  assert.equal(prof.h2h.lost, 1); assert.equal(prof.h2h.games[0].id, "towers");
+  assert.equal((await fetch(`${s.url}/api/friends?profile=${cb}&voter=${b}`).then((r) => r.json())).h2h, null, "no record against yourself");
+  assert.equal((await fetch(`${s.url}/api/friends?profile=ZZZZZZ`)).status, 404);
+  // Slow games
+  assert.equal((await post("/api/slow-games", { kind: "chess" })).status, 400);
+  const g = await (await post("/api/slow-games", { kind: "connect4", name: "Cy" })).json();
+  assert.match(g.id, /^[a-f0-9]{10}$/); assert.equal(g.seat, 1); assert.equal(g.open, true);
+  assert.equal((await post("/api/slow-games", { id: g.id, token: g.token, move: 3 })).status, 400, "wait for a friend");
+  const j = await (await post("/api/slow-games", { id: g.id, join: true, name: "Di" })).json();
+  assert.equal(j.seat, 2); assert.equal((await post("/api/slow-games", { id: g.id, join: true })).status, 400, "seat taken");
+  assert.equal((await post("/api/slow-games", { id: g.id, token: j.token, move: 3 })).status, 400, "not Di's turn");
+  assert.equal((await post("/api/slow-games", { id: g.id, token: "f".repeat(32), move: 3 })).status, 400, "a made-up seat");
+  let v;
+  for (const [t, m] of [[g.token, 0], [j.token, 6], [g.token, 0], [j.token, 6], [g.token, 0], [j.token, 6], [g.token, 0]] as [string, number][]) v = await (await post("/api/slow-games", { id: g.id, token: t, move: m })).json();
+  assert.equal(v.winner, 1); assert.equal(v.turn, 0); assert.equal(v.line.length, 4);
+  const look = await (await fetch(`${s.url}/api/slow-games?id=${g.id}`)).json();
+  assert.equal(look.seat, null); assert.deepEqual(look.options, []); assert.equal(look.moves, 7);
+  assert.equal((await fetch(`${s.url}/api/slow-games?id=nope`)).status, 404);
+  for (const p of ["/slow-games", "/profile"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});

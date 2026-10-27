@@ -1103,6 +1103,22 @@ function open() {
     at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (voter, friend)
   );`);
+  // Game profiles: a picture, a favourite game and three trophies to show friends
+  addColumn(db, "friend_codes", "avatar", "TEXT NOT NULL DEFAULT ''");
+  addColumn(db, "friend_codes", "fav", "TEXT NOT NULL DEFAULT ''");
+  addColumn(db, "friend_codes", "showcase", "TEXT NOT NULL DEFAULT '[]'");
+  // Slow games: Connect four or reversi by link, a move whenever you like. Each seat has a secret token.
+  db.exec(`CREATE TABLE IF NOT EXISTS slow_games (
+    id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    state TEXT NOT NULL,
+    seat1 TEXT NOT NULL,
+    seat2 TEXT,
+    name1 TEXT NOT NULL,
+    name2 TEXT NOT NULL DEFAULT '',
+    created TEXT NOT NULL DEFAULT (datetime('now')),
+    updated TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
   // The puzzle of the week's board
   db.exec(`CREATE TABLE IF NOT EXISTS weekly_scores (
     week TEXT NOT NULL,

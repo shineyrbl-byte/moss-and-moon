@@ -20,3 +20,18 @@ export function league(voters: string[], rows: Row[]): Standing[] {
   }
   return [...table.values()].sort((a, b) => b.points - a.points || b.bests - a.bests || voters.indexOf(a.voter) - voters.indexOf(b.voter));
 }
+
+export type Record3 = { won: number; lost: number; drawn: number };
+/** You against one friend: every daily puzzle you both saved, and who did better (lower is better) */
+export function headToHead(mine: Row[], theirs: Row[]): Record3 & { byGame: Record<string, Record3> } {
+  const best = (rows: Row[]) => { const m = new Map<string, number>(); for (const r of rows) { const k = `${r.game}|${r.date}`; m.set(k, Math.min(m.get(k) ?? Infinity, r.ms)); } return m; };
+  const a = best(mine), b = best(theirs), out = { won: 0, lost: 0, drawn: 0, byGame: {} as Record<string, Record3> };
+  for (const [k, ms] of a) {
+    const t = b.get(k);
+    if (t === undefined) continue;
+    const g = k.split("|")[0], res = ms < t ? "won" : ms > t ? "lost" : "drawn";
+    out[res]++;
+    (out.byGame[g] ??= { won: 0, lost: 0, drawn: 0 })[res]++;
+  }
+  return out;
+}

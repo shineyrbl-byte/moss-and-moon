@@ -2730,3 +2730,24 @@ test("batch J: season packs, the puzzle hunt and Games Day", async () => {
   const got = T.earned(ctx);
   assert.ok(got.includes("gamesDay5") && !got.includes("gamesDay10") && got.includes("hunt"));
 });
+
+test("batch K: head-to-head, profiles and slow games rules", async () => {
+  const L = await import("../src/lib/league.ts");
+  const r = (voter: string, game: string, date: string, ms: number) => ({ voter, game, date, ms });
+  const h = L.headToHead([r("a", "x", "d1", 10), r("a", "x", "d2", 30), r("a", "y", "d1", 5), r("a", "z", "d1", 1)], [r("b", "x", "d1", 20), r("b", "x", "d2", 20), r("b", "y", "d1", 5)]);
+  assert.deepEqual({ won: h.won, lost: h.lost, drawn: h.drawn }, { won: 1, lost: 1, drawn: 1 }); assert.deepEqual(h.byGame.x, { won: 1, lost: 1, drawn: 0 });
+  const P = await import("../src/lib/profiles.ts");
+  assert.equal(new Set(P.AVATARS).size, P.AVATARS.length);
+  assert.deepEqual(P.cleanProfile({ avatar: "☕", fav: "hangman", showcase: ["hunt"] }), { avatar: "☕", fav: "hangman", showcase: ["hunt"] });
+  const S = await import("../src/lib/slowGames.ts");
+  let st = S.newState("reversi");
+  assert.equal(S.options(st, 1).length, 4); assert.deepEqual(S.options(st, 2), []);
+  const n = S.apply(st, 1, S.options(st, 1)[0]); assert.ok(!("error" in n)); st = n as typeof st;
+  assert.equal(st.turn, 2); assert.ok("error" in S.apply(st, 1, 0));
+  // Play reversi to the end with first legal moves: it always finishes with a winner or draw
+  for (let k = 0; k < 100 && st.turn; k++) st = S.apply(st, st.turn as 1 | 2, S.options(st, st.turn as 1 | 2)[0]) as typeof st;
+  assert.equal(st.turn, 0); assert.notEqual(st.winner, null);
+  let c = S.newState("connect4");
+  for (let k = 0; k < 6; k++) c = S.apply(c, (k % 2 + 1) as 1 | 2, 0) as typeof c;
+  assert.ok("error" in S.apply(c, 1, 0), "a full column");
+});
