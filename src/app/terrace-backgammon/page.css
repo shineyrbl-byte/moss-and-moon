@@ -2,9 +2,9 @@
 .bg-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)) 10px repeat(6, minmax(0, 1fr)); gap: 2px; height: clamp(8rem, 34vw, 11rem); }
 .bg-bar { background: #4a3227; border-radius: 3px; }
 .bg-pt { position: relative; border: none; padding: 0; cursor: pointer; background: transparent; min-width: 0; display: flex; flex-direction: column; align-items: center; }
-.bg-pt::before { content: ""; position: absolute; inset: 0; background: #f3e2cf; clip-path: polygon(0 0, 100% 0, 50% 88%); }
+.bg-pt::before { content: ""; position: absolute; inset: 0; background: var(--board-light, #f3e2cf); clip-path: polygon(0 0, 100% 0, 50% 88%); }
 .bg-pt.bottom::before { clip-path: polygon(50% 12%, 100% 100%, 0 100%); }
-.bg-pt.odd::before { background: #c49a78; }
+.bg-pt.odd::before { background: var(--board-dark, #c49a78); }
 .bg-pt.bottom { flex-direction: column-reverse; }
 .bg-pt.target::before { background: var(--pink); }
 .bg-pt.can .bg-ck:last-child { box-shadow: 0 0 0 2px #f6da9e; }

@@ -17,7 +17,7 @@ for (const path of ["/?season=off", "/catering", "/gift-cards", "/account", "/jo
 
 // Colours in dark mode (and with a board look on), on guest pages and a spread of games: catches text that's
 // hard to read after a colour change. Contrast only, since the light-mode checks above cover everything else.
-const DARK = ["/?season=off", "/games", "/sudoku", "/bean-boggle", "/cafe-letters", "/golf-solitaire", "/cafe-dominoes", "/trophies", "/friends", "/game-settings", "/latte-art", "/songs"];
+const DARK = ["/?season=off", "/games", "/sudoku", "/bean-boggle", "/cafe-letters", "/golf-solitaire", "/cafe-dominoes", "/trophies", "/friends", "/game-settings", "/latte-art", "/songs", "/cafe-chess", "/draughts", "/reversi", "/terrace-backgammon", "/crazy-eights", "/tri-peaks"];
 for (const [scheme, board] of [["dark", ""], ["light", "night"], ["dark", "contrast"]] as const) {
   for (const path of DARK) {
     test(`colour contrast (${scheme}${board ? `, ${board} boards` : ""}): ${path}`, async ({ page }) => {

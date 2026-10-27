@@ -15,6 +15,8 @@ const DAILY = new Set<string>([...ARCHIVE_GAMES.map((g) => g.key), "mm-wordsearc
 export function synced(key: string) {
   if (!key.startsWith("mm-") || key.length > 80) return false;
   if (EXACT.has(key) || key.endsWith("-best")) return true;
+  // Weekend hunt keys, season-pack progress (one per season and year) and your seats in slow games
+  if (/^mm-hunt-\d{4}-\d\d-\d\d$/.test(key) || /^mm-season-\d{4}-(diwali|christmas|monsoon)$/.test(key) || key === "mm-slow-games") return true;
   const base = key.replace(/@\d{4}-\d\d-\d\d$/, "");
   return DAILY.has(base) || [...DAILY].some((d) => base.startsWith(`${d}-`));
 }
@@ -41,6 +43,12 @@ export function mergeEntry(key: string, a: Entry | undefined, b: Entry | undefin
   const av = parse(a.v), bv = parse(b.v);
   // Lists (trophy moments, favourites, cards seen): keep everything from both
   if (Array.isArray(av) && Array.isArray(bv)) return { v: JSON.stringify([...av, ...bv.filter((x) => !av.some((y) => JSON.stringify(y) === JSON.stringify(x)))]), t };
+  // A season pack: each picture keeps the faster time, and the most words found
+  if (key.startsWith("mm-season-") && isObj(av) && isObj(bv)) {
+    const ta = Array.isArray(av.times) ? av.times : [], tb = Array.isArray(bv.times) ? bv.times : [];
+    const times = [0, 1, 2].map((k) => { const x = ta[k], y = tb[k]; return typeof x === "number" && typeof y === "number" ? Math.min(x, y) : typeof x === "number" ? x : typeof y === "number" ? y : null; });
+    return { v: JSON.stringify({ times, saved: !!av.saved || !!bv.saved, found: Math.max(Number(av.found) || 0, Number(bv.found) || 0) }), t };
+  }
   // Best scores: the higher one
   if (key.endsWith("-best") && Number.isFinite(Number(a.v)) && Number.isFinite(Number(b.v))) return { v: String(Math.max(Number(a.v), Number(b.v))), t };
   if (isObj(av) && isObj(bv)) {

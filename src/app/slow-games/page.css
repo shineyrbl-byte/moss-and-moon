@@ -1,9 +1,9 @@
 /* Styles only this page uses */
 .sg-board { display: grid; gap: 4px; width: min(100%, 26rem); margin: 0.8rem auto; padding: 6px; border-radius: 14px; }
-.sg-board.connect4 { grid-template-columns: repeat(7, 1fr); background: #6b8fc4; }
+.sg-board.connect4 { grid-template-columns: repeat(7, 1fr); background: var(--board-frame, #6b8fc4); }
 .sg-board.reversi { grid-template-columns: repeat(8, 1fr); background: #4f7a52; gap: 2px; }
 .sg-cell { aspect-ratio: 1; border: 0; border-radius: 50%; background: var(--surface); padding: 0; position: relative; }
-.sg-board.reversi .sg-cell { border-radius: 4px; background: #5f8f62; }
+.sg-board.reversi .sg-cell { border-radius: 4px; background: var(--board-felt, #5f8f62); }
 .sg-cell.p1 { background: #c94c4c; } .sg-cell.p2 { background: #e8b86a; }
 .sg-board.reversi .sg-cell.p1::after, .sg-board.reversi .sg-cell.p2::after { content: ""; position: absolute; inset: 12%; border-radius: 50%; }
 .sg-board.reversi .sg-cell.p1 { background: #5f8f62; } .sg-board.reversi .sg-cell.p1::after { background: #2b1d1a; }

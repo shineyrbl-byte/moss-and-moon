@@ -51,8 +51,10 @@ export function GoaSpotsCard() {
   );
 }
 
-type DG = { id: string; title: string; emoji: string; href: string; views: number; saves: number; players: number; finish: number | null; median: number | null; hidden: boolean };
-type Report = { days: number; daily: DG[]; hard: { id: string; title: string; emoji: string; date: string; players: number; median: number; ratio: number }[]; anyTime: { id: string; title: string; emoji: string; href: string; views: number; hidden: boolean }[]; perDay: { date: string; n: number }[]; totals: { saves: number; players: number } };
+type DG = { id: string; title: string; emoji: string; href: string; views: number; saves: number; players: number; prevSaves: number; prevPlayers: number; finish: number | null; median: number | null; hidden: boolean };
+type Report = { days: number; daily: DG[]; hard: { id: string; title: string; emoji: string; date: string; players: number; median: number; ratio: number }[]; anyTime: { id: string; title: string; emoji: string; href: string; views: number; hidden: boolean }[]; perDay: { date: string; n: number }[]; totals: { saves: number; players: number; prevSaves: number; prevPlayers: number }; log: { id: string; title: string; hide: boolean; at: string; hiddenNow: boolean }[] };
+/** "▲ 12" or "▼ 3" against the period before (nothing when both are zero) */
+const change = (now: number, before: number) => (now === before ? (now ? "same as before" : "") : `${now > before ? "▲" : "▼"} ${Math.abs(now - before)}`);
 
 /** Owner: which games get played, where people give up, the hardest days, and hiding a game from the lists */
 export function GamesDashboard() {
@@ -77,7 +79,8 @@ export function GamesDashboard() {
         <div className="row" style={{ gap: "0.3rem" }} role="group" aria-label="Time range">{[7, 30, 90].map((d) => <button key={d} className={`chip ${days === d ? "on" : ""}`} aria-pressed={days === d} onClick={() => setDays(d)}>{d} days</button>)}</div>
       </div>
       <p className="small muted">From page visits and saved scores only. <b>Finish rate</b> is saved scores divided by visits to that game&apos;s page, so a low one means people open it and leave (it can read high if people replay or visit from the archive). Visits only count browsers that allow it.</p>
-      <p className="memory-stats" style={{ display: "flex", flexWrap: "wrap" }}><span><b>{r.totals.saves}</b> daily scores saved</span><span><b>{r.totals.players}</b> players</span></p>
+      <p className="memory-stats" style={{ display: "flex", flexWrap: "wrap" }}><span><b>{r.totals.saves}</b> daily scores saved <small className="muted">{change(r.totals.saves, r.totals.prevSaves)}</small></span><span><b>{r.totals.players}</b> players <small className="muted">{change(r.totals.players, r.totals.prevPlayers)}</small></span></p>
+      <p className="tiny muted" style={{ marginTop: "-0.4rem" }}>▲ and ▼ compare with the {r.days} days before.</p>
       {r.perDay.length > 1 && (
         <div className="gd-spark" role="img" aria-label={`Scores saved per day, from ${r.perDay[0].n} to ${r.perDay[r.perDay.length - 1].n}`}>
           {r.perDay.map((d) => <span key={d.date} title={`${d.date}: ${d.n}`} style={{ height: `${Math.max(4, (d.n / max) * 100)}%` }} />)}
@@ -89,7 +92,7 @@ export function GamesDashboard() {
         <tbody>{list.map((g) => (
           <tr key={g.id} style={g.hidden ? { opacity: 0.6 } : undefined}>
             <th scope="row"><a href={g.href}>{g.emoji} {g.title}</a>{g.hidden && <span className="tiny muted"> · hidden</span>}</th>
-            <td>{g.saves}</td><td>{g.players}</td><td>{g.views}</td>
+            <td>{g.saves} <small className="muted">{change(g.saves, g.prevSaves)}</small></td><td>{g.players}</td><td>{g.views}</td>
             <td>{g.finish === null ? <span className="muted">—</span> : <span className={g.finish < 0.3 && g.views >= 20 ? "gd-low" : ""}>{Math.round(g.finish * 100)}%</span>}</td>
             <td>{g.median === null ? <span className="muted">—</span> : showDaily(g.id, g.median)}</td>
             <td><button className="link-btn tiny" onClick={() => hide(g.id, g.title, !g.hidden)}>{g.hidden ? "Show" : "Hide"}</button></td>
@@ -102,6 +105,12 @@ export function GamesDashboard() {
         : <p className="small muted">Nothing stands out yet. A day shows here once at least three people saved it and it went noticeably slower than usual.</p>}
       <h3 className="h3" style={{ fontSize: "1.05rem", marginTop: "1rem" }}>Any-time games by visits</h3>
       <ul className="small gd-any">{r.anyTime.slice(0, all ? undefined : 12).map((g) => <li key={g.id} style={g.hidden ? { opacity: 0.6 } : undefined}><a href={g.href}>{g.emoji} {g.title}</a> · {g.views}{g.hidden ? " · hidden" : ""} <button className="link-btn tiny" onClick={() => hide(g.id, g.title, !g.hidden)}>{g.hidden ? "Show" : "Hide"}</button></li>)}</ul>
+      {r.log.length > 0 && (
+        <>
+          <h3 className="h3" style={{ fontSize: "1.05rem", marginTop: "1rem" }}>Hidden and shown</h3>
+          <ul className="small">{r.log.slice(0, 10).map((e, k) => <li key={k}>{new Date(e.at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}: {e.title} {e.hide ? "hidden" : "shown again"}{k === r.log.findIndex((x) => x.id === e.id) && <> · <button className="link-btn tiny" onClick={() => hide(e.id, e.title, !e.hiddenNow)}>{e.hiddenNow ? "Undo: show it" : "Undo: hide it"}</button></>}</li>)}</ul>
+        </>
+      )}
       <p className="tiny muted"><button className="link-btn tiny" onClick={async () => { const x = await fetch("/api/admin/tidy", { method: "POST" }).then((y) => y.json()).catch(() => null); if (x?.removed) { const n = Object.values(x.removed as Record<string, number>).reduce((a, b) => a + b, 0); toast(n ? `Tidied away ${n} old row${n === 1 ? "" : "s"}` : "Nothing old to tidy"); } }}>🧹 Tidy up old rows now</button> (played songs after a month, past game nights, finished slow games; it also runs by itself daily).</p>
       <p className="tiny muted">Hiding takes a game off the games page and out of Today&apos;s five from today. Its page still works by link, scores are kept, and past streaks don&apos;t change. Before retiring a game for good, give it a few weeks of numbers here.</p>
     </section>

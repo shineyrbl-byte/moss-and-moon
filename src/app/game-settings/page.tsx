@@ -43,7 +43,7 @@ export default function GameSettingsPage() {
         ))}
       </ul>
       <h2 className="h3" style={{ marginTop: "1.2rem" }}>🎨 Board look</h2>
-      <p className="small muted">One look for every puzzle grid: sudoku, the word games, nonograms and the rest.</p>
+      <p className="small muted">One look for every puzzle grid, board and deck of cards: sudoku, the word games, chess, draughts, reversi, backgammon, Connect four and the card games.</p>
       <div className="gs-boards" role="radiogroup" aria-label="Board look">
         {BOARD_THEMES.map((t) => (
           <button key={t.id} role="radio" aria-checked={s.board === t.id} className={`gs-board ${s.board === t.id ? "on" : ""}`} onClick={() => board(t.id)}>

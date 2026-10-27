@@ -6,11 +6,12 @@ import { useStore } from "@/components/Store";
 import { KINDS, type Kind } from "@/lib/slowGames";
 import { addFlag } from "@/lib/trophyFlags";
 
-type V = { id: string; kind: Kind; title: string; board: number[]; turn: 0 | 1 | 2; winner: 0 | 1 | 2 | null; moves: number; last: number | null; line: number[]; names: [string, string]; open: boolean; seat: 1 | 2 | null; options: number[]; updated: string; token?: string };
+type V = { id: string; kind: Kind; title: string; board: number[]; turn: 0 | 1 | 2; winner: 0 | 1 | 2 | null; moves: number; last: number | null; line: number[]; names: [string, string]; open: boolean; seat: 1 | 2 | null; options: number[]; updated: string; token?: string; alerts?: boolean };
 type Mine = { id: string; token: string };
 const KEY = "mm-slow-games";
 const loadMine = (): Mine[] => { try { const v = JSON.parse(localStorage.getItem(KEY) ?? "[]"); return Array.isArray(v) ? v : []; } catch { return []; } };
 const saveMine = (m: Mine[]) => { try { localStorage.setItem(KEY, JSON.stringify(m.slice(-30))); } catch {} };
+const toKey = (base64: string) => { const raw = atob((base64 + "=".repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
 const colour = (kind: Kind, p: 1 | 2) => (kind === "connect4" ? (p === 1 ? "#c94c4c" : "#e8b86a") : p === 1 ? "#2b1d1a" : "#fbf6ef");
 
 export default function SlowGames() {
@@ -48,6 +49,20 @@ export default function SlowGames() {
   async function share(gid: string, title: string) {
     const url = `${location.origin}/slow-games?g=${gid}`, text = `Play a slow game of ${title} with me at Moss & Moon. A move whenever you like:`;
     try { if (navigator.share) await navigator.share({ text, url }); else { await navigator.clipboard.writeText(`${text} ${url}`); toast("Link copied. Send it to your friend 📋"); } } catch {}
+  }
+  // "Tell me when it's my turn": a push notification on this device
+  async function alerts(on: boolean) {
+    try {
+      let subscription: PushSubscriptionJSON | null = null;
+      if (on) {
+        if (!("serviceWorker" in navigator && "PushManager" in window && "Notification" in window)) return toast("This browser can't show alerts. On an iPhone, add the site to your home screen first.");
+        if ((await Notification.requestPermission()) !== "granted") return toast("Alerts are blocked for this site in your browser settings.");
+        const reg = await navigator.serviceWorker.ready, { publicKey } = await fetch("/api/push").then((r) => r.json());
+        subscription = ((await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toKey(publicKey) }))).toJSON();
+      }
+      const d = await post({ id: g!.id, token: tokenFor(g!.id), subscription });
+      if (d) { setG(d); toast(on ? "🔔 We'll tell you when it's your move" : "Alerts off for this game"); }
+    } catch { toast("Couldn't turn on alerts on this browser."); }
   }
   async function move(m: number) { const d = await post({ id: g!.id, token: tokenFor(g!.id), move: m }); if (d) setG(d); }
 
@@ -87,7 +102,7 @@ export default function SlowGames() {
             aria-label={`Row ${Math.floor(i / cols) + 1}, column ${(i % cols) + 1}: ${v ? you(v as 1 | 2) : can ? "you can play here" : "empty"}`} />;
         })}
       </div>
-      <p className="center"><button className="btn btn-ghost btn-sm" onClick={() => share(g.id, g.title)}>📤 Send the link</button></p>
+      <p className="center"><button className="btn btn-ghost btn-sm" onClick={() => share(g.id, g.title)}>📤 Send the link</button>{me && g.turn !== 0 && <> <button className="btn btn-ghost btn-sm" aria-pressed={!!g.alerts} onClick={() => alerts(!g.alerts)}>{g.alerts ? "🔕 Stop alerts" : "🔔 Tell me when it's my turn"}</button></>}</p>
       <p className="tiny muted center">{g.kind === "connect4" ? "Four in a row, any way, wins." : "Trap their pieces between yours to turn them over. Most pieces at the end wins."} The page checks for new moves every 15 seconds while it&apos;s open.</p>
     </div>
   );

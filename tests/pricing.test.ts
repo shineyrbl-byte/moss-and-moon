@@ -2814,3 +2814,13 @@ test("tidy-up rules: only old rows go", async () => {
   assert.deepEqual(left("song_requests", "title"), ["next", "recent"]); assert.deepEqual(left("slow_games", "id"), ["done-new", "playing"]);
   assert.deepEqual(left("goa_events", "title"), ["festival", "soon"], "a long festival stays until three months after it ends");
 });
+
+test("sync: hunt keys, season packs and slow-game seats follow your account", async () => {
+  const S = await import("../src/lib/syncMerge.ts");
+  for (const k of ["mm-hunt-2026-10-31", "mm-season-2026-diwali", "mm-slow-games"]) assert.ok(S.synced(k), k);
+  assert.ok(!S.synced("mm-season-2026-easter") && !S.synced("mm-hunt-x"));
+  const m = S.mergeEntry("mm-season-2026-diwali", { v: JSON.stringify({ times: [50000, null, 90000], saved: false, found: 2 }), t: 1 }, { v: JSON.stringify({ times: [40000, 70000, null], saved: true, found: 1 }), t: 2 })!;
+  assert.deepEqual(JSON.parse(m.v), { times: [40000, 70000, 90000], saved: true, found: 2 });
+  const h = S.mergeEntry("mm-hunt-2026-10-31", { v: '["/moon"]', t: 1 }, { v: '["/pups","/moon"]', t: 2 })!;
+  assert.deepEqual(JSON.parse(h.v).sort(), ["/moon", "/pups"]);
+});

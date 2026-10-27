@@ -112,5 +112,9 @@ export const HOW_TO: Record<string, HowTo> = {
   "/pigeon-patrol": { title: "Pigeon patrol", goal: "Shoo every pigeon before they reach the tables.", tip: "Clear one column at a time so the flock has less room." },
   "/latte-beat": { title: "Latte beat", goal: "Tap each lane as its note crosses the line.", tip: "Listen for the soft tick: notes land on the beat." },
   "/higher-or-lower": { title: "Higher or lower", goal: "Guess which item costs more.", tip: "Large drinks and bakes with extras usually cost more." },
+  "/season-pack": { title: "Season packs", goal: "Finish the three colour pictures for the season, then guess the festive words.", tip: "Start with the rows and columns whose numbers fill them completely." },
+  "/advent-puzzles": { title: "The advent picture", goal: "Finish any daily puzzle on each day from 1 to 24 December to open that day's square.", tip: "Any saved daily puzzle counts, so a quick one keeps the picture going." },
+  "/puzzle-hunt": { title: "Weekend puzzle hunt", goal: "Follow five riddles to five pages and pick up the key hidden on each one.", tip: "The key sits in the bottom corner of the page. Stuck? Each riddle can show you its page." },
+  "/slow-games": { title: "Slow games", goal: "Play Connect four or reversi with a friend by link, one move whenever you like.", tip: "Turn on alerts so your phone tells you when it's your move." },
 };
 export const HOWTO_KEY = "mm-howto-seen";

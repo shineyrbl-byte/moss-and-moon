@@ -1,7 +1,7 @@
 // Game settings kept on this device: sound, vibration, colour-blind patterns and screen-reader help. Browser only.
 export const SETTINGS_KEY = "mm-game-settings";
 export type BoardTheme = "cafe" | "contrast" | "garden" | "night";
-/** Board looks for every puzzle grid at once (they change the grid's colours, nothing else) */
+/** Board looks for every puzzle grid, board game and card game at once (they change colours, nothing else) */
 export const BOARD_THEMES: { id: BoardTheme; name: string; how: string; swatch: [string, string, string] }[] = [
   { id: "cafe", name: "Café", how: "The usual cream and pink, following light or dark mode", swatch: ["#fffaf6", "#f9dce3", "#c25b78"] },
   { id: "contrast", name: "High contrast", how: "White squares, black lines and bright yellow for where you are", swatch: ["#ffffff", "#ffe14d", "#000000"] },

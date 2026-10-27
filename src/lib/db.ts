@@ -1128,6 +1128,9 @@ function open() {
     created TEXT NOT NULL DEFAULT (datetime('now')),
     updated TEXT NOT NULL DEFAULT (datetime('now'))
   );`);
+  // "Tell me when it's my turn": a push subscription for each seat
+  addColumn(db, "slow_games", "sub1", "TEXT");
+  addColumn(db, "slow_games", "sub2", "TEXT");
   // Café extras: the owner's list of Goa events, and board-game night bookings
   db.exec(`CREATE TABLE IF NOT EXISTS goa_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

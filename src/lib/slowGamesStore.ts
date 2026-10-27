@@ -2,9 +2,11 @@
 import "server-only";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { db, cleanText } from "./db";
+import type webpush from "web-push";
 import { apply, isKind, newState, options, winLine, KINDS, type State } from "./slowGames";
+import { pushTo } from "./push";
 
-type Row = { id: string; kind: string; state: string; seat1: string; seat2: string | null; name1: string; name2: string; updated: string };
+type Row = { id: string; kind: string; state: string; seat1: string; seat2: string | null; name1: string; name2: string; updated: string; sub1: string | null; sub2: string | null };
 const token = () => randomBytes(16).toString("hex");
 const cleanName = (n: unknown) => cleanText(n, 20).replace(/[<>]/g, "") || "Guest";
 const same = (a: string, b: unknown) => typeof b === "string" && a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
@@ -14,7 +16,7 @@ const seatOf = (r: Row, t: unknown): 1 | 2 | null => (same(r.seat1, t) ? 1 : r.s
 /** What a player (or a visitor with the link) sees */
 function view(r: Row, t?: unknown) {
   const s = JSON.parse(r.state) as State, seat = seatOf(r, t);
-  return { id: r.id, kind: s.kind, title: KINDS[s.kind].title, board: s.board, turn: s.turn, winner: s.winner, moves: s.moves, last: s.last, line: winLine(s), names: [r.name1, r.name2], open: !r.seat2, seat, options: seat ? options(s, seat) : [], updated: r.updated };
+  return { id: r.id, kind: s.kind, title: KINDS[s.kind].title, board: s.board, turn: s.turn, winner: s.winner, moves: s.moves, last: s.last, line: winLine(s), names: [r.name1, r.name2], open: !r.seat2, seat, options: seat ? options(s, seat) : [], updated: r.updated, alerts: seat ? !!(seat === 1 ? r.sub1 : r.sub2) : false };
 }
 export function createSlowGame(b: Record<string, unknown>) {
   if (!isKind(b.kind)) return { error: "Pick a game." };
@@ -22,13 +24,34 @@ export function createSlowGame(b: Record<string, unknown>) {
   db.prepare("INSERT INTO slow_games (id, kind, state, seat1, name1) VALUES (?, ?, ?, ?, ?)").run(id, b.kind, JSON.stringify(newState(b.kind)), t, cleanName(b.name));
   return { ...view(get(id)!, t), token: t };
 }
+/** Let the other player know, if they asked to be told. Runs in the background; a dead subscription is forgotten. */
+function nudge(r: Row, seat: 1 | 2, title: string, body: string) {
+  const sub = seat === 1 ? r.sub1 : r.sub2;
+  if (!sub) return;
+  let parsed: webpush.PushSubscription;
+  try { parsed = JSON.parse(sub); } catch { return; }
+  void pushTo(parsed, { title, body, url: `/slow-games?g=${r.id}` }, 24 * 3600).then((ok) => { if (!ok) db.prepare(`UPDATE slow_games SET sub${seat} = NULL WHERE id = ?`).run(r.id); });
+}
+/** A seat turns "your turn" alerts on (with a push subscription) or off (null) */
+export function slowAlerts(b: Record<string, unknown>) {
+  const r = get(b.id);
+  if (!r) return { error: "We couldn't find that game." };
+  const seat = seatOf(r, b.token);
+  if (!seat) return { error: "That's not your seat in this game." };
+  const sub = b.subscription as { endpoint?: unknown } | null;
+  if (sub !== null && !(sub && typeof sub.endpoint === "string" && sub.endpoint.startsWith("https://"))) return { error: "Alerts aren't available on this browser." };
+  db.prepare(`UPDATE slow_games SET sub${seat} = ? WHERE id = ?`).run(sub ? JSON.stringify(sub).slice(0, 2000) : null, r.id);
+  return view(get(r.id)!, b.token);
+}
 export function joinSlowGame(b: Record<string, unknown>) {
   const r = get(b.id);
   if (!r) return { error: "We couldn't find that game." };
   if (r.seat2) return { error: "Someone's already taken the other seat." };
   const t = token();
   db.prepare("UPDATE slow_games SET seat2 = ?, name2 = ?, updated = datetime('now') WHERE id = ? AND seat2 IS NULL").run(t, cleanName(b.name), r.id);
-  return { ...view(get(r.id)!, t), token: t };
+  const after = get(r.id)!;
+  nudge(after, 1, `${after.name2} joined your game`, `Your ${KINDS[JSON.parse(after.state).kind as keyof typeof KINDS].title} game is ready. It's your move!`);
+  return { ...view(after, t), token: t };
 }
 export function moveSlowGame(b: Record<string, unknown>) {
   const r = get(b.id);
@@ -39,7 +62,10 @@ export function moveSlowGame(b: Record<string, unknown>) {
   const n = apply(JSON.parse(r.state) as State, seat, Math.round(Number(b.move)));
   if ("error" in n) return n;
   db.prepare("UPDATE slow_games SET state = ?, updated = datetime('now') WHERE id = ?").run(JSON.stringify(n), r.id);
-  return view(get(r.id)!, b.token);
+  const after = get(r.id)!, other = (3 - seat) as 1 | 2, me = seat === 1 ? after.name1 : after.name2;
+  if (n.turn === other) nudge(after, other, "Your move ☕", `${me} played in your ${KINDS[n.kind].title} game.`);
+  else if (n.turn === 0) nudge(after, other, "Game over", `Your ${KINDS[n.kind].title} game with ${me} has finished. See how it ended.`);
+  return view(after, b.token);
 }
 export function slowGame(id: unknown, t?: unknown) {
   const r = get(id);

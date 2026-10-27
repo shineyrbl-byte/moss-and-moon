@@ -1637,10 +1637,10 @@ button.pc-slot { cursor: pointer; }
 /* Café chess */
 .cc-board { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); width: min(100%, 30rem); margin: 0 auto; border: 4px solid #6b4433; border-radius: 8px; overflow: hidden; }
 .cc-sq { position: relative; aspect-ratio: 1; border: none; padding: 0; display: grid; place-items: center; cursor: pointer; min-width: 0; }
-.cc-sq.light { background: #f3e2cf; }
-.cc-sq.dark { background: #c49a78; }
-:root[data-theme="dark"] .cc-sq.light { background: #8a6f5c; }
-:root[data-theme="dark"] .cc-sq.dark { background: #5a4033; }
+.cc-sq.light { background: var(--board-light, #f3e2cf); }
+.cc-sq.dark { background: var(--board-dark, #c49a78); }
+:root[data-theme="dark"] .cc-sq.light { background: var(--board-light, #8a6f5c); }
+:root[data-theme="dark"] .cc-sq.dark { background: var(--board-dark, #5a4033); }
 .cc-sq.last { box-shadow: inset 0 0 0 100px rgba(246, 218, 158, 0.55); }
 .cc-sq.sel { box-shadow: inset 0 0 0 100px rgba(227, 145, 168, 0.55); }
 .cc-sq.dot::after { content: ""; width: 32%; aspect-ratio: 1; border-radius: 50%; background: rgba(194, 91, 120, 0.7); }
@@ -1787,3 +1787,11 @@ button.pc-slot { cursor: pointer; }
 .coming-days { display: grid; place-items: center; min-width: 3.6rem; height: 3.6rem; border-radius: 50%; background: var(--pink-fill); color: var(--on-pink); line-height: 1; }
 .coming-days b { font-size: 1.3rem; } .coming-days small { font-size: 0.7rem; }
 @media (max-width: 600px) { .coming-soon { margin: 1rem; } }
+
+/* Board looks for board games and cards: squares, felt and frames, and the card faces */
+:root[data-board="contrast"] { --board-light: #ffffff; --board-dark: #8c8c8c; --board-felt: #2e7d32; --board-frame: #0040a8; --card-face: #ffffff; --card-ink: #000000; --card-red: #b00020; }
+:root[data-board="garden"] { --board-light: #eef4e7; --board-dark: #7fa36b; --board-felt: #6f9a5d; --board-frame: #4f7a52; --card-face: #f4f8ef; --card-ink: #22331f; --card-red: #8a3a52; }
+:root[data-board="night"] { --board-light: #b4c2e2; --board-dark: #6676a8; --board-felt: #2f4a6b; --board-frame: #26304d; --card-face: #1f2433; --card-ink: #eef1f8; --card-red: #ffb3c6; }
+:root[data-board="contrast"] :is(.pc-card, .pk-card) { --surface: #ffffff; --line: #000000; --text: #000000; --brown: #000000; --pink-ink: #b00020; --pink-fill: #0040a8; --pink-deep: #002a70; }
+:root[data-board="garden"] :is(.pc-card, .pk-card) { --surface: #f4f8ef; --line: #c9dbbd; --text: #22331f; --brown: #2f4a2c; --pink-ink: #8a3a52; --pink-fill: #4f7a52; --pink-deep: #3d6340; }
+:root[data-board="night"] :is(.pc-card, .pk-card) { --surface: #1f2433; --line: #394159; --text: #eef1f8; --brown: #cfd6ea; --pink-ink: #ffb3c6; --pink-fill: #3b4466; --pink-deep: #9fb4ff; }

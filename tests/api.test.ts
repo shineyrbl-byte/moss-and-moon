@@ -3944,3 +3944,30 @@ test("tidy up: old played songs, past game nights and finished slow games go; ev
   assert.ok(((await (await fetch(`${s.url}/api/songs`)).json()) as { next: { id: number }[] }).next.some((x) => x.id === queued), "a queued song stays");
   await s.api("/api/songs", { method: "PATCH", json: { id: queued, action: "remove" } });
 });
+
+test("slow games: your-turn alerts can be turned on and off for your own seat only", async () => {
+  const post = (json: unknown) => fetch(`${s.url}/api/slow-games`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.7.2" }, body: JSON.stringify(json) });
+  const g = await (await post({ kind: "reversi", name: "Al" })).json();
+  const sub = { endpoint: "https://push.example.test/abc", keys: { p256dh: "x", auth: "y" } };
+  assert.equal((await post({ id: g.id, token: "f".repeat(32), subscription: sub })).status, 400, "not your seat");
+  assert.equal((await post({ id: g.id, token: g.token, subscription: { endpoint: "http://nope" } })).status, 400);
+  const on = await (await post({ id: g.id, token: g.token, subscription: sub })).json();
+  assert.equal(on.alerts, true);
+  const j = await (await post({ id: g.id, join: true, name: "Bo" })).json();
+  assert.equal(j.alerts, false, "the other seat has its own setting");
+  const off = await (await post({ id: g.id, token: g.token, subscription: null })).json();
+  assert.equal(off.alerts, false);
+});
+
+test("games dashboard: the period before, and a log of hiding with undo", async () => {
+  await s.login();
+  assert.equal((await s.api("/api/admin/games", { method: "POST", json: { id: "flood", hide: true } })).status, 200);
+  assert.equal((await s.api("/api/admin/games", { method: "POST", json: { id: "flood", hide: true } })).status, 200, "hiding twice logs once");
+  const r = (await s.api("/api/admin/games?days=7")).body;
+  assert.ok("prevSaves" in r.totals && "prevPlayers" in r.totals && "prevSaves" in r.daily[0]);
+  const flood = r.log.filter((e: { id: string }) => e.id === "flood");
+  assert.equal(flood[0].hide, true); assert.equal(flood[0].hiddenNow, true);
+  await s.api("/api/admin/games", { method: "POST", json: { id: "flood", hide: false } });
+  const after = (await s.api("/api/admin/games?days=7")).body.log.filter((e: { id: string }) => e.id === "flood");
+  assert.equal(after[0].hide, false); assert.equal(after[0].hiddenNow, false); assert.equal(after.length, flood.length + 1);
+});
