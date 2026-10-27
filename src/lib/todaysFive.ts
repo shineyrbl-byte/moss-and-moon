@@ -14,12 +14,15 @@ const take = (list: readonly string[], n: number, rand: () => number) => {
 };
 // These puzzles joined on this day. Earlier days keep the picks they had, so old streaks still add up.
 export const NEW_LOGIC_FROM = "2026-10-27";
-const NEW_GAMES: readonly string[] = ["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill", "taller", "traytiles", "seats", "four", "threads", "garden", "rope", "necklace", "trail", "pipes", "cutters", "cryptic", "stars", "wheel", "codeword", "zip", "bikes", "push", "price"];
-const on = (list: readonly string[], date: string) => (date < NEW_LOGIC_FROM ? list.filter((id) => !NEW_GAMES.includes(id)) : list);
+const NEW_GAMES: readonly string[] = ["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill", "taller", "traytiles", "seats", "four", "threads", "garden", "rope", "necklace", "trail", "pipes", "cutters", "cryptic", "stars"];
+// A later group joins a day after, so today's picks (already played by some) don't change under anyone
+export const LATER_FROM = "2026-10-28";
+const LATER_GAMES: readonly string[] = ["wheel", "codeword", "zip", "bikes", "push", "price"];
+const on = (list: readonly string[], date: string) => list.filter((id) => !(date < NEW_LOGIC_FROM && NEW_GAMES.includes(id)) && !(date < LATER_FROM && LATER_GAMES.includes(id)));
 
 export function todaysFive(date: string): string[] {
   const rand = seededRand(`five:${date}`);
-  const [w, l, q] = [take(on(KINDS.word, date), 2, rand), take(on(KINDS.logic, date), 2, rand), take(KINDS.quick, 1, rand)];
+  const [w, l, q] = [take(on(KINDS.word, date), 2, rand), take(on(KINDS.logic, date), 2, rand), take(on(KINDS.quick, date), 1, rand)];
   // Mix them up so it isn't always words first
   return take([w[0], l[0], q[0], w[1], l[1]], 5, rand);
 }

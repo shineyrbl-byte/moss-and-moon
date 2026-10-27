@@ -1583,9 +1583,13 @@ test("today's five: the new puzzles only join from their start day, so old days 
   for (let d = 1; d <= 26; d++) before.push(...todaysFive(`2026-10-${String(d).padStart(2, "0")}`));
   assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill", "taller", "seats", "four", "threads", "garden", "rope", "necklace", "traytiles"].every((id) => !before.includes(id)));
   const after: string[] = [];
-  for (let d = 0; d < 60; d++) after.push(...todaysFive(new Date(Date.UTC(2026, 9, 27 + d)).toISOString().slice(0, 10)));
+  for (let d = 0; d < 200; d++) after.push(...todaysFive(new Date(Date.UTC(2026, 9, 27 + d)).toISOString().slice(0, 10)));
   assert.ok(["milk", "lights", "table", "parasols", "tipjar", "towers", "cups", "corners", "sums", "boggle", "bill", "taller", "seats", "four", "threads", "garden", "rope", "necklace", "traytiles"].every((id) => after.includes(id)));
   assert.equal(NEW_LOGIC_FROM, "2026-10-27");
+  // The later group isn't picked before its own start day
+  const { LATER_FROM } = await import("../src/lib/todaysFive.ts");
+  for (let d = 1; d <= 27; d++) assert.ok(!todaysFive(`2026-10-${String(d).padStart(2, "0")}`).some((id) => ["wheel", "codeword", "zip", "bikes", "push", "price"].includes(id)));
+  assert.equal(LATER_FROM, "2026-10-28");
   const { TROPHIES, earned } = await import("../src/lib/trophies.ts");
   assert.ok(TROPHIES.length >= 42);
   const got = earned({ played: { word: [] }, five: [], arcade: { dice: 260 }, local: { dots: { hard: { won: 1 } }, tray: 20, jam: 4, flags: ["dice-five", "jam-fewest"] } });
