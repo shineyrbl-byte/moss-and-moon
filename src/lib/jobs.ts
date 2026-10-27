@@ -20,6 +20,7 @@ import { anniversaryTick } from "./anniversary";
 import { laterTick } from "./laterOrders";
 import { simTick } from "./simulate";
 import { gameReminderTick } from "./gameReminders";
+import { tidyTick } from "./tidyUp";
 
 const g = globalThis as { __mmJobs?: NodeJS.Timeout[] };
 
@@ -58,5 +59,6 @@ export function startJobs() {
     every(20_000, "orders for tomorrow", () => laterTick()),
     every(10_000, "a day in the life", () => simTick()),
     every(60_000, "puzzle reminders", () => gameReminderTick()),
+    every(60 * 60_000, "tidy up old rows", () => tidyTick()),
   ];
 }

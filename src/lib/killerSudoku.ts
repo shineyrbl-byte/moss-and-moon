@@ -1,11 +1,12 @@
 // Sugar cages (killer sudoku): fill the 6×6 grid with 1–6 so every row, column and 2×3 box has each number once.
 // Dotted cages show what their numbers add up to, and a number can't repeat inside a cage. One answer each day. Pure.
 import { seededRand, shuffled } from "./gameOrders.ts";
+import { makeGrid } from "./grid.ts";
 
 export const N = 6;
 export const minMs = 15000;
 export const HINT_MS = 10000;
-const rowOf = (i: number) => Math.floor(i / N), colOf = (i: number) => i % N;
+const { rowOf, colOf } = makeGrid(N);
 const boxOf = (i: number) => Math.floor(rowOf(i) / 2) * 2 + Math.floor(colOf(i) / 3);
 export const PEERS: number[][] = [...Array(N * N).keys()].map((i) => [...Array(N * N).keys()].filter((j) => j !== i && (rowOf(j) === rowOf(i) || colOf(j) === colOf(i) || boxOf(j) === boxOf(i))));
 

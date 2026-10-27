@@ -2794,3 +2794,23 @@ test("café extras: time-of-day picks are real dishes, and what's new links to r
   assert.ok(NEWS.every((n, k) => k === 0 || n.date <= NEWS[k - 1].date), "newest first");
   for (const n of NEWS) for (const x of n.items) if (x.href) { const p = x.href.split("#")[0]; assert.ok(p === "/" || fs.existsSync(`src/app${p}/page.tsx`), `${x.href} exists`); }
 });
+
+test("tidy-up rules: only old rows go", async () => {
+  const { DatabaseSync } = await import("node:sqlite"), { tidyRows } = await import("../src/lib/tidyRules.ts");
+  const db = new DatabaseSync(":memory:");
+  db.exec(`CREATE TABLE song_requests (id INTEGER PRIMARY KEY, title TEXT, status TEXT, played_at TEXT);
+    CREATE TABLE song_votes (song_id INTEGER, voter TEXT);
+    CREATE TABLE game_night (id INTEGER PRIMARY KEY, date TEXT);
+    CREATE TABLE slow_games (id TEXT, state TEXT, updated TEXT);
+    CREATE TABLE goa_events (id INTEGER PRIMARY KEY, title TEXT, date TEXT, end_date TEXT DEFAULT '');
+    INSERT INTO song_requests VALUES (1, 'old', 'played', '2026-08-01 10:00:00'), (2, 'recent', 'played', '2026-10-20 10:00:00'), (3, 'next', 'queued', NULL);
+    INSERT INTO song_votes VALUES (3, 'a'), (1, 'b');
+    INSERT INTO game_night VALUES (1, '2026-08-01'), (2, '2026-10-29');
+    INSERT INTO slow_games VALUES ('done-old', '{"turn":0}', '2026-08-01 00:00:00'), ('playing', '{"turn":2}', '2026-08-01 00:00:00'), ('abandoned', '{"turn":1}', '2026-01-01 00:00:00'), ('done-new', '{"turn":0}', '2026-10-25 00:00:00');
+    INSERT INTO goa_events (title, date, end_date) VALUES ('long gone', '2026-01-01', ''), ('festival', '2026-07-01', '2026-10-01'), ('soon', '2026-11-20', '');`);
+  const r = tidyRows(db, new Date("2026-10-27T12:00:00"));
+  assert.deepEqual(r, { songs: 1, votes: 1, nights: 1, slow: 2, events: 1 });
+  const left = (t: string, c: string) => (db.prepare(`SELECT ${c} AS x FROM ${t} ORDER BY 1`).all() as { x: string }[]).map((x) => x.x);
+  assert.deepEqual(left("song_requests", "title"), ["next", "recent"]); assert.deepEqual(left("slow_games", "id"), ["done-new", "playing"]);
+  assert.deepEqual(left("goa_events", "title"), ["festival", "soon"], "a long festival stays until three months after it ends");
+});

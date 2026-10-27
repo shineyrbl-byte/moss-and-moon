@@ -8,21 +8,24 @@ export const minMs = 8000;
 export const HINT_MS = 10000;
 export type Mark = 0 | 1 | 2; // 0 untouched, 1 path (shaded), 2 garden (dotted)
 
-export const nextTo = (i: number) => {
+// Worked out once: the squares beside each square (up, down, left, right)
+const NEXT: number[][] = [...Array(N * N).keys()].map((i) => {
   const r = Math.floor(i / N), c = i % N;
   return [r > 0 ? i - N : -1, r < N - 1 ? i + N : -1, c > 0 ? i - 1 : -1, c < N - 1 ? i + 1 : -1].filter((j) => j >= 0);
-};
+});
+export const nextTo = (i: number): readonly number[] => NEXT[i] ?? [];
 /** Every connected shape of `size` squares that holds `seed` and no other number */
 export function shapes(clues: number[], seed: number, size: number): number[][] {
-  const out = new Map<string, number[]>();
-  const grow = (set: number[]) => {
-    if (set.length === size) { const k = [...set].sort((a, b) => a - b); out.set(k.join(","), k); return; }
+  // Shapes are kept by which squares they hold (as one number with a bit per square), so each is found once
+  const out = new Map<number, number[]>(), seen = new Set<number>();
+  const bit = (i: number) => 2 ** i, keyOf = (set: number[]) => set.reduce((k, i) => k + bit(i), 0);
+  const grow = (set: number[], key: number) => {
+    if (set.length === size) { if (!out.has(key)) out.set(key, [...set].sort((a, b) => a - b)); return; }
     const edge = new Set<number>();
-    for (const i of set) for (const j of nextTo(i)) if (!set.includes(j) && !clues[j]) edge.add(j);
-    for (const j of edge) { const next = [...set, j], key = [...next].sort((a, b) => a - b).join(","); if (!seen.has(key)) { seen.add(key); grow(next); } }
+    for (const i of set) for (const j of NEXT[i]) if (!set.includes(j) && !clues[j]) edge.add(j);
+    for (const j of edge) { const k = key + bit(j); if (!seen.has(k)) { seen.add(k); set.push(j); grow(set, k); set.pop(); } }
   };
-  const seen = new Set<string>();
-  grow([seed]);
+  grow([seed], keyOf([seed]));
   return [...out.values()];
 }
 const pathOk = (path: boolean[]) => {
@@ -69,7 +72,8 @@ export function gardenFor(date: string): { clues: number[]; path: boolean[] } {
       const cells = [seed];
       owner[seed] = plots;
       while (cells.length < want) {
-        const free = cells.flatMap(nextTo).filter((j) => owner[j] === -1 && nextTo(j).every((k) => owner[k] === -1 || owner[k] === plots));
+        const free: number[] = [];
+        for (const c of cells) for (const j of NEXT[c]) if (owner[j] === -1 && NEXT[j].every((k) => owner[k] === -1 || owner[k] === plots)) free.push(j);
         if (!free.length) break;
         const j = free[Math.floor(rand() * free.length)];
         owner[j] = plots; cells.push(j);

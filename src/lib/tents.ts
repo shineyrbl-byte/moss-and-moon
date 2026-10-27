@@ -2,6 +2,7 @@
 // Parasols never touch each other, not even at the corners, and the numbers say how many go in each row and column.
 // Each day's terrace has exactly one answer. Pure, so the page and tests share it.
 import { seededRand } from "./gameOrders.ts";
+import { makeGrid } from "./grid.ts";
 
 export const N = 8;
 export const minMs = 5000;
@@ -13,7 +14,7 @@ export const nextTo = (i: number) => {
   const [r, c] = rc(i);
   return [r > 0 ? i - N : -1, r < N - 1 ? i + N : -1, c > 0 ? i - 1 : -1, c < N - 1 ? i + 1 : -1].filter((j) => j >= 0);
 };
-export const touching = (a: number, b: number) => { const [ar, ac] = rc(a), [br, bc] = rc(b); return a !== b && Math.abs(ar - br) <= 1 && Math.abs(ac - bc) <= 1; };
+export const touching = makeGrid(N).touching;
 
 /** Can every parasol be paired with its own table next to it? */
 export function paired(tables: number[], parasols: number[]) {

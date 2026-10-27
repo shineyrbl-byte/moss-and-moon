@@ -102,6 +102,7 @@ export function GamesDashboard() {
         : <p className="small muted">Nothing stands out yet. A day shows here once at least three people saved it and it went noticeably slower than usual.</p>}
       <h3 className="h3" style={{ fontSize: "1.05rem", marginTop: "1rem" }}>Any-time games by visits</h3>
       <ul className="small gd-any">{r.anyTime.slice(0, all ? undefined : 12).map((g) => <li key={g.id} style={g.hidden ? { opacity: 0.6 } : undefined}><a href={g.href}>{g.emoji} {g.title}</a> · {g.views}{g.hidden ? " · hidden" : ""} <button className="link-btn tiny" onClick={() => hide(g.id, g.title, !g.hidden)}>{g.hidden ? "Show" : "Hide"}</button></li>)}</ul>
+      <p className="tiny muted"><button className="link-btn tiny" onClick={async () => { const x = await fetch("/api/admin/tidy", { method: "POST" }).then((y) => y.json()).catch(() => null); if (x?.removed) { const n = Object.values(x.removed as Record<string, number>).reduce((a, b) => a + b, 0); toast(n ? `Tidied away ${n} old row${n === 1 ? "" : "s"}` : "Nothing old to tidy"); } }}>🧹 Tidy up old rows now</button> (played songs after a month, past game nights, finished slow games; it also runs by itself daily).</p>
       <p className="tiny muted">Hiding takes a game off the games page and out of Today&apos;s five from today. Its page still works by link, scores are kept, and past streaks don&apos;t change. Before retiring a game for good, give it a few weeks of numbers here.</p>
     </section>
   );

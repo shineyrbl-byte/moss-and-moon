@@ -3930,3 +3930,17 @@ test("café extras: song votes, guest latte art, Goa events, coming soon, game n
   assert.ok(page.includes("RECIPE OF THE WEEK") && page.includes("https://example.com/chai"));
   for (const p of ["/game-night", "/whats-new"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
+
+test("tidy up: old played songs, past game nights and finished slow games go; everything current stays", async () => {
+  await s.login();
+  const post = (p: string, json: unknown) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.7.1" }, body: JSON.stringify(json) });
+  const g = await (await post("/api/slow-games", { kind: "connect4", name: "Ty" })).json();
+  const queued = (await (await post("/api/songs", { title: "Tidy test song" })).json()).id;
+  await s.api("/api/songs", { method: "PATCH", json: { id: queued, action: "approve" } });
+  assert.equal((await fetch(`${s.url}/api/admin/tidy`, { method: "POST" })).status, 401);
+  const r = await s.api("/api/admin/tidy", { method: "POST" });
+  assert.equal(r.status, 200); assert.ok("songs" in r.body.removed && "slow" in r.body.removed);
+  assert.equal((await fetch(`${s.url}/api/slow-games?id=${g.id}`)).status, 200, "a new game stays");
+  assert.ok(((await (await fetch(`${s.url}/api/songs`)).json()) as { next: { id: number }[] }).next.some((x) => x.id === queued), "a queued song stays");
+  await s.api("/api/songs", { method: "PATCH", json: { id: queued, action: "remove" } });
+});

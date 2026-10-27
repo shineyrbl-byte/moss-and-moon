@@ -24,35 +24,43 @@ export function runsOf(white: boolean[]): Omit<Run, "sum">[] {
   return out;
 }
 
-/** Up to `limit` answers */
+// Every set of different digits (as bits 1–9) of each length and total, for checking a run can still be finished
+const COMBOS: number[][][] = Array.from({ length: 10 }, () => Array.from({ length: 46 }, () => []));
+for (let m = 2; m < 1 << 10; m += 2) { let n = 0, s = 0; for (let v = 1; v <= 9; v++) if (m & (1 << v)) { n++; s += v; } COMBOS[n][s].push(m); }
+
+/** Up to `limit` answers (tried smallest digit first, square by square, so the same grid always gives the same answers) */
 export function answers(white: boolean[], runs: Run[], given: number[], limit = 2): number[][] {
   const cells = [...Array(N * N).keys()].filter((i) => white[i]);
-  const runsAt: Run[][] = Array.from({ length: N * N }, () => []);
-  for (const r of runs) for (const c of r.cells) runsAt[c].push(r);
+  const runsAt: number[][] = Array.from({ length: N * N }, () => []);
+  runs.forEach((r, k) => r.cells.forEach((c) => runsAt[c].push(k)));
+  const combos = runs.map((r) => (r.sum >= 0 && r.sum <= 45 ? COMBOS[r.cells.length][r.sum] : []));
+  const used = runs.map(() => 0);
   const g = Array(N * N).fill(0), out: number[][] = [];
-  const ok = (i: number) => {
-    for (const r of runsAt[i]) {
-      let sum = 0, filled = 0, used = 0;
-      for (const c of r.cells) { const v = g[c]; if (v) { if (used & (1 << v)) return false; used |= 1 << v; sum += v; filled++; } }
-      const left = r.cells.length - filled;
-      if (!left) { if (sum !== r.sum) return false; continue; }
-      // The smallest and largest the empty squares could still add up to
-      let lo = 0, hi = 0;
-      for (let v = 1, k = 0; v <= 9 && k < left; v++) if (!(used & (1 << v))) { lo += v; k++; }
-      for (let v = 9, k = 0; v >= 1 && k < left; v--) if (!(used & (1 << v))) { hi += v; k++; }
-      if (sum + lo > r.sum || sum + hi < r.sum) return false;
+  // A run is still possible if some set of digits with its length and total holds everything placed in it so far
+  const possible = (k: number) => { const u = used[k]; for (const c of combos[k]) if ((c & u) === u) return true; return false; };
+  // The digits a run could still take: every set that fits what's placed, minus what's placed
+  const open = (k: number) => { const u = used[k]; let m = 0; for (const c of combos[k]) if ((c & u) === u) m |= c; return m & ~u; };
+  // Each empty square next to the one just filled must still have a digit it could be
+  const roomLeft = (rs: number[]) => {
+    for (const r of rs) for (const c of runs[r].cells) {
+      if (g[c]) continue;
+      let m = 0x3fe; for (const q of runsAt[c]) m &= open(q);
+      if (given[c]) m &= 1 << given[c];
+      if (!m) return false;
     }
     return true;
   };
   const go = (k: number) => {
     if (out.length >= limit) return;
     if (k === cells.length) { out.push([...g]); return; }
-    const i = cells[k];
+    const i = cells[k], rs = runsAt[i];
     for (let v = 1; v <= 9; v++) {
       if (given[i] && given[i] !== v) continue;
-      g[i] = v;
-      if (ok(i)) go(k + 1);
-      g[i] = 0;
+      const bit = 1 << v;
+      if (rs.some((r) => used[r] & bit)) continue;
+      for (const r of rs) used[r] |= bit;
+      if (rs.every(possible)) { g[i] = v; if (roomLeft(rs)) go(k + 1); g[i] = 0; }
+      for (const r of rs) used[r] &= ~bit;
     }
   };
   go(0);

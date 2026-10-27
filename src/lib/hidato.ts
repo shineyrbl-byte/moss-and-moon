@@ -1,21 +1,15 @@
 // Coffee trail (Hidato): fill the tray with 1 to 36 so each number touches the next one, side by side or corner to corner.
 // Some numbers are given; each day's tray has exactly one answer. Pure, so the page and tests share it.
 import { seededRand, shuffled } from "./gameOrders.ts";
+import { makeGrid } from "./grid.ts";
 
 export const N = 6;
 export const LAST = N * N;
 export const minMs = 10000;
 export const HINT_MS = 10000;
 
-const rowOf = (i: number) => Math.floor(i / N), colOf = (i: number) => i % N;
-export const around = (i: number) => {
-  const out: number[] = [];
-  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-    const r = rowOf(i) + dr, c = colOf(i) + dc;
-    if ((dr || dc) && r >= 0 && r < N && c >= 0 && c < N) out.push(r * N + c);
-  }
-  return out;
-};
+const G = makeGrid(N), { rowOf, colOf } = G;
+export const around = G.around;
 export const touches = (a: number, b: number) => a !== b && Math.abs(rowOf(a) - rowOf(b)) <= 1 && Math.abs(colOf(a) - colOf(b)) <= 1;
 const far = (a: number, b: number) => Math.max(Math.abs(rowOf(a) - rowOf(b)), Math.abs(colOf(a) - colOf(b)));
 

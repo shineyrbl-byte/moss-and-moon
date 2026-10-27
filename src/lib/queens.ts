@@ -1,6 +1,7 @@
 // Table for one: seat one guest in every row, every column and every coloured section, with no two guests in touching seats
 // (not even corner to corner). Every day's floor plan has exactly one answer. Pure, so the page and tests share it.
 import { seededRand } from "./gameOrders.ts";
+import { makeGrid } from "./grid.ts";
 
 export const N = 8;
 export const minMs = 5000;
@@ -13,7 +14,7 @@ export const nextMark = (m: Mark): Mark => ((m + 1) % 3) as Mark;
 
 /** Everything that depends on the size of the floor: 8×8 is the daily, 9×9 the hard one */
 export function queensOf(N: number) {
-  const touching = (a: number, b: number) => a !== b && Math.abs(Math.floor(a / N) - Math.floor(b / N)) <= 1 && Math.abs((a % N) - (b % N)) <= 1;
+  const { touching } = makeGrid(N);
 
   /** Up to `limit` ways to seat everyone, each as the seat picked in every row */
   function seatings(regions: number[], limit = 2): number[][] {

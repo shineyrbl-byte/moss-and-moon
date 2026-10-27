@@ -1,13 +1,14 @@
 // Battleship against the computer: each of you hides a fleet on a 10×10 sea and takes turns firing. First to sink the
 // whole fleet wins. Easy fires at random; hard hunts in a checkerboard and follows up hits. Pure.
 import { shuffled } from "./gameOrders.ts";
+import { makeGrid } from "./grid.ts";
 
 export const N = 10, FLEET = [5, 4, 3, 3, 2];
 export const SHIP_NAMES = ["Espresso machine", "Coffee cart", "Delivery van", "Tuk-tuk", "Bicycle"];
 export type Board = { ships: number[][]; shots: boolean[] };
 export type Level = "easy" | "hard";
-const rowOf = (i: number) => Math.floor(i / N), colOf = (i: number) => i % N;
-const side = (i: number) => [i - N, i + N, colOf(i) > 0 ? i - 1 : -1, colOf(i) < N - 1 ? i + 1 : -1].filter((j) => j >= 0 && j < N * N);
+const G = makeGrid(N), { rowOf, colOf } = G;
+const side = G.side;
 
 /** Hide a fleet at random (ships may sit side by side but never overlap) */
 export function hide(rand: () => number): number[][] {

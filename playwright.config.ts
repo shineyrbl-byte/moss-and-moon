@@ -12,7 +12,8 @@ export default defineConfig({
   timeout: 45_000,
   expect: { timeout: 8_000 },
   fullyParallel: false,
-  workers: 1,
+  // Test files run side by side (each file's tests still run in order)
+  workers: 3,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
   use: {
