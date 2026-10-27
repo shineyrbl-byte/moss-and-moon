@@ -19,3 +19,7 @@
 .season-event { display: flex; gap: 0.9rem; align-items: center; padding: 0.9rem 1.1rem; margin-top: 0.8rem; background: color-mix(in srgb, var(--butter) 30%, var(--surface)); }
 .season-emoji { font-size: 2.2rem; }
 .season-event > div { flex: 1; }
+.game-rewards { padding: 0.8rem 1rem; margin: 0.8rem 0; }
+.gr-dots { display: flex; gap: 0.35rem; margin-top: 0.5rem; }
+.gr-dots i { width: 1.4rem; height: 1.4rem; border-radius: 50%; border: 2px dashed var(--line); }
+.gr-dots i.on { background: var(--pink); border: 2px solid var(--pink-deep); }

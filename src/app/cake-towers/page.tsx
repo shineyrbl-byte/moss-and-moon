@@ -123,7 +123,7 @@ export default function CakeTowers() {
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, g]); setG(Array(N * N).fill(0)); setHinted(null); }} disabled={done || g.every((v) => !v)}>Start over</button>
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{left}</b> to bake</span><span>⏱ {clock(elapsed)}</span></div>
-      <div className={`ct-grid ${done ? "done" : ""}`} role="grid" aria-label="Cake towers">
+      <div className={`ct-grid ${done ? "done" : ""}`} role="grid" data-own-keys="" aria-label="Cake towers">
         {[...Array(N + 2).keys()].flatMap((r) => [...Array(N + 2).keys()].map((c) => {
           const k = clueAt(r, c);
           if (k !== null) return (

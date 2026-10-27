@@ -4,7 +4,7 @@ import "server-only";
 import { randomBytes, randomInt } from "node:crypto";
 import { db } from "./db";
 
-export const ROOM_GAMES = ["chess", "gomoku"] as const;
+export const ROOM_GAMES = ["chess", "gomoku", "reversi", "draughts", "connect4", "backgammon"] as const;
 export type RoomGame = (typeof ROOM_GAMES)[number];
 const ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const DAY = 86_400_000;

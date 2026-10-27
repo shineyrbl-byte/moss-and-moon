@@ -85,7 +85,7 @@ export default function FiveInARow() {
         <span className="small muted">{done ? (winner === null ? "A draw" : two ? `${winner === 0 ? p1 : p2} wins! 🎉` : winner === 0 ? "You win! 🎉" : "Computer wins") : two ? `${g.turn === 0 ? p1 : p2}'s cup` : g.turn === 0 ? "Your cup" : "Thinking…"}</span>
         <span className={g.turn === 1 && !done ? "on" : ""}>{p2} <i className="dr-mini them" /></span>
       </div>
-      <div className={`fr-board ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Tablecloth">
+      <div className={`fr-board ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" data-own-keys="" aria-label="Tablecloth">
         {g.b.map((x, i) => (
           <button key={i} ref={(el) => { cells.current[i] = el; }} className={`fr-cell ${win.has(i) ? "win" : ""} ${g.last === i ? "last" : ""}`}
             tabIndex={focus === i ? 0 : -1} onFocus={() => setFocus(i)} onKeyDown={(e) => key(e, i)} onClick={() => place(i)}

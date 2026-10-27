@@ -124,7 +124,7 @@ export default function PuzzleOfTheWeek() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { setG(p.g); setNotes(p.notes); setHistory(history.slice(0, -1)); } }} disabled={!history.length || done}>↩ Undo</button>
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{left}</b> to fill</span><span>⏱ {clock(elapsed)}</span></div>
-      <div className={`s9-grid ${done ? "done" : ""}`} role="grid" aria-label="Weekly sudoku">
+      <div className={`s9-grid ${done ? "done" : ""}`} role="grid" data-own-keys="" aria-label="Weekly sudoku">
         {g.map((v, i) => {
           const fixed = !!puzzle.puzzle[i];
           const same = !!selVal && v === selVal;

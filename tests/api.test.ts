@@ -3562,6 +3562,43 @@ test("batch C arcade boards and the seven new any-time pages", async () => {
   for (const p of ["/cafe-dominoes", "/cafe-letters", "/cafe-poker", "/pinball-parlour", "/market-road", "/pop-the-cupcakes", "/slice-the-cake"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
+test("batch D: more live rooms, tournaments, café rewards and the year in games", async () => {
+  const rooms = (json: Record<string, unknown>) => fetch(`${s.url}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.51" }, body: JSON.stringify(json) });
+  for (const game of ["reversi", "draughts", "connect4", "backgammon"]) {
+    const r = await rooms({ create: game, state: { seat: 0 } });
+    assert.equal(r.status, 200, game);
+    const d = (await r.json()) as { code: string };
+    const j = (await (await rooms({ join: d.code })).json()) as { seat: number };
+    assert.equal(j.seat, 1);
+  }
+  assert.equal((await rooms({ create: "snap", state: {} })).status, 400);
+  // Tournaments
+  const tpost = (json: Record<string, unknown>) => fetch(`${s.url}/api/tournaments`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.52" }, body: JSON.stringify(json) });
+  const host = "t".repeat(16) + "host", today = new Date(), d = (n: number) => { const x = new Date(today); x.setDate(x.getDate() + n); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
+  assert.equal((await tpost({ create: true, game: "word", voter: host })).status, 400, "needs a puzzle with a time board");
+  assert.equal((await tpost({ create: true, game: "sudoku", voter: host, start: d(0) })).status, 400, "can't start today");
+  const made = (await (await tpost({ create: true, game: "sudoku", voter: host, start: d(2), name: "Friday cup", playerName: "Ana" })).json()) as { code: string; open: boolean; players: { name: string; you: boolean }[]; host: boolean };
+  assert.ok(made.code && made.open && made.host); assert.deepEqual(made.players, [{ name: "Ana", you: true }]);
+  for (let k = 0; k < 7; k++) assert.equal((await tpost({ join: made.code, voter: "t".repeat(16) + `p${k}`, name: `P${k}` })).status, 200);
+  assert.equal((await tpost({ join: made.code, voter: "t".repeat(16) + "late", name: "Late" })).status, 400, "eight at most");
+  const view = (await (await fetch(`${s.url}/api/tournaments?code=${made.code}&voter=${host}`)).json()) as { players: unknown[]; days: string[]; started: boolean };
+  assert.equal(view.players.length, 8); assert.equal(view.days.length, 3); assert.equal(view.started, false);
+  assert.ok(!JSON.stringify(view).includes("tttttttttttttttt"), "no private ids in the view");
+  const g = (await (await fetch(`${s.url}/api/tournaments?games=1`)).json()) as { games: { id: string }[] };
+  assert.ok(g.games.some((x) => x.id === "sudoku") && !g.games.some((x) => x.id === "word"));
+  // Café rewards need an account
+  const rv = "r".repeat(16) + "rewards";
+  const st = (await (await fetch(`${s.url}/api/game-rewards?voter=${rv}`)).json()) as { signedIn: boolean; streak: number; ready: number };
+  assert.equal(st.signedIn, false); assert.equal(st.ready, 0);
+  assert.equal((await fetch(`${s.url}/api/game-rewards`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voter: rv }) })).status, 400);
+  // Year in games counts saved scores
+  const yv = "y".repeat(16) + "year";
+  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.53" }, body: JSON.stringify({ game: "sudoku", ms: 90_000, voter: yv, name: "Y" }) });
+  const y = (await (await fetch(`${s.url}/api/year-in-games?voter=${yv}`)).json()) as { solved: number; days: number; longest: number; games: { id: string; best: number }[]; months: unknown[] };
+  assert.equal(y.solved, 1); assert.equal(y.days, 1); assert.equal(y.longest, 1); assert.equal(y.games[0].best, 90_000); assert.equal(y.months.length, 12);
+  for (const p of ["/tournament", "/puzzle-maker", "/year-in-games", "/play-together"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

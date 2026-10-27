@@ -118,7 +118,7 @@ export default function BeanSums() {
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, g]); setG([...given]); setHinted(null); }} disabled={done || g.every((v, i) => v === given[i])}>Start over</button>
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{left}</b> to fill</span><span>⏱ {clock(elapsed)}</span></div>
-      <div className={`ks-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Bean sums">
+      <div className={`ks-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" data-own-keys="" aria-label="Bean sums">
         {[...Array(N * N).keys()].map((i) => {
           if (!white[i]) {
             const a = clueAt(i, true), d = clueAt(i, false);

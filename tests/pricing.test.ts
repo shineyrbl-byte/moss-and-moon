@@ -2104,7 +2104,7 @@ test("how to play cards: every one is for a real game page, with a goal and a ti
   // Every computer opponent and arcade game has one
   for (const g of ANY_TIME.filter((x) => x.kind === "board" || x.kind === "arcade" || x.kind === "cards")) if (g.id !== "saucers" && g.id !== "rush") assert.ok(HOW_TO[g.href], g.href);
   const { DEFAULTS } = await import("../src/lib/gameSettings.ts");
-  assert.deepEqual(DEFAULTS, { sound: true, vibrate: false, patterns: false }, "vibration and patterns start off");
+  assert.deepEqual(DEFAULTS, { sound: true, vibrate: false, patterns: false, reader: false }, "vibration, patterns and screen-reader help start off");
 });
 
 test("account sync: what follows you, and merging two devices", async () => {
@@ -2455,4 +2455,35 @@ test("batch C games: dominoes, café letters, poker, pinball, market road, cupca
   const target = sc.items.find((i) => i.kind !== "chilli");
   if (target) { const r = SC.swipe(sc, target.x - 40, target.y, target.x + 40, target.y, true); assert.ok(r.s.score >= 10); }
   assert.ok(SC.crosses(0, 0, 10, 0, 5, 1, 2)); assert.ok(!SC.crosses(0, 0, 10, 0, 5, 5, 2));
+});
+
+test("batch D: tournament brackets and the puzzle maker", async () => {
+  const B = await import("../src/lib/bracket.ts");
+  const P = (n: number) => [...Array(n).keys()].map((k) => ({ voter: `v${k}`, name: `P${k + 1}` }));
+  assert.deepEqual(B.seed(P(4)).map((p) => p?.name), ["P1", "P4", "P2", "P3"]);
+  assert.deepEqual(B.seed(P(3)).map((p) => p?.name ?? null), ["P1", null, "P2", "P3"], "the top seed gets the bye");
+  assert.equal(B.roundsFor(8), 3); assert.equal(B.roundsFor(5), 3); assert.equal(B.roundsFor(2), 1);
+  // Scores: lower is better. Day 1: P4 beats P1, P2 beats P3. Day 2: P2 only plays.
+  const scores: Record<string, number> = { "2026-11-01:v3": 50, "2026-11-01:v0": 60, "2026-11-01:v1": 40, "2026-11-01:v2": 45, "2026-11-02:v1": 30 };
+  const sc = (d: string, v: string) => scores[`${d}:${v}`] ?? null;
+  const during = B.bracket(P(4), "2026-11-01", "2026-11-01", sc);
+  assert.ok(during[0].every((m) => !m.decided), "not settled until the day's over");
+  assert.equal(during[0][0].winner?.name, "P4", "but the leader shows"); assert.equal(during[1][0].a, null, "next round not known yet");
+  const later = B.bracket(P(4), "2026-11-01", "2026-11-03", sc);
+  assert.deepEqual(later[0].map((m) => m.winner?.name), ["P4", "P2"]);
+  assert.equal(later[1][0].winner?.name, "P2", "the only one who played the final"); assert.equal(B.champion(later)?.name, "P2");
+  const nobody = B.bracket(P(2), "2026-11-05", "2026-11-09", () => null);
+  assert.equal(nobody[0][0].winner?.name, "P1", "nobody played: first to join goes through");
+
+  const M = await import("../src/lib/puzzleMaker.ts");
+  const { sudokuFor } = await import("../src/lib/sudoku.ts");
+  const real = sudokuFor("2026-10-27", "easy");
+  const v = M.check(real.puzzle);
+  assert.equal(v.kind, "one"); if (v.kind === "one") assert.deepEqual(v.answer, real.answer);
+  const few = Array(36).fill(0); few[0] = 1;
+  const many = M.check(few); assert.equal(many.kind, "many"); if (many.kind === "many") assert.ok(many.differ >= 0 && !few[many.differ]);
+  const bad = Array(36).fill(0); bad[0] = 1; bad[1] = 1;
+  assert.equal(M.check(bad).kind, "none");
+  assert.deepEqual(M.decode(M.encode(real.puzzle)), real.puzzle);
+  assert.equal(M.decode("12"), null); assert.equal(M.decode("9".repeat(36)), null);
 });

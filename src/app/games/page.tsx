@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { voterId } from "@/components/LabCard";
 import { useStore } from "@/components/Store";
+import GameRewards from "@/components/GameRewards";
 import { TROPHIES, earned, type TrophyCtx } from "@/lib/trophies";
 import { localTrophyStats } from "@/lib/trophyFlags";
 import { eventToday, progress } from "@/lib/seasonalGames";
@@ -97,6 +98,7 @@ export default function Games() {
           </section>
         );
       })()}
+      <GameRewards />
       <p className="small center" style={{ margin: "0.8rem 0" }}><Link href="/trophies">🏆 Trophy shelf{trophies !== null ? `: ${trophies} of ${TROPHIES.length}` : ""} →</Link></p>
       {favs.length > 0 && !filtering && f.kind !== "fav" && (
         <section className="games-favs" aria-labelledby="fav-h">
@@ -130,7 +132,7 @@ export default function Games() {
           </li>
         ))}
       </ul>
-      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />Want more? <Link href="/practice">🎲 Practice puzzles, as many as you like →</Link><br />Past champions: <Link href="/hall-of-fame">👑 Hall of fame →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration, colour-blind patterns and a daily reminder: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/weekly-crossword">🗞️ Weekly crossword</Link> · <Link href="/play-together">🎮 Play a friend live</Link></p>
+      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />Want more? <Link href="/practice">🎲 Practice puzzles, as many as you like →</Link><br />Past champions: <Link href="/hall-of-fame">👑 Hall of fame →</Link><br />Make your own: <Link href="/puzzle-maker">✏️ Puzzle maker →</Link> · Your last twelve months: <Link href="/year-in-games">🎮 Year in games →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration, colour-blind patterns and a daily reminder: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/weekly-crossword">🗞️ Weekly crossword</Link> · <Link href="/play-together">🎮 Play a friend live</Link> · <Link href="/tournament">🏆 Mini tournaments</Link></p>
       {anyTime.length > 0 && <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>}
       <ul className="games-more">
         {anyTime.map((g) => (

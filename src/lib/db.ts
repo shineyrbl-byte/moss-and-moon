@@ -1122,6 +1122,23 @@ function open() {
     guest TEXT,
     updated_at INTEGER NOT NULL
   );`);
+  // Café rewards: a loyalty stamp for every week-long run of today's five
+  db.exec(`CREATE TABLE IF NOT EXISTS game_rewards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL,
+    claimed_on TEXT NOT NULL,
+    streak INTEGER NOT NULL
+  );`);
+  // Mini tournaments between friends: a knockout, one round a day on a daily puzzle
+  db.exec(`CREATE TABLE IF NOT EXISTS tournaments (
+    code TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    game TEXT NOT NULL,
+    start TEXT NOT NULL,
+    players TEXT NOT NULL,
+    host TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
   // Boards for puzzles that last a week (the weekly crossword): each person's best time that week
   db.exec(`CREATE TABLE IF NOT EXISTS weekly_games (
     game TEXT NOT NULL,

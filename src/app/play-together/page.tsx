@@ -1,16 +1,33 @@
 "use client";
+import "../reversi/page.css";
+import "../draughts/page.css";
+import "../connect-four/page.css";
+import "../terrace-backgammon/page.css";
 import "./page.css";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/components/Store";
 import * as C from "@/lib/chess";
 import * as G from "@/lib/gomoku";
+import { LiveBackgammon, LiveDraughts, LiveFour, LiveReversi, freshBg, freshDraughts, freshFour, freshReversi, type BgState, type DraughtsState, type FourState, type ReversiState } from "@/components/LiveBoards";
 
 type ChessState = { seat: 0 | 1; s: C.State; log: string[]; last: C.Move | null };
 type GomokuState = { seat: 0 | 1; b: G.Cell[]; last: number | null; line: number[] | null };
-type Room = { code: string; game: "chess" | "gomoku"; state: ChessState | GomokuState; version: number; joined: boolean };
+type Game = "chess" | "gomoku" | "reversi" | "draughts" | "connect4" | "backgammon";
+type Room = { code: string; game: Game; state: ChessState | GomokuState | ReversiState | DraughtsState | FourState | BgState; version: number; joined: boolean };
+const GAMES: { id: Game; emoji: string; title: string; note: string }[] = [
+  { id: "chess", emoji: "♟️", title: "Café chess", note: "You're white" },
+  { id: "gomoku", emoji: "⭕", title: "Five in a row", note: "You go first" },
+  { id: "reversi", emoji: "⚫", title: "Bean reversi", note: "You're the dark beans" },
+  { id: "draughts", emoji: "🔴", title: "Café draughts", note: "You're pink" },
+  { id: "connect4", emoji: "🟡", title: "Connect Four", note: "You're red" },
+  { id: "backgammon", emoji: "🎲", title: "Backgammon", note: "You're pink" },
+];
+const titleOf = (g: Game) => GAMES.find((x) => x.id === g)!.title;
 const GLYPH: Record<string, string> = { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟" };
-const fresh = (game: Room["game"]): Room["state"] => (game === "chess" ? { seat: 0, s: C.newGame(), log: [], last: null } : { seat: 0, b: G.empty(), last: null, line: null });
+const fresh = (game: Game): Room["state"] =>
+  game === "chess" ? { seat: 0, s: C.newGame(), log: [], last: null } : game === "gomoku" ? { seat: 0, b: G.empty(), last: null, line: null }
+  : game === "reversi" ? freshReversi() : game === "draughts" ? freshDraughts() : game === "connect4" ? freshFour() : freshBg();
 const saved = (code: string) => { try { return JSON.parse(localStorage.getItem(`mm-room-${code}`) ?? "null") as { token: string; seat: 0 | 1 } | null; } catch { return null; } };
 
 export default function PlayTogether() {
@@ -69,7 +86,7 @@ export default function PlayTogether() {
   async function shareLink() {
     if (!room) return;
     const url = `${location.origin}/play-together?room=${room.code}`;
-    try { if (navigator.share) await navigator.share({ text: `Play me at ${room.game === "chess" ? "chess" : "five in a row"} on Moss & Moon: room ${room.code}`, url }); else { await navigator.clipboard.writeText(url); toast("Link copied 📋"); } } catch {}
+    try { if (navigator.share) await navigator.share({ text: `Play me at ${titleOf(room.game)} on Moss & Moon: room ${room.code}`, url }); else { await navigator.clipboard.writeText(url); toast("Link copied 📋"); } } catch {}
   }
 
   if (!room || !me) {
@@ -79,8 +96,7 @@ export default function PlayTogether() {
         <h1 className="h2">Play <em>together</em></h1>
         <p className="small muted">Play a friend live, each on your own phone or computer. Start a room and send them the link, or type in the code they sent you. No sign-in needed.</p>
         <div className="pt-start">
-          <button className="card pt-game" onClick={() => create("chess")} disabled={busy}><span aria-hidden="true">♟️</span><b>Café chess</b><small className="muted">You&apos;re white</small></button>
-          <button className="card pt-game" onClick={() => create("gomoku")} disabled={busy}><span aria-hidden="true">⭕</span><b>Five in a row</b><small className="muted">You go first</small></button>
+          {GAMES.map((g) => <button key={g.id} className="card pt-game" onClick={() => create(g.id)} disabled={busy}><span aria-hidden="true">{g.emoji}</span><b>{g.title}</b><small className="muted">{g.note}</small></button>)}
         </div>
         <div className="row" style={{ alignItems: "end", gap: "0.5rem", marginTop: "1.2rem", flexWrap: "wrap" }}>
           <label className="field" style={{ marginBottom: 0, maxWidth: "12rem" }}>Join with a code<input className="input" maxLength={5} value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="ABCDE" style={{ letterSpacing: "0.14em", textTransform: "uppercase" }} /></label>
@@ -122,6 +138,12 @@ export default function PlayTogether() {
         <p className="tiny muted">Pawns that reach the far side become queens.</p>
       </>
     );
+  } else if (room.game !== "gomoku") {
+    const props = { me: me.seat, joined: room.joined };
+    board = room.game === "reversi" ? <LiveReversi st={room.state as ReversiState} {...props} send={(x) => void send(x)} />
+      : room.game === "draughts" ? <LiveDraughts st={room.state as DraughtsState} {...props} send={(x) => void send(x)} />
+      : room.game === "connect4" ? <LiveFour st={room.state as FourState} {...props} send={(x) => void send(x)} />
+      : <LiveBackgammon st={room.state as BgState} {...props} send={(x) => void send(x)} />;
   } else {
     const st = room.state as GomokuState;
     const winner = st.line ? st.b[st.line[0]] : null, full = G.full(st.b);
@@ -141,14 +163,14 @@ export default function PlayTogether() {
   return (
     <div className="page" style={{ maxWidth: "36rem" }}>
       <p className="eyebrow">live · room {room.code}</p>
-      <h1 className="h2">{room.game === "chess" ? "Café chess" : "Five in a row"} <em>together</em></h1>
+      <h1 className="h2">{titleOf(room.game)} <em>together</em></h1>
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
         <span className="pt-code">{room.code}</span>
         <button className="btn btn-pink btn-sm" onClick={shareLink}>📤 Send the link</button>
         {me.seat === 0 && <button className="btn btn-ghost btn-sm" onClick={() => send(fresh(room.game), true)}>New game</button>}
         <Link className="small" href="/play-together" onClick={() => { setRoom(null); setMe(null); }}>Leave</Link>
       </div>
-      <p className="center small" aria-live="polite" style={{ margin: "0.8rem 0 0.4rem" }}><b>{status}</b>{room.joined ? <span className="muted"> · {who(room.state.seat)} to play</span> : null}</p>
+      {status && <p className="center small" aria-live="polite" style={{ margin: "0.8rem 0 0.4rem" }}><b>{status}</b>{room.joined ? <span className="muted"> · {who(room.state.seat)} to play</span> : null}</p>}
       {board}
       <p className="tiny muted">Moves show up on the other device within a couple of seconds. Keep this page open while you play.</p>
     </div>

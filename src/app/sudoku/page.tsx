@@ -109,7 +109,7 @@ export default function Sudoku() {
         <button className="btn btn-ghost btn-sm" onClick={hint} disabled={doneMs !== null}>Hint (+{HINT_MS / 1000}s)</button>
         <span className="memory-stats"><span>⏱ {clock(elapsed)}</span></span>
       </div>
-      <div className={`sd-grid ${doneMs !== null ? "done" : ""}`} role="grid" aria-label="Mini sudoku">
+      <div className={`sd-grid ${doneMs !== null ? "done" : ""}`} role="grid" data-own-keys="" aria-label="Mini sudoku">
         {cells.map((v, p) => {
           const given = !!puzzle[p];
           const same = at !== null && (rowOf(p) === rowOf(at) || colOf(p) === colOf(at));

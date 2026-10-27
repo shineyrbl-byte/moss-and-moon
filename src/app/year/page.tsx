@@ -74,6 +74,7 @@ export default function Year() {
       <h1 className="h2">Your year at <em>Moss &amp; Moon</em></h1>
       <p className="lead">Your last 12 months in coffee: favourites, streaks and badges.</p>
       <Link className="btn btn-pink" href="/account">Sign in to see yours</Link>
+      <p className="small" style={{ marginTop: "1rem" }}><Link href="/year-in-games">🎮 Or see your year in games →</Link></p>
     </div>
   );
   if (!y) return <div className="page narrow"><p className="muted">Counting your cups…</p></div>;
@@ -82,6 +83,7 @@ export default function Year() {
       <h1 className="h2">Your year at <em>Moss &amp; Moon</em></h1>
       <p className="lead">No orders in the last 12 months yet. Come say hi, and this page will fill up ✿</p>
       <Link className="btn btn-pink" href="/#menu">See the menu</Link>
+      <p className="small" style={{ marginTop: "1rem" }}><Link href="/year-in-games">🎮 Your year in games →</Link></p>
     </div>
   );
   const tile = (v: React.ReactNode, l: string) => <div className="year-tile"><b>{v}</b><span className="small muted">{l}</span></div>;
@@ -89,6 +91,7 @@ export default function Year() {
     <div className="page" style={{ maxWidth: "52rem" }}>
       <p className="eyebrow">the last 12 months</p>
       <h1 className="h2">{y.name ? `${y.name}, your` : "Your"} year at <em>Moss &amp; Moon</em></h1>
+      <p className="small"><Link href="/year-in-games">🎮 And your year in games →</Link></p>
       <p className="lead">{y.cups} drinks over {y.visits} visits{y.when ? `. You're ${y.when}` : ""} ☕</p>
       <div className="year-grid">
         {tile(y.tried, "different things tried")}

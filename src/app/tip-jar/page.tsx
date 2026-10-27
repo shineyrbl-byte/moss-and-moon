@@ -132,7 +132,7 @@ export default function TipJar() {
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, g]); setG(Array(N * N).fill(0)); setHinted(null); }} disabled={done || g.every((v) => !v)}>Start over</button>
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{left}</b> to fill</span><span>⏱ {clock(elapsed)}</span></div>
-      <div className={`tj-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Tip jar grid">
+      <div className={`tj-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" data-own-keys="" aria-label="Tip jar grid">
         {g.map((v, i) => {
           const cage = cages[cageOf[i]], first = cage.cells[0] === i;
           return (

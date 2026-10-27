@@ -47,6 +47,8 @@ export const TROPHIES: Trophy[] = [
   { group: "Streaks", id: "streak30", emoji: "🌙", name: "Part of the furniture", how: "Play the same daily game 30 days in a row", test: (c) => bestStreak(c) >= 30 },
   { group: "Streaks", id: "five", emoji: "🎲", name: "High five", how: "Finish Today's five", test: (c) => c.five.length > 0 },
   { group: "Streaks", id: "five7", emoji: "🖐", name: "Five a day", how: "Finish Today's five 7 days in a row", test: (c) => longestRun(c.five) >= 7 },
+  { group: "Clever moments", id: "setter", emoji: "✏️", name: "Puzzle setter", how: "Make a mini sudoku with one answer and share it", test: (c) => flag(c, "maker-shared") },
+  { group: "Clever moments", id: "champ", emoji: "🏆", name: "Café champion", how: "Win a mini tournament", test: (c) => flag(c, "tournament-won") },
   { group: "Clever moments", id: "rival", emoji: "🤝", name: "Friendly rival", how: "Beat a friend's challenge link on a daily puzzle", test: (c) => flag(c, "challenge-won") },
   { group: "Clever moments", id: "underpar", emoji: "🎨", name: "Below par", how: "Beat par in Flood the cup", test: (c) => flag(c, "flood-under-par") },
   { group: "Clever moments", id: "lamps", emoji: "💡", name: "Bright spark", how: "Turn off the lamps in the fewest taps", test: (c) => flag(c, "lamps-fewest") },

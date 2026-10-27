@@ -1,0 +1,19 @@
+/* Styles only this page uses */
+.tn-form { display: grid; gap: 0.2rem; padding: 1rem 1.1rem; margin-top: 1rem; }
+.tn-mine, .tn-players { padding-left: 1.2rem; }
+.tn-join { align-items: end; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+.tn-champ, .tn-today { padding: 0.8rem 1rem; margin: 1rem 0 0; }
+.tn-champ { background: var(--pink-soft); font-size: 1.1rem; }
+.tn-bracket { display: grid; grid-template-columns: repeat(var(--rounds), minmax(12rem, 1fr)); gap: 0.8rem; margin-top: 1.2rem; overflow-x: auto; padding-bottom: 0.4rem; }
+.tn-round { display: flex; flex-direction: column; gap: 0.5rem; justify-content: space-around; }
+.tn-round h2 { margin: 0; }
+.tn-round > .tiny { margin: 0 0 0.2rem; }
+.tn-match { border: 1px solid var(--line); border-radius: 12px; padding: 0.4rem 0.6rem; background: var(--surface); }
+.tn-side { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.15rem 0; font-size: 0.92rem; }
+.tn-side + .tn-side { border-top: 1px dashed var(--line); }
+.tn-side.win span { font-weight: 700; }
+.tn-side.win span::before { content: "✓ "; color: var(--moss); }
+.tn-side.lead span { font-weight: 600; }
+.tn-side.you span { color: var(--pink-ink); }
+.tn-side b { font-variant-numeric: tabular-nums; font-weight: 600; }
+@media (max-width: 640px) { .tn-bracket { grid-template-columns: 1fr; overflow: visible; } }
