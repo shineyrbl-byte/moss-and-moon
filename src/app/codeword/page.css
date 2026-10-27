@@ -1,0 +1,13 @@
+/* Styles only this page uses */
+.cw-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; width: min(100%, 28rem); margin: 0.8rem auto; }
+.cw-cell { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: 4px; background: var(--surface); box-shadow: 0 0 0 1px var(--brown); color: var(--text); font-weight: 800; font-size: clamp(0.9rem, 4.4vw, 1.35rem); text-transform: uppercase; display: grid; place-items: center; cursor: pointer; }
+.cw-cell.blank { background: transparent; box-shadow: none; cursor: default; }
+.cw-cell.on { background: var(--pink-soft); box-shadow: 0 0 0 2px var(--pink-deep); }
+.cw-cell.given { color: var(--pink-ink); }
+.cw-cell.bad { color: #d64545; }
+.cw-n { position: absolute; top: 1px; left: 2px; font-size: clamp(0.42rem, 1.7vw, 0.58rem); font-weight: 600; color: var(--muted); }
+.cw-grid.done .cw-cell:not(.blank) { background: var(--butter); color: #3b2720; }
+.cw-keys { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center; }
+.cw-key { width: 2.2rem; height: 2.5rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); font-weight: 700; cursor: pointer; }
+.cw-key.wide { width: 3.2rem; }
+.cw-key.used { opacity: 0.4; }

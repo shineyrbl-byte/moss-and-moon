@@ -1,0 +1,12 @@
+/* Styles only this page uses */
+.db-board { display: grid; grid-template-columns: 1.6rem repeat(var(--n), 1fr); gap: 2px; width: min(100%, 26rem); margin: 0.6rem auto; }
+.db-count { display: grid; place-items: center; font-weight: 800; font-size: 0.95rem; color: var(--text); aspect-ratio: 1; }
+.db-count.met { color: var(--moss); }
+.db-count.bad { color: #d64545; }
+.db-cell { aspect-ratio: 1; padding: 0; border: 0; border-radius: 6px; background: #c9d6dd; display: grid; place-items: center; font-size: clamp(0.9rem, 4vw, 1.3rem); cursor: pointer; color: #3b2720; }
+.db-cell.road { background: #8d8682; color: #f6eee7; }
+.db-cell.bike { background: #f6dce3; }
+.db-cell.shown { outline: 2px solid var(--brown-deep); outline-offset: -2px; }
+.db-cell.bad { box-shadow: inset 0 0 0 3px #d64545; }
+.db-board.done .db-cell.bike { background: var(--butter); }
+.db-ship { display: inline-block; margin: 0 0.3rem; letter-spacing: -2px; color: var(--pink-deep); }

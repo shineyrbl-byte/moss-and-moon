@@ -1,0 +1,13 @@
+/* Styles only this page uses */
+.po-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: 0.4rem; }
+.po-item { display: flex; align-items: center; gap: 0.4rem; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); padding: 0.3rem; }
+.po-item.on { border-color: var(--pink-deep); background: var(--pink-soft); }
+.po-item.right { border-color: var(--moss); }
+.po-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0.6rem; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; padding: 0.2rem; font: inherit; }
+.po-rank { width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--brown); color: var(--surface); display: grid; place-items: center; font-weight: 700; font-size: 0.85rem; flex: none; }
+.po-img { width: 2.6rem; height: 2.6rem; border-radius: 10px; background-size: cover; background-position: center; flex: none; }
+.po-name { flex: 1; min-width: 0; font-weight: 600; }
+.po-price { font-variant-numeric: tabular-nums; }
+.po-move { display: flex; flex-direction: column; gap: 2px; }
+.po-move .btn { padding: 0.05rem 0.5rem; min-height: 0; line-height: 1.2; }
+.po-go { display: inline-block; margin: 0 0.25rem; letter-spacing: 1px; }

@@ -8,6 +8,9 @@ export function showDaily(game: string, v: number): string {
   if (game === "corners") { const { n, ms } = split(v); return `${n} words, ${clock(ms)}`; }
   if (game === "four") { const { n, ms } = split(v); return `${n} tries, ${clock(ms)}`; }
   if (game === "bill") { const { n, ms } = split(v); return `${n ? `${n} off` : "spot on"}, ${clock(ms)}`; }
+  if (game === "wheel") { const { n, ms } = split(v); return `${40 - n} words, ${clock(ms)}`; }
+  if (game === "push") { const { n, ms } = split(v); return `${n} moves, ${clock(ms)}`; }
+  if (game === "price") { const { n, ms } = split(v); return `${n} go${n === 1 ? "" : "es"}, ${clock(ms)}`; }
   return clock(v);
 }
 export { clock as showClock };

@@ -3044,7 +3044,7 @@ test("artist wall and where guests are visiting from", async () => {
 test("games corner: knows which daily games you've played today", async () => {
   const voter = "r".repeat(16) + "games1";
   const before = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[]; done: number };
-  assert.equal(before.games.length, 47);
+  assert.equal(before.games.length, 53);
   assert.equal(before.done, 0);
   await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ game: "wordsearch", ms: 70000, name: "G", voter }) });
   await fetch(`${s.url}/api/slide`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.9" }, body: JSON.stringify({ mode: "easy", ms: 40000, moves: 40, name: "G", voter }) });
@@ -3391,7 +3391,7 @@ test("my puzzle stats, bean sums and freecell times, and the delivery dash board
   const post = (p: string, json: Record<string, unknown>) => fetch(`${s.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.38" }, body: JSON.stringify({ voter, name: "Sam", ...json }) });
   let st = (await (await fetch(`${s.url}/api/my-stats?voter=${voter}`)).json()) as { days: number; plays: number; games: { id: string; days: number }[]; times: unknown[] };
   assert.equal(st.days, 0); assert.equal(st.times.length, 0);
-  assert.equal(st.games.length, 47);
+  assert.equal(st.games.length, 53);
   assert.equal((await post("/api/daily-scores", { game: "sums", ms: 4000 })).status, 400, "too quick");
   assert.equal((await post("/api/daily-scores", { game: "sums", ms: 90000 })).status, 200);
   assert.equal((await post("/api/daily-scores", { game: "freecell", ms: 20000 })).status, 400, "nobody clears FreeCell in 20s");
@@ -3597,6 +3597,18 @@ test("batch D: more live rooms, tournaments, café rewards and the year in games
   const y = (await (await fetch(`${s.url}/api/year-in-games?voter=${yv}`)).json()) as { solved: number; days: number; longest: number; games: { id: string; best: number }[]; months: unknown[] };
   assert.equal(y.solved, 1); assert.equal(y.days, 1); assert.equal(y.longest, 1); assert.equal(y.games[0].best, 90_000); assert.equal(y.months.length, 12);
   for (const p of ["/tournament", "/puzzle-maker", "/year-in-games", "/play-together"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("batch E daily puzzles go on the boards", async () => {
+  const voter = "e".repeat(16) + "batche";
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.54" }, body: JSON.stringify({ voter, name: "Ed", ...json }) });
+  for (const [game, ok, bad] of [["wheel", 28_060_000, 41_000_000], ["codeword", 95_000, 5_000], ["zip", 40_000, 1_000], ["bikes", 80_000, 2_000], ["push", 24_061_000, 1_000_000_000], ["price", 2_045_000, 6_000_000]] as const) {
+    assert.equal((await post({ game, ms: bad })).status, 400, `${game} ${bad}`);
+    assert.equal((await post({ game, ms: ok })).status, 200, game);
+  }
+  const g = (await (await fetch(`${s.url}/api/games?voter=${voter}`)).json()) as { games: { id: string; done: boolean }[] };
+  for (const id of ["wheel", "codeword", "zip", "bikes", "push", "price"]) assert.ok(g.games.find((x) => x.id === id)!.done, id);
+  for (const p of ["/word-wheel", "/codeword", "/zip-path", "/delivery-bikes", "/bean-push", "/price-order"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

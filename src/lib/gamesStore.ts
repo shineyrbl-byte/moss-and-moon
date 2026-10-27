@@ -56,6 +56,12 @@ export const DAILY_GAMES = [
   { id: "cutters", title: "Cookie cutters", emoji: "🍪", href: "/cookie-cutters", blurb: "Fit every cutter in the dough" },
   { id: "cryptic", title: "Cryptic clue", emoji: "✏️", href: "/cryptic-clue", blurb: "One clue, two ways in" },
   { id: "stars", title: "Sugar stars", emoji: "⭐", href: "/sugar-stars", blurb: "Two stars in every row and tray" },
+  { id: "wheel", title: "Word wheel", emoji: "🎡", href: "/word-wheel", blurb: "Nine letters, one in the middle" },
+  { id: "codeword", title: "Codeword", emoji: "🔢", href: "/codeword", blurb: "Numbers for letters" },
+  { id: "zip", title: "Zip path", emoji: "〰️", href: "/zip-path", blurb: "One line through every square" },
+  { id: "bikes", title: "Delivery bikes", emoji: "🚲", href: "/delivery-bikes", blurb: "Find the parked fleet" },
+  { id: "push", title: "Bean push", emoji: "🫘", href: "/bean-push", blurb: "Push the sacks into place" },
+  { id: "price", title: "Price order", emoji: "💸", href: "/price-order", blurb: "Cheapest to dearest" },
 ] as const;
 
 /** The days you played each daily game. Signed-in games count you by account; the rest by the id kept in your browser. */
@@ -116,6 +122,12 @@ export function playedMap(customerId: number | null, voter: unknown): Record<str
     cutters: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'cutters' AND voter = ?", anon),
     cryptic: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'cryptic' AND voter = ?", anon),
     stars: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'stars' AND voter = ?", anon),
+    wheel: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'wheel' AND voter = ?", anon),
+    codeword: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'codeword' AND voter = ?", anon),
+    zip: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'zip' AND voter = ?", anon),
+    bikes: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'bikes' AND voter = ?", anon),
+    push: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'push' AND voter = ?", anon),
+    price: days("SELECT DISTINCT date FROM daily_scores WHERE game = 'price' AND voter = ?", anon),
   };
   return played;
 }

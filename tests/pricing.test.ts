@@ -2487,3 +2487,54 @@ test("batch D: tournament brackets and the puzzle maker", async () => {
   assert.deepEqual(M.decode(M.encode(real.puzzle)), real.puzzle);
   assert.equal(M.decode("12"), null); assert.equal(M.decode("9".repeat(36)), null);
 });
+
+test("batch E puzzles: word wheel, codeword, zip path, delivery bikes, bean push and price order", async () => {
+  const WW = await import("../src/lib/wordWheel.ts");
+  const w = WW.wheelFor("2026-10-28");
+  assert.equal(w.ring.length, 8); assert.equal([...w.ring, w.centre].sort().join(""), [...w.word].sort().join(""));
+  assert.ok(w.main.includes(w.word) && w.main.every((x) => x.includes(w.centre) && x.length >= 4));
+  assert.deepEqual(WW.judge(w, [], w.word), { ok: "main" });
+  assert.ok("why" in WW.judge(w, [w.word], w.word), "no repeats");
+  assert.ok("why" in WW.judge(w, [], "abc"));
+  assert.ok(WW.pack(10, 5000) < WW.pack(9, 1000), "more words beats a quicker time");
+  const { WHEELS } = await import("../src/lib/data/wordWheel.ts");
+  for (const x of WHEELS) for (const a of [...x.main, ...x.bonus]) { const pool = [...x.word]; for (const ch of a) { const k = pool.indexOf(ch); assert.ok(k >= 0, `${a} from ${x.word}`); pool.splice(k, 1); } }
+
+  const CW = await import("../src/lib/codeword.ts");
+  const c = CW.codewordFor("2026-10-28");
+  assert.equal(Object.keys(c.key).length, c.n); assert.equal(c.given.length, 2);
+  assert.ok(CW.isSolved(c, c.key)); assert.ok(!CW.isSolved(c, {}));
+  assert.deepEqual([...CW.clashes({ 1: "a", 2: "a", 3: "b" })].sort(), [1, 2]);
+
+  const Z = await import("../src/lib/zipPath.ts");
+  for (const d of ["2026-10-28", "2025-05-05"]) { const z = Z.zipFor(d); assert.equal(Z.countPaths(z.marks, 3), 1, d); assert.ok(Z.isSolved(z.marks, z.path)); assert.ok(!Z.validLine(z.marks, [z.path[1]])); }
+
+  const BK = await import("../src/lib/bikes.ts");
+  const b = BK.bikesFor("2026-10-28");
+  assert.equal(BK.answers(b.rows, b.cols, new Map(b.shown.map((s) => [s.i, s.bike])), 3).length, 1);
+  assert.equal(b.answer.filter(Boolean).length, BK.FLEET.reduce((a, x) => a + x, 0));
+  assert.ok(BK.isSolved(b, b.answer.map((x) => (x ? 2 : 1)) as (0 | 1 | 2)[]));
+
+  const BP = await import("../src/lib/beanPush.ts");
+  const l = BP.levelFor("2026-10-28");
+  assert.equal(l.boxes.length, 3); assert.ok(!BP.isSolved(l, BP.start(l)));
+  // Breadth-first search proves today's storeroom can be cleared
+  const key = (s: { player: number; boxes: number[] }) => `${s.player}:${[...s.boxes].sort((x, y) => x - y)}`;
+  let frontier = [BP.start(l)]; const seen = new Set([key(frontier[0])]); let solved = false;
+  for (let depth = 0; depth < 120 && frontier.length && !solved; depth++) {
+    const next: typeof frontier = [];
+    for (const s of frontier) { if (BP.isSolved(l, s)) { solved = true; break; } for (const dir of [0, 1, 2, 3] as const) { const n = BP.move(l, s, dir); if (n && !seen.has(key(n))) { seen.add(key(n)); next.push(n); } } }
+    frontier = next;
+  }
+  assert.ok(solved, "the level can be solved");
+
+  const PO = await import("../src/lib/priceOrder.ts");
+  const menu = [...Array(12).keys()].map((k) => ({ id: `m${k}`, name: `Item ${k}`, price: 100 + (k % 7) * 20, img: "" }));
+  const five = PO.priceFor("2026-10-28", menu)!;
+  assert.equal(five.length, 5); assert.equal(new Set(five.map((x) => x.price)).size, 5);
+  const right = [...five].sort((x, y) => x.price - y.price).map((x) => x.id);
+  assert.ok(PO.isRight(five, right)); assert.deepEqual(PO.marks(five, [...right].reverse()).filter(Boolean).length, 1, "only the middle one");
+  assert.equal(PO.priceFor("2026-10-28", menu.slice(0, 3)), null);
+  const S = await import("../src/lib/scoreFormat.ts");
+  assert.equal(S.showDaily("push", BP.pack(24, 61_000)), "24 moves, 1:01"); assert.equal(S.showDaily("wheel", WW.pack(12, 30_000)), "12 words, 0:30");
+});

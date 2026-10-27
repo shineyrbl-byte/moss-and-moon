@@ -16,6 +16,7 @@ export const DAILY_KIND: Record<string, { kind: Kind; quick: boolean }> = {
   boggle: { kind: "word", quick: true }, bill: { kind: "logic", quick: true },
   taller: { kind: "logic", quick: true }, traytiles: { kind: "logic", quick: true }, seats: { kind: "logic", quick: true }, four: { kind: "word", quick: true }, threads: { kind: "word", quick: false }, garden: { kind: "logic", quick: false }, rope: { kind: "logic", quick: false }, necklace: { kind: "logic", quick: false },
   trail: { kind: "logic", quick: false }, pipes: { kind: "logic", quick: true }, cutters: { kind: "logic", quick: false }, cryptic: { kind: "word", quick: true }, stars: { kind: "logic", quick: false },
+  wheel: { kind: "word", quick: true }, codeword: { kind: "word", quick: false }, zip: { kind: "logic", quick: true }, bikes: { kind: "logic", quick: false }, push: { kind: "logic", quick: false }, price: { kind: "logic", quick: true },
 };
 
 /** Games you can play any time */

@@ -39,6 +39,12 @@ import { minMs as pipesMin } from "./pipes";
 import { minMs as cuttersMin } from "./cutters";
 import { minMs as crypticMin } from "./cryptic";
 import { minMs as starsMin } from "./starBattle";
+import { MIN_SCORE as wheelMin, MAX_SCORE as wheelMax } from "./wordWheel";
+import { minMs as codewordMin } from "./codeword";
+import { minMs as zipMin } from "./zipPath";
+import { minMs as bikesMin } from "./bikes";
+import { MIN_SCORE as pushMin, MAX_SCORE as pushMax } from "./beanPush";
+import { MIN_SCORE as priceMin, MAX_SCORE as priceMax } from "./priceOrder";
 import { MIN_SCORE as fourMin, MAX_SCORE as fourMax } from "./quordle";
 import { MIN_SCORE as cornersMin, MAX_SCORE as cornersMax } from "./letterBoxed";
 
@@ -83,6 +89,13 @@ const GAMES = {
   cutters: { mode: () => "daily", min: () => cuttersMin },
   cryptic: { mode: () => "daily", min: () => crypticMin },
   stars: { mode: () => "daily", min: () => starsMin },
+  // Word wheel packs words found (more is better), Bean push packs moves, Price order packs goes, each with the time
+  wheel: { mode: () => "daily", min: () => wheelMin, max: wheelMax },
+  codeword: { mode: () => "daily", min: () => codewordMin },
+  zip: { mode: () => "daily", min: () => zipMin },
+  bikes: { mode: () => "daily", min: () => bikesMin },
+  push: { mode: () => "daily", min: () => pushMin, max: pushMax },
+  price: { mode: () => "daily", min: () => priceMin, max: priceMax },
   // Four at once packs tries and time together, so fewest tries wins
   four: { mode: () => "daily", min: () => fourMin, max: fourMax },
   // Café corners packs words and time into one number (see letterBoxed pack), so fewest words wins

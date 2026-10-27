@@ -1,0 +1,10 @@
+/* Styles only this page uses */
+.ww-wheel { position: relative; width: min(100%, 18rem); aspect-ratio: 1; margin: 1rem auto 0.4rem; border-radius: 50%; background: radial-gradient(circle, var(--pink-soft) 0 30%, var(--surface) 31%); border: 2px solid var(--line); }
+.ww-letter { position: absolute; width: 3.1rem; height: 3.1rem; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid var(--brown); background: var(--surface); color: var(--text); font-weight: 800; font-size: 1.3rem; cursor: pointer; }
+.ww-letter.centre { left: 50%; top: 50%; width: 3.8rem; height: 3.8rem; background: var(--pink-deep); border-color: var(--pink-deep); color: #fff; font-size: 1.6rem; }
+.ww-letter.used { opacity: 0.35; }
+.ww-word { text-align: center; font-size: 1.6rem; font-weight: 800; letter-spacing: 0.18em; min-height: 2.2rem; margin: 0.2rem 0 0.4rem; }
+.ww-found { list-style: none; padding: 0; margin: 1rem 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.ww-found li { padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 0.9rem; text-transform: capitalize; }
+.ww-found li.bonus { border-style: dashed; color: var(--muted); }
+.ww-found li.nine { background: var(--butter); color: #3b2720; font-weight: 700; }
