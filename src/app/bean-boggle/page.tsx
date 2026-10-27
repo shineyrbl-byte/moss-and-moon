@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
@@ -144,7 +146,7 @@ export default function BeanBoggle() {
           <b>{found.length} word{found.length === 1 ? "" : "s"}, {score} point{score === 1 ? "" : "s"} 🎉</b>
           {missed.length > 0 && <p className="small" style={{ margin: 0 }}>Some everyday ones you missed: {missed.slice(0, 18).join(", ")}{missed.length > 18 ? `, and ${missed.length - 18} more` : ""}.</p>}
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved && score > 0 ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
             </div>
@@ -155,7 +157,8 @@ export default function BeanBoggle() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s best</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s best</h2>
+          <Difficulty board={board} show={(v) => showDaily("boggle", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{fromBoard(t.ms)} points</b></li>)}</ol> : <p className="small muted">No scores yet today. Set the first one.</p>}
           <p className="tiny muted">Everyone gets the same tray today, and three minutes each.</p>
         </section>

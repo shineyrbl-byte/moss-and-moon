@@ -68,7 +68,7 @@ export default function WordWheel() {
       <ArchiveNote date={d.date} path="/word-wheel" />
       <h1 className="h2">Word <em>wheel</em></h1>
       <p className="small muted">Make words of four letters or more from the wheel. Every word must use the middle letter, and each letter only once. There&apos;s one nine-letter word that uses them all. Rarer words count as bonus words. Stop whenever you like: your score is how many everyday words you found.</p>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{rank}</b></span><span><b>{s.main.length}</b>/{total} words</span>{s.bonus.length > 0 && <span>✨ {s.bonus.length} bonus</span>}<span>⏱ {clock(d.elapsed)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{rank}</b></span><span><b>{s.main.length}</b>/{total} words</span>{s.bonus.length > 0 && <span>✨ {s.bonus.length} bonus</span>}<span className="mm-clock">⏱ {clock(d.elapsed)}</span></div>
       <div className="ww-wheel" role="group" aria-label="Letter wheel">
         {ring.map((l, k) => <button key={`${spin}-${k}`} className={`ww-letter ${cur.includes(k) ? "used" : ""}`} style={pos(k)} onClick={() => !done && !cur.includes(k) && setCur([...cur, k])} disabled={done || cur.includes(k)} aria-label={l}>{l.toUpperCase()}</button>)}
         <button className={`ww-letter centre ${cur.includes(8) ? "used" : ""}`} onClick={() => !done && !cur.includes(8) && setCur([...cur, 8])} disabled={done || cur.includes(8)} aria-label={`${w.centre}, the middle letter`}>{w.centre.toUpperCase()}</button>
@@ -86,7 +86,7 @@ export default function WordWheel() {
       {done && (
         <>
           <p className="small"><b>Words you missed:</b> {w.main.filter((x) => !s.main.includes(x)).join(", ") || "none at all!"}</p>
-          <DoneCard replay={d.replay} game="wheel" title="Word wheel" date={d.date} past={past} headline={`${s.main.length} of ${total} words (${rank})${s.main.includes(w.word) ? ", nine-letter word found" : ""} 🎉`} score={pack(s.main.length, d.doneMs ?? 0)} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />
+          <DoneCard replay={d.replay} proof={s.main} game="wheel" title="Word wheel" date={d.date} past={past} headline={`${s.main.length} of ${total} words (${rank})${s.main.includes(w.word) ? ", nine-letter word found" : ""} 🎉`} score={pack(s.main.length, d.doneMs ?? 0)} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />
         </>
       )}
       {!past && <TodayBoard board={d.board} show={(v) => `${MAX_MAIN - Math.floor(v / 1_000_000)} words · ${clock(v % 1_000_000)}`} note="Most words wins; time breaks a tie." />}

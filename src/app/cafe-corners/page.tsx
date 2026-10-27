@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import { useReplay } from "@/components/useReplay";
@@ -107,7 +109,7 @@ export default function CafeCorners() {
       <ArchiveNote date={date} path="/cafe-corners" />
       <h1 className="h2">Café <em>corners</em></h1>
       <p className="small muted">Twelve letters are chalked round the square. Make words of 4 or more letters by hopping between sides: two letters from the same side can&apos;t come one after the other. Each new word starts with the last letter of the one before. Use every letter, in as few words as you can.</p>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Words <b>{words.length}</b></span><span>Letters <b>{box.join("").split("").filter((c) => u.has(c)).length}</b>/12</span><span>⏱ {clock(elapsed)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Words <b>{words.length}</b></span><span>Letters <b>{box.join("").split("").filter((c) => u.has(c)).length}</b>/12</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
       <p className="lb-word" aria-live="polite">{cur ? cur.toUpperCase() : done ? "✓" : <span className="muted">Tap a letter</span>}</p>
       <div className={`lb-box ${done ? "done" : ""}`}>
         <svg viewBox="-8 -8 116 116" aria-hidden="true">
@@ -136,7 +138,7 @@ export default function CafeCorners() {
           <b>Every letter in {words.length} words, {clock(doneMs)} 🎉</b>
           <p className="small" style={{ margin: 0 }}>The barista&apos;s go: {best.map((w) => w.toUpperCase()).join(" – ")}</p>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
             </div>
@@ -147,7 +149,8 @@ export default function CafeCorners() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s best</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s best</h2>
+          <Difficulty board={board} show={(v) => showDaily("corners", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => { const x = unpack(t.ms); return <li key={i}><span>{t.name}</span><b>{x.words} words · {clock(x.ms)}</b></li>; })}</ol> : <p className="small muted">No scores yet today. Set the first one.</p>}
           <p className="tiny muted">Fewest words wins; time breaks a tie.</p>
         </section>

@@ -2,6 +2,7 @@
 import "./page.css";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import TimeChart from "@/components/TimeChart";
 import { voterId } from "@/components/LabCard";
 import { clock } from "@/lib/memory";
 import { unpackScore } from "@/lib/flood";
@@ -12,6 +13,7 @@ type Stats = {
   perDay: Record<string, number>;
   games: { id: string; title: string; emoji: string; href: string; days: number; last: string | null }[];
   times: TimeStat[];
+  history?: Record<string, { date: string; ms: number }[]>;
 };
 const MODE: Record<string, string> = { easy: "easy", medium: "medium", hard: "hard", daily: "" };
 /** Flood and Café corners keep moves or words with the time */
@@ -26,12 +28,16 @@ const nice = (d: string, o: Intl.DateTimeFormatOptions = { day: "numeric", month
 export default function MyStats() {
   const [s, setS] = useState<Stats | null>(null);
   const [err, setErr] = useState(false);
+  const [pick, setChartGame] = useState("");
   useEffect(() => { fetch(`/api/my-stats?voter=${voterId()}`).then((r) => r.json()).then(setS).catch(() => setErr(true)); }, []);
   if (err) return <div className="page"><p className="muted">Couldn&apos;t load your stats. Try again in a moment.</p></div>;
   if (!s) return <div className="page"><p className="muted">Adding it all up…</p></div>;
   const weeks = calendar(s.perDay, s.today);
   const played = s.games.filter((g) => g.days).sort((a, b) => b.days - a.days || a.title.localeCompare(b.title));
   const not = s.games.filter((g) => !g.days);
+  // Puzzles with at least three days of times can be charted
+  const charted = played.filter((g) => (s.history?.[g.id]?.length ?? 0) >= 3);
+  const chartGame = charted.some((g) => g.id === pick) ? pick : charted[0]?.id ?? "";
   const timesFor = (id: string) => s.times.filter((t) => t.game === id).sort((a, b) => a.mode.localeCompare(b.mode));
   return (
     <div className="page" style={{ maxWidth: "44rem" }}>
@@ -60,6 +66,15 @@ export default function MyStats() {
         </div>
       </div>
       <p className="st-legend tiny muted" aria-hidden="true">Fewer <i className="st-day l0" /><i className="st-day l1" /><i className="st-day l2" /><i className="st-day l3" /> more · 1–2, 3–5, 6 or more puzzles{s.busiest ? ` · your busiest day: ${s.busiest}` : ""}</p>
+      {charted.length > 0 && (
+        <section style={{ marginTop: "1.4rem" }}>
+          <h2 className="h3">Your times over time</h2>
+          <label className="field" style={{ maxWidth: "18rem" }}>Puzzle
+            <select className="input" value={chartGame} onChange={(e) => setChartGame(e.target.value)}>{charted.map((g) => <option key={g.id} value={g.id}>{g.emoji} {g.title}</option>)}</select>
+          </label>
+          <TimeChart key={chartGame} game={chartGame} points={s.history![chartGame]} />
+        </section>
+      )}
       <h2 className="h3" style={{ marginTop: "1.4rem" }}>Puzzle by puzzle</h2>
       {played.length ? (
         <div className="st-table-wrap">

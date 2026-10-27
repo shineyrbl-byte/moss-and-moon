@@ -1,5 +1,7 @@
 // Best times for the daily puzzles (word search, sudoku, crossword, pixel pictures, bean sweeper and the rest): each person's best today, and the day's board.
 import "server-only";
+import { isChecked, verify } from "./proofs";
+import { getMenu } from "./menuStore";
 import { db, cleanText } from "./db";
 import { toDateStr } from "./cafe";
 import { minMs as wsMin } from "./wordSearch";
@@ -114,7 +116,12 @@ export function dailyBoard(game: DailyGame, modeIn: unknown, voter?: unknown, no
   const v = cleanVoter(voter);
   const mine = v ? (db.prepare("SELECT ms FROM daily_scores WHERE game = ? AND date = ? AND mode = ? AND voter = ?").get(game, date, mode, v) as { ms: number } | undefined) ?? null : null;
   const played = (db.prepare("SELECT COUNT(*) AS n FROM daily_scores WHERE game = ? AND date = ? AND mode = ?").get(game, date, mode) as { n: number }).n;
-  return { date, mode, top, mine, played };
+  // How hard is today? The middle score today, against the middle of the last fortnight's
+  const med = (list: { ms: number }[]) => (list.length ? [...list].sort((a, b) => a.ms - b.ms)[Math.floor(list.length / 2)].ms : null);
+  const todayAll = db.prepare("SELECT ms FROM daily_scores WHERE game = ? AND date = ? AND mode = ?").all(game, date, mode) as { ms: number }[];
+  const from = toDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 14));
+  const before = db.prepare("SELECT ms FROM daily_scores WHERE game = ? AND date >= ? AND date < ? AND mode = ?").all(game, from, date, mode) as { ms: number }[];
+  return { date, mode, top, mine, played, median: med(todayAll), usual: before.length >= 5 ? med(before) : null };
 }
 
 /** { mode, ms, name, voter }: keeps your best time today */
@@ -125,6 +132,9 @@ export function submitDaily(game: DailyGame, b: Record<string, unknown>, now = n
   const ms = Math.round(Number(b.ms));
   const g = GAMES[game] as { max?: number };
   if (!(ms >= GAMES[game].min(mode) && ms <= (g.max ?? 3 * 3600_000))) return { error: "That time doesn't look right." };
+  // Puzzles the server can check need the finished board too
+  if (isChecked(game) && !verify(game, mode, toDateStr(now), b.proof, ms, () => getMenu({}).filter((m) => m.cat !== "shop" && !(m as { pup?: boolean }).pup && m.price > 0).map((m) => ({ id: m.id, name: m.name, price: m.price, img: m.img }))))
+    return { error: "That doesn't look like today's finished puzzle. Refresh and try again." };
   const name = cleanText(b.name, 20).replace(/[<>]/g, "") || "Guest";
   db.prepare(`INSERT INTO daily_scores (game, date, voter, mode, name, ms) VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(game, date, voter, mode) DO UPDATE SET name = excluded.name, ms = excluded.ms WHERE excluded.ms < daily_scores.ms`)

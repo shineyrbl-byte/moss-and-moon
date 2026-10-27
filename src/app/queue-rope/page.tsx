@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -61,7 +62,8 @@ export default function QueueRope() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { d.setState(p); setHistory(history.slice(0, -1)); setHinted(null); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, edges]); d.setState(Array(EDGES).fill(0)); setHinted(null); }} disabled={done || edges.every((x) => !x)}>Start over</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Rope <b>{edges.filter((x) => x === 1).length}</b></span><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Rope <b>{edges.filter((x) => x === 1).length}</b></span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`qr-board ${done ? "done" : ""}`}>
         <svg viewBox={`${-P} ${-P} ${N + 2 * P} ${N + 2 * P}`} role="group" aria-label="Queue rope board">
           {clues.map((k, i) => k !== null && <text key={`c${i}`} x={(i % N) + 0.5} y={Math.floor(i / N) + 0.56} className={`qr-clue ${bad.has(i) ? "bad" : ""}`} textAnchor="middle" dominantBaseline="middle">{k}</text>)}

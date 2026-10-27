@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import { useReplay } from "@/components/useReplay";
@@ -105,7 +107,7 @@ export default function SpotTheDifference() {
         <section className="card memory-done" aria-live="polite">
           <b>All five in {clock(doneMs)} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -116,7 +118,8 @@ export default function SpotTheDifference() {
       {timeUp && <p className="small center">You found {found.length} of {DIFFS}. New shelves tomorrow!</p>}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest</h2>
+          <Difficulty board={board} show={(v) => showDaily("spot", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
         </section>
       )}

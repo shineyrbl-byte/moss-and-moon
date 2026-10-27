@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import { useReplay } from "@/components/useReplay";
@@ -102,7 +104,8 @@ export default function SpareCups() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { setMarks(p); setHistory(history.slice(0, -1)); setHinted(null); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, marks]); setMarks(Array(N * N).fill(0)); setHinted(null); }} disabled={done || marks.every((m) => !m)}>Start over</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>🥤 <b>{shaded.size}</b> put away</span><span>⏱ {clock(elapsed)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>🥤 <b>{shaded.size}</b> put away</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       <div className={`hc-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Cup shelf">
         {nums.map((v, i) => {
           const m = marks[i];
@@ -119,7 +122,7 @@ export default function SpareCups() {
         <section className="card memory-done" aria-live="polite">
           <b>Tidied in {clock(doneMs)}{hints ? ` (${hints} hint${hints === 1 ? "" : "s"})` : ", no hints"} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -130,7 +133,8 @@ export default function SpareCups() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest</h2>
+          <Difficulty board={board} show={(v) => showDaily("cups", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
           <p className="tiny muted">Each hint adds {HINT_MS / 1000} seconds.</p>
         </section>

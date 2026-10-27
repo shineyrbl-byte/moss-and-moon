@@ -6,7 +6,7 @@ import { seededRand } from "./gameOrders.ts";
 export const W = 7, H = 7;
 export const minMs = 3000;
 export type Level = { walls: boolean[]; goals: number[]; boxes: number[]; player: number; par: number };
-export type State = { boxes: number[]; player: number; moves: number; pushes: number };
+export type State = { boxes: number[]; player: number; moves: number; pushes: number; path?: Dir[] };
 export type Dir = 0 | 1 | 2 | 3; // up right down left
 const D = [-W, 1, W, -1];
 const step = (i: number, d: Dir) => { const j = i + D[d]; if (j < 0 || j >= W * H) return -1; if ((d === 1 || d === 3) && Math.floor(j / W) !== Math.floor(i / W)) return -1; return j; };
@@ -43,16 +43,17 @@ export function levelFor(date: string): Level {
     return { walls, goals, boxes, player, par: pulls };
   }
 }
-export const start = (l: Level): State => ({ boxes: [...l.boxes], player: l.player, moves: 0, pushes: 0 });
+export const start = (l: Level): State => ({ boxes: [...l.boxes], player: l.player, moves: 0, pushes: 0, path: [] });
 /** Step one square; pushes a sack if there's room beyond it. Returns null if you can't go that way. */
 export function move(l: Level, s: State, d: Dir): State | null {
   const to = step(s.player, d);
   if (to < 0 || l.walls[to]) return null;
   const bi = s.boxes.indexOf(to);
-  if (bi < 0) return { ...s, player: to, moves: s.moves + 1 };
+  const path = [...(s.path ?? []), d];
+  if (bi < 0) return { ...s, player: to, moves: s.moves + 1, path };
   const beyond = step(to, d);
   if (beyond < 0 || l.walls[beyond] || s.boxes.includes(beyond)) return null;
-  return { boxes: s.boxes.map((b, n) => (n === bi ? beyond : b)), player: to, moves: s.moves + 1, pushes: s.pushes + 1 };
+  return { boxes: s.boxes.map((b, n) => (n === bi ? beyond : b)), player: to, moves: s.moves + 1, pushes: s.pushes + 1, path };
 }
 export const isSolved = (l: Level, s: State) => s.boxes.every((b) => l.goals.includes(b));
 /** The board keeps fewest moves first, then time */

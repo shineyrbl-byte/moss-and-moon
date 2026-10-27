@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -54,7 +55,8 @@ export default function WindowSeats() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { d.setState(p); setHistory(history.slice(0, -1)); setHinted(null); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, marks]); d.setState(Array(N * N).fill(0)); setHinted(null); }} disabled={done || marks.every((m) => !m)}>Start over</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>💡 <b>{lit.size}</b>/{open} lit</span><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>💡 <b>{lit.size}</b>/{open} lit</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`ws-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Café floor">
         {walls.map((w, i) => w !== null ? (
           <span key={i} className={`ws-wall ${bad.walls.has(i) ? "bad" : ""}`} aria-label={w >= 0 ? `Wall, needs ${w} lamp${w === 1 ? "" : "s"}` : "Wall"}>{w >= 0 ? w : ""}</span>
@@ -66,7 +68,7 @@ export default function WindowSeats() {
         ))}
       </div>
       <p className="tiny muted center">Lit squares glow. Lamps that shine on each other, and walls with too many lamps, turn red.</p>
-      {done && <DoneCard replay={d.replay} game="seats" title="Window seats" date={d.date} past={past} headline={`All lit in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={d.state} game="seats" title="Window seats" date={d.date} past={past} headline={`All lit in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

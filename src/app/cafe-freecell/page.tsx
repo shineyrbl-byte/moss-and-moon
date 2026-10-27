@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
@@ -114,8 +116,9 @@ export default function CafeFreecell() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { setS(p); setHistory(history.slice(0, -1)); setSel(null); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => newDeal(false)}>{practice ? "Back to today's deal" : "Restart"}</button>
         <button className="btn btn-ghost btn-sm" onClick={() => newDeal(true)}>Practice deal</button>
-        <span className="memory-stats"><span>Moves <b>{s.moves}</b></span><span>⏱ {clock(elapsed)}</span></span>
+        <span className="memory-stats"><span>Moves <b>{s.moves}</b></span><span className="mm-clock">⏱ {clock(elapsed)}</span></span>
       </div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       <div className="pc-table fc-table">
         <div className="fc-top">
           {s.cells.map((c, i) => (
@@ -147,7 +150,7 @@ export default function CafeFreecell() {
         <section className="card memory-done" aria-live="polite">
           <b>Cleared in {clock(doneMs)}, {s.moves} moves 🎉</b>
           {practice ? <p className="small" style={{ margin: 0 }}>Practice deals don&apos;t go on the board.</p> : past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -160,7 +163,8 @@ export default function CafeFreecell() {
       <p className="tiny muted">Cards go home on their own once nothing could still need them. Almost every FreeCell deal can be won with careful play. Today&apos;s deal is the same for everyone and goes on the board; practice deals are fresh shuffles just for you.</p>
       {board && !past && !practice && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest</h2>
+          <Difficulty board={board} show={(v) => showDaily("freecell", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Clear the first deal.</p>}
         </section>
       )}

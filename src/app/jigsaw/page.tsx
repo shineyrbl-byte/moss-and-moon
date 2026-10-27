@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -109,8 +111,9 @@ export default function Jigsaw() {
       <p className="small muted">Put today&apos;s menu photo back together. Drag a piece onto the board, or tap a piece and then tap where it goes. Pieces only stay put in the right spot.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
         {(Object.keys(JIGSAW_MODES) as JigsawMode[]).map((m) => <button key={m} className={`chip ${mode === m ? "on" : ""}`} aria-pressed={mode === m} onClick={() => setMode(m)}>{LABEL[m]}</button>)}
-        <span className="memory-stats"><span>⏱ {clock(elapsed)}</span><span>{placed.size}/{n}</span></span>
+        <span className="memory-stats"><span className="mm-clock">⏱ {clock(elapsed)}</span><span>{placed.size}/{n}</span></span>
       </div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       <div className={`jig-board ${doneMs !== null ? "done" : ""}`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, aspectRatio: `${cols} / ${rows}` }} role="grid" aria-label="Jigsaw board">
         {[...Array(n).keys()].map((s) => (
           <button key={s} data-slot={s} className={`jig-slot ${placed.has(s) ? "in" : ""} ${miss === s ? "miss" : ""}`} style={placed.has(s) ? piece(s) : undefined}
@@ -128,7 +131,7 @@ export default function Jigsaw() {
         <section className="card memory-done" aria-live="polite">
           <b>{item.name}, done in {clock(doneMs)} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -139,7 +142,8 @@ export default function Jigsaw() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest · {LABEL[mode]}</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest · {LABEL[mode]}</h2>
+          <Difficulty board={board} show={(v) => showDaily("jigsaw", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
         </section>
       )}

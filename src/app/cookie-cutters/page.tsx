@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -95,7 +96,8 @@ export default function CookieCutters() {
         <button className="btn btn-ghost btn-sm" onClick={hint} disabled={done}>Hint (+{HINT_MS / 1000}s)</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { d.setState({ ...s, placed: s.placed.map(() => null) }); setSel(0); }} disabled={done || left === s.placed.length}>Start over</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>🍪 <b>{s.placed.length - left}</b>/{s.placed.length} in</span><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>🍪 <b>{s.placed.length - left}</b>/{s.placed.length} in</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`cu-board ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Dough" onPointerLeave={() => setHover(null)}>
         {puzzle.dough.map((dough, i) => {
           const k = owner[i], inPreview = preview?.includes(i);
@@ -114,7 +116,7 @@ export default function CookieCutters() {
           </button>
         ))}
       </div>
-      {done && <DoneCard replay={d.replay} game="cutters" title="Cookie cutters" date={d.date} past={past} headline={`All cut in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={d.state.placed} game="cutters" title="Cookie cutters" date={d.date} past={past} headline={`All cut in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

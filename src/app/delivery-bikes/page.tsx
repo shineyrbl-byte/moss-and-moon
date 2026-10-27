@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -50,8 +51,9 @@ export default function DeliveryBikes() {
         <button className="btn btn-ghost btn-sm" onClick={hint} disabled={done}>Hint (+{HINT_MS / 1000}s)</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { const h = history[history.length - 1]; if (h) { d.setState(h); setHistory(history.slice(0, -1)); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={fill} disabled={done}>Fill the rest with road</button>
-        <span className="memory-stats"><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></span>
+        <span className="memory-stats"><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></span>
       </div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <p className="center small" aria-label="The fleet">{FLEET.map((l, k) => <span key={k} className="db-ship" aria-label={`${l} long`}>{"▮".repeat(l)}</span>)}</p>
       <div className={`db-board ${done ? "done" : ""}`} style={{ ["--n" as string]: N }}>
         <span aria-hidden="true" />
@@ -68,7 +70,7 @@ export default function DeliveryBikes() {
         ])}
       </div>
       <p className="tiny muted center">Row and column numbers turn green when they&apos;re met; bikes that touch corner to corner turn red.</p>
-      {done && <DoneCard replay={d.replay} game="bikes" title="Delivery bikes" date={d.date} past={past} headline={`Fleet found in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={marks} game="bikes" title="Delivery bikes" date={d.date} past={past} headline={`Fleet found in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

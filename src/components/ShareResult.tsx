@@ -6,6 +6,7 @@ import { CHALLENGE_PARAM, encodeChallenge, verdict, type Challenge } from "@/lib
 import { isPractice } from "@/lib/archive";
 import { addFlag } from "@/lib/trophyFlags";
 import type { Replay } from "@/components/useReplay";
+import { rememberBest } from "@/components/GameExtras";
 
 /** The line people share once a daily puzzle is done */
 export function shareText(title: string, date: string, result: string) {
@@ -36,6 +37,32 @@ export function drawCard(title: string, date: string, result: string): HTMLCanva
   return c;
 }
 
+/** Today's five as one square card: each puzzle, ticked if done, and the streak */
+export function drawFive(date: string, items: { emoji: string; title: string; done: boolean }[], streak: number): HTMLCanvasElement {
+  const c = document.createElement("canvas");
+  c.width = c.height = 1080;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createLinearGradient(0, 0, 1080, 1080);
+  g.addColorStop(0, "#f9dce3"); g.addColorStop(1, "#e6cfbd");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 1080, 1080);
+  ctx.fillStyle = "#fffaf6"; ctx.beginPath(); ctx.roundRect(90, 150, 900, 800, 60); ctx.fill();
+  ctx.fillStyle = "#3b2720"; ctx.textAlign = "center";
+  ctx.font = "italic 64px Georgia, serif"; ctx.fillText("Moss & Moon", 540, 110);
+  ctx.font = "bold 76px Georgia, serif"; ctx.fillText("Today's five", 540, 270);
+  const nice = new Date(`${date}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  ctx.fillStyle = "#765749"; ctx.font = "40px system-ui, sans-serif"; ctx.fillText(nice, 540, 335);
+  ctx.textAlign = "left";
+  items.forEach((it, k) => {
+    const y = 450 + k * 92;
+    ctx.font = "56px system-ui, sans-serif"; ctx.fillText(it.emoji, 190, y);
+    ctx.fillStyle = it.done ? "#3b2720" : "#b49a8c"; ctx.font = `${it.done ? "bold " : ""}48px system-ui, sans-serif`; ctx.fillText(it.title, 280, y);
+    ctx.font = "56px system-ui, sans-serif"; ctx.textAlign = "right"; ctx.fillText(it.done ? "✅" : "⬜", 890, y); ctx.textAlign = "left"; ctx.fillStyle = "#3b2720";
+  });
+  ctx.textAlign = "center"; ctx.fillStyle = "#c25b78"; ctx.font = "bold 46px system-ui, sans-serif";
+  ctx.fillText(`${items.filter((i) => i.done).length} of 5${streak > 1 ? ` · 🔥 ${streak} days in a row` : ""}`, 540, 910);
+  return c;
+}
+
 /** Share buttons for a puzzle's "done" card. They share the card's headline (time, hints, moves), so every puzzle says it its own way. */
 export default function ShareResult({ title, date, score, mode, replay }: { title: string; date: string; score?: number | null; mode?: string; replay?: Replay }) {
   const { toast } = useStore();
@@ -43,6 +70,8 @@ export default function ShareResult({ title, date, score, mode, replay }: { titl
   const head = () => me.current?.closest(".memory-done")?.querySelector("b")?.textContent ?? "";
   const [vs, setVs] = useState<Challenge | null>(null);
   const canChallenge = typeof score === "number" && Number.isFinite(score);
+  // Puzzles scored by time remember your best for the ghost (packed scores, like moves + time, are 1,000,000 and up)
+  useEffect(() => { if (canChallenge && score! < 1_000_000) rememberBest(location.pathname, score!); }, [canChallenge, score]);
   useEffect(() => {
     if (!canChallenge) return;
     const c = readChallenge(location.pathname);

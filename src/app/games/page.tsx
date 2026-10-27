@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { voterId } from "@/components/LabCard";
 import { useStore } from "@/components/Store";
 import GameRewards from "@/components/GameRewards";
+import OfflineSave from "@/components/OfflineSave";
+import { drawFive } from "@/components/ShareResult";
 import { TROPHIES, earned, type TrophyCtx } from "@/lib/trophies";
 import { localTrophyStats } from "@/lib/trophyFlags";
 import { eventToday, progress } from "@/lib/seasonalGames";
@@ -51,6 +53,17 @@ export default function Games() {
       if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast("Copied. Paste it anywhere 📋"); }
     } catch {}
   }
+  // The picture card: share it where you can, or save it
+  async function pictureFive() {
+    if (!s) return;
+    const items = s.five.ids.map((id) => { const g = s.games.find((x) => x.id === id)!; return { emoji: g.emoji, title: g.title, done: g.done }; });
+    const blob = await new Promise<Blob | null>((ok) => drawFive(s.date, items, s.five.streak).toBlob(ok, "image/png"));
+    if (!blob) return toast("Couldn't make the picture on this browser.");
+    const file = new File([blob], `moss-and-moon-todays-five-${s.date}.png`, { type: "image/png" });
+    try { if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file] }); return; } } catch { return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast("Picture saved 🖼");
+  }
   if (!s) return <div className="page"><p className="muted">Setting out the games…</p></div>;
   const pct = Math.round((s.done / s.games.length) * 100);
   const tagged = s.games.map((g) => ({ ...g, ...(DAILY_KIND[g.id] ?? { kind: "logic" as Kind, quick: false }) }));
@@ -82,8 +95,8 @@ export default function Games() {
             <li key={id}><Link href={g.href} className={g.done ? "done" : ""}><span aria-hidden="true">{g.done ? "✅" : g.emoji}</span> {g.title}</Link></li>
           ); })}
         </ol>
-        {s.five.done === 5 ? <p className="small" style={{ margin: "0.6rem 0 0" }}>All five done! 🎉 <button className="btn btn-ghost btn-sm" onClick={shareFive}>Share</button></p>
-          : s.five.done > 0 && <p className="tiny" style={{ margin: "0.6rem 0 0" }}><button className="btn btn-ghost btn-sm" onClick={shareFive}>Share so far</button></p>}
+        {s.five.done === 5 ? <p className="small" style={{ margin: "0.6rem 0 0" }}>All five done! 🎉 <button className="btn btn-ghost btn-sm" onClick={shareFive}>Share</button> <button className="btn btn-ghost btn-sm" onClick={pictureFive}>🖼 Picture</button></p>
+          : s.five.done > 0 && <p className="tiny" style={{ margin: "0.6rem 0 0" }}><button className="btn btn-ghost btn-sm" onClick={shareFive}>Share so far</button> <button className="btn btn-ghost btn-sm" onClick={pictureFive}>🖼 Picture</button></p>}
       </section>
       {(() => {
         const ev = eventToday(s.date);
@@ -99,6 +112,7 @@ export default function Games() {
         );
       })()}
       <GameRewards />
+      <OfflineSave />
       <p className="small center" style={{ margin: "0.8rem 0" }}><Link href="/trophies">🏆 Trophy shelf{trophies !== null ? `: ${trophies} of ${TROPHIES.length}` : ""} →</Link></p>
       {favs.length > 0 && !filtering && f.kind !== "fav" && (
         <section className="games-favs" aria-labelledby="fav-h">
@@ -132,7 +146,7 @@ export default function Games() {
           </li>
         ))}
       </ul>
-      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />Want more? <Link href="/practice">🎲 Practice puzzles, as many as you like →</Link><br />Past champions: <Link href="/hall-of-fame">👑 Hall of fame →</Link><br />Make your own: <Link href="/puzzle-maker">✏️ Puzzle maker →</Link> · Your last twelve months: <Link href="/year-in-games">🎮 Year in games →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration, colour-blind patterns and a daily reminder: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/weekly-crossword">🗞️ Weekly crossword</Link> · <Link href="/play-together">🎮 Play a friend live</Link> · <Link href="/tournament">🏆 Mini tournaments</Link> · <Link href="/daily-duel">⚔️ Daily duel</Link> · <Link href="/clubs">👥 Café clubs</Link></p>
+      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />Want more? <Link href="/practice">🎲 Practice puzzles, as many as you like →</Link><br />Past champions: <Link href="/hall-of-fame">👑 Hall of fame →</Link><br />New to logic puzzles? <Link href="/learn">🎓 Learn to play →</Link><br />Make your own: <Link href="/puzzle-maker">✏️ Puzzle maker →</Link> · Your last twelve months: <Link href="/year-in-games">🎮 Year in games →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration, colour-blind patterns and a daily reminder: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/weekly-crossword">🗞️ Weekly crossword</Link> · <Link href="/play-together">🎮 Play a friend live</Link> · <Link href="/tournament">🏆 Mini tournaments</Link> · <Link href="/daily-duel">⚔️ Daily duel</Link> · <Link href="/clubs">👥 Café clubs</Link></p>
       {anyTime.length > 0 && <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>}
       <ul className="games-more">
         {anyTime.map((g) => (

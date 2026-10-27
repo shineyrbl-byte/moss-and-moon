@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ArchiveNote from "@/components/ArchiveNote";
 import { dayKey, isPast, playDay } from "@/lib/archive";
@@ -77,7 +79,8 @@ export default function WordLadder() {
       <ArchiveNote date={date} path="/word-ladder" />
       <h1 className="h2">Word <em>ladder</em></h1>
       <p className="small muted">Turn <b>{lad.from.toUpperCase()}</b> into <b>{lad.to.toUpperCase()}</b> by changing one letter at a time. Every step has to be a real word. Our best is {lad.par} steps.</p>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⏱ {clock(elapsed)}</span><span>Steps <b>{steps.length}</b> · par {lad.par}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span className="mm-clock">⏱ {clock(elapsed)}</span><span>Steps <b>{steps.length}</b> · par {lad.par}</span></div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       <ol className="ladder" aria-label="Your ladder">
         <li className="ladder-word end">{lad.from}</li>
         {steps.map((w, i) => (
@@ -106,7 +109,7 @@ export default function WordLadder() {
         <section className="card memory-done" aria-live="polite">
           <b>{steps.length <= lad.par ? `A perfect ${steps.length}-step ladder 🎉` : `Done in ${steps.length} steps 🎉`} · {clock(doneMs)}</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -116,7 +119,8 @@ export default function WordLadder() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest</h2>
+          <Difficulty board={board} show={(v) => showDaily("ladder", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
         </section>
       )}

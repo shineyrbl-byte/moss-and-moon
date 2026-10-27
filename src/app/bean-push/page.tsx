@@ -47,7 +47,7 @@ export default function BeanPush() {
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
         <button className="btn btn-ghost btn-sm" onClick={undo} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, s]); d.setState({ ...start(l), moves: s.moves }); }} disabled={done}>Start over</button>
-        <span className="memory-stats"><span>Moves <b>{s.moves}</b></span><span>Pushes <b>{s.pushes}</b></span><span>⏱ {clock(d.elapsed)}</span></span>
+        <span className="memory-stats"><span>Moves <b>{s.moves}</b></span><span>Pushes <b>{s.pushes}</b></span><span className="mm-clock">⏱ {clock(d.elapsed)}</span></span>
       </div>
       <div className={`bp-room ${done ? "done" : ""}`} style={{ ["--w" as string]: W }} role="img" aria-label={`Storeroom: ${s.boxes.filter((b) => l.goals.includes(b)).length} of ${l.goals.length} sacks on their spots`}
         onPointerDown={(e) => { swipe.current = { x: e.clientX, y: e.clientY }; }}
@@ -61,7 +61,7 @@ export default function BeanPush() {
         {([0, 3, 2, 1] as Dir[]).map((dir) => <button key={dir} className={`btn btn-ghost btn-sm ${["up", "right", "down", "left"][dir]}`} onClick={() => go(dir)} aria-label={["Up", "Right", "Down", "Left"][dir]}>{["▲", "▶", "▼", "◀"][dir]}</button>)}
       </div>
       <p className="tiny muted center">Arrow keys, swipe, or the buttons. U undoes.</p>
-      {done && <DoneCard replay={d.replay} game="push" title="Bean push" date={d.date} past={past} headline={`Stored in ${s.moves} moves, ${clock(d.doneMs ?? 0)} 🎉`} score={pack(s.moves, d.doneMs ?? 0)} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={s.path} game="push" title="Bean push" date={d.date} past={past} headline={`Stored in ${s.moves} moves, ${clock(d.doneMs ?? 0)} 🎉`} score={pack(s.moves, d.doneMs ?? 0)} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={(v) => `${Math.floor(v / 1_000_000)} moves · ${clock(v % 1_000_000)}`} note="Fewest moves wins; time breaks a tie." />}
     </div>
   );

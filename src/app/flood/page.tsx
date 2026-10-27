@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useState } from "react";
 import { gameSettings } from "@/lib/gameSettings";
 import ShareResult from "@/components/ShareResult";
@@ -82,7 +84,7 @@ export default function Flood() {
         <button className="btn btn-ghost btn-sm" onClick={() => setPicks(picks.slice(0, -1))} disabled={!picks.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => setPicks([])} disabled={!picks.length || done}>Start over</button>
         <label className="small row" style={{ gap: "0.3rem", alignItems: "center" }}><input type="checkbox" checked={symbols} onChange={(e) => { setSymbols(e.target.checked); try { localStorage.setItem(SYMS, e.target.checked ? "1" : "0"); } catch {} }} /> Symbols</label>
-        <span className="memory-stats"><span>Moves <b>{picks.length}</b></span><span>Par <b>{target}</b></span><span>⏱ {clock(elapsed)}</span></span>
+        <span className="memory-stats"><span>Moves <b>{picks.length}</b></span><span>Par <b>{target}</b></span><span className="mm-clock">⏱ {clock(elapsed)}</span></span>
       </div>
       <div className={`flood-grid ${symbols ? "syms" : ""}`} style={{ ["--n" as string]: SIZE }} role="img" aria-label={`Your patch covers ${owned.size} of ${SIZE * SIZE} squares`}>
         {grid.map((c, i) => <span key={i} className={`flood-cell ${owned.has(i) ? "mine" : ""}`} style={{ background: COLOURS[c].hex }}>{symbols ? COLOURS[c].sym : ""}</span>)}
@@ -101,7 +103,7 @@ export default function Flood() {
         <section className="card memory-done" aria-live="polite">
           <b>Filled in {picks.length} moves{picks.length < target ? `, ${target - picks.length} under par` : picks.length === target ? ", right on par" : ""} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
             </div>
@@ -112,7 +114,8 @@ export default function Flood() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s best</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s best</h2>
+          <Difficulty board={board} show={(v) => showDaily("flood", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => { const u = unpackScore(t.ms); return <li key={i}><span>{t.name}</span><b>{u.moves} moves · {clock(u.ms)}</b></li>; })}</ol> : <p className="small muted">No scores yet today. Set the first one.</p>}
           <p className="tiny muted">Fewest moves wins. Ties go to the quickest.</p>
         </section>

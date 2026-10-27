@@ -46,7 +46,7 @@ export const viewport: Viewport = {
 };
 
 // Sets the theme before the page paints, so there's no flash of the wrong colours.
-const themeScript = `try{var t=localStorage.getItem('mm-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;var c=JSON.parse(localStorage.getItem('mm-comfort')||'{}');if(c.text==='large')document.documentElement.dataset.text='large';if(c.motion==='reduce')document.documentElement.dataset.motion='reduce';var g=JSON.parse(localStorage.getItem('mm-game-settings')||'{}');if(g.patterns)document.documentElement.dataset.patterns='on';if(g.reader)document.documentElement.dataset.reader='on'}catch(e){}`;
+const themeScript = `try{var t=localStorage.getItem('mm-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;var c=JSON.parse(localStorage.getItem('mm-comfort')||'{}');if(c.text==='large')document.documentElement.dataset.text='large';if(c.motion==='reduce')document.documentElement.dataset.motion='reduce';var g=JSON.parse(localStorage.getItem('mm-game-settings')||'{}');if(g.patterns)document.documentElement.dataset.patterns='on';if(g.reader)document.documentElement.dataset.reader='on';if(g.zen)document.documentElement.dataset.zen='on'}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const season = currentSeason();

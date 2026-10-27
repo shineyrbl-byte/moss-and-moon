@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { gameSettings } from "@/lib/gameSettings";
 import ShareResult from "@/components/ShareResult";
@@ -113,8 +115,9 @@ export default function PourPaths() {
       <p className="small muted">Drag from a cup to its matching partner to lay a pipe. Join every pair and fill every square. Pipes can&apos;t cross; drawing over one cuts it back.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
         {(Object.keys(PATH_MODES) as PathMode[]).map((m) => <button key={m} className={`chip ${mode === m ? "on" : ""}`} aria-pressed={mode === m} onClick={() => setMode(m)}>{LABEL[m]}</button>)}
-        <span className="memory-stats"><span>⏱ {clock(elapsed)}</span><span>{joined}/{ends.length} joined</span><span>{Math.round((filled / (size * size)) * 100)}%</span></span>
+        <span className="memory-stats"><span className="mm-clock">⏱ {clock(elapsed)}</span><span>{joined}/{ends.length} joined</span><span>{Math.round((filled / (size * size)) * 100)}%</span></span>
       </div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       <svg ref={svg} className={`paths-board ${doneMs !== null ? "done" : ""}`} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Pour paths board, ${joined} of ${ends.length} pairs joined`}
         onPointerDown={begin} onPointerMove={drag} onPointerUp={end} onPointerCancel={end}>
         {[...Array(size * size).keys()].map((p) => <rect key={p} x={p % size + 0.03} y={Math.floor(p / size) + 0.03} width={0.94} height={0.94} rx={0.12} className="paths-cell" />)}
@@ -135,7 +138,7 @@ export default function PourPaths() {
         <section className="card memory-done" aria-live="polite">
           <b>All poured in {clock(doneMs)} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -146,7 +149,8 @@ export default function PourPaths() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest · {LABEL[mode]}</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest · {LABEL[mode]}</h2>
+          <Difficulty board={board} show={(v) => showDaily("paths", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
         </section>
       )}

@@ -9,6 +9,50 @@ let s: TestServer;
 before(async () => {
   s = await startServer();
 });
+
+// The server checks finished boards for some daily puzzles. Test players "solve" today's puzzle first: this works out
+// the proof the page would send, so the score tests can stay about scores. (The checks have their own test below.)
+const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+async function solvedProof(game: string, mode: string | undefined, ms: number): Promise<{ proof: unknown; ms: number } | null> {
+  const day = localDay();
+  switch (game) {
+    case "sudoku": { const S = await import("../src/lib/sudoku.ts"); return { proof: S.sudokuFor(day, S.sudokuMode(mode)).answer, ms }; }
+    case "crossword": { const X = await import("../src/lib/crossword.ts"); return { proof: X.solutionOf(X.crosswordFor(day).rows), ms }; }
+    case "trail": { const H = await import("../src/lib/hidato.ts"); return { proof: H.trailFor(day).answer, ms }; }
+    case "stars": { const B = await import("../src/lib/starBattle.ts"); const p = B.starsFor(day); return { proof: p.region.map((_, i) => (p.stars.includes(i) ? 2 : 0)), ms }; }
+    case "seats": { const A = await import("../src/lib/akari.ts"); const p = A.seatsFor(day); return { proof: p.walls.map((_, i) => (p.lamps.includes(i) ? 2 : 0)), ms }; }
+    case "garden": { const G = await import("../src/lib/nurikabe.ts"); const p = G.gardenFor(day); return { proof: p.path.map((x: boolean) => (x ? 1 : 2)), ms }; }
+    case "zip": { const Z = await import("../src/lib/zipPath.ts"); return { proof: Z.zipFor(day).path, ms }; }
+    case "bikes": { const B = await import("../src/lib/bikes.ts"); return { proof: B.bikesFor(day).answer.map((x) => (x ? 2 : 1)), ms }; }
+    case "codeword": { const C = await import("../src/lib/codeword.ts"); return { proof: C.codewordFor(day).key, ms }; }
+    case "pipes": { const P = await import("../src/lib/pipes.ts"); const p = P.pipesFor(day), zero = p.tiles.map(() => 0); return { proof: p.tiles.map((_, i) => P.fixTurns(p.tiles, p.spins, zero, i)), ms }; }
+    case "cutters": { const C = await import("../src/lib/cutters.ts"); return { proof: C.cuttersFor(day).answer, ms }; }
+    case "push": {
+      const B = await import("../src/lib/beanPush.ts"); const l = B.levelFor(day);
+      const key = (x: { player: number; boxes: number[] }) => `${x.player}:${[...x.boxes].sort((a, b) => a - b)}`;
+      let front = [B.start(l)]; const seen = new Set([key(front[0])]);
+      for (let k = 0; k < 200 && front.length; k++) { const next: typeof front = []; for (const st of front) { if (B.isSolved(l, st)) return { proof: st.path, ms: st.path!.length * 1_000_000 + (ms % 1_000_000) }; for (const d of [0, 1, 2, 3] as const) { const n = B.move(l, st, d); if (n && !seen.has(key(n))) { seen.add(key(n)); next.push(n); } } } front = next; }
+      return null;
+    }
+    case "wheel": { const W = await import("../src/lib/wordWheel.ts"); const w = W.wheelFor(day), n = Math.min(w.main.length, W.MAX_MAIN - Math.floor(ms / 1_000_000)); return { proof: w.main.slice(0, n), ms: W.pack(n, ms % 1_000_000) }; }
+    case "price": {
+      const P = await import("../src/lib/priceOrder.ts");
+      const menu = ((await (await fetch(`${s.url}/api/menu`)).json()).items as (import("../src/lib/priceOrder.ts").PItem & { cat: string; pup?: boolean })[]).filter((m) => m.cat !== "shop" && !m.pup && m.price > 0);
+      const five = P.priceFor(day, menu)!, right = [...five].sort((a, b) => a.price - b.price).map((x) => x.id), goes = Math.max(1, Math.floor(ms / 1_000_000));
+      return { proof: [...Array(goes - 1).fill([...right].reverse()), right], ms };
+    }
+  }
+  return null;
+}
+const realFetch = globalThis.fetch;
+globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = String(input instanceof Request ? input.url : input);
+  if (url.endsWith("/api/daily-scores") && init?.method === "POST" && typeof init.body === "string") {
+    const b = JSON.parse(init.body);
+    if (b.proof === undefined && b.game && Number(b.ms) > 0) { const p = await solvedProof(b.game, b.mode, Number(b.ms)); if (p) init = { ...init, body: JSON.stringify({ ...b, ...p, ms: (b.game === "push" && Number(b.ms) >= 3000 && Number(b.ms) < 1e9) || (b.game === "wheel" && Number(b.ms) >= 5000 && Number(b.ms) < 41e6) ? p.ms : b.ms }) }; }
+  }
+  return realFetch(input, init);
+}) as typeof fetch;
 after(async () => {
   await s?.stop();
 });
@@ -3666,9 +3710,10 @@ test("batch G: rooms for up to four, watching, reactions, rematches and hidden h
   assert.ok(opts.options.some((o: { id: string }) => o.id === "sudoku"));
   const duel = await fetch(`${s.url}/api/duels`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voter: v2, game: "sudoku" }) }).then((r) => r.json());
   assert.equal(duel.today[0].result, "on"); assert.equal(duel.today[0].theirs, null, "their time stays hidden");
-  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.57" }, body: JSON.stringify({ game: "sudoku", ms: 70_000, voter: v2, name: "Ben" }) });
+  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.57" }, body: JSON.stringify({ game: "sudoku", ms: 15_000, voter: v2, name: "Ben" }) });
+  // The opponent is any player who did today's sudoku, so the quickest time allowed wins (or ties with another)
   const after = await (await fetch(`${s.url}/api/duels?voter=${v2}`)).json();
-  assert.equal(after.today[0].result, "won"); assert.equal(after.record.won, 1);
+  assert.ok(["won", "drawn"].includes(after.today[0].result)); assert.equal(after.record.won + after.record.drawn, 1);
   // Clubs
   const club = (json: Record<string, unknown>) => fetch(`${s.url}/api/clubs`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.58" }, body: JSON.stringify(json) }).then((r) => r.json());
   const made = await club({ voter: v1, create: "Saturday regulars", name: "Ana" });
@@ -3687,6 +3732,29 @@ test("batch G: rooms for up to four, watching, reactions, rematches and hidden h
   const tv = await (await fetch(`${s.url}/api/today-champions`)).json();
   assert.ok(tv.leaders.some((l: { game: string; name: string }) => l.game === "sudoku"));
   for (const p of ["/daily-duel", "/clubs", "/play-together", "/friends", "/board"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("the server checks finished boards before a daily score counts", async () => {
+  const v = "p".repeat(16) + "proofs";
+  const post = (json: Record<string, unknown>) => realFetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.61" }, body: JSON.stringify({ voter: v, name: "Pat", ...json }) });
+  assert.equal((await post({ game: "sudoku", mode: "easy", ms: 90_000 })).status, 400, "no board, no score");
+  assert.equal((await post({ game: "sudoku", mode: "easy", ms: 90_000, proof: Array(36).fill(1) })).status, 400, "not a solved board");
+  const good = (await solvedProof("sudoku", "easy", 90_000))!;
+  assert.equal((await post({ game: "sudoku", mode: "easy", ms: 90_000, proof: good.proof })).status, 200);
+  const push = (await solvedProof("push", undefined, 61_000))!;
+  assert.equal((await post({ game: "push", ms: push.ms + 1_000_000, proof: push.proof })).status, 400, "the move count must match the moves");
+  assert.equal((await post({ game: "push", ms: push.ms, proof: push.proof })).status, 200);
+  assert.equal((await post({ game: "wordsearch", ms: 60_000 })).status, 200, "puzzles the server doesn't check still save");
+});
+
+test("batch H: today's difficulty, times over time and the new pages", async () => {
+  const b = await (await fetch(`${s.url}/api/daily-scores?game=sudoku&mode=easy`)).json();
+  assert.ok("median" in b && "usual" in b);
+  const v = "h".repeat(16) + "history";
+  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.62" }, body: JSON.stringify({ game: "sudoku", mode: "easy", ms: 70_000, voter: v, name: "H" }) });
+  const st = await (await fetch(`${s.url}/api/my-stats?voter=${v}`)).json();
+  assert.equal(st.history.sudoku.length, 1); assert.equal(st.history.sudoku[0].ms, 70_000);
+  for (const p of ["/learn", "/my-stats", "/game-settings", "/games"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

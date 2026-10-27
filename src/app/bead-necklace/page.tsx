@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -59,7 +60,8 @@ export default function BeadNecklace() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { d.setState(p); setHistory(history.slice(0, -1)); setHinted(null); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, links]); d.setState(Array(LINKS).fill(0)); setHinted(null); }} disabled={done || links.every((x) => !x)}>Start over</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`qr-board bn-board ${done ? "done" : ""}`}>
         <svg viewBox={`0 0 ${N} ${N}`} role="group" aria-label="Bead necklace board">
           {[...Array(N * N).keys()].map((i) => <rect key={`s${i}`} x={(i % N) + 0.03} y={Math.floor(i / N) + 0.03} width={0.94} height={0.94} rx={0.12} className="bn-sq" />)}

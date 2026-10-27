@@ -2,6 +2,7 @@
 // - pages: try the network first, fall back to a saved copy, then the offline page
 // - app files & photos: served from the cache once seen
 // - push: shows "your order is ready" notifications
+// - "save for offline": fetches the daily puzzles and the app files they need, so they work without signal
 const VERSION = "mm-v1";
 const OFFLINE = "/offline";
 
@@ -13,6 +14,28 @@ self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim())
   );
+});
+
+// Save a list of pages, plus the script and style files each one uses, then report back how many worked
+self.addEventListener("message", (e) => {
+  if (e.data?.type !== "precache" || !Array.isArray(e.data.urls)) return;
+  const port = e.ports?.[0];
+  e.waitUntil((async () => {
+    const c = await caches.open(VERSION);
+    let ok = 0;
+    for (const u of e.data.urls.slice(0, 80)) {
+      try {
+        const res = await fetch(u, { credentials: "same-origin" });
+        if (!res.ok) continue;
+        const html = await res.clone().text();
+        await c.put(u, res);
+        const assets = [...new Set(html.match(/\/_next\/static\/[^"'\s)]+/g) || [])];
+        await Promise.all(assets.map((a) => caches.match(a).then((hit) => hit || fetch(a).then((r) => (r.ok ? c.put(a, r) : null)).catch(() => null))));
+        ok++;
+      } catch {}
+    }
+    port?.postMessage({ saved: ok });
+  })());
 });
 
 self.addEventListener("fetch", (e) => {

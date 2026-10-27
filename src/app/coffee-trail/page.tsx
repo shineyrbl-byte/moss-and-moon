@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -69,8 +70,9 @@ export default function CoffeeTrail() {
       </div>
       <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}>
         <span>{done ? "Done" : next <= LAST && !given.includes(next) ? <>Next: <b>{next}</b></> : <>On <b>{cur}</b></>}</span>
-        <span><b>{placed}</b>/{LAST}</span><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span>
+        <span><b>{placed}</b>/{LAST}</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span>
       </div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`ct-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Coffee trail">
         {all.map((v, i) => {
           const canGo = !done && !v && curAt >= 0 && touches(curAt, i) && next <= LAST && !given.includes(next);
@@ -84,7 +86,7 @@ export default function CoffeeTrail() {
         })}
       </div>
       <p className="tiny muted center">The faint numbers show where the next one could go. Numbers that can&apos;t be right turn red.</p>
-      {done && <DoneCard replay={d.replay} game="trail" title="Coffee trail" date={d.date} past={past} headline={`Trail laid in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={d.state} game="trail" title="Coffee trail" date={d.date} past={past} headline={`Trail laid in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

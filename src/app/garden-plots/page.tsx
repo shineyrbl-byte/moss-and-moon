@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -55,7 +56,8 @@ export default function GardenPlots() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { d.setState(p); setHistory(history.slice(0, -1)); setHinted(null); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, marks]); d.setState(Array(N * N).fill(0)); setHinted(null); }} disabled={done || marks.every((m) => !m)}>Start over</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`gp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Garden">
         {clues.map((v, i) => (
           <button key={i} className={`gp-cell ${v ? "clue" : marks[i] === 1 ? "path" : marks[i] === 2 ? "bed" : ""} ${bad.has(i) ? "bad" : ""} ${hinted === i ? "hint" : ""}`} onClick={() => tap(i)} disabled={done || !!v}
@@ -65,7 +67,7 @@ export default function GardenPlots() {
         ))}
       </div>
       <p className="tiny muted center">A 2×2 block of path turns red.</p>
-      {done && <DoneCard replay={d.replay} game="garden" title="Garden plots" date={d.date} past={past} headline={`Planted in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={d.state} game="garden" title="Garden plots" date={d.date} past={past} headline={`Planted in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import { useReplay } from "@/components/useReplay";
@@ -112,8 +114,9 @@ export default function WordSearch() {
       <p className="small muted">Eight café words are hiding: across, down and diagonal. Drag across a word, or tap its first letter and then its last.</p>
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
         <span className="small"><b>{found.length}</b> of {HIDDEN} found</span>
-        <span className="memory-stats"><span>⏱ {clock(elapsed)}</span></span>
+        <span className="memory-stats"><span className="mm-clock">⏱ {clock(elapsed)}</span></span>
       </div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       <div ref={gridRef} className={`ws-grid ${doneMs !== null ? "done" : ""}`} style={{ gridTemplateColumns: `repeat(${SIZE}, 1fr)` }} onPointerMove={move} onPointerUp={up} onPointerLeave={() => { if (dragging.current) up(); }} role="grid" aria-label="Word search letters">
         {puzzle.grid.map((l, i) => {
           const f = foundCells.get(i);
@@ -130,7 +133,7 @@ export default function WordSearch() {
         <section className="card memory-done" aria-live="polite">
           <b>All eight in {clock(doneMs)} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -141,7 +144,8 @@ export default function WordSearch() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest</h2>
+          <Difficulty board={board} show={(v) => showDaily("wordsearch", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
         </section>
       )}

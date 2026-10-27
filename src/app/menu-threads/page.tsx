@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useRef, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -78,7 +79,8 @@ export default function MenuThreads() {
       <h1 className="h2">Menu <em>threads</em></h1>
       <p className="small muted">Every letter belongs to one of today&apos;s menu words, and together they fill the whole grid. Find them all by joining letters that touch (across, down or corner to corner). Other real words you spot earn hints.</p>
       <p className="mt-theme"><small>Today&apos;s theme</small><b>{puzzle.title}</b></p>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Found <b>{st.found.length}</b>/{puzzle.threads.length}</span><span>⏱ {clock(d.elapsed)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Found <b>{st.found.length}</b>/{puzzle.threads.length}</span><span className="mm-clock">⏱ {clock(d.elapsed)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <p className="lb-word" aria-live="polite">{live || <span className="muted">{done ? "✓" : " "}</span>}</p>
       <div className={`mt-grid ${done ? "done" : ""}`} style={{ ["--c" as string]: COLS }} role="grid" aria-label="Letter grid"
         onPointerUp={() => { const go = dragging.current && moved.current && path.length > 1; dragging.current = false; moved.current = false; if (go) send(); }}

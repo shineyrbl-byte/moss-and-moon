@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useEffect, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -57,7 +58,8 @@ export default function SugarStars() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { d.setState(p); setHistory(history.slice(0, -1)); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className={`chip ${auto ? "on" : ""}`} aria-pressed={auto} onClick={() => setAuto(!auto)}>Auto dots</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⭐ <b>{mine.length}</b>/{N * STARS}</span><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⭐ <b>{mine.length}</b>/{N * STARS}</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`sb-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Sugar stars">
         {region.map((g, i) => {
           const b = borders(region, i), m = marks[i];
@@ -70,7 +72,7 @@ export default function SugarStars() {
         })}
       </div>
       <p className="tiny muted center">Thick lines mark the trays. Stars that break a rule turn red.</p>
-      {done && <DoneCard replay={d.replay} game="stars" title="Sugar stars" date={d.date} past={past} headline={`Starred in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={d.state} game="stars" title="Sugar stars" date={d.date} past={past} headline={`Starred in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

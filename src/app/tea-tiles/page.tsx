@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import { useReplay } from "@/components/useReplay";
@@ -88,8 +90,9 @@ export default function TeaTiles() {
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
         <button className="btn btn-ghost btn-sm" onClick={showHint} disabled={doneMs !== null || stuck}>Hint (+5s)</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setTiles(history[history.length - 1]); setHistory(history.slice(0, -1)); setPicked(null); }} disabled={!history.length || doneMs !== null}>↩ Undo</button>
-        <span className="memory-stats"><span>⏱ {clock(elapsed)}</span><span>{tiles.length} left</span></span>
+        <span className="memory-stats"><span className="mm-clock">⏱ {clock(elapsed)}</span><span>{tiles.length} left</span></span>
       </div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       {stuck && doneMs === null && (
         <p className="small center" style={{ color: "var(--pink-ink)" }}>No pairs left to take. <button className="btn btn-pink btn-sm" onClick={shuffle}>Shuffle (+{SHUFFLE_MS / 1000}s)</button></p>
       )}
@@ -107,7 +110,7 @@ export default function TeaTiles() {
         <section className="card memory-done" aria-live="polite">
           <b>Cleared in {clock(doneMs)} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -118,7 +121,8 @@ export default function TeaTiles() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest</h2>
+          <Difficulty board={board} show={(v) => showDaily("tiles", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
           <p className="tiny muted">Hints add 5 seconds and shuffles add {SHUFFLE_MS / 1000}.</p>
         </section>

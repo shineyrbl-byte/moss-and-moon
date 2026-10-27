@@ -15,3 +15,16 @@
 .st-legend { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-top: 0.4rem; }
 .st-legend .st-day { width: 0.8rem; }
 .st-time { display: block; }
+.tc { margin: 0.4rem 0 0; }
+.tc svg { width: 100%; height: auto; display: block; }
+.tc-grid { stroke: var(--line); stroke-width: 1; }
+.tc-axis { fill: var(--muted); font-size: 11px; }
+.tc-line { fill: none; stroke: var(--pink-deep); stroke-width: 2; stroke-linejoin: round; }
+.tc-dot { fill: var(--pink-deep); stroke: var(--surface); stroke-width: 2; pointer-events: none; }
+.tc-dot.best { fill: var(--butter); stroke: var(--pink-deep); }
+.tc-dot.on { r: 6; }
+.tc-hit { fill: transparent; cursor: pointer; }
+.tc-tip rect { fill: var(--text); }
+.tc-tip text { fill: var(--surface); font-size: 11px; font-weight: 600; }
+.tc-table table { border-collapse: collapse; font-size: 0.85rem; margin-top: 0.3rem; }
+.tc-table td, .tc-table th { padding: 0.15rem 0.6rem; border-bottom: 1px dashed var(--line); text-align: left; }

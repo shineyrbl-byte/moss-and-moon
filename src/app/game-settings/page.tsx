@@ -11,6 +11,7 @@ const ROWS: { key: keyof GameSettings; title: string; how: string }[] = [
   { key: "vibrate", title: "📳 Vibration", how: "A short buzz on phones when a game tells you something: a word found, a win, a mistake. Off unless you turn it on." },
   { key: "patterns", title: "🎨 Colour-blind patterns", how: "Puzzles that rely on colour also use patterns and symbols: Flood the cup shows symbols, Table for one's sections get stripes and dots, and Pour paths marks each path with its cup." },
   { key: "reader", title: "🔈 Screen-reader help", how: "For puzzle grids: each grid is one stop when you Tab through the page, and the arrow keys move you square by square (Home and End go to the ends of a row). Bigger focus outlines, and animations stay still. Arrow keys work in grids for everyone; this makes them easier with a screen reader." },
+  { key: "zen", title: "🧘 Zen mode", how: "Puzzles without the pressure: no clocks, no ghost, no boards or saving. Just you and the puzzle. Your streaks only count saved scores, so they pause while this is on." },
 ];
 
 export default function GameSettingsPage() {

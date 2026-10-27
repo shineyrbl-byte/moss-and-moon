@@ -3,22 +3,23 @@ import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import ShareResult from "@/components/ShareResult";
+import { Difficulty } from "@/components/GameExtras";
 import { dayKey, playDay } from "@/lib/archive";
 import { useReplay, type Replay } from "@/components/useReplay";
 
-export type DailyBoard = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number };
+export type DailyBoard = { top: { name: string; ms: number }[]; mine: { ms: number } | null; played: number; median?: number | null; usual?: number | null };
 
 /** The "done" card for a daily puzzle: the headline, saving to today's board (not for archive days) and sharing */
-export function DoneCard({ game, title, date, past, headline, score, saved, onSaved, replay, children }: {
+export function DoneCard({ game, title, date, past, headline, score, saved, onSaved, replay, proof, children }: {
   game: string; title: string; date: string; past: boolean; headline: string; score: number; saved: boolean;
-  onSaved: (board: DailyBoard) => void; replay?: Replay; children?: React.ReactNode;
+  onSaved: (board: DailyBoard) => void; replay?: Replay; proof?: unknown; children?: React.ReactNode;
 }) {
   const { toast } = useStore();
   const [name, setName] = useState("");
   useEffect(() => { try { setName(localStorage.getItem("mm-game-name") ?? ""); } catch {} }, []);
   async function save() {
     try { localStorage.setItem("mm-game-name", name); } catch {}
-    const r = await fetch("/api/daily-scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game, ms: score, name, voter: voterId() }) });
+    const r = await fetch("/api/daily-scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game, ms: score, name, voter: voterId(), proof }) });
     const d = await r.json();
     if (!r.ok) return toast(d.error);
     onSaved(d);
@@ -28,7 +29,7 @@ export function DoneCard({ game, title, date, past, headline, score, saved, onSa
       <b>{headline}</b>
       {children}
       {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-        <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+        <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
           <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
           <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
         </div>
@@ -43,7 +44,8 @@ export function TodayBoard({ board, show, note }: { board: DailyBoard | null; sh
   if (!board) return null;
   return (
     <section style={{ marginTop: "1.4rem" }}>
-      <h2 className="h3">Today&apos;s best</h2>
+      <h2 className="h3" data-zen-board="">Today&apos;s best</h2>
+      <Difficulty board={board} show={show} />
       {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{show(t.ms)}</b></li>)}</ol> : <p className="small muted">No scores yet today. Set the first one.</p>}
       {note && <p className="tiny muted">{note}</p>}
     </section>

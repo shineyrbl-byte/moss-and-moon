@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -58,7 +59,8 @@ export default function SteamPipes() {
       <div className="row" style={{ gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
         <button className="btn btn-ghost btn-sm" onClick={hint} disabled={done}>Hint (+{HINT_MS / 1000}s)</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>♨️ <b>{reached.size}</b>/{N * N}</span><span>Open ends <b>{leaks}</b></span><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>♨️ <b>{reached.size}</b>/{N * N}</span><span>Open ends <b>{leaks}</b></span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`sp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Pipes">
         {tiles.map((_, i) => {
           const m = sidesNow(tiles, spins, turns, i), cup = i !== SOURCE && SIDES(tiles[i]) === 1;
@@ -70,7 +72,7 @@ export default function SteamPipes() {
           );
         })}
       </div>
-      {done && <DoneCard replay={d.replay} game="pipes" title="Steam pipes" date={d.date} past={past} headline={`Piped in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={d.state} game="pipes" title="Steam pipes" date={d.date} past={past} headline={`Piped in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

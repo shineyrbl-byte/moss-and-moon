@@ -57,7 +57,7 @@ export default function FourAtOnce() {
       <ArchiveNote date={d.date} path="/four-at-once" />
       <h1 className="h2">Four <em>at once</em></h1>
       <p className="small muted">Four five-letter words, and nine tries to get them all. Every guess goes on all four boards at once. Green is the right letter in the right place, yellow is in that board&apos;s word somewhere else.</p>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Tries <b>{guesses.length}</b>/{TRIES}</span><span>Found <b>{at.filter((x) => x !== null).length}</b>/4</span><span>⏱ {clock(d.elapsed)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Tries <b>{guesses.length}</b>/{TRIES}</span><span>Found <b>{at.filter((x) => x !== null).length}</b>/4</span><span className="mm-clock">⏱ {clock(d.elapsed)}</span></div>
       <div className="fa-boards">
         {words.map((w, k) => {
           const upto = at[k] ?? guesses.length;

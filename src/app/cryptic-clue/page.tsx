@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -64,7 +65,8 @@ export default function CrypticClue() {
           <button className="btn btn-ghost btn-sm" onClick={() => d.setState({ ...s, gaveUp: true })}>Show me</button>
         </div>
       )}
-      <p className="memory-stats center" style={{ display: "flex", justifyContent: "center" }}><span>⏱ {clock(d.elapsed + (done ? 0 : hintsUsed * HINT_MS))}</span><span>Tries <b>{s.tries}</b></span></p>
+      <p className="memory-stats center" style={{ display: "flex", justifyContent: "center" }}><span className="mm-clock">⏱ {clock(d.elapsed + (done ? 0 : hintsUsed * HINT_MS))}</span><span>Tries <b>{s.tries}</b></span></p>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       {over && (
         <section className="card cc-why">
           <p style={{ margin: 0 }}><b>{c.a.toUpperCase()}</b>: {c.why}</p>

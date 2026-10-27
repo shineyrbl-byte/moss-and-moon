@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useRef, useState } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -72,7 +73,8 @@ export default function TrayTiles() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { d.setState(p); setHistory(history.slice(0, -1)); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, rects]); d.setState([]); }} disabled={done || !rects.length}>Start over</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{owner.filter((o) => o === -1).length}</b> squares left</span><span>⏱ {clock(elapsed)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span><b>{owner.filter((o) => o === -1).length}</b> squares left</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`tt-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Tray"
         onPointerUp={() => {
           // Let go on another square: that's a drag. On the same square: a tap.

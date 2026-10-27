@@ -50,7 +50,7 @@ export default function PriceOrder() {
       <ArchiveNote date={d.date} path="/price-order" />
       <h1 className="h2">Price <em>order</em></h1>
       <p className="small muted">Five things from our menu. Put them in order of price, cheapest at the top. After each go you&apos;ll see which places are right. You have {TRIES} goes. Tap two to swap them, or use the arrows.</p>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Go <b>{Math.min(TRIES, s.goes.length + (over ? 0 : 1))}</b>/{TRIES}</span><span>⏱ {clock(d.elapsed)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>Go <b>{Math.min(TRIES, s.goes.length + (over ? 0 : 1))}</b>/{TRIES}</span><span className="mm-clock">⏱ {clock(d.elapsed)}</span></div>
       <ol className="po-list" aria-label="Cheapest first">
         {shown.map((id, k) => {
           const it = byId[id], ok = over || (lastMarks && s.goes[s.goes.length - 1][k] === id && lastMarks[k]);
@@ -70,7 +70,7 @@ export default function PriceOrder() {
       {!over && <p className="center"><button className="btn btn-pink" onClick={submit}>Check my order</button></p>}
       {s.goes.length > 0 && !done && <p className="center small" aria-live="polite">{s.goes.map((g, k) => <span key={k} className="po-go">{marks(items, g).map((m) => (m ? "🟩" : "⬜")).join("")}</span>)}</p>}
       {s.failed && !done && <p className="center small">No score today, but now you know. A new five tomorrow.</p>}
-      {done && <DoneCard replay={d.replay} game="price" title="Price order" date={d.date} past={past} headline={`Got it in ${s.goes.length} go${s.goes.length === 1 ? "" : "es"}, ${clock(d.doneMs ?? 0)} 🎉`} score={pack(s.goes.length, d.doneMs ?? 0)} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={s.goes} game="price" title="Price order" date={d.date} past={past} headline={`Got it in ${s.goes.length} go${s.goes.length === 1 ? "" : "es"}, ${clock(d.doneMs ?? 0)} 🎉`} score={pack(s.goes.length, d.doneMs ?? 0)} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={(v) => `${Math.floor(v / 1_000_000)} go${Math.floor(v / 1_000_000) === 1 ? "" : "es"} · ${clock(v % 1_000_000)}`} note="Fewest goes wins; time breaks a tie." />}
     </div>
   );

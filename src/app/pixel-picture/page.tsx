@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import { useReplay } from "@/components/useReplay";
@@ -90,8 +92,9 @@ export default function PixelPicture() {
       <p className="small muted">The numbers say how many squares in a row are shaded, in order, with at least one gap between each group. Shade them all to reveal today&apos;s picture. You can drag across squares, and ✕ marks squares you know are empty.</p>
       <div className="row" style={{ gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
         {(["easy", "hard"] as NonoMode[]).map((m) => <button key={m} className={`chip ${mode === m ? "on" : ""}`} aria-pressed={mode === m} onClick={() => setMode(m)}>{m === "easy" ? "Easy 5×5" : "Hard 10×10"}</button>)}
-        <span className="memory-stats"><span>⏱ {clock(elapsed)}</span></span>
+        <span className="memory-stats"><span className="mm-clock">⏱ {clock(elapsed)}</span></span>
       </div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       {doneMs === null && (
         <div className="row" style={{ gap: "0.4rem", marginTop: "0.6rem" }} role="group" aria-label="Tool">
           <button className={`chip ${tool === 1 ? "on" : ""}`} aria-pressed={tool === 1} onClick={() => setTool(1)}>⬛ Shade</button>
@@ -121,7 +124,7 @@ export default function PixelPicture() {
         <section className="card memory-done" aria-live="polite">
           <b>It&apos;s {pic.name}! Solved in {clock(doneMs)} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -132,7 +135,8 @@ export default function PixelPicture() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest · {mode}</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest · {mode}</h2>
+          <Difficulty board={board} show={(v) => showDaily("nonogram", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
         </section>
       )}

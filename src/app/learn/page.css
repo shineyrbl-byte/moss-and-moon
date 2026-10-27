@@ -1,0 +1,16 @@
+/* Styles only this page uses */
+.ln-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0.8rem 0; }
+.ln-lesson { border: 1px solid var(--line); border-radius: 16px; padding: 1rem; background: var(--surface); }
+.ln-board { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 3px; width: min(100%, 18rem); margin: 0.6rem auto; }
+.ln-cell { aspect-ratio: 1; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--bg, #fffaf6); font-size: clamp(1.1rem, 6vw, 1.6rem); display: grid; place-items: center; cursor: pointer; color: var(--text); position: relative; }
+.ln-cell.given { background: var(--pink-soft); cursor: default; }
+.ln-cell.wrong { box-shadow: inset 0 0 0 3px #d64545; }
+.ln-cell.br { border-right: 3px solid var(--brown-deep); }
+.ln-cell.bd { border-bottom: 3px solid var(--brown-deep); }
+.ln-cell.on { background: var(--pink-soft); }
+.ln-cell.bike { background: #f6dce3; }
+.ln-num { display: grid; place-items: center; width: 64%; aspect-ratio: 1; border-radius: 50%; background: var(--brown-deep); color: #fffaf6; font-size: 1rem; }
+.ln-dot { font-style: normal; font-size: 0.8rem; color: var(--pink-ink); font-weight: 700; }
+.ln-count { display: grid; place-items: center; font-weight: 800; }
+.ln-tips { padding-left: 1.2rem; font-size: 0.92rem; }
+.ln-done { text-align: center; font-weight: 600; }

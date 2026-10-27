@@ -1,5 +1,6 @@
 "use client";
 import "./page.css";
+import { Ghost } from "@/components/GameExtras";
 import { useMemo, useRef } from "react";
 import { useStore } from "@/components/Store";
 import ArchiveNote from "@/components/ArchiveNote";
@@ -59,8 +60,9 @@ export default function ZipPath() {
         <button className="btn btn-ghost btn-sm" onClick={hint} disabled={done}>Hint (+{HINT_MS / 1000}s)</button>
         <button className="btn btn-ghost btn-sm" onClick={() => d.setState(line.slice(0, -1))} disabled={done || !line.length}>↩ Back one</button>
         <button className="btn btn-ghost btn-sm" onClick={() => d.setState([])} disabled={done || !line.length}>Start over</button>
-        <span className="memory-stats"><span><b>{line.length}</b>/{N * N}</span><span>⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></span>
+        <span className="memory-stats"><span><b>{line.length}</b>/{N * N}</span><span className="mm-clock">⏱ {clock(d.elapsed + d.hints * HINT_MS)}</span></span>
       </div>
+      <Ghost elapsed={d.elapsed} done={d.doneMs !== null} />
       <div className={`zp-grid ${done ? "done" : ""}`} style={{ ["--n" as string]: N }} role="grid" aria-label="Zip path"
         onPointerDown={(e) => { drawing.current = true; const i = cellAt(e); if (i !== null) touch(i); }}
         onPointerMove={(e) => { if (!drawing.current) return; const i = cellAt(e); if (i !== null && i !== line[line.length - 1]) touch(i, true); }}
@@ -73,7 +75,7 @@ export default function ZipPath() {
           </button>
         ))}
       </div>
-      {done && <DoneCard replay={d.replay} game="zip" title="Zip path" date={d.date} past={past} headline={`Zipped in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
+      {done && <DoneCard replay={d.replay} proof={d.state} game="zip" title="Zip path" date={d.date} past={past} headline={`Zipped in ${clock(d.doneMs ?? 0)}${d.hints ? ` (${d.hints} hint${d.hints === 1 ? "" : "s"})` : ", no hints"} 🎉`} score={d.doneMs!} saved={d.saved} onSaved={(b) => { d.setBoard(b); d.setSaved(true); }} />}
       {!past && <TodayBoard board={d.board} show={clock} />}
     </div>
   );

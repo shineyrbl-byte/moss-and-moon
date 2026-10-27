@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
@@ -93,7 +95,7 @@ export default function BillTotal() {
       <h1 className="h2">Bill <em>total</em></h1>
       <p className="small muted">The till wants today&apos;s total. Make it from the six numbers: tap one, a sign, then another, and the answer becomes a new number to use. Each number can only be used once, and every answer has to be a whole number above zero. Hit the total exactly, or stop when you&apos;re as close as you can get.</p>
       <div className="bt-target" aria-live="polite"><small>Make</small><b>{bill.target}</b>{!done && closest > 0 && closest < 100 && tiles.length < 6 ? <small>{closest} off so far</small> : null}</div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>⏱ {clock(elapsed)}</span><span>Steps <b>{steps.length}</b></span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span className="mm-clock">⏱ {clock(elapsed)}</span><span>Steps <b>{steps.length}</b></span></div>
       <div className="bt-tiles" role="group" aria-label="Your numbers">
         {tiles.map((t) => (
           <button key={t.id} className={`bt-tile ${a === t.id ? "sel" : ""} ${t.v === bill.target ? "hit" : ""} ${t.id >= 6 ? "made" : ""}`} onClick={() => tap(t.id)} disabled={done} aria-pressed={a === t.id}>{t.v}</button>
@@ -114,7 +116,7 @@ export default function BillTotal() {
           <b>{off === 0 ? `Spot on in ${clock(doneMs)}` : `${off} off, in ${clock(doneMs)}`} 🎉</b>
           <p className="small" style={{ margin: 0 }}>One way to make {bill.target}: {bill.way.join("; ")}.</p>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my score</button>
             </div>
@@ -125,7 +127,8 @@ export default function BillTotal() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s best</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s best</h2>
+          <Difficulty board={board} show={(v) => showDaily("bill", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => { const u = unpack(t.ms); return <li key={i}><span>{t.name}</span><b>{u.off ? `${u.off} off` : "spot on"} · {clock(u.ms)}</b></li>; })}</ol> : <p className="small muted">No scores yet today. Set the first one.</p>}
           <p className="tiny muted">Closest wins; time breaks a tie. Every day&apos;s total can be made exactly.</p>
         </section>

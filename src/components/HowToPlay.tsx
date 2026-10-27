@@ -2,11 +2,16 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { HOWTO_KEY, HOW_TO } from "@/lib/howTo";
+import { HOWTO_UI, HOW_TO_I18N } from "@/lib/howToI18n";
+import { useStore } from "@/components/Store";
 
 /** The first time you open a game, a small card says what you're aiming for and the tip that helps most. The ? brings it back. */
 export default function HowToPlay() {
   const path = usePathname();
-  const how = HOW_TO[path];
+  const { lang } = useStore();
+  // The word games' cards come in Hindi, Marathi and Konkani too
+  const how = (lang !== "en" && HOW_TO_I18N[lang][path]) || HOW_TO[path];
+  const ui = lang !== "en" && HOW_TO_I18N[lang][path] ? HOWTO_UI[lang] : null;
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!how) return;
@@ -22,12 +27,12 @@ export default function HowToPlay() {
   }
   return open ? (
     <aside className="howto card" role="note" aria-label={`How to play ${how.title}`}>
-      <b>New to {how.title}?</b>
+      <b>{ui ? ui.newTo(how.title) : `New to ${how.title}?`}</b>
       <p className="small" style={{ margin: "0.2rem 0" }}><span aria-hidden="true">🎯 </span>{how.goal}</p>
       <p className="small" style={{ margin: "0.2rem 0 0.6rem" }}><span aria-hidden="true">💡 </span>{how.tip}</p>
-      <button className="btn btn-pink btn-sm" onClick={close}>Got it</button>
+      <button className="btn btn-pink btn-sm" onClick={close}>{ui ? ui.gotIt : "Got it"}</button>
     </aside>
   ) : (
-    <div className="howto-bar"><button className="howto-q" onClick={() => setOpen(true)} aria-label={`How to play ${how.title}`} title="How to play">? How to play</button></div>
+    <div className="howto-bar"><button className="howto-q" onClick={() => setOpen(true)} aria-label={`How to play ${how.title}`} title="How to play">{ui ? ui.how : "? How to play"}</button></div>
   );
 }

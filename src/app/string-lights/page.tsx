@@ -1,5 +1,7 @@
 "use client";
 import "./page.css";
+import { Difficulty, Ghost } from "@/components/GameExtras";
+import { showDaily } from "@/lib/scoreFormat";
 import { useEffect, useMemo, useState } from "react";
 import ShareResult from "@/components/ShareResult";
 import { useReplay } from "@/components/useReplay";
@@ -81,7 +83,8 @@ export default function StringLights() {
         <button className="btn btn-ghost btn-sm" onClick={() => { const p = history[history.length - 1]; if (p) { setBr(p); setHistory(history.slice(0, -1)); } }} disabled={!history.length || done}>↩ Undo</button>
         <button className="btn btn-ghost btn-sm" onClick={() => { setHistory([...history, br]); setBr({}); setSel(null); }} disabled={!Object.keys(br).length || done}>Start over</button>
       </div>
-      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>✨ <b>{full}</b>/{islands.length} lamps lit</span><span>⏱ {clock(elapsed)}</span></div>
+      <div className="memory-stats" style={{ display: "flex", justifyContent: "center" }}><span>✨ <b>{full}</b>/{islands.length} lamps lit</span><span className="mm-clock">⏱ {clock(elapsed)}</span></div>
+      <Ghost elapsed={elapsed} done={doneMs !== null} />
       <div className={`sl-board ${done ? "done" : ""}`} role="group" aria-label="String lights">
         <svg viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden="true">
           {[...Array(SIZE).keys()].flatMap((r) => [...Array(SIZE).keys()].map((c) => <circle key={`${r},${c}`} cx={c + 0.5} cy={r + 0.5} r={0.04} className="sl-dot" />))}
@@ -110,7 +113,7 @@ export default function StringLights() {
         <section className="card memory-done" aria-live="polite">
           <b>Lit up in {clock(doneMs)} 🎉</b>
           {past ? <p className="small" style={{ margin: 0 }}>Archive days and practice puzzles don&apos;t go on the board.</p> : !saved ? (
-            <div className="row" style={{ alignItems: "end", justifyContent: "center" }}>
+            <div className="row zen-hide" style={{ alignItems: "end", justifyContent: "center" }}>
               <label className="field" style={{ maxWidth: "12rem" }}>Name for the board<input className="input" maxLength={20} value={name} onChange={(e) => setName(e.target.value)} placeholder="Guest" /></label>
               <button className="btn btn-pink btn-sm" style={{ marginBottom: "0.6rem" }} onClick={save}>Save my time</button>
             </div>
@@ -121,7 +124,8 @@ export default function StringLights() {
       )}
       {board && !past && (
         <section style={{ marginTop: "1.4rem" }}>
-          <h2 className="h3">Today&apos;s quickest</h2>
+          <h2 className="h3" data-zen-board="">Today&apos;s quickest</h2>
+          <Difficulty board={board} show={(v) => showDaily("lights", v)} />
           {board.top.length ? <ol className="memory-board">{board.top.map((t, i) => <li key={i}><span>{t.name}</span><b>{clock(t.ms)}</b></li>)}</ol> : <p className="small muted">No times yet today. Set the first one.</p>}
         </section>
       )}

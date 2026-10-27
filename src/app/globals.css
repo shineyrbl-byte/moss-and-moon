@@ -1760,3 +1760,10 @@ button.pc-slot { cursor: pointer; }
 /* Screen-reader help (game settings): clear focus rings on puzzle squares, and nothing moving about */
 :root[data-reader="on"] [role="grid"] :focus-visible { outline: 3px solid var(--pink-deep); outline-offset: 2px; z-index: 1; position: relative; }
 :root[data-reader="on"] *, :root[data-reader="on"] *::before, :root[data-reader="on"] *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+/* Race your ghost (daily puzzles) */
+.ghost-bar { display: grid; gap: 0.15rem; justify-items: center; margin: 0.2rem auto 0.4rem; width: min(100%, 22rem); }
+.ghost-track { position: relative; width: 100%; height: 6px; border-radius: 999px; background: var(--line); }
+.ghost-track i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--pink); }
+.ghost-track b { position: absolute; top: 50%; transform: translate(-50%, -50%); font-size: 0.9rem; }
+/* Zen mode (game settings): no clocks, no boards */
+:root[data-zen="on"] .mm-clock, :root[data-zen="on"] .zen-hide, :root[data-zen="on"] section:has(> [data-zen-board]) { display: none !important; }

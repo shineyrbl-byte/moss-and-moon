@@ -2108,7 +2108,7 @@ test("how to play cards: every one is for a real game page, with a goal and a ti
   // Every computer opponent and arcade game has one
   for (const g of ANY_TIME.filter((x) => x.kind === "board" || x.kind === "arcade" || x.kind === "cards")) if (g.id !== "saucers" && g.id !== "rush") assert.ok(HOW_TO[g.href], g.href);
   const { DEFAULTS } = await import("../src/lib/gameSettings.ts");
-  assert.deepEqual(DEFAULTS, { sound: true, vibrate: false, patterns: false, reader: false }, "vibration, patterns and screen-reader help start off");
+  assert.deepEqual(DEFAULTS, { sound: true, vibrate: false, patterns: false, reader: false, zen: false }, "vibration, patterns, screen-reader help and zen start off");
 });
 
 test("account sync: what follows you, and merging two devices", async () => {
@@ -2630,4 +2630,44 @@ test("live rooms with hidden hands: the server plays the rules and hides other p
   assert.ok(lv.g.racks[1].every(Boolean) && lv.g.racks[0].every((x) => x === null) && lv.g.bag.every((x) => x === null));
   assert.ok("error" in RG.apply(l, 1, { type: "pass", swap: [] }), "player 1 goes second");
   assert.ok("s" in RG.apply(l, 0, { type: "pass", swap: [] }));
+});
+
+test("batch H: proofs, the friends league and the learn-to-play lessons", async () => {
+  const PR = await import("../src/lib/proofs.ts");
+  const S = await import("../src/lib/sudoku.ts");
+  const day = "2026-10-28", sd = S.sudokuFor(day, "easy");
+  assert.ok(PR.verify("sudoku", "easy", day, sd.answer, 60_000));
+  assert.ok(!PR.verify("sudoku", "easy", day, sd.puzzle, 60_000), "an unfinished board fails");
+  assert.ok(!PR.verify("sudoku", "hard", day, sd.answer, 60_000), "the easy answer isn't the hard one");
+  assert.ok(!PR.verify("sudoku", "easy", day, "nonsense", 60_000));
+  const Z = await import("../src/lib/zipPath.ts"), zp = Z.zipFor(day);
+  assert.ok(PR.verify("zip", "daily", day, zp.path, 40_000)); assert.ok(!PR.verify("zip", "daily", day, [...zp.path].reverse(), 40_000));
+  const W = await import("../src/lib/wordWheel.ts"), w = W.wheelFor(day);
+  assert.ok(PR.verify("wheel", "daily", day, w.main.slice(0, 3), W.pack(3, 9000)));
+  assert.ok(!PR.verify("wheel", "daily", day, w.main.slice(0, 3), W.pack(4, 9000)), "the count must match");
+  assert.ok(!PR.verify("wheel", "daily", day, [w.main[0], w.main[0]], W.pack(2, 9000)), "no repeats");
+  assert.ok(PR.verify("wordsearch", "daily", day, undefined, 60_000), "unchecked puzzles pass through");
+
+  const L = await import("../src/lib/league.ts");
+  const st = L.league(["a", "b", "c"], [{ voter: "a", game: "x", date: "d", ms: 5 }, { voter: "b", game: "x", date: "d", ms: 9 }, { voter: "b", game: "y", date: "d", ms: 3 }]);
+  assert.deepEqual(st.map((x) => [x.voter, x.points]), [["a", 3], ["b", 2], ["c", 0]], "a bonus only when two or more played it");
+
+  const { LESSONS, lessonSolved, lessonWrong } = await import("../src/lib/lessons.ts");
+  for (const l of LESSONS) {
+    assert.ok(lessonSolved(l, l.solution), l.id);
+    if (l.kind !== "path") { assert.ok(l.given.every((v, i) => !v || l.kind === "bikes" || v === l.solution[i]), `${l.id} givens agree`); assert.ok(!lessonSolved(l, l.given), `${l.id} isn't solved to start`); }
+  }
+  // Each lesson has exactly one answer
+  const sud = LESSONS[0]; let n = 0;
+  const go = (b: number[], i: number): void => { if (i === 16) { n++; return; } if (b[i]) return go(b, i + 1); for (let v = 1; v <= 4; v++) { const r = Math.floor(i / 4), c = i % 4, br = Math.floor(r / 2) * 2, bc = Math.floor(c / 2) * 2; let ok = true; for (let k = 0; k < 4; k++) if (b[r * 4 + k] === v || b[k * 4 + c] === v || b[(br + (k >> 1)) * 4 + bc + (k & 1)] === v) ok = false; if (ok) { b[i] = v; go(b, i + 1); b[i] = 0; } } };
+  go([...sud.given], 0); assert.equal(n, 1, "one sudoku answer");
+  const stars = LESSONS[1]; let sn = 0;
+  const perm = (a: number[], o: number[] = []): number[][] => (a.length ? a.flatMap((x, k) => perm(a.filter((_, j) => j !== k), [...o, x])) : [o]);
+  for (const p of perm([0, 1, 2, 3, 4])) { const cells = p.map((c, r) => r * 5 + c); if (new Set(cells.map((i) => stars.regions![i])).size === 5 && !p.some((c, r) => r && Math.abs(c - p[r - 1]) <= 1)) sn++; }
+  assert.equal(sn, 1, "one stars answer");
+  const zipL = LESSONS[3]; let zn = 0;
+  const nb = (i: number) => [i - 3, i + 3, i % 3 ? i - 1 : -1, i % 3 < 2 ? i + 1 : -1].filter((j) => j >= 0 && j < 9);
+  const walk = (p: number[]): void => { if (p.length === 9) { const o = p.map((i) => zipL.marks![i]).filter(Boolean); if (o.join() === "1,2,3,4" && zipL.marks![p[8]] === 4) zn++; return; } for (const j of nb(p[p.length - 1])) if (!p.includes(j)) walk([...p, j]); };
+  walk([zipL.marks!.indexOf(1)]); assert.equal(zn, 1, "one zip answer");
+  assert.deepEqual(lessonWrong(sud, sud.given.map((v, i) => v || (i === 2 ? 1 : 0))), [2]);
 });
