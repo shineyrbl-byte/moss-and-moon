@@ -1151,6 +1151,11 @@ function open() {
     created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     UNIQUE (date, voter)
   );`);
+  // Who came (the owner ticks them off, for stamps), and a day-before reminder on the guest's phone
+  addColumn(db, "game_night", "came", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "game_night", "sub", "TEXT");
+  addColumn(db, "game_night", "reminded", "INTEGER NOT NULL DEFAULT 0");
+  addColumn(db, "tickets", "reminded", "INTEGER NOT NULL DEFAULT 0");
   // The puzzle of the week's board
   db.exec(`CREATE TABLE IF NOT EXISTS weekly_scores (
     week TEXT NOT NULL,

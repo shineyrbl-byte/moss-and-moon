@@ -1,6 +1,15 @@
 // What's new on the site, newest first. Written by hand when something guests can use is added. Pure.
 export type News = { date: string; title: string; items: { text: string; href?: string }[] };
 export const NEWS: News[] = [
+  { date: "2026-10-27", title: "Little extras", items: [
+    { text: "My tastes on the menu: less sweet, low caffeine, iced, dairy-free and more", href: "/#menu" },
+    { text: "On a rainy day, add all the rainy-day picks to your order in one tap", href: "/#menu" },
+    { text: "The kids' corner: the kids' menu, colouring, I spy and easy games", href: "/kids" },
+    { text: "The café map: which tables have a socket, a window or room for a dog", href: "/cafe-map" },
+    { text: "Quiz night season standings", href: "/quiz" },
+    { text: "Game-night stamps and a reminder the day before; event tickets get a reminder email too", href: "/game-night" },
+    { text: "Your-turn alerts for slow games, and board looks for chess, cards and more", href: "/slow-games" },
+  ] },
   { date: "2026-10-27", title: "At the café", items: [
     { text: "Vote for the songs you'd like next: the most votes play first", href: "/songs" },
     { text: "Menu picks for the time of day, alongside the weather picks", href: "/#menu" },

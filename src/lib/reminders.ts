@@ -1,9 +1,12 @@
 // Friendly nudges by email:
 //  - an order has been ready for 10 minutes and nobody has picked it up
 //  - a table booking is coming up in the next 2 hours
+//  - an event you have a ticket for is tomorrow (from 10am the day before), and game night (by push, if asked for)
 import "server-only";
 import { db } from "./db";
-import { bookingReminderEmail, pickupReminderEmail, sendEmail } from "./email";
+import { bookingReminderEmail, eventReminderEmail, pickupReminderEmail, sendEmail } from "./email";
+import { findEvent } from "./eventsStore";
+import { nightReminderTick } from "./cafeExtras";
 import { toDateStr } from "./cafe";
 import type { QuoteLine } from "./pricing";
 
@@ -42,4 +45,17 @@ export async function reminderTick(now = new Date()) {
     if (bookedMinsAgo < BOOKING_REMINDER_MIN) continue;
     await sendEmail(b.email, ...bookingReminderEmail(b));
   }
+
+  // Events tomorrow: one email per ticket, from 10am the day before
+  if (now.getHours() >= 10) {
+    const tomorrow = toDateStr(new Date(now.getTime() + 86_400_000));
+    const tickets = db.prepare("SELECT code, event_id, name, email, qty FROM tickets WHERE reminded = 0 AND (paid = 1 OR amount = 0) AND email != '' LIMIT 200").all() as { code: string; event_id: string; name: string; email: string; qty: number }[];
+    for (const tk of tickets) {
+      const ev = findEvent(tk.event_id);
+      if (!ev || ev.date !== tomorrow) continue;
+      db.prepare("UPDATE tickets SET reminded = 1 WHERE code = ?").run(tk.code);
+      await sendEmail(tk.email, ...eventReminderEmail({ title: ev.title, date: ev.date, time: ev.time, name: tk.name, qty: tk.qty, code: tk.code }));
+    }
+  }
+  await nightReminderTick(now);
 }

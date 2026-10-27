@@ -34,6 +34,7 @@ export default function Footer() {
             <li><Link href="/passport">{t("footer.passport")}</Link></li>
             <li><Link href="/lab">{t("footer.lab")}</Link></li>
             <li><Link href="/shelf">{t("footer.shelf")}</Link></li>
+            <li><Link href="/cafe-map">{t("footer.map")}</Link></li>
             <li><Link href="/team">{t("footer.team")}</Link></li>
             <li><Link href="/postcard">{t("footer.postcard")}</Link></li>
             <li><Link href="/advent">{t("footer.advent")}</Link></li>
@@ -74,6 +75,7 @@ export default function Footer() {
             <li><Link href="/word-search">{t("footer.wordSearch")}</Link></li>
             <li><Link href="/sudoku">{t("footer.sudoku")}</Link></li>
             <li><Link href="/i-spy">{t("footer.ispy")}</Link></li>
+            <li><Link href="/kids">{t("footer.kids")}</Link></li>
             <li><Link href="/recipe-swap">{t("footer.recipeSwap")}</Link></li>
             <li><Link href="/connect-four">{t("footer.connect4")}</Link></li>
             <li><Link href="/story-chain">{t("footer.storyChain")}</Link></li>

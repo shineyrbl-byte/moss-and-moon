@@ -3918,7 +3918,14 @@ test("café extras: song votes, guest latte art, Goa events, coming soon, game n
   assert.equal((await j("/api/game-night", "POST", { voter: g2, date: "2020-01-02", name: "Ben", party: 1 })).status, 400, "not a game night");
   const ok = await (await j("/api/game-night", "POST", { voter: g2, date: night, name: "Ben", party: 1 })).json();
   assert.equal(ok.nights[0].left, 0); assert.equal(ok.nights[0].mine.name, "Ben");
-  assert.equal((await s.api("/api/game-night?admin=1")).body.nights[0].rows.length, 2);
+  const adm = (await s.api("/api/game-night?admin=1")).body;
+  assert.equal(adm.upcoming[0].rows.length, 2); assert.ok(Array.isArray(adm.past));
+  assert.equal((await s.api("/api/game-night", { method: "PATCH", json: { id: adm.upcoming[0].rows[0].id, came: true } })).status, 400, "can't tick off a night that hasn't happened");
+  assert.equal((await j("/api/game-night", "PATCH", { id: adm.upcoming[0].rows[0].id, came: true })).status, 401);
+  const sub = { endpoint: "https://push.example.test/gn", keys: { p256dh: "x", auth: "y" } };
+  assert.equal((await j("/api/game-night", "POST", { voter: g1, subscription: sub })).status, 200);
+  assert.equal((await (await fetch(`${s.url}/api/game-night?voter=${g1}`)).json()).alerts, true, "reminders on");
+  assert.equal((await (await j("/api/game-night", "POST", { voter: g1, subscription: null })).json()).alerts, false);
   const cancelled = await (await j("/api/game-night", "POST", { voter: g2, date: night, cancel: true })).json();
   assert.equal(cancelled.nights[0].left, 1);
   await s.api("/api/game-night", { method: "PUT", json: { on: false, day: 4, time: "19:00", seats: 4 } });
@@ -3970,4 +3977,13 @@ test("games dashboard: the period before, and a log of hiding with undo", async 
   await s.api("/api/admin/games", { method: "POST", json: { id: "flood", hide: false } });
   const after = (await s.api("/api/admin/games?days=7")).body.log.filter((e: { id: string }) => e.id === "flood");
   assert.equal(after[0].hide, false); assert.equal(after[0].hiddenNow, false); assert.equal(after.length, flood.length + 1);
+});
+
+test("quiz season standings, the kids' corner and the café map", async () => {
+  const q = await (await fetch(`${s.url}/api/quiz?season=1`)).json();
+  assert.match(q.season, /^(January to March|April to June|July to September|October to December) \d{4}$/); assert.ok(Array.isArray(q.teams));
+  const kids = await (await fetch(`${s.url}/kids`)).text();
+  assert.ok(kids.includes("Babyccino") && kids.includes("/colouring"), "the kids' menu and colouring");
+  const map = await (await fetch(`${s.url}/cafe-map`)).text();
+  assert.ok(map.includes("Counter") && map.includes("Power socket"));
 });

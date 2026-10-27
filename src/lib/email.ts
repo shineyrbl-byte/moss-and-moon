@@ -224,6 +224,11 @@ export function rsvpEmail(e: { title: string; date: string; time: string; name: 
   return [`You're on the list ✿`, `<p>Hi ${esc(e.name)}, you've got a spot at <b>${esc(e.title)}</b> on <b>${when}</b>. See you there!</p>`] as const;
 }
 
+export function eventReminderEmail(e: { title: string; date: string; time: string; name: string; qty: number; code: string }) {
+  const when = new Date(`${e.date}T${e.time}`).toLocaleString("en-IN", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
+  return [`See you tomorrow at ${e.title} ✿`, `<p>Hi ${esc(e.name)}, just a reminder: <b>${esc(e.title)}</b> is tomorrow, <b>${when}</b>. You have ${e.qty === 1 ? "one place" : `${e.qty} places`}.</p>${codeBox(e.code)}<p style="color:#8a6a5c;font-size:13px">Show this code when you arrive.</p>`] as const;
+}
+
 export function welcomeEmail() {
   return [`Welcome to the Pink Post 💌`, `<p>One cosy email a month: new drinks, events and secret codes. Here's your first one, for 15% off orders over ₹500:</p>${codeBox("PINKMOON")}${button(`${SITE()}/#menu`, "See the menu")}`] as const;
 }

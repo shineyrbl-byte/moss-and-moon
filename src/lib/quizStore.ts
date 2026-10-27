@@ -95,3 +95,27 @@ export function answerQuiz(b: Record<string, unknown>, now = Date.now()) {
   if (got) db.prepare("UPDATE quiz_players SET score = score + ? WHERE quiz_id = ? AND voter = ?").run(got, q.id, v);
   return quizState(v, false, now);
 }
+
+/** The season: this calendar quarter (Jan–Mar, Apr–Jun, Jul–Sep, Oct–Dec), in UTC like the quiz's own times */
+export function quizSeasonOf(now = new Date()) {
+  const y = now.getUTCFullYear(), q = Math.floor(now.getUTCMonth() / 3);
+  const from = new Date(Date.UTC(y, q * 3, 1)).toISOString().slice(0, 10), to = new Date(Date.UTC(y, q * 3 + 3, 1)).toISOString().slice(0, 10);
+  const names = ["January to March", "April to June", "July to September", "October to December"];
+  return { from, to, label: `${names[q]} ${y}` };
+}
+/** Season standings: every finished quiz this quarter, points added up by team name (ignoring capitals and spaces), and quiz wins */
+export function quizSeason(now = new Date()) {
+  const s = quizSeasonOf(now);
+  const rows = db.prepare(`SELECT p.quiz_id, p.name, p.score FROM quiz_players p JOIN quiz_nights n ON n.id = p.quiz_id
+    WHERE n.status = 'done' AND n.ended_at >= ? AND n.ended_at < ?`).all(s.from, s.to) as { quiz_id: number; name: string; score: number }[];
+  const key = (n: string) => n.trim().toLowerCase().replace(/\s+/g, " ");
+  const teams = new Map<string, { name: string; points: number; quizzes: number; wins: number }>();
+  const best = new Map<number, number>();
+  for (const r of rows) best.set(r.quiz_id, Math.max(best.get(r.quiz_id) ?? 0, r.score));
+  for (const r of rows) {
+    const t = teams.get(key(r.name)) ?? { name: r.name.trim(), points: 0, quizzes: 0, wins: 0 };
+    t.points += r.score; t.quizzes++; if (r.score > 0 && r.score === best.get(r.quiz_id)) t.wins++;
+    teams.set(key(r.name), t);
+  }
+  return { season: s.label, quizzes: best.size, teams: [...teams.values()].sort((a, b) => b.points - a.points || b.wins - a.wins).slice(0, 10) };
+}

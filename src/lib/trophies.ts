@@ -188,6 +188,7 @@ TROPHIES.push(
   { group: "Seasons", id: "packMonsoon", emoji: "🌧️", name: "Rain painter", how: "Finish all three pictures in the monsoon season pack", test: (c) => flag(c, "season-monsoon") },
   { group: "Seasons", id: "advent", emoji: "🎅", name: "Every door open", how: "Open all 24 squares of the advent picture", test: (c) => flag(c, "advent-picture") },
   { group: "Seasons", id: "hunt", emoji: "🗝️", name: "Treasure hunter", how: "Find all five keys in a weekend puzzle hunt", test: (c) => flag(c, "hunt-done") },
+  { group: "Seasons", id: "gameNight5", emoji: "🎲", name: "Board-game regular", how: "Come to five board-game nights", test: (c) => flag(c, "game-night-5") },
   { group: "Seasons", id: "gamesDay5", emoji: "🎪", name: "Games Day regular", how: "Finish 5 daily puzzles on Café Games Day", test: (c) => bestGamesDay(c.played) >= 5 },
   { group: "Seasons", id: "gamesDay10", emoji: "🎡", name: "Games Day hero", how: "Finish 10 daily puzzles on Café Games Day", test: (c) => bestGamesDay(c.played) >= 10 },
 );

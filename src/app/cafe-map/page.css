@@ -1,0 +1,7 @@
+/* Styles only this page uses */
+.cm-plan { position: relative; width: 100%; aspect-ratio: 10 / 9; margin: 1rem 0; border: 2px solid var(--line); border-radius: 18px; background: var(--surface-2); }
+.cm-table { position: absolute; display: grid; place-content: center; justify-items: center; gap: 0.05rem; border: 2px solid var(--caramel); border-radius: 10px; background: var(--surface); color: var(--text); font-size: clamp(0.6rem, 2.4vw, 0.85rem); line-height: 1.1; text-align: center; }
+.cm-table.round { border-radius: 50%; }
+.cm-table small { font-size: 0.8em; color: var(--muted); }
+.cm-tags { font-size: 0.95em; }
+.cm-counter { position: absolute; display: grid; place-items: center; border-radius: 10px; background: var(--brown); color: var(--surface); font-weight: 700; font-size: clamp(0.7rem, 2.6vw, 0.95rem); }

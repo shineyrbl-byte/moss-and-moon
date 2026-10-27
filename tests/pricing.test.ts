@@ -2824,3 +2824,13 @@ test("sync: hunt keys, season packs and slow-game seats follow your account", as
   const h = S.mergeEntry("mm-hunt-2026-10-31", { v: '["/moon"]', t: 1 }, { v: '["/pups","/moon"]', t: 2 })!;
   assert.deepEqual(JSON.parse(h.v).sort(), ["/moon", "/pups"]);
 });
+
+test("my tastes only pick what the menu says suits you", async () => {
+  const T = await import("../src/lib/tastes.ts");
+  const latte = { id: "l", traits: { energy: 1, sweet: 2, temp: "hot" as const }, allergens: ["milk"] }, cold = { id: "c", traits: { energy: 2, sweet: 0, temp: "iced" as const }, allergens: [] }, cake = { id: "k" };
+  assert.ok(T.suits(cold, { sweet: "less", caffeine: "high", temp: "iced", dairyFree: true }));
+  assert.ok(!T.suits(latte, { dairyFree: true }) && !T.suits(latte, { sweet: "less" }) && T.suits(latte, { sweet: "more" }));
+  assert.ok(!T.suits(cake, { sweet: "less" }), "no traits, no guess"); assert.ok(!T.suits(cake, { dairyFree: true }), "no allergen list, no guess");
+  assert.deepEqual(T.tastePicks([latte, cold, cake], {}), [], "nothing picked, nothing shown");
+  assert.deepEqual(T.tastePicks([latte, cold, cake], { temp: "iced" }).map((m) => m.id), ["c"]);
+});

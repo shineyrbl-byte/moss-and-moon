@@ -99,7 +99,8 @@ const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
 /** Events tab: the weekly board-game night and who's booked */
 export function GameNightCard() {
   const { toast } = useStore();
-  const [d, setD] = useState<{ settings: { on: boolean; day: number; time: string; seats: number; note: string }; nights: { date: string; rows: { name: string; party: number; game: string }[] }[] } | null>(null);
+  type NRow = { id: number; name: string; party: number; game: string; came: number };
+  const [d, setD] = useState<{ settings: { on: boolean; day: number; time: string; seats: number; note: string }; upcoming: { date: string; rows: NRow[] }[]; past: { date: string; rows: NRow[] }[] } | null>(null);
   const load = () => fetch("/api/game-night?admin=1").then((r) => (r.ok ? r.json() : null)).then((x) => x && setD(x)).catch(() => {});
   useEffect(() => { void load(); }, []);
   if (!d) return null;
@@ -121,9 +122,19 @@ export function GameNightCard() {
         <button className="btn btn-pink btn-sm" onClick={() => save({ ...s, on: true })}>{s.on ? "Save" : "Turn it on"}</button>
         {s.on && <button className="btn btn-ghost btn-sm" onClick={() => save({ ...s, on: false })}>Turn it off</button>}
       </div>
-      {s.on && d.nights.map((n) => (
+      {s.on && d.upcoming.map((n) => (
         <p key={n.date} className="small" style={{ margin: "0.5rem 0 0" }}><b>{n.date}</b>: {n.rows.length ? n.rows.map((r) => `${r.name} (${r.party})${r.game ? ` · ${r.game}` : ""}`).join("; ") : <span className="muted">no bookings yet</span>}</p>
       ))}
+      {d.past.length > 0 && (
+        <>
+          <p className="small" style={{ margin: "0.8rem 0 0.2rem" }}><b>Tick off who came</b> <span className="muted">(each tick is a stamp for that guest)</span></p>
+          {d.past.map((n) => (
+            <p key={n.date} className="small" style={{ margin: "0.2rem 0" }}>{n.date}: {n.rows.map((r) => (
+              <label key={r.id} style={{ marginRight: "0.8rem", whiteSpace: "nowrap" }}><input type="checkbox" checked={!!r.came} onChange={async (e) => { const x = await send("/api/game-night", "PATCH", { id: r.id, came: e.target.checked }); if (x.error) toast(x.error); void load(); }} /> {r.name} ({r.party})</label>
+            ))}</p>
+          ))}
+        </>
+      )}
     </section>
   );
 }

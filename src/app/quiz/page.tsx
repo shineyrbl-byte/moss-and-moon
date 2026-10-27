@@ -2,6 +2,7 @@
 import "./page.css";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import QuizSeason from "@/components/QuizSeason";
 import { useStore } from "@/components/Store";
 import { voterId } from "@/components/LabCard";
 import { LETTERS, secsLeft, useQuiz } from "./useQuiz";
@@ -30,6 +31,7 @@ export default function QuizPage() {
       <h1 className="h2">Quiz <em>night</em></h1>
       <p>There&apos;s no quiz on right now. When the team starts one, the questions show on the TV and you answer here on your phone.</p>
       <p className="small muted">Fancy a question in the meantime? Try <Link href="/trivia">today&apos;s trivia</Link>.</p>
+      <QuizSeason />
     </div>
   );
   const q = quiz.question, me = quiz.me, left = secsLeft(quiz.endsAt, now);

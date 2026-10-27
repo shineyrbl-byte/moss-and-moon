@@ -36,6 +36,17 @@ const en = {
   "menu.vegan": "🌱 Vegan",
   "menu.gf": "🌾 Gluten-free",
   "menu.favs": "♥ My favourites",
+  "tastes.title": "✨ Suits your tastes",
+  "tastes.edit": "✨ My tastes",
+  "tastes.lessSweet": "Less sweet",
+  "tastes.sweetTooth": "Sweet tooth",
+  "tastes.lowCaffeine": "Low caffeine",
+  "tastes.strong": "Extra strong",
+  "tastes.hot": "Hot",
+  "tastes.iced": "Iced",
+  "tastes.dairyFree": "Dairy-free",
+  "tastes.clear": "Clear my tastes",
+  "weather.addAll": "Add all of these to my order",
   "menu.soldout": "sold out",
   "menu.empty": "Nothing matches that. Try another search? ☕",
   "quiz.eyebrow": "can't decide?",
@@ -406,6 +417,8 @@ const en = {
   "footer.boggle": "Bean boggle",
   "footer.bill": "Bill total",
   "footer.new": "What's new",
+  "footer.kids": "Kids' corner",
+  "footer.map": "Café map",
 };
 
 type Key = keyof typeof en;

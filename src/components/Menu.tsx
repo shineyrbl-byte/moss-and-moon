@@ -8,6 +8,7 @@ import { isLastHour, lastHourLabel } from "@/lib/cafe";
 import { useStore } from "./Store";
 import { fill } from "@/lib/i18n";
 import { timePicks, weatherPicks, type Weather } from "@/lib/weatherPicks";
+import { TASTES_KEY, anyTaste, loadTastes, tastePicks, type Tastes } from "@/lib/tastes";
 import Reveal from "./Reveal";
 import UsualCard from "./Usual";
 import VoiceOrder from "./VoiceOrder";
@@ -19,6 +20,12 @@ export default function Menu() {
   const [weather, setWeather] = useState<Weather | null>(null);
   const [hour, setHour] = useState<number | null>(null); // the guest's own clock, so it's set after the page loads
   useEffect(() => { setHour(new Date().getHours()); }, []);
+  // My tastes: kept on this device
+  const [tastes, setTastesState] = useState<Tastes>({});
+  const [tasteOpen, setTasteOpen] = useState(false);
+  useEffect(() => { setTastesState(loadTastes()); }, []);
+  const setTastes = (t: Tastes) => { setTastesState(t); try { localStorage.setItem(TASTES_KEY, JSON.stringify(t)); } catch {} };
+  const flipTaste = <K extends keyof Tastes>(k: K, v: Tastes[K]) => setTastes({ ...tastes, [k]: tastes[k] === v ? undefined : v });
   useEffect(() => { fetch("/api/weather").then((r) => r.json()).then((w) => !w.off && typeof w.temp === "number" && setWeather(w)).catch(() => {}); }, []);
   const [onlyFavs, setOnlyFavs] = useState(false);
   const [happy, setHappy] = useState(false);
@@ -101,7 +108,7 @@ export default function Menu() {
             <button key={c.id} className={`chip ${cat === c.id ? "on" : ""}`} onClick={() => setCat(c.id)}>{t(`menu.${c.id}` as "menu.all")}</button>
           ))}
         </div>
-        {cat === "kids" && <p className="small center" style={{ margin: "0.2rem 0 0.6rem" }}>🖍 <a href="/colouring">{t("footer.colouring")}</a></p>}
+        {cat === "kids" && <p className="small center" style={{ margin: "0.2rem 0 0.6rem" }}>🖍 <a href="/colouring">{t("footer.colouring")}</a> · 🧸 <a href="/kids">{t("footer.kids")}</a></p>}
         {cat === "pups" && <p className="small center" style={{ margin: "0.2rem 0 0.6rem" }}>🐾 <a href="/pups">{t("footer.pups")}</a></p>}
         <div className="chips">
           <button className={`chip ${diet.includes("vegan") ? "on" : ""}`} onClick={() => toggleDiet("vegan")}>{t("menu.vegan")}</button>
@@ -112,7 +119,17 @@ export default function Menu() {
             </button>
           ))}
           <button className={`chip ${onlyFavs ? "on" : ""}`} onClick={() => setOnlyFavs((v) => !v)}>{t("menu.favs")}{favs.size ? ` (${favs.size})` : ""}</button>
+          <button className={`chip ${anyTaste(tastes) ? "on" : ""}`} aria-expanded={tasteOpen} onClick={() => setTasteOpen((v) => !v)}>{t("tastes.edit")}</button>
         </div>
+        {tasteOpen && (
+          <div className="chips taste-chips" role="group" aria-label={t("tastes.edit")}>
+            {([["sweet", "less", "tastes.lessSweet"], ["sweet", "more", "tastes.sweetTooth"], ["caffeine", "low", "tastes.lowCaffeine"], ["caffeine", "high", "tastes.strong"], ["temp", "hot", "tastes.hot"], ["temp", "iced", "tastes.iced"]] as const).map(([k, v, label]) => (
+              <button key={label} className={`chip ${tastes[k] === v ? "on" : ""}`} aria-pressed={tastes[k] === v} onClick={() => flipTaste(k, v)}>{t(label)}</button>
+            ))}
+            <button className={`chip ${tastes.dairyFree ? "on" : ""}`} aria-pressed={!!tastes.dairyFree} onClick={() => setTastes({ ...tastes, dairyFree: !tastes.dairyFree || undefined })}>{t("tastes.dairyFree")}</button>
+            {anyTaste(tastes) && <button className="link-btn small" onClick={() => setTastes({})}>{t("tastes.clear")}</button>}
+          </div>
+        )}
       </div>
 
       {usingProfile && (
@@ -139,9 +156,16 @@ export default function Menu() {
         const here = (m: (typeof menu)[number]) => !m.branches?.length || m.branches.includes(branch);
         const wx = weather ? weatherPicks(weather, menu.filter(here)) : null;
         const tx = hour !== null ? timePicks(hour, menu.filter(here), wx && wx.items.length >= 2 ? wx.items.map((m) => m.id) : []) : null;
+        const mine = tastePicks(menu.filter(here), tastes);
         return (
           <>
+            {mine.length >= 2 && strip(t("tastes.title"), mine)}
             {wx && wx.items.length >= 2 && strip(fill(t(`weather.${wx.mood}`), { temp: weather!.temp }), wx.items)}
+            {wx && wx.mood === "rain" && wx.items.length >= 2 && (
+              <p className="center small" style={{ margin: "-0.4rem 0 1rem" }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => { for (const m of wx.items) add(m.id, defaultOptions(m)); toast(`☔ ${wx.items.length} rainy-day picks added`); }}>☔ {t("weather.addAll")}</button>
+              </p>
+            )}
             {tx && tx.items.length >= 2 && strip(t(`time.${tx.slot}`), tx.items)}
             {strip(t("menu.staffPicks"), menu.filter((m) => m.staffPick && here(m)))}
             {strip(t("menu.newThisMonth"), menu.filter((m) => m.badge === "new" && !m.staffPick && here(m)).reverse())} {/* newest additions first */}
