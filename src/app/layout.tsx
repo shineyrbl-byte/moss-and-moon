@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import SyncAgent from "@/components/SyncAgent";
 import GridKeys from "@/components/GridKeys";
+import HuntToken from "@/components/HuntToken";
 import HowToPlay from "@/components/HowToPlay";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <StatsBeacon />
             <SyncAgent />
             <GridKeys />
+            <HuntToken />
           </PaymentProvider>
         </StoreProvider>
       </body>

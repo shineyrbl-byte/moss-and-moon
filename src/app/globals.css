@@ -1767,3 +1767,10 @@ button.pc-slot { cursor: pointer; }
 .ghost-track b { position: absolute; top: 50%; transform: translate(-50%, -50%); font-size: 0.9rem; }
 /* Zen mode (game settings): no clocks, no boards */
 :root[data-zen="on"] .mm-clock, :root[data-zen="on"] .zen-hide, :root[data-zen="on"] section:has(> [data-zen-board]) { display: none !important; }
+
+/* Weekend puzzle hunt key, tucked in the corner of the page */
+.hunt-token { position: fixed; left: 0.8rem; bottom: 0.8rem; z-index: 40; border: 2px dashed var(--brown-deep); background: var(--butter); color: #3b2720; border-radius: 999px; font-size: 1.3rem; width: 2.8rem; height: 2.8rem; cursor: pointer; animation: hunt-bob 2.4s ease-in-out infinite; }
+.hunt-token.found { width: auto; height: auto; padding: 0.5rem 0.9rem; font-size: 0.85rem; margin: 0; animation: none; }
+.hunt-token.found a { color: #3b2720; font-weight: 700; }
+@keyframes hunt-bob { 50% { transform: translateY(-4px) rotate(-8deg); } }
+@media (prefers-reduced-motion: reduce) { .hunt-token { animation: none; } }

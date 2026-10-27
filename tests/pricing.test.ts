@@ -2696,3 +2696,37 @@ test("batch I games: killer sudoku, word chain, colour pixels, golf and TriPeaks
   const B = await import("../src/lib/latteBeat.ts");
   assert.ok(B.chart(B.SONGS.find((x) => x.level === 3)!, () => 0.4).length > B.chart(B.SONGS.find((x) => x.id === "espresso")!, () => 0.4).length, "level 3 is busier than hard");
 });
+
+test("batch J: season packs, the puzzle hunt and Games Day", async () => {
+  const S = await import("../src/lib/seasonPacks.ts"), C = await import("../src/lib/colourPixels.ts");
+  for (const pack of Object.values(S.PACKS)) {
+    assert.equal(pack.pictures.length, 3, pack.id);
+    for (const pic of pack.pictures) {
+      assert.ok(pic.rows.length === 8 && pic.rows.every((r) => r.length === 8 && /^[.pbgyr]+$/.test(r)), `${pic.name} is 8×8 in the palette`);
+      const solved = C.lineSolve(pic.rows.map(C.runs), [...Array(8).keys()].map((c) => C.runs(C.colOf(pic.rows, c))));
+      assert.equal(solved.join(""), pic.rows.join(""), `${pic.name} solves line by line`);
+    }
+    for (const w of Object.keys(pack.words)) assert.match(w, /^[a-z]+$/, w);
+  }
+  assert.equal(S.packToday(new Date(2026, 10, 8, 12)), "diwali"); assert.equal(S.packToday(new Date(2026, 6, 1, 12)), "monsoon"); assert.equal(S.packToday(new Date(2026, 2, 1, 12)), null);
+  assert.equal(S.seasonKey(new Date(2027, 0, 1, 12), "christmas"), "2026-christmas", "Christmas runs over New Year");
+  const H = await import("../src/lib/puzzleHunt.ts");
+  assert.equal(H.huntFor("2026-10-27"), null, "no hunt on a Tuesday");
+  const sat = H.huntFor("2026-10-31")!, sun = H.huntFor("2026-11-01")!;
+  assert.equal(sat.key, "2026-10-31"); assert.deepEqual(sun, sat, "Saturday and Sunday share a hunt");
+  assert.equal(new Set(sat.spots.map((s) => s.path)).size, H.HUNT_SIZE);
+  assert.notDeepEqual(H.huntFor("2026-11-07")!.spots, sat.spots, "a new hunt each weekend");
+  assert.equal(new Set(H.SPOTS.map((s) => s.path)).size, H.SPOTS.length);
+  assert.equal(H.nextHunt("2026-10-27"), "2026-10-31");
+  const fs = await import("node:fs");
+  for (const s of H.SPOTS) assert.ok(fs.existsSync(`src/app${s.path}/page.tsx`), `${s.path} exists`);
+  const G = await import("../src/lib/gamesDay.ts");
+  assert.equal(G.gamesDay(2026), "2026-11-14"); assert.equal(G.gamesDay(2027), "2027-11-13");
+  assert.equal(G.nextGamesDay("2026-11-15"), "2027-11-13"); assert.equal(G.daysUntil("2026-10-27", "2026-11-14"), 18);
+  const played = Object.fromEntries([...Array(6).keys()].map((k) => [`g${k}`, ["2026-11-14", "2026-11-13"]]));
+  assert.equal(G.bestGamesDay(played), 6);
+  const T = await import("../src/lib/trophies.ts");
+  const ctx: import("../src/lib/trophies.ts").TrophyCtx = { played, five: [], arcade: {}, local: { flags: ["hunt-done"] } };
+  const got = T.earned(ctx);
+  assert.ok(got.includes("gamesDay5") && !got.includes("gamesDay10") && got.includes("hunt"));
+});

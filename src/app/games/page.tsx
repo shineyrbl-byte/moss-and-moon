@@ -10,6 +10,9 @@ import { drawFive } from "@/components/ShareResult";
 import { TROPHIES, earned, type TrophyCtx } from "@/lib/trophies";
 import { localTrophyStats } from "@/lib/trophyFlags";
 import { eventToday, progress } from "@/lib/seasonalGames";
+import { bestGamesDay, daysUntil, nextGamesDay } from "@/lib/gamesDay";
+import { packToday, PACKS } from "@/lib/seasonPacks";
+import { huntFor } from "@/lib/puzzleHunt";
 import { ANY_TIME, DAILY_KIND, FAVS_KEY, KIND_LABEL, matches, toggleFav, type Filter, type Kind } from "@/lib/gameCatalog";
 
 type G = { id: string; title: string; emoji: string; href: string; blurb: string; done: boolean; streak: number };
@@ -111,6 +114,31 @@ export default function Games() {
           </section>
         );
       })()}
+      {(() => {
+        // Café Games Day: a countdown in the fortnight before, and a tally on the day
+        const gd = nextGamesDay(s.date), left = daysUntil(s.date, gd);
+        if (left > 14) return null;
+        const today = Object.values(played).filter((days) => days.includes(s.date)).length;
+        return (
+          <section className="card season-event" aria-label="Café Games Day">
+            <span className="season-emoji" aria-hidden="true">🎪</span>
+            <div><b>Café Games Day{left === 0 ? " is today!" : `: ${left} day${left === 1 ? "" : "s"} to go`}</b>
+              <p className="small" style={{ margin: "0.1rem 0 0.3rem" }}>{left === 0 ? `Finish 5 daily puzzles today for one trophy, and 10 for another. You've done ${Math.min(today, 10)} so far.` : `The second Saturday of November is our games day. Finish 5 or 10 daily puzzles on the day for two special trophies.`}</p>
+              {left === 0 && <div className="explore-bar" role="progressbar" aria-valuemin={0} aria-valuemax={10} aria-valuenow={Math.min(today, 10)} aria-label={`${Math.min(today, 10)} of 10`}><span style={{ width: `${Math.min(today, 10) * 10}%` }} /></div>}
+              {bestGamesDay(played) >= 10 && <span className="tiny muted">You&apos;ve been a Games Day hero 🎡</span>}</div>
+          </section>
+        );
+      })()}
+      {(() => {
+        const pk = packToday(new Date(`${s.date}T12:00:00`)), hunt = huntFor(s.date);
+        return (
+          <p className="small center games-events">
+            {pk && <><Link href="/season-pack">{PACKS[pk].emoji} The {PACKS[pk].title.toLowerCase()} is out →</Link><br /></>}
+            {hunt && <><Link href="/puzzle-hunt">🗝️ This weekend&apos;s puzzle hunt is on →</Link><br /></>}
+            {s.date.slice(5, 7) === "12" && <><Link href="/advent-puzzles">🎄 Open today&apos;s square of the advent picture →</Link><br /></>}
+          </p>
+        );
+      })()}
       <GameRewards />
       <OfflineSave />
       <p className="small center" style={{ margin: "0.8rem 0" }}><Link href="/trophies">🏆 Trophy shelf{trophies !== null ? `: ${trophies} of ${TROPHIES.length}` : ""} →</Link></p>
@@ -146,7 +174,7 @@ export default function Games() {
           </li>
         ))}
       </ul>
-      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />Want more? <Link href="/practice">🎲 Practice puzzles, as many as you like →</Link><br />Past champions: <Link href="/hall-of-fame">👑 Hall of fame →</Link><br />New to logic puzzles? <Link href="/learn">🎓 Learn to play →</Link><br />Make your own: <Link href="/puzzle-maker">✏️ Puzzle maker →</Link> · Your last twelve months: <Link href="/year-in-games">🎮 Year in games →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration, colour-blind patterns and a daily reminder: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/weekly-crossword">🗞️ Weekly crossword</Link> · <Link href="/play-together">🎮 Play a friend live</Link> · <Link href="/tournament">🏆 Mini tournaments</Link> · <Link href="/daily-duel">⚔️ Daily duel</Link> · <Link href="/clubs">👥 Café clubs</Link></p>
+      <p className="small" style={{ marginTop: "1rem" }}>Missed a day? <Link href="/puzzle-archive">🗂 Play the last week&apos;s puzzles in the archive →</Link><br />Want more? <Link href="/practice">🎲 Practice puzzles, as many as you like →</Link><br />Past champions: <Link href="/hall-of-fame">👑 Hall of fame →</Link><br />New to logic puzzles? <Link href="/learn">🎓 Learn to play →</Link><br />Make your own: <Link href="/puzzle-maker">✏️ Puzzle maker →</Link> · Your last twelve months: <Link href="/year-in-games">🎮 Year in games →</Link><br />How are you getting on? <Link href="/my-stats">📊 See my puzzle stats →</Link><br />Sound, vibration, colour-blind patterns and a daily reminder: <Link href="/game-settings">⚙️ Game settings →</Link><br />Fancy pen and paper? <Link href="/print-puzzles">🖨 Print today&apos;s puzzles →</Link><br />Play with people: <Link href="/friends">🤝 Friends board</Link> · <Link href="/puzzle-of-the-week">🗓 Puzzle of the week</Link> · <Link href="/weekly-crossword">🗞️ Weekly crossword</Link> · <Link href="/play-together">🎮 Play a friend live</Link> · <Link href="/tournament">🏆 Mini tournaments</Link> · <Link href="/daily-duel">⚔️ Daily duel</Link> · <Link href="/clubs">👥 Café clubs</Link><br />Seasons and events: <Link href="/season-pack">🪔 Season packs</Link> · <Link href="/advent-puzzles">🎄 Advent picture</Link> · <Link href="/puzzle-hunt">🗝️ Weekend puzzle hunt</Link></p>
       {anyTime.length > 0 && <h2 className="h3" style={{ marginTop: "1.6rem" }}>Any time</h2>}
       <ul className="games-more">
         {anyTime.map((g) => (

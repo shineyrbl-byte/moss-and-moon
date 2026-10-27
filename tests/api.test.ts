@@ -3800,3 +3800,13 @@ test("demo reset backs up, clears activity and fills in sample orders", async ()
   assert.equal(stats.allTimeOrders, r.body.orders);
   assert.ok(((await s.api("/api/reviews")).body as { reviews: unknown[] }).reviews.length >= 8);
 });
+
+test("batch J: season pack board and the event pages", async () => {
+  const voter = "j".repeat(16) + "batchj";
+  const r = await fetch(`${s.url}/api/weekly-games`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.97" }, body: JSON.stringify({ voter, name: "Jo", game: "season", ms: 90_000 }) });
+  const { packToday } = await import("../src/lib/seasonPacks.ts");
+  if (packToday()) assert.equal(r.status, 200);
+  else { assert.equal(r.status, 400); assert.match(((await r.json()) as { error: string }).error, /no season pack/); }
+  assert.equal((await fetch(`${s.url}/api/weekly-games?game=season`)).status, 200);
+  for (const p of ["/season-pack", "/advent-puzzles", "/puzzle-hunt"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});

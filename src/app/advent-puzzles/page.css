@@ -1,0 +1,5 @@
+/* Styles only this page uses */
+.ap-svg { width: 100%; height: auto; display: block; border-radius: 16px; margin: 0.6rem 0; }
+.ap-door { fill: #c25b78; stroke: #f6eee7; stroke-width: 2; }
+.ap-door.today { fill: #e391a8; stroke: #f6da9e; stroke-width: 4; }
+.ap-num { fill: #fffaf6; font: 700 30px Georgia, serif; }

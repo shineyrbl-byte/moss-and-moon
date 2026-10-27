@@ -1,6 +1,7 @@
 // Game trophies: worked out from what you've played (from the server) and wins kept in this browser. Pure, so the page and tests share it.
 import { KINDS } from "./todaysFive.ts";
 import { EVENTS, progress } from "./seasonalGames.ts";
+import { bestGamesDay } from "./gamesDay.ts";
 
 // Kept here as numbers (rather than importing the level lists) so the trophy shelf stays small
 export const TRAY_LEVELS = 20, JAM_LEVELS = 20;
@@ -180,4 +181,13 @@ export const TROPHIES: Trophy[] = [
 ];
 // Seasonal ones, from the festivals the café dresses up for
 TROPHIES.push(...EVENTS.map((e) => ({ group: "Seasons", id: e.id, emoji: e.emoji, name: e.name, how: e.how, test: (c: TrophyCtx) => progress(e, c.played) >= e.need })));
+TROPHIES.push(
+  { group: "Seasons", id: "packDiwali", emoji: "🏮", name: "Lamplighter", how: "Finish all three pictures in the Diwali season pack", test: (c) => flag(c, "season-diwali") },
+  { group: "Seasons", id: "packChristmas", emoji: "🎁", name: "Deck the halls", how: "Finish all three pictures in the Christmas season pack", test: (c) => flag(c, "season-christmas") },
+  { group: "Seasons", id: "packMonsoon", emoji: "🌧️", name: "Rain painter", how: "Finish all three pictures in the monsoon season pack", test: (c) => flag(c, "season-monsoon") },
+  { group: "Seasons", id: "advent", emoji: "🎅", name: "Every door open", how: "Open all 24 squares of the advent picture", test: (c) => flag(c, "advent-picture") },
+  { group: "Seasons", id: "hunt", emoji: "🗝️", name: "Treasure hunter", how: "Find all five keys in a weekend puzzle hunt", test: (c) => flag(c, "hunt-done") },
+  { group: "Seasons", id: "gamesDay5", emoji: "🎪", name: "Games Day regular", how: "Finish 5 daily puzzles on Café Games Day", test: (c) => bestGamesDay(c.played) >= 5 },
+  { group: "Seasons", id: "gamesDay10", emoji: "🎡", name: "Games Day hero", how: "Finish 10 daily puzzles on Café Games Day", test: (c) => bestGamesDay(c.played) >= 10 },
+);
 export const earned = (c: TrophyCtx) => TROPHIES.filter((t) => t.test(c)).map((t) => t.id);
