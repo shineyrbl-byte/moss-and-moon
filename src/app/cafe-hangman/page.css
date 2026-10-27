@@ -1,0 +1,9 @@
+/* Styles only this page uses */
+.hm-cup { display: block; width: 9rem; height: 9rem; margin: 0.6rem auto 0; color: var(--text); }
+.hm-word { display: flex; justify-content: center; gap: 0.35rem; margin: 0.8rem 0 1rem; flex-wrap: wrap; }
+.hm-word span { width: 1.8rem; height: 2.3rem; border-bottom: 3px solid var(--brown); display: grid; place-items: center; font-weight: 800; font-size: 1.4rem; text-transform: uppercase; }
+.hm-word span.missed { color: var(--pink-ink); }
+.hm-keys { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center; }
+.hm-key { width: 2.3rem; height: 2.6rem; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); font-weight: 700; cursor: pointer; }
+.hm-key.good { background: var(--moss); color: #fff; border-color: var(--moss); }
+.hm-key.bad { opacity: 0.35; }

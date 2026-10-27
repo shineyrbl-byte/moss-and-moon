@@ -3611,6 +3611,16 @@ test("batch E daily puzzles go on the boards", async () => {
   for (const p of ["/word-wheel", "/codeword", "/zip-path", "/delivery-bikes", "/bean-push", "/price-order"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
+test("batch F arcade boards and the eight new any-time pages", async () => {
+  const voter = "f".repeat(16) + "batchf";
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/arcade`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.55" }, body: JSON.stringify({ voter, name: "Fi", ...json }) });
+  for (const [game, ok, bad] of [["swap", 1_770, 1_775], ["bubble", 4_560, 4_565]] as const) {
+    assert.equal((await post({ game, score: ok })).status, 200, game);
+    assert.equal((await post({ game, score: bad })).status, 400, `${game} ${bad}`);
+  }
+  for (const p of ["/sugar-swap", "/bubble-pop", "/mini-golf", "/air-hockey", "/cafe-pool", "/cafe-blackjack", "/battleship", "/cafe-hangman"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);

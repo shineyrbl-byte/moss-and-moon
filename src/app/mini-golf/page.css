@@ -1,0 +1,4 @@
+/* Styles only this page uses */
+.gl-card { width: 100%; border-collapse: collapse; margin-top: 0.8rem; font-size: 0.8rem; text-align: center; }
+.gl-card td, .gl-card th { border: 1px solid var(--line); padding: 0.2rem; }
+.gl-card th { text-align: left; font-weight: 600; }

@@ -1,0 +1,10 @@
+/* Styles only this page uses */
+.bs-seas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 1rem; margin-top: 0.6rem; }
+.bs-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 2px; }
+.bs-sq { aspect-ratio: 1; padding: 0; border: 0; border-radius: 3px; background: #a5c8e8; font-size: clamp(0.6rem, 2.6vw, 0.9rem); display: grid; place-items: center; cursor: pointer; color: #3b2720; }
+.bs-sq:disabled { cursor: default; }
+.bs-sq.ship { background: #8a5a40; }
+.bs-sq.miss { background: #d6e6f2; }
+.bs-sq.hit { background: #f6da9e; }
+.bs-sq.sunk { background: #c25b78; }
+.bs-sq.last { outline: 2px solid #3b2720; outline-offset: -2px; }

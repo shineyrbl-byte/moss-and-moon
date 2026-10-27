@@ -2542,3 +2542,58 @@ test("batch E puzzles: word wheel, codeword, zip path, delivery bikes, bean push
   const S = await import("../src/lib/scoreFormat.ts");
   assert.equal(S.showDaily("push", BP.pack(24, 61_000)), "24 moves, 1:01"); assert.equal(S.showDaily("wheel", WW.pack(12, 30_000)), "12 words, 0:30");
 });
+
+test("batch F games: sugar swap, bubble pop, mini golf, air hockey, pool, blackjack, battleship and hangman", async () => {
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  const SW = await import("../src/lib/sugarSwap.ts");
+  let sw = SW.newGame(42); assert.equal(SW.lines(sw.b).size, 0); assert.ok(SW.hasMove(sw.b));
+  while (!sw.over) { let ok = false; for (let i = 0; i < 64 && !ok; i++) for (const j of [i + 1, i + 8]) { if (j < 64 && !(j === i + 1 && i % 8 === 7)) { const r = SW.swap(sw, i, j); if (r.ok) { sw = r.s; ok = true; break; } } } assert.ok(ok, "always a swap"); }
+  assert.ok(sw.score > 0 && sw.score % 10 === 0); assert.equal(SW.swap(sw, 0, 1).ok, false, "no swaps after the last");
+
+  const BP = await import("../src/lib/bubblePop.ts");
+  let bp = BP.newGame(7);
+  for (let k = 0; k < 30 && !bp.over; k++) bp = BP.fire(bp, (k % 7 - 3) * 0.25).s;
+  assert.ok(bp.shots > 0 && bp.score % 10 === 0);
+  assert.ok(BP.around(0, 0).every((j) => j >= 0 && j < BP.COLS * BP.ROWS));
+
+  const G = await import("../src/lib/miniGolf.ts");
+  let g = G.putt(G.newRound(), 0, -110); // hole 1 is straight up
+  for (let k = 0; k < 600 && g.moving; k++) g = G.step(g, 1 / 60);
+  assert.equal(g.strokes[0], 1); assert.ok(g.ball.y < G.HOLES[0].tee[1]);
+  assert.ok(g.ball.x > 90 && g.ball.x < 210 && g.ball.y > 40, "stays inside the walls");
+
+  const A = await import("../src/lib/airHockey.ts");
+  let a = A.newGame();
+  for (let k = 0; k < 60 * 300 && !a.over; k++) { const m0 = A.computerMallet({ ...a, puck: { ...a.puck, y: A.H - a.puck.y, vy: -a.puck.vy }, mallets: [a.mallets[1], { x: a.mallets[0].x, y: A.H - a.mallets[0].y }] }, "easy", 1 / 60); a = A.step(a, 1 / 60, [{ x: m0.x, y: A.H - m0.y }, A.computerMallet(a, "hard", 1 / 60)]).s; assert.ok(a.puck.x >= 0 && a.puck.x <= A.W); }
+  assert.ok(a.over, "a computer-only game finishes"); assert.equal(Math.max(...a.score), A.TARGET);
+
+  const P = await import("../src/lib/pool.ts");
+  const rand = seededRand("pool-test"); let p = P.newGame(); let shots = 0;
+  p = P.simulate(p, -Math.PI / 2 + 0.02, 1);
+  while (p.winner === null && shots++ < 150) { const sh = P.computerShot(p, "hard", rand); p = P.simulate(p, sh.angle, sh.power); }
+  assert.notEqual(p.winner, null, "a computer-only game finishes");
+  assert.ok(p.balls.find((b) => b.n === 8)!.down);
+
+  const BJ = await import("../src/lib/blackjack.ts");
+  assert.equal(BJ.total([{ r: 1, s: 0 }, { r: 13, s: 0 }]).t, 21); assert.ok(BJ.isBlackjack([{ r: 1, s: 0 }, { r: 13, s: 0 }]));
+  assert.equal(BJ.total([{ r: 1, s: 0 }, { r: 9, s: 0 }, { r: 5, s: 0 }]).t, 15);
+  let bj = BJ.deal(BJ.newTable(seededRand("bj")), 50, seededRand("bj2"));
+  assert.equal(bj.chips + bj.bet, BJ.START);
+  while (bj.phase === "play") bj = BJ.stand(bj, seededRand("bj3"));
+  assert.ok(bj.result && [BJ.START - 50, BJ.START, BJ.START + 50, BJ.START + 75].includes(bj.chips));
+
+  const BS = await import("../src/lib/battleship.ts");
+  const board = BS.newBoard(seededRand("bs"));
+  assert.equal(new Set(board.ships.flat()).size, BS.FLEET.reduce((x, y) => x + y, 0), "no overlaps");
+  let bb = board, n = 0; while (!BS.allSunk(bb)) { bb = BS.fire(bb, BS.aim(bb, "hard", seededRand(`a${n}`))).b; n++; }
+  assert.ok(n < 100); assert.equal(BS.fire(bb, bb.shots.indexOf(true)), null, "can't fire twice at a square");
+
+  const HM = await import("../src/lib/hangman.ts");
+  let h = { word: "latte", guessed: [], over: false, won: false } as import("../src/lib/hangman.ts").State;
+  for (const l of "late") h = HM.guess(h, l);
+  assert.ok(h.won && h.over);
+  let h2 = { word: "mocha", guessed: [], over: false, won: false } as import("../src/lib/hangman.ts").State;
+  for (const l of "bdefgij") h2 = HM.guess(h2, l);
+  assert.ok(h2.over && !h2.won); assert.equal(HM.wrong(h2), HM.LIVES);
+  assert.ok(HM.WORDS.length > 50 && HM.WORDS.every((w) => HM.clueFor(w)));
+});

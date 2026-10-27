@@ -1,0 +1,8 @@
+/* Styles only this page uses */
+.sw-grid { display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 3px; padding: 6px; border-radius: 16px; background: #f6dce3; touch-action: none; user-select: none; -webkit-user-select: none; }
+.sw-cell { aspect-ratio: 1; padding: 0; border: 0; border-radius: 10px; background: #fffaf6; font-size: clamp(1.1rem, 6vw, 1.8rem); display: grid; place-items: center; cursor: pointer; }
+.sw-cell.on { background: #f6da9e; box-shadow: 0 0 0 3px #c25b78; }
+.sw-flash { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); background: #c25b78; color: #fff; font-weight: 800; padding: 0.4rem 1rem; border-radius: 999px; pointer-events: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sw-grid { background: #5a3a44; } :root:not([data-theme="light"]) .sw-cell { background: #3a2620; } }
+:root[data-theme="dark"] .sw-grid { background: #5a3a44; }
+:root[data-theme="dark"] .sw-cell { background: #3a2620; }
