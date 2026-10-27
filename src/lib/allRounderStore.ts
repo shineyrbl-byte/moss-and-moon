@@ -50,7 +50,7 @@ export function trophyData(customerId: number | null, voter: unknown) {
   const v = cleanVoter(voter);
   const played = playedMap(customerId, v);
   const arcade: Record<string, number | null> = {};
-  for (const g of ["stacker", "typing", "snake", "higherlower", "merge", "dice", "echo", "breaker", "pastry", "dash", "puff", "pigeons", "muncher", "beat"]) {
+  for (const g of ["stacker", "typing", "snake", "higherlower", "merge", "dice", "echo", "breaker", "pastry", "dash", "puff", "pigeons", "muncher", "beat", "pinball", "road", "cupcakes", "slice"]) {
     const vs = [...new Set([v, ...votersFor(customerId)].filter(Boolean))] as string[];
     const best = vs.map((x) => (db.prepare("SELECT MAX(score) AS s FROM arcade_scores WHERE game = ? AND voter = ?").get(g, x) as { s: number | null }).s).filter((x): x is number => x !== null);
     arcade[g] = best.length ? Math.max(...best) : null;

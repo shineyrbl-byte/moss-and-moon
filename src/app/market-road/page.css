@@ -1,0 +1,14 @@
+/* Styles only this page uses */
+.mr-board { display: grid; grid-template-rows: repeat(var(--rows), 1fr); width: 100%; aspect-ratio: 9 / 11; border-radius: 14px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.mr-row { position: relative; overflow: hidden; }
+.mr-row.cafe { background: #8a5a40; }
+.mr-row.pave { background: #d9c4ad; }
+.mr-row.market { background: #e9d7a8; border-bottom: 1px dashed rgba(90, 58, 44, 0.3); }
+.mr-row.road { background: #5d5552; border-bottom: 2px dashed rgba(255, 255, 255, 0.35); }
+.mr-thing, .mr-me, .mr-door { position: absolute; top: 0; bottom: 0; display: grid; place-items: center; font-size: clamp(1rem, 5.6vw, 1.7rem); line-height: 1; }
+.mr-me, .mr-door { width: calc(100% / 9); }
+.mr-me { z-index: 2; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4)); }
+.mr-door.open { background: rgba(255, 250, 246, 0.18); }
+.mr-board.bump { animation: mrBump 0.35s; }
+@keyframes mrBump { 30% { transform: translateX(-4px); } 60% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .mr-board.bump { animation: none; outline: 3px solid #d64545; } }

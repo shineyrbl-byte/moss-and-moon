@@ -2385,3 +2385,74 @@ test("batch B puzzles: coffee trail, steam pipes, cookie cutters, cryptic clues,
   for (const e of a.entries) { assert.equal(e.cells.map((i) => a.grid[i]).join(""), e.answer); assert.ok(e.clue); }
   assert.ok(W.isSolved(a.grid, a.grid.map((g) => g.toUpperCase())));
 });
+
+test("batch C games: dominoes, café letters, poker, pinball, market road, cupcakes and slicing", async () => {
+  const { seededRand } = await import("../src/lib/gameOrders.ts");
+  const D = await import("../src/lib/dominoes.ts");
+  assert.equal(D.SET.length, 28);
+  for (let g = 0; g < 40; g++) {
+    const rand = seededRand(`dom${g}`); let r = D.deal(rand);
+    for (let k = 0; k < 200 && r.winner === null; k++) { const m = D.bestMove(r, k % 2 ? "hard" : "easy", rand); r = m ? D.play(r, m.tile, m.end)! : D.drawOrPass(r); }
+    assert.notEqual(r.winner, null);
+    assert.equal(r.line.length + r.hands[0].length + r.hands[1].length + r.boneyard.length, 28);
+    for (let i = 1; i < r.line.length; i++) assert.equal(r.line[i - 1][1], r.line[i][0], "the line matches up");
+  }
+
+  const L = await import("../src/lib/cafeLetters.ts");
+  const empty = Array(L.N * L.N).fill("");
+  assert.deepEqual(L.evaluate(empty, [{ at: 59, letter: "c" }, { at: 60, letter: "a" }, { at: 61, letter: "t" }]), { ok: true, words: ["cat"], points: 10 }, "the star doubles CAT");
+  assert.equal(L.evaluate(empty, [{ at: 0, letter: "c" }, { at: 1, letter: "a" }, { at: 2, letter: "t" }]).ok, false, "first word on the star");
+  assert.equal(L.evaluate(empty, [{ at: 59, letter: "c" }, { at: 71, letter: "a" }]).ok, false, "one straight line");
+  assert.equal(L.evaluate(empty, [{ at: 58, letter: "x" }, { at: 59, letter: "q" }, { at: 60, letter: "z" }]).ok, false, "not a word");
+  const b2 = [...empty]; b2[59] = "c"; b2[60] = "a"; b2[61] = "t";
+  assert.equal(L.evaluate(b2, [{ at: 62, letter: "s" }]).ok, true, "CATS"); assert.equal(L.evaluate(b2, [{ at: 0, letter: "a" }, { at: 1, letter: "t" }]).ok, false, "must join up");
+  let lg = L.newGame(seededRand("letters"));
+  for (let k = 0; k < 60 && !lg.over; k++) { const ms = L.computerMoves(lg); const n = ms.length ? L.playMove(lg, ms[0].move) : L.passOrSwap(lg, [], seededRand(`p${k}`)); assert.ok(!("why" in n)); lg = n as typeof lg; }
+  assert.ok(lg.over, "a computer-only game finishes");
+  assert.equal(lg.board.filter(Boolean).length + lg.racks[0].length + lg.racks[1].length + lg.bag.length, L.BAG.length);
+
+  const P = await import("../src/lib/poker.ts");
+  const c = (s: string) => s.split(" ").map((x) => ({ r: "  23456789TJQKA".indexOf(x[0]), s: "shdc".indexOf(x[1]) }));
+  assert.equal(P.categoryOf(P.bestOf(c("Ah Kh Qh Jh Th 2c 3d"))), "Straight flush");
+  assert.equal(P.categoryOf(P.bestOf(c("Ah 2d 3c 4s 5h 9c 9d"))), "Straight");
+  assert.ok(P.bestOf(c("Ah 2d 3c 4s 5h")) < P.bestOf(c("2d 3c 4s 5h 6h")), "the wheel is the lowest straight");
+  assert.ok(P.bestOf(c("Ah Ad Kc 7d 9s")) > P.bestOf(c("Ah Ad Qc 7d 9s")), "kickers count");
+  // Side pot: a short stack all in with the best hand wins only the main pot
+  const seats = P.newTable(); seats[0].chips = 100; seats[3].out = true; seats[3].chips = 0;
+  let h = P.startHand(seats, 3, 1, seededRand("side"));
+  h.seats[0].cards = c("Ah As"); h.seats[1].cards = c("Kh Ks"); h.seats[2].cards = c("2c 7d");
+  h.deck = [...c("3d 4c 9h 2h Jc 8d Qs 5c"), ...h.deck.slice(8)].reverse();
+  for (let k = 0; k < 30 && !h.result; k++) h = P.act(h, h.turn === 0 ? { kind: "call" } : h.toMatch < 500 ? { kind: "raise", to: 500 } : { kind: "call" });
+  assert.ok(h.result);
+  assert.equal(h.seats.reduce((n, s) => n + s.chips, 0), 2100, "no chips made or lost");
+  assert.equal(h.seats[0].chips, 300, "aces win the main pot: 100 from each of three");
+  assert.equal(h.seats[1].chips, 1800, "kings win the side pot (both bigger stacks went all in)"); assert.equal(h.seats[2].chips, 0);
+
+  const PB = await import("../src/lib/pinball.ts");
+  let pb = PB.launch(PB.newState(), 1);
+  for (let k = 0; k < 60 * 40 && !pb.over; k++) { pb = PB.step(pb, 1 / 60, [false, false]); if (pb.inShooter) pb = PB.launch(pb, 0.8); if (pb.ball) assert.ok(pb.ball.x > -20 && pb.ball.x < PB.WIDTH + 20 && pb.ball.y > -20); }
+  assert.ok(pb.over, "with no flipping, the balls drain"); assert.equal(pb.score % 10, 0);
+
+  const R = await import("../src/lib/marketRoad.ts");
+  let rs = R.newState();
+  rs = R.hop(rs, "up"); assert.equal(rs.score, 10); rs = R.hop(rs, "down"); rs = R.hop(rs, "up"); assert.equal(rs.score, 10, "no points twice for the same row");
+  const lane = R.lanes(1)[0];
+  for (const t of [0, 1.3, 7.7]) assert.equal(R.positions(lane, t).length, R.positions(lane, 0).length);
+  const atDoor = { ...R.newState(), r: 1, c: 1, best: 1 }; const inDoor = R.hop(atDoor, "up");
+  assert.deepEqual(inDoor.filled, [1]); assert.equal(R.hop({ ...atDoor, c: 2 }, "up").r, 1, "no door there");
+
+  const CU = await import("../src/lib/cupcakes.ts");
+  const pops = CU.schedule(seededRand("cup"));
+  assert.ok(pops.length > 30 && pops.every((p) => p.until > p.at && p.until <= CU.GAME_MS));
+  const all = new Set(pops.flatMap((p, i) => (p.kind === "burnt" ? [] : [i])));
+  assert.ok(CU.scoreOf(pops, all) <= CU.CUPCAKE_MAX && CU.scoreOf(pops, all) % 10 === 0);
+  for (let t = 0; t < CU.GAME_MS; t += 100) { const holes = CU.showing(pops, new Set(), t).map((i) => pops[i].hole); assert.equal(new Set(holes).size, holes.length, "one cupcake per tin"); }
+
+  const SC = await import("../src/lib/sliceCake.ts");
+  let sc = SC.newState(); const rand = seededRand("slice");
+  for (let k = 0; k < 60; k++) sc = SC.step(sc, 1 / 30, rand);
+  assert.ok(sc.items.length > 0);
+  const target = sc.items.find((i) => i.kind !== "chilli");
+  if (target) { const r = SC.swipe(sc, target.x - 40, target.y, target.x + 40, target.y, true); assert.ok(r.s.score >= 10); }
+  assert.ok(SC.crosses(0, 0, 10, 0, 5, 1, 2)); assert.ok(!SC.crosses(0, 0, 10, 0, 5, 5, 2));
+});

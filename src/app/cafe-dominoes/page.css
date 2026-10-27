@@ -1,0 +1,17 @@
+/* Styles only this page uses */
+.dm-tile { width: 4.2rem; height: 2.1rem; display: block; }
+.dm-tile.v { width: 2.1rem; height: 4.2rem; }
+.dm-face { fill: #fffaf6; stroke: #5a3a2c; stroke-width: 4; }
+.dm-tile.down .dm-face { fill: #c25b78; }
+.dm-mid { stroke: #5a3a2c; stroke-width: 3; }
+.dm-dot { fill: #3b2720; }
+.dm-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; margin: 0.6rem 0; }
+.dm-hand.them .dm-tile.v { width: 1.5rem; height: 3rem; }
+.dm-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; min-height: 5rem; padding: 0.8rem; border-radius: 16px; background: #5f7a55; }
+.dm-line .dm-tile { width: 3.4rem; height: 1.7rem; }
+.dm-line .dm-tile.v { width: 1.7rem; height: 3.4rem; }
+.dm-new .dm-face { stroke: #f6da9e; stroke-width: 8; }
+.dm-btn { padding: 0.15rem; border: 2px solid transparent; border-radius: 10px; background: transparent; cursor: pointer; }
+.dm-btn.can { border-color: var(--pink); }
+.dm-btn.sel { background: var(--pink-soft); }
+.dm-btn:disabled { cursor: default; }

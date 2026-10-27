@@ -17,9 +17,13 @@ import { PUFF_MAX } from "./steamPuff";
 import { PIGEON_MAX } from "./pigeons";
 import { MUNCH_MAX } from "./muncher";
 import { BEAT_MAX } from "./latteBeat";
+import { PINBALL_MAX } from "./pinball";
+import { ROAD_MAX } from "./marketRoad";
+import { CUPCAKE_MAX } from "./cupcakes";
+import { SLICE_MAX } from "./sliceCake";
 
 const cleanVoter = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{16,64}$/i.test(v) ? v.toLowerCase() : null);
-const GAMES = { higherlower: HL_MAX, merge: MAX_SCORE, snake: SNAKE_MAX, typing: TYPING_MAX, stacker: STACKER_MAX, dice: DICE_MAX, echo: ECHO_MAX, breaker: BREAKER_MAX, pastry: PASTRY_MAX, dash: DASH_MAX, puff: PUFF_MAX, pigeons: PIGEON_MAX, muncher: MUNCH_MAX, beat: BEAT_MAX } as const;
+const GAMES = { higherlower: HL_MAX, merge: MAX_SCORE, snake: SNAKE_MAX, typing: TYPING_MAX, stacker: STACKER_MAX, dice: DICE_MAX, echo: ECHO_MAX, breaker: BREAKER_MAX, pastry: PASTRY_MAX, dash: DASH_MAX, puff: PUFF_MAX, pigeons: PIGEON_MAX, muncher: MUNCH_MAX, beat: BEAT_MAX, pinball: PINBALL_MAX, road: ROAD_MAX, cupcakes: CUPCAKE_MAX, slice: SLICE_MAX } as const;
 export type ArcadeGame = keyof typeof GAMES;
 export const isArcadeGame = (g: unknown): g is ArcadeGame => typeof g === "string" && g in GAMES;
 
@@ -36,7 +40,7 @@ export function submitArcade(game: ArcadeGame, b: Record<string, unknown>, now =
   const voter = cleanVoter(b.voter);
   if (!voter) return { error: "Something went wrong. Refresh and try again." };
   const score = Number(b.score);
-  if (!Number.isInteger(score) || score < 1 || score > GAMES[game] || (game === "merge" && score % 4 !== 0) || ((game === "breaker" || game === "pigeons" || game === "muncher") && score % 10 !== 0)) return { error: "That score doesn't look right." };
+  if (!Number.isInteger(score) || score < 1 || score > GAMES[game] || (game === "merge" && score % 4 !== 0) || (["breaker", "pigeons", "muncher", "pinball", "road", "cupcakes", "slice"].includes(game) && score % 10 !== 0)) return { error: "That score doesn't look right." };
   const name = cleanText(b.name, 20).replace(/[<>]/g, "") || "Guest";
   db.prepare(`INSERT INTO arcade_scores (game, week, voter, name, score) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(game, week, voter) DO UPDATE SET name = excluded.name, score = excluded.score, at = datetime('now') WHERE excluded.score > arcade_scores.score`)

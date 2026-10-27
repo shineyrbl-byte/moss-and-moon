@@ -1,0 +1,15 @@
+/* Styles only this page uses */
+.cl-board { display: grid; grid-template-columns: repeat(11, 1fr); gap: 2px; width: min(100%, 34rem); margin: 0 auto; padding: 3px; border-radius: 10px; background: #8a5a40; }
+.cl-sq { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: 3px; background: #f3e6d6; color: #3b2720; display: grid; place-items: center; font-size: clamp(0.55rem, 2.4vw, 0.75rem); cursor: pointer; }
+.cl-sq.dl { background: #f6dce3; } .cl-sq.tl { background: #e391a8; color: #fff; }
+.cl-sq.dw { background: #d9b48f; } .cl-sq.tw { background: #8a5a40; color: #fff; }
+.cl-p { font-weight: 700; font-size: 0.85em; opacity: 0.85; }
+.cl-sq.tile, .cl-tile { background: #fff4d6; color: #3b2720; box-shadow: inset 0 -2px 0 rgba(120, 80, 40, 0.35); }
+.cl-sq.new { background: #f6da9e; outline: 2px solid var(--pink-deep); outline-offset: -2px; }
+.cl-l { font-weight: 800; font-size: clamp(0.8rem, 3.6vw, 1.15rem); line-height: 1; }
+.cl-v { position: absolute; right: 2px; bottom: 1px; font-size: clamp(0.4rem, 1.6vw, 0.55rem); font-weight: 600; }
+.cl-rack { display: flex; justify-content: center; gap: 0.35rem; margin: 0.8rem 0 0.6rem; min-height: 3rem; }
+.cl-tile { position: relative; width: 2.7rem; height: 2.9rem; border: 0; border-radius: 8px; display: grid; place-items: center; cursor: pointer; }
+.cl-tile .cl-l { font-size: 1.3rem; } .cl-tile .cl-v { font-size: 0.62rem; right: 4px; bottom: 3px; }
+.cl-tile.on { outline: 3px solid var(--pink-deep); transform: translateY(-3px); }
+.cl-tile.swap { opacity: 0.45; outline: 2px dashed var(--brown); }

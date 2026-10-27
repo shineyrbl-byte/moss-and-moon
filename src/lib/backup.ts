@@ -24,13 +24,15 @@ export function makeBackup(label = "") {
   const file = path.join(backupDir(), name);
   fs.writeFileSync(file, zlib.gzipSync(fs.readFileSync(tmp), { level: 9 }));
   fs.rmSync(tmp, { force: true });
-  prune();
-  return { name, file, size: fs.statSync(file).size };
+  const size = fs.statSync(file).size;
+  prune(name);
+  return { name, file, size };
 }
 
-function prune() {
+/** Keep the newest few, and never the one just made (names close together could sort it out of the list) */
+function prune(keep: string) {
   const all = listBackups();
-  for (const b of all.slice(KEEP)) fs.rmSync(path.join(backupDir(), b.name), { force: true });
+  for (const b of all.slice(KEEP)) if (b.name !== keep) fs.rmSync(path.join(backupDir(), b.name), { force: true });
 }
 
 export function listBackups() {

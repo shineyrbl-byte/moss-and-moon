@@ -3550,6 +3550,18 @@ test("batch B daily puzzles and the weekly crossword board", async () => {
   for (const p of ["/coffee-trail", "/steam-pipes", "/cookie-cutters", "/cryptic-clue", "/sugar-stars", "/weekly-crossword"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
+test("batch C arcade boards and the seven new any-time pages", async () => {
+  const voter = "k".repeat(16) + "batchc";
+  const post = (json: Record<string, unknown>) => fetch(`${s.url}/api/arcade`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.50" }, body: JSON.stringify({ voter, name: "Ci", ...json }) });
+  for (const [game, ok, bad] of [["pinball", 25_430, 25_435], ["road", 1_230, 1_235], ["cupcakes", 480, 3_010], ["slice", 640, 645]] as const) {
+    assert.equal((await post({ game, score: ok })).status, 200, game);
+    assert.equal((await post({ game, score: bad })).status, 400, `${game} ${bad}`);
+  }
+  const tr = (await (await fetch(`${s.url}/api/trophies?voter=${voter}`)).json()) as { arcade: Record<string, number | null> };
+  assert.equal(tr.arcade.pinball, 25_430); assert.equal(tr.arcade.slice, 640);
+  for (const p of ["/cafe-dominoes", "/cafe-letters", "/cafe-poker", "/pinball-parlour", "/market-road", "/pop-the-cupcakes", "/slice-the-cake"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
 test("demo reset backs up, clears activity and fills in sample orders", async () => {
   await s.login();
   assert.equal((await s.api("/api/admin/demo-reset", { method: "POST", json: { confirm: "yes" } })).status, 400);
