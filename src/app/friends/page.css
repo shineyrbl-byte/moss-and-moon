@@ -2,3 +2,8 @@
 .fr-code { font-family: ui-monospace, monospace; font-size: 2rem; letter-spacing: 0.18em; color: var(--pink-ink); }
 .fr-table td.fr-best { font-weight: 700; }
 .fr-table td.fr-best::after { content: " 🏅"; }
+.fr-league { list-style: none; padding: 0; margin: 0.4rem 0; display: grid; gap: 0.3rem; }
+.fr-league li { display: grid; grid-template-columns: 1.8rem 1fr auto; gap: 0 0.6rem; align-items: baseline; padding: 0.45rem 0.7rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.fr-league li.me { border-color: var(--pink-deep); }
+.fr-league .tiny { grid-column: 2 / 4; }
+.fr-rank { font-weight: 800; color: var(--pink-ink); }

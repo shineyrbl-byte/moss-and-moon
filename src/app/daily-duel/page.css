@@ -1,0 +1,9 @@
+/* Styles only this page uses */
+.dd-list, .dd-opts, .dd-recent { list-style: none; padding: 0; margin: 0.4rem 0; display: grid; gap: 0.4rem; }
+.dd-opts { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
+.dd-duel { display: grid; gap: 0.3rem; padding: 0.7rem 0.9rem; }
+.dd-duel.won { border-color: var(--moss); }
+.dd-duel.lost { opacity: 0.8; }
+.dd-title { font-weight: 600; }
+.dd-opt { display: grid; width: 100%; text-align: left; padding: 0.7rem 0.9rem; cursor: pointer; color: var(--text); font: inherit; }
+.dd-opt:hover { border-color: var(--pink); }

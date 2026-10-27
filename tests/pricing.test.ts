@@ -2597,3 +2597,37 @@ test("batch F games: sugar swap, bubble pop, mini golf, air hockey, pool, blackj
   assert.ok(h2.over && !h2.won); assert.equal(HM.wrong(h2), HM.LIVES);
   assert.ok(HM.WORDS.length > 50 && HM.WORDS.every((w) => HM.clueFor(w)));
 });
+
+test("live rooms with hidden hands: the server plays the rules and hides other players' cards", async () => {
+  const RG = await import("../src/lib/roomGames.ts");
+  // Poker: three at the table
+  let p = RG.seated(RG.freshState("poker", 11), 3);
+  assert.ok("error" in RG.apply(p, 1, { type: "deal" }), "only the host deals");
+  let r = RG.apply(p, 0, { type: "deal" }); assert.ok("s" in r); p = (r as { s: typeof p }).s;
+  const v1 = RG.view(p, 1) as unknown as { h: { seats: { cards: unknown[] }[]; deck: unknown[] } };
+  assert.ok(v1.h.seats[1].cards.every(Boolean), "you see your cards"); assert.ok(v1.h.seats[0].cards.every((c) => c === null), "not theirs");
+  assert.equal(v1.h.deck.length, 0, "nor the deck"); assert.ok(v1.h.seats[3].cards.length === 0, "the empty seat is out");
+  const turn = (p as unknown as { h: { turn: number } }).h.turn;
+  assert.ok("error" in RG.apply(p, (turn + 1) % 3, { type: "call" }), "not your turn");
+  for (let k = 0; k < 40 && !(p as unknown as { h: { result: unknown } }).h.result; k++) { const t = (p as unknown as { h: { turn: number } }).h.turn; const rr = RG.apply(p, t, { type: "call" }); assert.ok("s" in rr, JSON.stringify(rr)); p = (rr as { s: typeof p }).s; }
+  const chips = (p as unknown as { h: { seats: { chips: number }[] } }).h.seats.reduce((n, s) => n + s.chips, 0);
+  assert.equal(chips, 3000, "chips add up after a hand");
+  // Dominoes
+  let d = RG.freshState("dominoes", 5);
+  const dv = RG.view(d, 0) as unknown as { r: { hands: unknown[][]; boneyard: unknown[] } };
+  assert.ok(dv.r.hands[0].every(Boolean) && dv.r.hands[1].every((t) => t === null) && dv.r.boneyard.every((t) => t === null));
+  for (let k = 0; k < 200 && !d.over; k++) {
+    const st = d as unknown as { r: import("../src/lib/dominoes.ts").Round };
+    if (st.r.winner !== null) { const n = RG.apply(d, 0, { type: "next" }); d = (n as { s: typeof d }).s; continue; }
+    const DM = await import("../src/lib/dominoes.ts");
+    const who = st.r.turn, m = DM.bestMove(st.r, "easy", () => 0.4);
+    const n = RG.apply(d, who, m ? { type: "play", tile: m.tile, end: m.end } : { type: "draw" });
+    assert.ok("s" in n, JSON.stringify(n)); d = (n as { s: typeof d }).s;
+  }
+  // Café letters
+  const l = RG.freshState("letters", 9);
+  const lv = RG.view(l, 1) as unknown as { g: { racks: unknown[][]; bag: unknown[] } };
+  assert.ok(lv.g.racks[1].every(Boolean) && lv.g.racks[0].every((x) => x === null) && lv.g.bag.every((x) => x === null));
+  assert.ok("error" in RG.apply(l, 1, { type: "pass", swap: [] }), "player 1 goes second");
+  assert.ok("s" in RG.apply(l, 0, { type: "pass", swap: [] }));
+});

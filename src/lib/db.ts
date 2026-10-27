@@ -1122,6 +1122,29 @@ function open() {
     guest TEXT,
     updated_at INTEGER NOT NULL
   );`);
+  // Daily duels: you against a random player who's already done today's puzzle
+  db.exec(`CREATE TABLE IF NOT EXISTS duels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    voter TEXT NOT NULL,
+    game TEXT NOT NULL,
+    date TEXT NOT NULL,
+    opp TEXT NOT NULL,
+    opp_name TEXT NOT NULL,
+    opp_ms INTEGER NOT NULL,
+    UNIQUE (voter, game, date)
+  );`);
+  // Café clubs: teams that pool their puzzles on a weekly board
+  db.exec(`CREATE TABLE IF NOT EXISTS clubs (
+    code TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS club_members (
+    voter TEXT PRIMARY KEY,
+    club TEXT NOT NULL,
+    name TEXT NOT NULL,
+    joined_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
   // Café rewards: a loyalty stamp for every week-long run of today's five
   db.exec(`CREATE TABLE IF NOT EXISTS game_rewards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1270,6 +1293,12 @@ function open() {
   addColumn(db, "orders", "sim", "INTEGER NOT NULL DEFAULT 0"); // 1 = made by "a day in the life"
   addColumn(db, "ingredients", "supplier_email", "TEXT");
   addColumn(db, "ingredients", "reorder_qty", "REAL");
+  // Live rooms: more seats, names, emoji reactions, rematch votes, and the starting board for a rematch
+  addColumn(db, "game_rooms", "extra", "TEXT NOT NULL DEFAULT '[]'");
+  addColumn(db, "game_rooms", "names", "TEXT NOT NULL DEFAULT '[]'");
+  addColumn(db, "game_rooms", "reactions", "TEXT NOT NULL DEFAULT '[]'");
+  addColumn(db, "game_rooms", "rematch", "TEXT NOT NULL DEFAULT '[]'");
+  addColumn(db, "game_rooms", "fresh", "TEXT");
 
   // First run: copy the starting menu into the database
   const items = db.prepare("SELECT COUNT(*) AS n FROM menu_items").get() as { n: number };

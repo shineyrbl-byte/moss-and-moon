@@ -45,6 +45,7 @@ export default function BoardPage() {
   const [chain, setChain] = useState<{ text: string; name: string; count: number } | null>(null);
   const [quizOn, setQuizOn] = useState<{ title: string; players: number } | null>(null);
   const [shouts, setShouts] = useState<{ id: number; text: string; from_name: string }[]>([]);
+  const [leaders, setLeaders] = useState<{ game: string; title: string; emoji: string; name: string; score: string; players: number }[]>([]);
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const seenReady = useRef<Set<string> | null>(null);
   const soundRef = useRef(false);
@@ -61,6 +62,7 @@ export default function BoardPage() {
         fetch("/api/latte-art?board=1").then((r) => r.json()).then((d) => alive && setLatte(d.art)).catch(() => {});
         fetch("/api/connect4").then((r) => r.json()).then((d) => alive && setC4(d)).catch(() => {});
         fetch("/api/quiz").then((r) => r.json()).then((d) => alive && setQuizOn(d.quiz && d.quiz.phase !== "done" ? d.quiz : null)).catch(() => {});
+        fetch("/api/today-champions").then((r) => r.json()).then((d) => alive && Array.isArray(d.leaders) && setLeaders(d.leaders)).catch(() => {});
         fetch("/api/shoutouts").then((r) => r.json()).then((d) => alive && Array.isArray(d.shouts) && setShouts(d.shouts)).catch(() => {});
         fetch("/api/story-chain?board=1").then((r) => r.json()).then((d) => alive && setChain(d)).catch(() => {});
         fetch("/api/photos?kind=doodle").then((r) => r.json()).then((d) => { if (alive && Array.isArray(d.photos)) { setDoodles(d.photos.slice(0, 12)); setDoodleAt((i) => i + 1); } }).catch(() => {});
@@ -131,6 +133,13 @@ export default function BoardPage() {
         </div>
       )}
       {quizOn && <p className="board-shout">🎤 {quizOn.title} is on! Join on your phone: mossandmoon → Quiz night <span className="muted">· {quizOn.players} team{quizOn.players === 1 ? "" : "s"} in</span></p>}
+      {leaders.length > 0 && (
+        <div className="board-leaders" aria-live="polite">
+          <b>🏆 Today&apos;s puzzle leaders</b>
+          {[0, 1, 2].map((k) => leaders[(doodleAt * 3 + k) % leaders.length]).filter((l, k, a) => a.indexOf(l) === k).map((l) => <span key={l.game}>{l.emoji} {l.title}: <b>{l.name}</b> <span className="muted">{l.score}</span></span>)}
+          <span className="muted">Beat them: mossandmoon → Games</span>
+        </div>
+      )}
       {story && <p className="board-story">✍️ <q>{story.text}</q> <span className="muted">· six-word story of the week{story.name ? ` by ${story.name}` : ""}</span></p>}
       {shouts.length > 0 && (() => {
         const sh = shouts[doodleAt % shouts.length];

@@ -1,0 +1,12 @@
+/* Styles only this page uses */
+.cb-mine { padding: 1rem 1.1rem; margin-top: 1rem; }
+.cb-code { letter-spacing: 0.12em; color: var(--pink-ink); }
+.cb-members { padding-left: 1.4rem; display: grid; gap: 0.2rem; }
+.cb-members li { display: flex; justify-content: space-between; padding-right: 0.4rem; }
+.cb-members li.me { font-weight: 600; }
+.cb-forms { margin-top: 1rem; display: grid; gap: 0.6rem; }
+.cb-form { display: flex; gap: 0.5rem; align-items: end; flex-wrap: wrap; padding: 0.8rem 1rem; }
+.cb-board { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.cb-board th, .cb-board td { padding: 0.4rem; border-bottom: 1px dashed var(--line); text-align: left; }
+.cb-board th { font-size: 0.78rem; color: var(--muted); }
+.cb-board tr.mine td { color: var(--pink-ink); font-weight: 600; }

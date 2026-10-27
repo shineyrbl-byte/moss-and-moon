@@ -1,5 +1,6 @@
 // Friends: everyone gets a short friend code; add a friend's code to see their times next to yours. One way, like following.
 import "server-only";
+import { league, type Row } from "./league";
 import { randomInt } from "node:crypto";
 import { db, cleanText } from "./db";
 import { toDateStr } from "./cafe";
@@ -60,5 +61,8 @@ export function board(voterIn: unknown, now = new Date()) {
     const w = db.prepare("SELECT ms FROM weekly_scores WHERE voter = ? AND week = ?").get(v, week) as { ms: number } | undefined;
     return { code: c?.code ?? "", name: c?.name ?? (v === voter ? "You" : "A friend"), me: v === voter, played: rows.length, times: Object.fromEntries(rows.map((r) => [r.game, r.ms])), weekly: w?.ms ?? null };
   });
-  return { me: mine, people, games: DAILY_GAMES.map((g) => ({ id: g.id, title: g.title, emoji: g.emoji })), today, week };
+  // This week's league, from Monday to today (each person's best per puzzle per day, at the usual level)
+  const rows = ids.flatMap((v) => db.prepare("SELECT voter, game, date, MIN(ms) AS ms FROM daily_scores WHERE voter = ? AND date >= ? AND date <= ? GROUP BY game, date").all(v, week, today) as Row[]);
+  const standings = league(ids, rows).map((s) => { const p = people[ids.indexOf(s.voter)]; return { name: p.name, me: p.me, points: s.points, solved: s.solved, bests: s.bests }; });
+  return { me: mine, people, games: DAILY_GAMES.map((g) => ({ id: g.id, title: g.title, emoji: g.emoji })), today, week, league: standings };
 }

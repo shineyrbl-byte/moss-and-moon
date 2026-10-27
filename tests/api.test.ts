@@ -3476,7 +3476,7 @@ test("account sync, friends, the puzzle of the week and live rooms", async () =>
   // Live rooms: create, join, take turns, no moving out of turn
   const created = await (await post("/api/rooms", { create: "gomoku", state: { seat: 0, b: [], last: null, line: null } }, "10.9.9.42")).json();
   assert.match(created.code, /^[A-Z2-9]{5}$/); assert.equal(created.seat, 0);
-  assert.equal((await post("/api/rooms", { create: "poker", state: {} }, "10.9.9.42")).status, 400);
+  assert.equal((await post("/api/rooms", { create: "snap", state: {} }, "10.9.9.42")).status, 400);
   const joined = await (await post("/api/rooms", { join: created.code.toLowerCase() }, "10.9.9.43")).json();
   assert.equal(joined.seat, 1); assert.equal(joined.joined, true);
   assert.equal((await post("/api/rooms", { join: created.code }, "10.9.9.44")).status, 400, "the room is full");
@@ -3619,6 +3619,74 @@ test("batch F arcade boards and the eight new any-time pages", async () => {
     assert.equal((await post({ game, score: bad })).status, 400, `${game} ${bad}`);
   }
   for (const p of ["/sugar-swap", "/bubble-pop", "/mini-golf", "/air-hockey", "/cafe-pool", "/cafe-blackjack", "/battleship", "/cafe-hangman"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
+});
+
+test("batch G: rooms for up to four, watching, reactions, rematches and hidden hands; duels, clubs, the league and the TV", async () => {
+  const room = (json: Record<string, unknown>) => fetch(`${s.url}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.56" }, body: JSON.stringify(json) }).then(async (r) => ({ status: r.status, d: await r.json() }));
+  // Ludo seats four
+  const lu = await room({ create: "ludo", state: { seat: 0, started: false }, name: "Ana" });
+  assert.equal(lu.d.seats, 4);
+  const seats = [lu.d];
+  for (const n of ["Ben", "Cas", "Dev"]) seats.push((await room({ join: lu.d.code, name: n })).d);
+  assert.deepEqual(seats.map((x) => x.seat), [0, 1, 2, 3]);
+  const fifth = await room({ join: lu.d.code, name: "Eli" });
+  assert.equal(fifth.status, 400); assert.ok(fifth.d.full, "full rooms send you to watch");
+  const watch = await (await fetch(`${s.url}/api/rooms?code=${lu.d.code}`)).json();
+  assert.deepEqual(watch.names, ["Ana", "Ben", "Cas", "Dev"]);
+  // Reactions and rematch votes
+  assert.equal((await room({ code: lu.d.code, token: seats[1].token, react: "🔥" })).d.reactions[0].emoji, "🔥");
+  assert.equal((await room({ code: lu.d.code, token: seats[1].token, react: "💩" })).status, 400, "only the café's emoji");
+  for (let k = 0; k < 3; k++) assert.equal((await room({ code: lu.d.code, token: seats[k].token, rematch: true })).d.rematch.length, k + 1);
+  const re = await room({ code: lu.d.code, token: seats[3].token, rematch: true });
+  assert.equal(re.d.rematch.length, 0, "everyone voted: it starts again"); assert.equal(re.d.state.started, false);
+  // Dominoes is played by the server, and hands stay hidden
+  const dm = await room({ create: "dominoes", name: "Ana" }), dj = await room({ join: dm.d.code, name: "Ben" });
+  assert.ok(dm.d.server);
+  const asHost = await (await fetch(`${s.url}/api/rooms?code=${dm.d.code}&token=${dm.d.token}`)).json();
+  assert.ok(asHost.state.r.hands[0].every(Boolean) && asHost.state.r.hands[1].every((x: unknown) => x === null));
+  const asWatcher = await (await fetch(`${s.url}/api/rooms?code=${dm.d.code}`)).json();
+  assert.ok(asWatcher.state.r.hands.flat().every((x: unknown) => x === null), "watchers see no hands");
+  const turn = asHost.state.r.turn, tok = turn === 0 ? dm.d.token : dj.d.token;
+  const hand = (await (await fetch(`${s.url}/api/rooms?code=${dm.d.code}&token=${tok}`)).json()).state.r.hands[turn];
+  const played = await room({ code: dm.d.code, token: tok, action: { type: "play", tile: hand[0], end: "right" } });
+  assert.equal(played.status, 200); assert.equal(played.d.state.r.line.length, 1);
+  assert.ok([400, 409].includes((await room({ code: dm.d.code, token: tok, action: { type: "play", tile: hand[1], end: "right" } })).status), "not your turn now");
+  // Poker needs two before the host deals
+  const pk = await room({ create: "poker", name: "Ana" });
+  assert.ok([400, 409].includes((await room({ code: pk.d.code, token: pk.d.token, action: { type: "deal" } })).status));
+  const pj = await room({ join: pk.d.code, name: "Ben" });
+  const dealt = await room({ code: pk.d.code, token: pk.d.token, action: { type: "deal" } });
+  assert.equal(dealt.status, 200); assert.ok(dealt.d.state.h.seats[0].cards.every(Boolean)); assert.ok(dealt.d.state.h.seats[1].cards.every((c: unknown) => c === null));
+  assert.equal((await room({ join: pk.d.code, name: "Late" })).status, 400, "no joining once dealt");
+  void pj;
+  // Duels
+  const v1 = "d".repeat(16) + "duelone", v2 = "d".repeat(16) + "dueltwo";
+  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.57" }, body: JSON.stringify({ game: "sudoku", ms: 80_000, voter: v1, name: "Ana" }) });
+  const opts = await (await fetch(`${s.url}/api/duels?voter=${v2}`)).json();
+  assert.ok(opts.options.some((o: { id: string }) => o.id === "sudoku"));
+  const duel = await fetch(`${s.url}/api/duels`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voter: v2, game: "sudoku" }) }).then((r) => r.json());
+  assert.equal(duel.today[0].result, "on"); assert.equal(duel.today[0].theirs, null, "their time stays hidden");
+  await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.57" }, body: JSON.stringify({ game: "sudoku", ms: 70_000, voter: v2, name: "Ben" }) });
+  const after = await (await fetch(`${s.url}/api/duels?voter=${v2}`)).json();
+  assert.equal(after.today[0].result, "won"); assert.equal(after.record.won, 1);
+  // Clubs
+  const club = (json: Record<string, unknown>) => fetch(`${s.url}/api/clubs`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.58" }, body: JSON.stringify(json) }).then((r) => r.json());
+  const made = await club({ voter: v1, create: "Saturday regulars", name: "Ana" });
+  assert.equal(made.mine.name, "Saturday regulars");
+  const joined = await club({ voter: v2, join: made.mine.code, name: "Ben" });
+  assert.equal(joined.mine.members.length, 2); assert.equal(joined.mine.total, 2, "both saved a puzzle this week");
+  assert.equal(joined.board[0].perMember, 1);
+  // Friends league
+  const f1 = "l".repeat(16) + "leagueone", f2 = "l".repeat(16) + "leaguetwo";
+  const fr = (json: Record<string, unknown>) => fetch(`${s.url}/api/friends`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.59" }, body: JSON.stringify(json) }).then((r) => r.json());
+  const c2 = (await fr({ voter: f2, name: "Bo" })).me.code; await fr({ voter: f1, name: "Al" }); await fr({ voter: f1, add: c2 });
+  for (const [v, ms] of [[f1, 60_000], [f2, 50_000]] as const) await fetch(`${s.url}/api/daily-scores`, { method: "POST", headers: { "Content-Type": "application/json", "X-Real-IP": "10.9.9.60" }, body: JSON.stringify({ game: "sudoku", ms, voter: v, name: "x" }) });
+  const lg = (await (await fetch(`${s.url}/api/friends?voter=${f1}`)).json()).league as { name: string; points: number }[];
+  assert.deepEqual(lg.map((x) => x.points), [3, 1], "the quicker one gets the bonus");
+  // The TV's puzzle leaders
+  const tv = await (await fetch(`${s.url}/api/today-champions`)).json();
+  assert.ok(tv.leaders.some((l: { game: string; name: string }) => l.game === "sudoku"));
+  for (const p of ["/daily-duel", "/clubs", "/play-together", "/friends", "/board"]) assert.equal((await fetch(`${s.url}${p}`)).status, 200, p);
 });
 
 test("demo reset backs up, clears activity and fills in sample orders", async () => {

@@ -40,3 +40,4 @@
   .board-clock { font-size: 1.4rem; }
   .board-cols { grid-template-columns: 1fr; }
 }
+.board-leaders { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; align-items: baseline; justify-content: center; margin: 1rem 0 0; font-size: 1.15rem; }

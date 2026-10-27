@@ -8,7 +8,7 @@ import { clock } from "@/lib/memory";
 import { scoreText } from "@/lib/scoreText";
 
 type Person = { code: string; name: string; me: boolean; played: number; times: Record<string, number>; weekly: number | null };
-type Board = { me: { code: string; name: string } | null; people: Person[]; games: { id: string; title: string; emoji: string }[]; today: string; week: string };
+type Board = { me: { code: string; name: string } | null; people: Person[]; games: { id: string; title: string; emoji: string }[]; today: string; week: string ; league?: { name: string; me: boolean; points: number; solved: number; bests: number }[] };
 
 export default function Friends() {
   const { toast } = useStore();
@@ -67,6 +67,15 @@ export default function Friends() {
       </div>
       {!others.length ? <p className="small muted" style={{ marginTop: "1.2rem" }}>No friends added yet. Send them your code, or add theirs.</p> : (
         <>
+          {b.league && (
+            <>
+              <h2 className="h3" style={{ marginTop: "1.4rem" }}>This week&apos;s league</h2>
+              <ol className="fr-league">
+                {b.league.map((s, k) => <li key={k} className={s.me ? "me" : ""}><span className="fr-rank">{k + 1}</span><span className="fr-who">{s.me ? "You" : s.name}{k === 0 && s.points > 0 ? " 👑" : ""}</span><b>{s.points} pts</b><span className="tiny muted">{s.solved} solved · {s.bests} best{s.bests === 1 ? "" : "s"}</span></li>)}
+              </ol>
+              <p className="tiny muted">A point for every daily puzzle you save this week, and two more for the best score among you on it. Starts fresh every Monday.</p>
+            </>
+          )}
           <h2 className="h3" style={{ marginTop: "1.4rem" }}>Today</h2>
           <div className="st-table-wrap">
             <table className="st-table fr-table">
