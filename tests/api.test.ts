@@ -2485,10 +2485,12 @@ test("seat finder: tables carry tags the owner can change", async () => {
   const slots = (await s.api(`/api/bookings/availability?date=${date}`)).body as { time: string }[];
   const url = `/api/bookings/tables?date=${date}&time=${slots[0].time}&guests=2`;
   const t = (await s.api(url)).body.tables as { no: number; tags: string[] }[];
-  assert.ok(t.find((x) => x.no === 8)!.tags.includes("quiet"));
+  assert.ok(t.every((x) => x.tags.length === 0), "guests see no tags until the café has checked and saved them");
   assert.equal((await fetch(`${s.url}/api/admin/table-tags`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: "{}" })).status, 401);
   await s.login();
-  const cur = (await s.api("/api/admin/table-tags")).body.tags as Record<string, string[]>;
+  const start = (await s.api("/api/admin/table-tags")).body as { tags: Record<string, string[]>; saved: boolean };
+  assert.equal(start.saved, false); assert.ok(start.tags["8"].includes("quiet"), "suggestions to start from");
+  const cur = start.tags;
   const saved = await s.api("/api/admin/table-tags", { method: "PUT", json: { tags: { ...cur, 6: ["socket", "dog", "nonsense"], 99: ["window"] } } });
   assert.deepEqual(saved.body.tags["6"], ["socket", "dog"], "unknown tags dropped");
   assert.equal(saved.body.tags["99"], undefined, "unknown tables dropped");
@@ -3985,7 +3987,7 @@ test("quiz season standings, the kids' corner and the café map", async () => {
   const kids = await (await fetch(`${s.url}/kids`)).text();
   assert.ok(kids.includes("Babyccino") && kids.includes("/colouring"), "the kids' menu and colouring");
   const map = await (await fetch(`${s.url}/cafe-map`)).text();
-  assert.ok(map.includes("Counter") && map.includes("Power socket"));
+  assert.ok(map.includes("Counter") && map.toLowerCase().includes("power socket"));
 });
 
 test("owner tools: one approval queue, the monthly report and printable guest lists", async () => {

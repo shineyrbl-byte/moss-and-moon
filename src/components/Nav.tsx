@@ -33,7 +33,7 @@ export default function Nav() {
   const extras = (
     <>
       <label className="lang-pick" title={t("lang.label")}>
-        <span className="sr-only">{t("lang.label")} / Language</span>
+        <span className="sr-only">{t("lang.label")}{lang !== "en" ? " / Choose language" : ""}</span>
         <span aria-hidden>{lang === "en" ? "अ" : "A"}</span>
         <select value={lang} onChange={(e) => setLang(e.target.value as typeof lang)} aria-label="Language">
           {LANGS.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}

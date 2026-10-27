@@ -92,7 +92,7 @@ const en = {
   "footer.hi": "Say hi",
   "chat.ask": "Ask the barista",
   "lang.switch": "हिं",
-  "lang.label": "हिंदी में देखें",
+  "lang.label": "Choose language",
   "status.openUntil": "Open now · until {time}",
   "status.opensAt": "Closed · opens at {time}",
   "status.closedOpen": "Closed · open {next}",

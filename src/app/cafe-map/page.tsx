@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 // The floor plan guests see when they book, with what each table is good for (the team keeps the tags up to date)
 export default function CafeMap() {
-  const tags = tableTags();
+  const tags = tableTags(), anyTags = Object.values(tags).some((x) => x.length);
   const zones = [...new Set(FLOOR.map((t) => t.zone))];
   return (
     <div className="page" style={{ maxWidth: "44rem" }}>
@@ -23,7 +23,8 @@ export default function CafeMap() {
         ))}
         <div className="cm-counter" style={{ left: `${COUNTER.x}%`, top: `${COUNTER.y}%`, width: `${COUNTER.w}%`, height: `${COUNTER.h}%` }}>☕ Counter</div>
       </div>
-      <p className="small" style={{ display: "flex", flexWrap: "wrap", gap: "0.8rem" }}>{SEAT_TAGS.map((s) => <span key={s.id}>{s.icon} {s.label}</span>)}</p>
+      {anyTags ? <p className="small" style={{ display: "flex", flexWrap: "wrap", gap: "0.8rem" }}>{SEAT_TAGS.map((s) => <span key={s.id}>{s.icon} {s.label}</span>)}</p>
+        : <p className="small muted">Which tables have a socket, a window, a quiet spot or room for a dog will show here once the team has marked them. Just ask at the counter for now.</p>}
       <h2 className="h3" style={{ marginTop: "1.2rem" }}>Table by table</h2>
       <ul className="small">
         {zones.map((z) => (
