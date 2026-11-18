@@ -17,4 +17,5 @@ jobs:
         env:
           URL: ${{ vars.SITE_URL || 'https://moss-and-moon-eta.vercel.app' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: curl -fsS --max-time 90 -H "Authorization: Bearer $CRON_SECRET" "$URL/api/cron"
+        run: |
+          curl -fsS --max-time 90 -H "Authorization: Bearer $CRON_SECRET" "$URL/api/cron"
