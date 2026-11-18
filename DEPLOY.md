@@ -188,15 +188,19 @@ and no domain, use the address you signed up to Resend with). Then you get:
   **/admin → Health**.
 - **Weekly backup**: every Sunday night, a copy of the database as an email attachment.
 
-You can also set the address with an `OWNER_EMAIL` variable in Railway instead.
+You can also set the address with an `OWNER_EMAIL` variable on your host instead.
 
 **Backups** are made every night (after 3am) and the last 14 are kept on the server.
 In **/admin → Settings → 🗄 Backups** you can back up now, download a copy, or **restore** one:
 choose the `.db.gz` file and confirm. The current data is saved first, so a restore can be undone.
 Uploaded photos aren't in the backup; they stay on the Railway volume.
 
-**Health check:** Railway calls `/api/health` before switching to a new deploy (see `railway.toml`),
-so a broken update never replaces a working site.
+**On Vercel + Turso:** use **⬇ Download a fresh copy**. Vercel keeps no files between requests, so the
+nightly copies listed there may not be downloadable, and restoring from a file isn't available (load a
+backup with `turso db create … --from-file` instead). Uploaded photos *are* in the backup there, since
+they're stored in the database. Turso also keeps its own point-in-time history of the data.
+
+**Health check:** `/api/health` answers `{"ok":true}` when the site is up; the uptime workflow checks it.
 
 
 ## 10. Running the café from Admin
