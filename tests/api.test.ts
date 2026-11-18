@@ -539,7 +539,13 @@ test("seasonal drinks appear only in their season", async () => {
 });
 
 test("paid event tickets: reserve, pay, check in once", async () => {
-  const ev = ((await s.api("/api/events")).body as { id: string; price: number; spotsLeft: number }[]).find((e) => e.price > 0)!;
+  // Make our own paid event a week out (the starter events have dates that pass)
+  await s.login();
+  const date = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+  const made = await s.api("/api/events", { method: "PUT", json: { title: "Pour-over Masterclass", date, time: "17:00", capacity: 10, price: 399 } });
+  assert.equal(made.status, 200);
+  const madeId = (made.body as { id: string }).id;
+  const ev = ((await s.api("/api/events")).body as { id: string; price: number; spotsLeft: number }[]).find((e) => e.id === madeId)!;
   assert.ok(ev, "there is a paid event");
   assert.equal((await s.api("/api/events", { method: "POST", json: { eventId: ev.id, name: "A", email: "a@example.com" } })).status, 400, "paid events need a ticket");
   assert.equal((await s.api("/api/tickets", { method: "POST", json: { eventId: ev.id, name: "Tara", email: "tara@example.com", qty: 9 } })).status, 400);
