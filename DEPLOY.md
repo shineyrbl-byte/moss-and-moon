@@ -85,8 +85,9 @@ Until you do this the site shows a **test payment screen**, so nothing is charge
    RAZORPAY_KEY_SECRET=...
    ```
 4. Restart. "Pay now" now opens the real Razorpay window (UPI, cards, wallets).
-   In test mode use card `4111 1111 1111 1111`, any future expiry, any CVV,
-   or UPI ID `success@razorpay`.
+   In test mode pay with UPI ID `success@razorpay`, or Netbanking (any bank, then **Success**).
+   Cards like `4111 1111 1111 1111` count as international and Indian accounts reject them;
+   for a card, use a domestic one from Razorpay's "Test Card Details" page.
 5. When you're ready for real money, finish KYC and swap in the **Live** keys.
 
 ## 4. Turn on real emails
