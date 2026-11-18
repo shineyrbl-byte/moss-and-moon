@@ -100,6 +100,15 @@ function open() {
   const dir = dataDir();
   fs.mkdirSync(dir, { recursive: true });
   const db = connect(dir);
+  // The setup below (tables, new columns, starter data) is safe to repeat, but on Turso it's hundreds of
+  // network writes. When the host gives each deploy an ID, run it once per deploy instead of per server start.
+  const stamp = process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_URL || "";
+  if (stamp) {
+    try {
+      const done = db.prepare("SELECT value FROM settings WHERE key = 'setup_stamp'").get() as { value: string } | undefined;
+      if (done?.value === stamp) return db;
+    } catch {} // brand-new database: no settings table yet
+  }
   db.exec(`
     CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1536,6 +1545,7 @@ function open() {
     add.run("Meera", 4, "Matcha is properly whisked, not powdery. Gets busy on Saturdays though!");
     add.run("Rohan", 5, "Open mic night was so cosy. Staff remembered my order the second time.");
   }
+  if (stamp) db.prepare("INSERT INTO settings (key, value) VALUES ('setup_stamp', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(stamp);
   return db;
 }
 

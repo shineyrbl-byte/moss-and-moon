@@ -30,11 +30,13 @@ export function seedIngredients() {
     for (const i of DEFAULT_INGREDIENTS) add.run(i.id, i.name, i.unit, i.qty, i.low_at, i.cost);
   }
   // Older databases: add ingredients that came later (like soy milk) and fill in starting costs
+  // (read first and only write what's missing: each write is a network trip when the data lives in Turso)
+  const have = new Map((db.prepare("SELECT id, cost FROM ingredients").all() as { id: string; cost: number | null }[]).map((r) => [r.id, r.cost]));
   const addMissing = db.prepare("INSERT OR IGNORE INTO ingredients (id, name, unit, qty, low_at, cost) VALUES (?, ?, ?, ?, ?, ?)");
   const fill = db.prepare("UPDATE ingredients SET cost = ? WHERE id = ? AND cost IS NULL");
   for (const i of DEFAULT_INGREDIENTS) {
-    addMissing.run(i.id, i.name, i.unit, i.qty, i.low_at, i.cost);
-    fill.run(i.cost, i.id);
+    if (!have.has(i.id)) addMissing.run(i.id, i.name, i.unit, i.qty, i.low_at, i.cost);
+    else if (have.get(i.id) == null) fill.run(i.cost, i.id);
   }
 }
 
