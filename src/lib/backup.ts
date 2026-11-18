@@ -4,8 +4,8 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
-import { DatabaseSync } from "node:sqlite";
-import { closeDb, dataDir, db, getSetting, setSetting } from "./db";
+import Database from "libsql";
+import { closeDb, dataDir, db, getSetting, setSetting, usingTurso } from "./db";
 import { toDateStr } from "./cafe";
 import { ownerEmail, ownerPref } from "./owner";
 import { sendEmail } from "./email";
@@ -59,6 +59,7 @@ export function backupFile(name: string) {
  * The current database is backed up first, so a restore can always be undone.
  */
 export function restoreBackup(bytes: Buffer) {
+  if (usingTurso()) throw new Error("Restoring from a file isn't available while the café's data lives in Turso. Use `turso db shell` or ask whoever set up the hosting.");
   let raw = bytes;
   if (raw[0] === 0x1f && raw[1] === 0x8b) raw = zlib.gunzipSync(raw);
   if (raw.subarray(0, 16).toString("latin1") !== "SQLite format 3\0") throw new Error("That isn't a Moss & Moon backup file.");
@@ -67,7 +68,7 @@ export function restoreBackup(bytes: Buffer) {
   const candidate = path.join(backupDir(), `.restore-${Date.now()}.db`);
   fs.writeFileSync(candidate, raw);
   try {
-    const check = new DatabaseSync(candidate, { readOnly: true });
+    const check = new Database(candidate, { readonly: true });
     const ok = (check.prepare("PRAGMA integrity_check").get() as { integrity_check: string }).integrity_check === "ok";
     const tables = (check.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map((t) => t.name);
     check.close();

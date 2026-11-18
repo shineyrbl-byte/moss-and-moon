@@ -1,0 +1,20 @@
+# Vercel only runs the site while it's answering a request, so this visits /api/cron
+# every 10 minutes to keep background jobs (reminders, regular orders, reports) ticking
+# when nobody is on the site. Set the CRON_SECRET repo secret to the same value as on Vercel.
+name: Background jobs
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Run due jobs
+        env:
+          URL: ${{ vars.SITE_URL || 'https://moss-and-moon.vercel.app' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: curl -fsS --max-time 90 -H "Authorization: Bearer $CRON_SECRET" "$URL/api/cron"

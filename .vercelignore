@@ -1,0 +1,11 @@
+# Never upload local data, secrets or test output to Vercel
+data/
+.env*
+!.env.example
+tests/
+e2e/
+legacy-static/
+test-results/
+playwright-report/
+.next/
+node_modules/

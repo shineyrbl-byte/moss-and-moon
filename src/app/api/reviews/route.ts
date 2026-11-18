@@ -11,7 +11,7 @@ export async function GET() {
   const staff = await isAdmin();
   const where = staff ? "" : "WHERE private = 0";
   const rows = db.prepare(`SELECT id, name, rating, text, photo, created_at, order_code IS NOT NULL AS verified, private FROM reviews ${where} ORDER BY id DESC LIMIT ${staff ? 60 : 30}`).all();
-  const s = db.prepare(`SELECT COUNT(*) AS count, ROUND(AVG(rating), 1) AS avg FROM reviews ${where}`).get();
+  const s = db.prepare(`SELECT COUNT(*) AS count, ROUND(AVG(rating), 1) AS avg FROM reviews ${where}`).get() as { count: number; avg: number | null };
   return Response.json({ reviews: rows, ...s });
 }
 

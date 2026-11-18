@@ -19,7 +19,11 @@ export const DEFAULT_INGREDIENTS: Ingredient[] = [
   { id: "tapioca", name: "Tapioca pearls", unit: "g", qty: 3000, low_at: 400, cost: 0.45 },
 ];
 
+let seeded = false;
 export function seedIngredients() {
+  // Once per server start is enough (each write is a network trip when the data lives in Turso)
+  if (seeded) return;
+  seeded = true;
   const n = (db.prepare("SELECT COUNT(*) AS n FROM ingredients").get() as { n: number }).n;
   if (!n) {
     const add = db.prepare("INSERT INTO ingredients (id, name, unit, qty, low_at, cost) VALUES (?, ?, ?, ?, ?, ?)");

@@ -37,6 +37,9 @@ const dateOf = (year: number, day: number) => `${year}-12-${String(day).padStart
 
 /** Make this year's 24 codes (once; editing a code in Promos is kept) */
 export function ensureAdvent(year: number) {
+  // Read first: writes are slow when the data lives in Turso, and the codes are almost always there already
+  const have = (db.prepare("SELECT COUNT(*) AS n FROM promos WHERE code LIKE ?").get(`ADVENT${String(year).slice(2)}%`) as { n: number }).n;
+  if (have >= ADVENT_TREATS.length) return;
   const add = db.prepare("INSERT OR IGNORE INTO promos (code, kind, value, min_order, once_per_guest, starts, expires, note) VALUES (?, ?, ?, ?, 1, ?, ?, ?)");
   ADVENT_TREATS.forEach((t, i) => add.run(code(year, i + 1), t.kind, t.value, t.min, dateOf(year, i + 1), dateOf(year, i + 1), `Advent calendar, door ${i + 1}`));
 }

@@ -1,12 +1,11 @@
 import { ImageResponse } from "next/og";
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { currentStaff, unauthorized } from "@/lib/auth";
 import { menuLookup } from "@/lib/menuStore";
 import { findEvent } from "@/lib/eventsStore";
 import { photo } from "@/lib/menu";
 import { rupees } from "@/lib/pricing";
-import { dataDir } from "@/lib/db";
+import { readPhoto } from "@/lib/uploads";
 
 // Staff: a 1080×1920 Instagram story image for a menu item (?item=) or an event (?event=)
 export async function GET(req: Request) {
@@ -26,8 +25,8 @@ export async function GET(req: Request) {
   let src: string | null = null;
   try {
     if (img.startsWith("/api/uploads/")) {
-      const file = path.join(dataDir(), "uploads", path.basename(img));
-      src = `data:image/${img.endsWith(".png") ? "png" : img.endsWith(".webp") ? "webp" : "jpeg"};base64,${(await readFile(file)).toString("base64")}`;
+      const bytes = readPhoto(path.basename(img));
+      if (bytes) src = `data:image/${img.endsWith(".png") ? "png" : img.endsWith(".webp") ? "webp" : "jpeg"};base64,${bytes.toString("base64")}`;
     } else {
       const r = await fetch(photo(img, 1080), { signal: AbortSignal.timeout(4000) });
       if (r.ok) src = `data:${r.headers.get("content-type") ?? "image/jpeg"};base64,${Buffer.from(await r.arrayBuffer()).toString("base64")}`;

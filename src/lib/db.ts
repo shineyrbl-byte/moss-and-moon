@@ -1,8 +1,11 @@
-// SQLite database, built into Node (no install needed).
-// Saved in data/cafe.db, or in DATA_DIR if that's set (used when hosting online).
+// SQLite database (libSQL, a drop-in SQLite).
+// Saved in data/cafe.db, or in DATA_DIR if that's set (used when hosting on a server with a disk).
+// When TURSO_DATABASE_URL is set (used on Vercel), the data lives in Turso and this server keeps a
+// local copy that reads come from; writes go straight to Turso.
 import "server-only";
-import { DatabaseSync } from "node:sqlite";
+import Database from "libsql";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { NEARBY_SEED } from "./nearby";
 import { HALF_PORTIONS, KIDS_ITEMS, MENU_SHOP, MENU_V2, MENU_V3, MENU_V4, MENU_V5, MENU_V6, MENU_V7, MENU_V8, MENU_V9, MENU_V10, SEED_MENU } from "./menu";
@@ -14,7 +17,15 @@ import { MENU_DESCS } from "./menuDescs";
 import { SEED_SHELF } from "./shelfSeed";
 import { SEED_EVENTS } from "./cafe";
 
+// Same as instrumentation.ts, in case something opens the database first
+if (process.env.VERCEL) process.env.TZ = process.env.CAFE_TZ || "Asia/Kolkata";
+
+export type DatabaseSync = Database.Database;
+
 const g = globalThis as unknown as { __cafeDb?: DatabaseSync };
+
+/** True when the data lives in Turso (no local disk to rely on) */
+export const usingTurso = () => !!process.env.TURSO_DATABASE_URL;
 
 /** Add a column to an existing table if it isn't there yet (for older databases). */
 function addColumn(db: DatabaseSync, table: string, column: string, type: string) {
@@ -23,15 +34,70 @@ function addColumn(db: DatabaseSync, table: string, column: string, type: string
 }
 
 /** Folder where the database and uploaded photos live */
-export const dataDir = () => process.env.DATA_DIR || path.join(process.cwd(), "data");
+// On Vercel only /tmp can be written to.
+export const dataDir = () => process.env.DATA_DIR || (process.env.VERCEL ? path.join(os.tmpdir(), "moss-and-moon") : path.join(process.cwd(), "data"));
+
+/** A synced libSQL connection adds a `_metadata` field to every row; drop it so rows look like plain SQLite rows */
+function withoutMetadata(db: DatabaseSync) {
+  const strip = (row: unknown) => {
+    if (row && typeof row === "object" && "_metadata" in row) delete (row as { _metadata?: unknown })._metadata;
+    return row;
+  };
+  const prepare = db.prepare.bind(db);
+  let inTxn = false;
+  db.prepare = ((sql: string) => {
+    const stmt = prepare(sql);
+    const get = stmt.get.bind(stmt), all = stmt.all.bind(stmt), iterate = stmt.iterate.bind(stmt), run = stmt.run.bind(stmt);
+    // SLOW_SQL_MS=100 logs any statement slower than that (writes travel to Turso, so they're the slow ones)
+    const slow = Number(process.env.SLOW_SQL_MS) || 0;
+    const timed = <T,>(f: () => T): T => {
+      if (!slow) return f();
+      const t = Date.now(), r = f(), ms = Date.now() - t;
+      if (ms >= slow) console.warn(`[slow sql ${ms}ms] ${sql.replace(/\s+/g, " ").slice(0, 160)}`);
+      return r;
+    };
+    stmt.get = (...a: unknown[]) => strip(timed(() => get(...a)));
+    stmt.all = (...a: unknown[]) => timed(() => all(...a)).map(strip);
+    // "DELETE FROM t WHERE …" housekeeping usually matches nothing: check the local copy first and skip the network trip
+    const del = /^\s*DELETE\s+FROM\s+(\w+)\s+WHERE\s+([\s\S]+)$/i.exec(sql);
+    type Probe = { get: (...a: unknown[]) => unknown };
+    let probe = null as Probe | null;
+    if (del && !/\b(RETURNING|ORDER\s+BY|LIMIT)\b|;/i.test(sql)) {
+      try { probe = prepare(`SELECT 1 FROM ${del[1]} WHERE ${del[2]} LIMIT 1`) as unknown as Probe; } catch { probe = null; } // unusual shape: just send it
+    }
+    const txn = /^\s*(BEGIN|COMMIT|END|ROLLBACK)\b/i.exec(sql)?.[1].toUpperCase();
+    stmt.run = (...a: unknown[]) => {
+      if (txn) inTxn = txn === "BEGIN";
+      // (inside a transaction the local copy can't see its uncommitted rows, so always send the delete)
+      if (probe && !inTxn && !probe.get(...a)) return { changes: 0, lastInsertRowid: 0 } as Database.RunResult;
+      return timed(() => run(...a));
+    };
+    stmt.iterate = function* (...a: unknown[]) { for (const r of iterate(...a)) yield strip(r); };
+    return stmt;
+  }) as DatabaseSync["prepare"];
+  return db;
+}
+
+function connect(dir: string) {
+  const url = process.env.TURSO_DATABASE_URL;
+  if (url) {
+    // authToken and syncPeriod work at runtime but are missing from libsql's types. Pull others' writes every few seconds.
+    const opts = { syncUrl: url, authToken: process.env.TURSO_AUTH_TOKEN, syncPeriod: 5 } as Database.Options;
+    const db = new Database(path.join(dir, "replica.db"), opts);
+    db.sync();
+    return withoutMetadata(db);
+  }
+  // Wait up to 5s if another process is using the database, instead of failing
+  const db = new Database(path.join(dir, "cafe.db"), { timeout: 5000 });
+  db.exec("PRAGMA journal_mode = WAL;");
+  return withoutMetadata(db); // same wrapper either way, so tests cover what runs on Vercel
+}
 
 function open() {
   const dir = dataDir();
   fs.mkdirSync(dir, { recursive: true });
-  // Wait up to 5s if another process is using the database, instead of failing
-  const db = new DatabaseSync(path.join(dir, "cafe.db"), { timeout: 5000 });
+  const db = connect(dir);
   db.exec(`
-    PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT UNIQUE NOT NULL,

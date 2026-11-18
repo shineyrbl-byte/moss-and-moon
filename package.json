@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",
-    "next": "^16.4.2",
+    "libsql": "^0.5.29",
+    "next": "^16.4.6",
     "nodemailer": "^10.0.13",
     "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",

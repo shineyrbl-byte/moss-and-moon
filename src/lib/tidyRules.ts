@@ -1,12 +1,13 @@
 // What the daily tidy-up removes, written against any database so tests can try it on a scratch one. Pure SQL.
-import type { DatabaseSync } from "node:sqlite";
+/** Any SQLite connection (the live libSQL one, or node:sqlite in tests) */
+type Db = { prepare(sql: string): { run(...args: string[]): { changes: number | bigint } } };
 import { toDateStr } from "./cafe.ts";
 
 const daysAgo = (n: number, now: Date) => toDateStr(new Date(now.getTime() - n * 86_400_000));
 
 /** Played songs after a month (and votes for songs no longer waiting), game nights over a month gone, slow games finished
  * a month ago or untouched for six months, and Goa events three months over. Scores, orders and guests' own things stay. */
-export function tidyRows(db: DatabaseSync, now = new Date()) {
+export function tidyRows(db: Db, now = new Date()) {
   const n = (sql: string, ...args: string[]) => Number(db.prepare(sql).run(...args).changes);
   return {
     songs: n("DELETE FROM song_requests WHERE status = 'played' AND played_at < ?", `${daysAgo(30, now)} 00:00:00`),
