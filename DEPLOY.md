@@ -1,5 +1,22 @@
 # Putting Moss & Moon online 🌍
 
+## Free hosting: Vercel + Turso (how the live site runs)
+
+Both are free with no card, and you sign in with GitHub.
+
+- **Turso** holds the data. `turso db create moss-and-moon --from-file cafe.db --location aws-ap-south-1`
+  loads a backup (gunzip a `cafe-….db.gz` first), then `turso db tokens create moss-and-moon` gives the token.
+- **Vercel** runs the site (`vercel.json` sets Next.js, the Mumbai region and a daily cron). Variables:
+  `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `CRON_SECRET` (any long random string), `SITE_URL`,
+  `ADMIN_PASSCODE`, plus the optional email/payment/AI ones below. Deploy with `vercel deploy --prod`.
+- **Background jobs**: Vercel only runs the site while it answers a request, so `/api/cron` runs the due jobs.
+  Visits nudge it, and `.github/workflows/jobs.yml` calls it every 10 minutes (needs the `CRON_SECRET`
+  repo secret, and the `SITE_URL` repo variable if the address changes).
+- Uploaded photos are stored in the database. Restoring a backup from the admin page isn't available on
+  Turso; load it with the `turso` command above instead. `SLOW_SQL_MS=250` logs slow database writes.
+
+The steps below are for a server with a disk (Railway, Render, a VPS), where the data stays in a SQLite file.
+
 The site keeps its data in a small SQLite file, so it needs a host with a
 **persistent disk** (a place where files survive restarts). Railway is the
 easiest one, and its free trial is enough to show the project off.

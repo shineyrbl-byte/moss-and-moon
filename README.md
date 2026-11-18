@@ -1,6 +1,6 @@
 # Moss & Moon ☾ — an aesthetic café website
 
-**Live site:** https://moss-and-moon.up.railway.app (every push to `main` deploys automatically)
+**Live site:** https://moss-and-moon-eta.vercel.app (hosted free on Vercel, data in Turso; see [DEPLOY.md](DEPLOY.md))
 
 A full-stack café site built with **Next.js 16 + React 19 + TypeScript**, with a real backend
 (Next.js API routes + **SQLite**, built into Node — nothing extra to install).

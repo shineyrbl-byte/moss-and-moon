@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      URL: ${{ vars.SITE_URL || 'https://moss-and-moon.up.railway.app' }}
+      URL: ${{ vars.SITE_URL || 'https://moss-and-moon-eta.vercel.app' }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
@@ -41,7 +41,7 @@ jobs:
             gh label create downtime --color B60205 --description "The live site isn't answering" 2>/dev/null || true
             gh issue create --label downtime --title "🚨 Moss & Moon is down" --body "The health check at $URL/api/health didn't answer (last status: ${{ steps.ping.outputs.code }}) at $(date -u '+%Y-%m-%d %H:%M UTC').
 
-          Check Railway: https://railway.com/dashboard. This issue closes by itself when the site is back."
+          Check Vercel: https://vercel.com/dashboard. This issue closes by itself when the site is back."
           else
             gh issue comment "$open" --body "Still down at $(date -u '+%H:%M UTC') (status ${{ steps.ping.outputs.code }})."
           fi
