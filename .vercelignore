@@ -1,11 +1,11 @@
-# Never upload local data, secrets or test output to Vercel
-data/
+# Never upload local data, secrets or test output to Vercel (leading / = top-level folder only)
+/data/
 .env*
 !.env.example
-tests/
-e2e/
-legacy-static/
-test-results/
-playwright-report/
-.next/
-node_modules/
+/tests/
+/e2e/
+/legacy-static/
+/test-results/
+/playwright-report/
+/.next/
+/node_modules/
