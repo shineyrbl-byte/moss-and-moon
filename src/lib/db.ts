@@ -37,15 +37,47 @@ function addColumn(db: DatabaseSync, table: string, column: string, type: string
 // On Vercel only /tmp can be written to.
 export const dataDir = () => process.env.DATA_DIR || (process.env.VERCEL ? path.join(os.tmpdir(), "moss-and-moon") : path.join(process.cwd(), "data"));
 
+/**
+ * The café's offset from UTC as an SQLite modifier, like "+330 minutes" for Asia/Kolkata.
+ * With Turso, writes run on Turso's server, which is on UTC, so SQLite's 'localtime' would mean UTC there.
+ */
+export function cafeOffsetModifier(tz = process.env.CAFE_TZ || "Asia/Kolkata", at = new Date()) {
+  const wall = (zone: string) => new Date(at.toLocaleString("en-US", { timeZone: zone })).getTime();
+  const mins = Math.round((wall(tz) - wall("UTC")) / 60_000);
+  return `${mins >= 0 ? "+" : ""}${mins} minutes`;
+}
+
+/** Swap SQLite's 'localtime' for the café's fixed offset (exact for India, which has no daylight saving) */
+export const withCafeOffset = (sql: string, modifier = cafeOffsetModifier()) => sql.replace(/'localtime'/g, `'${modifier}'`);
+
+/** Turso only: fix rows whose time came from a column default (evaluated in UTC on Turso's server) */
+function addTimezoneTriggers(db: DatabaseSync) {
+  const cols = db
+    .prepare("SELECT m.name AS t, p.name AS c FROM sqlite_master m, pragma_table_info(m.name) p WHERE m.type = 'table' AND p.dflt_value = ?")
+    .all("datetime('now','localtime')") as { t: string; c: string }[];
+  const fix = withCafeOffset("datetime('now','localtime')");
+  for (const { t, c } of cols) {
+    // Same statement means the same 'now', so a default-filled value equals datetime('now') exactly
+    db.exec(`CREATE TRIGGER IF NOT EXISTS tzfix_${t}_${c} AFTER INSERT ON ${t} FOR EACH ROW WHEN NEW.${c} IS datetime('now')
+      BEGIN UPDATE ${t} SET ${c} = ${fix} WHERE rowid = NEW.rowid; END;`);
+  }
+  return cols.length;
+}
+
 /** A synced libSQL connection adds a `_metadata` field to every row; drop it so rows look like plain SQLite rows */
-function withoutMetadata(db: DatabaseSync) {
+function withoutMetadata(db: DatabaseSync, remote = false) {
+  // On Turso, 'localtime' would be Turso's UTC: use the café's fixed offset instead
+  const fixSql = remote ? (sql: string) => withCafeOffset(sql) : (sql: string) => sql;
+  const exec = db.exec.bind(db);
+  db.exec = ((sql: string) => exec(fixSql(sql))) as DatabaseSync["exec"];
   const strip = (row: unknown) => {
     if (row && typeof row === "object" && "_metadata" in row) delete (row as { _metadata?: unknown })._metadata;
     return row;
   };
   const prepare = db.prepare.bind(db);
   let inTxn = false;
-  db.prepare = ((sql: string) => {
+  db.prepare = ((rawSql: string) => {
+    const sql = fixSql(rawSql);
     const stmt = prepare(sql);
     const get = stmt.get.bind(stmt), all = stmt.all.bind(stmt), iterate = stmt.iterate.bind(stmt), run = stmt.run.bind(stmt);
     // SLOW_SQL_MS=100 logs any statement slower than that (writes travel to Turso, so they're the slow ones)
@@ -88,7 +120,7 @@ function connect(dir: string) {
     const opened = Date.now();
     db.sync();
     if (process.env.SLOW_SQL_MS) console.warn(`[db] replica opened in ${opened - t}ms, first sync ${Date.now() - opened}ms`);
-    return withoutMetadata(db);
+    return withoutMetadata(db, true);
   }
   // Wait up to 5s if another process is using the database, instead of failing
   const db = new Database(path.join(dir, "cafe.db"), { timeout: 5000 });
@@ -1545,6 +1577,7 @@ function open() {
     add.run("Meera", 4, "Matcha is properly whisked, not powdery. Gets busy on Saturdays though!");
     add.run("Rohan", 5, "Open mic night was so cosy. Staff remembered my order the second time.");
   }
+  if (usingTurso()) addTimezoneTriggers(db);
   if (stamp) db.prepare("INSERT INTO settings (key, value) VALUES ('setup_stamp', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(stamp);
   return db;
 }

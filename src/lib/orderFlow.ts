@@ -44,7 +44,7 @@ async function emailReceipt(code: string) {
                 pay_method, pay_status, table_no, delivery_address, pickup FROM orders WHERE code = ?`
       )
       .get(code) as (Omit<ReceiptOrder, "lines"> & { lines: string; email: string | null }) | undefined;
-    if (!row?.email) return;
+    if (!row?.email || row.pay_status === "pending") return; // never a receipt for a payment that didn't go through
     const pdf = await receiptPdf({ ...row, lines: JSON.parse(row.lines) });
     sendLater(row.email, ...receiptEmail(row), [{ filename: `moss-and-moon-${code}.pdf`, content: pdf }]);
   } catch (e) {
@@ -68,7 +68,8 @@ export function setDemoBarista(on: boolean) {
 export function demoTick(now = new Date()) {
   if (!demoBaristaOn()) return 0;
   const rows = db
-    .prepare("SELECT code, status, pickup, created_at, delivery_address FROM orders WHERE status != 'collected' AND created_at >= datetime('now','localtime','-1 day')")
+    // (online orders wait until they're paid: an abandoned payment shouldn't get brewed or a receipt)
+    .prepare("SELECT code, status, pickup, created_at, delivery_address FROM orders WHERE status != 'collected' AND pay_status != 'pending' AND created_at >= datetime('now','localtime','-1 day')")
     .all() as { code: string; status: OrderStatus; pickup: string; created_at: string; delivery_address: string | null }[];
   let moved = 0;
   for (const o of rows) {
