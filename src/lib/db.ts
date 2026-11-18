@@ -83,8 +83,11 @@ function connect(dir: string) {
   if (url) {
     // authToken and syncPeriod work at runtime but are missing from libsql's types. Pull others' writes every few seconds.
     const opts = { syncUrl: url, authToken: process.env.TURSO_AUTH_TOKEN, syncPeriod: 5 } as Database.Options;
+    const t = Date.now();
     const db = new Database(path.join(dir, "replica.db"), opts);
+    const opened = Date.now();
     db.sync();
+    if (process.env.SLOW_SQL_MS) console.warn(`[db] replica opened in ${opened - t}ms, first sync ${Date.now() - opened}ms`);
     return withoutMetadata(db);
   }
   // Wait up to 5s if another process is using the database, instead of failing
@@ -1542,7 +1545,14 @@ const SEED_POSTS = [
   { slug: "meet-the-new-menu", title: "Meet our new menu: cold drinks and proper food", body: "We've grown! Alongside your favourite lattes and bakes, you'll now find a whole section of **cold drinks** and a menu of **real food**.\n\n## Cold drinks\nSmoothies made with thick curd, mocktails with fresh fruit, a cookies & cream frappé, and our slow cold brew.\n\n## Food\nToasties pressed on sourdough, a Bombay masala grill, pancakes, pasta and big colourful bowls. Most of it comes with add-ons: an egg, extra cheese, gluten-free bread, or a coffee combo.\n\n[See the menu](/#menu) ✿", cover: "1528736235302-52922df5c122", ago: "-1 days" },
 ];
 
-const getDb = () => (g.__cafeDb ??= open());
+const getDb = () => {
+  if (!g.__cafeDb) {
+    const t = Date.now();
+    g.__cafeDb = open();
+    if (process.env.SLOW_SQL_MS) console.warn(`[db] ready in ${Date.now() - t}ms (including setup)`);
+  }
+  return g.__cafeDb;
+};
 
 /** Close the database so its file can be swapped (used when restoring a backup). It reopens on next use. */
 export function closeDb() {

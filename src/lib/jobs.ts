@@ -77,20 +77,26 @@ export function startJobs() {
  * which visits and a schedule both trigger. Each job checks the database itself before doing anything
  * once-a-day, so running one a little early or twice is harmless.
  */
-export async function runDueJobs(now = Date.now()) {
-  if (g.__mmRunning) return { ran: [] as string[] };
+export async function runDueJobs(now = Date.now(), budgetMs = 20_000) {
+  if (g.__mmRunning) return { ran: [] as string[], ms: {} as Record<string, number> };
   g.__mmRunning = true;
   const last = (g.__mmLastRun ??= new Map());
-  const ran: string[] = [];
+  const ran: string[] = [], ms: Record<string, number> = {};
+  const started = Date.now();
   try {
-    for (const [ms, name, fn] of JOBS) {
-      if (now - (last.get(name) ?? 0) < ms) continue;
+    // Longest-waiting first, and stop once the time budget is used so one call never hits the host's time limit;
+    // whatever's left runs on the next call
+    const due = JOBS.filter(([every, name]) => now - (last.get(name) ?? 0) >= every).sort((a, b) => (last.get(a[1]) ?? 0) - (last.get(b[1]) ?? 0));
+    for (const [, name, fn] of due) {
+      if (Date.now() - started > budgetMs) break;
       last.set(name, now);
+      const t = Date.now();
       await runJob(name, fn);
+      ms[name] = Date.now() - t;
       ran.push(name);
     }
   } finally {
     g.__mmRunning = false;
   }
-  return { ran };
+  return { ran, ms };
 }
